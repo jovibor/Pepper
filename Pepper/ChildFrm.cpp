@@ -25,10 +25,10 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	::GetClientRect(AfxGetMainWnd()->m_hWnd, &rect);
 
 	m_MainSplitter.CreateStatic(this, 1, 2, WS_CHILD | WS_VISIBLE);
-	m_MainSplitter.CreateView(0, 0, RUNTIME_CLASS(CViewLeft), CSize(rect.Width() / 5, 0), pContext);
+	m_MainSplitter.CreateView(0, 0, RUNTIME_CLASS(CViewLeft), CSize(0, 0), pContext);
 	m_RightSplitter.CreateStatic(&m_MainSplitter, 2, 1, WS_CHILD | WS_VISIBLE, m_MainSplitter.IdFromRowCol(0, 1));
-	m_RightSplitter.CreateView(0, 0, RUNTIME_CLASS(CViewRightTop), CSize(0, rect.Height() / 2), pContext);
-	m_RightSplitter.CreateView(1, 0, RUNTIME_CLASS(CViewRightBottom), CSize(0, rect.Height() / 2), pContext);
+	m_RightSplitter.CreateView(0, 0, RUNTIME_CLASS(CViewRightTop), CSize(0, 0), pContext);
+	m_RightSplitter.CreateView(1, 0, RUNTIME_CLASS(CViewRightBottom), CSize(0, 0), pContext);
 
 	m_fSpliterCreated = true;
 
@@ -42,31 +42,33 @@ BOOL CChildFrame::OnEraseBkgnd(CDC* pDC)
 
 void CChildFrame::OnSize(UINT nType, int cx, int cy)
 {
-	if (m_fSpliterCreated)
+	if (nType != SIZE_MINIMIZED && cx > 0 && cy > 0)
 	{
-		CRect rect { };
-		::GetClientRect(AfxGetMainWnd()->m_hWnd, &rect);
-
-		if (m_cx > 0)
+		if (m_fSpliterCreated)
 		{
-			int _cxCur, _min;
-			m_MainSplitter.GetColumnInfo(0, _cxCur, _min);
-			UINT _nCurrentWidth = ((double)_cxCur * ((double)cx / (double)m_cx)) + 0.5;
-			m_MainSplitter.SetColumnInfo(0, _nCurrentWidth, _min);
+			if (m_cx > 0 && m_cy > 0)
+			{
+				int _cxCur, _min;
+				m_MainSplitter.GetColumnInfo(0, _cxCur, _min);
+				double ratio = m_cx / _cxCur;
+				m_MainSplitter.SetColumnInfo(0, cx / ratio, _min);
 
-			m_RightSplitter.GetRowInfo(0, _cxCur, _min);
-			_nCurrentWidth = ((double)_cxCur * ((double)cy / (double)m_cy)) + 0.5;
-			m_RightSplitter.SetRowInfo(0, _nCurrentWidth, 0);
+				m_RightSplitter.GetRowInfo(0, _cxCur, _min);
+				ratio = m_cy / _cxCur;
+				m_RightSplitter.SetRowInfo(0, cy / ratio, _min);
+			}
+			else
+			{
+				CRect rect { };
+				::GetClientRect(GetParent()->m_hWnd, &rect);
 
-			m_MainSplitter.RecalcLayout();
-			m_RightSplitter.RecalcLayout();
+				m_MainSplitter.SetColumnInfo(0, rect.Width() / 5, 0);
+				m_RightSplitter.SetRowInfo(0, rect.Height() / 2, 0);
+			}
+
+			m_cx = cx; m_cy = cy;
 		}
-		else {
-			m_MainSplitter.SetColumnInfo(0, rect.Width() / 5, 0);
-			m_RightSplitter.SetRowInfo(0, rect.Height() / 2, 0);
-		}
-
-		m_cx = cx; m_cy = cy;
 	}
+
 	CMDIChildWndEx::OnSize(nType, cx, cy);
 }
