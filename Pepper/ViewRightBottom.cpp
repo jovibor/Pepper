@@ -29,8 +29,11 @@ void CViewRightBottom::OnInitialUpdate()
 	if (!m_pLibpe)
 		return;
 
-	if (m_pLibpe->GetFileSummary(&m_dwFileSummary) != S_OK)
+	const DWORD* m_pFileSummary { };
+	if (m_pLibpe->GetFileSummary(&m_pFileSummary) != S_OK)
 		return;
+
+	m_dwFileSummary = *m_pFileSummary;
 
 	listCreateExportFuncs();
 	treeCreateResourceDir();

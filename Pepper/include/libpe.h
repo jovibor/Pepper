@@ -7,6 +7,7 @@
 #define ILIBPEAPI __declspec(dllimport) __cdecl
 #endif
 
+typedef const DWORD* PCDWORD;
 typedef const IMAGE_DOS_HEADER *PLIBPE_DOSHEADER;
 typedef std::vector<std::tuple<WORD, WORD, DWORD>> LIBPE_RICH;
 typedef const LIBPE_RICH *PLIBPE_RICH;
@@ -66,13 +67,14 @@ typedef std::vector<std::tuple<IMAGE_BOUND_IMPORT_DESCRIPTOR, std::string, std::
 typedef const LIBPE_BOUNDIMPORT *PLIBPE_BOUNDIMPORT;
 typedef std::vector<std::tuple<IMAGE_DELAYLOAD_DESCRIPTOR, std::string, std::vector<std::tuple<LONGLONG, std::string, LONGLONG, LONGLONG, LONGLONG, LONGLONG>>>> LIBPE_DELAYIMPORT;
 typedef const LIBPE_DELAYIMPORT *PLIBPE_DELAYIMPORT;
+typedef const IMAGE_COR20_HEADER *PLIBPE_COM_DESCRIPTOR;
 
 //Pure Virtual base class Ilibpe
 class __declspec(novtable) Ilibpe
 {
 public:
-	virtual HRESULT LoadPe(LPCWSTR lpszFile) = 0;
-	virtual HRESULT GetFileSummary(DWORD* pFileSummary) = 0;
+	virtual HRESULT LoadPe(LPCWSTR lpszFileName) = 0;
+	virtual HRESULT GetFileSummary(PCDWORD*) = 0;
 	virtual HRESULT GetMSDOSHeader(PLIBPE_DOSHEADER*) = 0;
 	virtual HRESULT GetMSDOSRichHeader(PLIBPE_RICH*) = 0;
 	virtual HRESULT GetNTHeader(PLIBPE_NTHEADER*) = 0;
@@ -91,6 +93,7 @@ public:
 	virtual HRESULT GetLoadConfigTable(PLIBPE_LOADCONFIGTABLE*) = 0;
 	virtual HRESULT GetBoundImportTable(PLIBPE_BOUNDIMPORT*) = 0;
 	virtual HRESULT GetDelayImportTable(PLIBPE_DELAYIMPORT*) = 0;
+	virtual HRESULT GetCOMDescriptorTable(PLIBPE_COM_DESCRIPTOR*) = 0;
 
 	virtual HRESULT Release() = 0;
 };
@@ -104,8 +107,12 @@ extern "C" HRESULT ILIBPEAPI Getlibpe(Ilibpe**);
 #define	FILE_MAP_VIEW_OF_FILE_FAILED		0x0013
 #define	IMAGE_TYPE_UNSUPPORTED				0x0014
 #define	IMAGE_DOS_SIGNATURE_MISMATCH		0x0015
+#define IMAGE_HAS_NO_DOS_HEADER				0x002C
 #define	IMAGE_HAS_NO_RICH_HEADER			0x0016
 #define	IMAGE_NT_SIGNATURE_MISMATCH			0x0017
+#define	IMAGE_HAS_NO_NT_HEADER				0x002B
+#define	IMAGE_HAS_NO_FILE_HEADER			0x002A
+#define	IMAGE_HAS_NO_OPTIONAL_HEADER		0x0029
 #define	IMAGE_HAS_NO_DATA_DIRECTORIES		0x0018
 #define	IMAGE_HAS_NO_SECTIONS				0x0019
 #define	IMAGE_HAS_NO_EXPORT_DIR				0x001A

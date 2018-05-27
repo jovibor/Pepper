@@ -45,9 +45,11 @@ void CViewLeft::OnInitialUpdate()
 	if (!m_pLibpe)
 		return;
 
-	DWORD m_dwFileSummary { };
-	if (m_pLibpe->GetFileSummary(&m_dwFileSummary) != S_OK)
+	const DWORD* m_pFileSummary { };
+	if (m_pLibpe->GetFileSummary(&m_pFileSummary) != S_OK)
 		return;
+	
+	DWORD m_dwFileSummary = *m_pFileSummary;
 
 	m_ImgListRootTree.Create(16, 16, ILC_COLOR32, 0, 4);
 	int _iconHdr = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_HEADER_ICON));
@@ -71,7 +73,7 @@ void CViewLeft::OnInitialUpdate()
 	}
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_RICH_HEADER_FLAG))
 	{
-		_hTreeDosRich = m_TreeMain.InsertItem(TEXT("«Rich» Header"), _iconHdr, _iconHdr, _hTreeRoot);
+		_hTreeDosRich = m_TreeMain.InsertItem(L"\u00ABRich\u00BB Header", _iconHdr, _iconHdr, _hTreeRoot);
 		m_TreeMain.SetItemData(_hTreeDosRich, LISTID_DOS_RICH);
 	}
 

@@ -34,7 +34,7 @@ void CViewRightTop::OnDraw(CDC* pDC)
 void CViewRightTop::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
-	
+
 	m_ChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
@@ -54,8 +54,12 @@ void CViewRightTop::OnInitialUpdate()
 	m_strFileName.erase(0, m_strFileName.find_last_of('\\') + 1);
 	m_strFileName.insert(0, TEXT("File name: "));
 
-	if (m_pLibpe->GetFileSummary(&m_dwFileSummary) != S_OK)
+	const DWORD* m_pFileSummary { };
+	if (m_pLibpe->GetFileSummary(&m_pFileSummary) != S_OK)
 		return;
+
+	m_dwFileSummary = *m_pFileSummary;
+
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
 		m_strFileType = TEXT("File type: PE32 (x86)");
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
@@ -128,17 +132,18 @@ void CViewRightTop::OnInitialUpdate()
 	listCreateSecurityDir();
 	listCreateRelocDir();
 	listCreateDebugDir();
+	listCreateTLSDir();
 	listCreateLoadConfigDir();
 	listCreateBoundImportDir();
 	listCreateDelayImportDir();
-	listCreateTLSDir();
+	listCreateCOMDir();
 }
 
 void CViewRightTop::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
 {
 	if (m_pActiveList)
 		m_pActiveList->ShowWindow(SW_HIDE);
-	
+
 	m_fFileSummaryShow = false;
 
 	CRect _rectClient, rect;
@@ -237,6 +242,12 @@ void CViewRightTop::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*
 		m_ChildFrame->m_RightSplitter.SetRowInfo(0, _rectClient.Height(), 0);
 		m_ChildFrame->m_RightSplitter.RecalcLayout();
 		break;
+	case LISTID_TLS_DIR:
+		m_listTLSDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pActiveList = &m_listTLSDir;
+		m_ChildFrame->m_RightSplitter.SetRowInfo(0, _rectClient.Height() / 2, 0);
+		m_ChildFrame->m_RightSplitter.RecalcLayout();
+		break;
 	case LISTID_LOAD_CONFIG_DIR:
 		m_listLoadConfigDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listLoadConfigDir;
@@ -255,10 +266,10 @@ void CViewRightTop::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*
 		m_ChildFrame->m_RightSplitter.SetRowInfo(0, _rectClient.Height() / 2, 0);
 		m_ChildFrame->m_RightSplitter.RecalcLayout();
 		break;
-	case LISTID_TLS_DIR:
-		m_listTLSDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_listTLSDir;
-		m_ChildFrame->m_RightSplitter.SetRowInfo(0, _rectClient.Height() / 2, 0);
+	case LISTID_COMDESCRIPTOR_DIR:
+		m_listCOMDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pActiveList = &m_listCOMDir;
+		m_ChildFrame->m_RightSplitter.SetRowInfo(0, _rectClient.Height(), 0);
 		m_ChildFrame->m_RightSplitter.RecalcLayout();
 		break;
 	}
@@ -2236,6 +2247,132 @@ int CViewRightTop::listCreateDebugDir()
 	return 0;
 }
 
+int CViewRightTop::listCreateTLSDir()
+{
+	PLIBPE_TLS _pTLSDir { };
+	if (m_pLibpe->GetTLSTable(&_pTLSDir) != S_OK)
+		return -1;
+
+	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, LISTID_TLS_DIR);
+	m_listTLSDir.ShowWindow(SW_HIDE);
+	m_listTLSDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listTLSDir.InsertColumn(0, _T("Name"), LVCFMT_CENTER, 250);
+	m_listTLSDir.InsertColumn(1, _T("Size [BYTES]"), LVCFMT_LEFT, 110);
+	m_listTLSDir.InsertColumn(2, _T("Value"), LVCFMT_LEFT, 150);
+
+	std::map<DWORD, std::wstring> _mapCharact {
+		{ IMAGE_SCN_ALIGN_1BYTES, TEXT("IMAGE_SCN_ALIGN_1BYTES") },
+	{ IMAGE_SCN_ALIGN_2BYTES, TEXT("IMAGE_SCN_ALIGN_2BYTES") },
+	{ IMAGE_SCN_ALIGN_4BYTES, TEXT("IMAGE_SCN_ALIGN_4BYTES") },
+	{ IMAGE_SCN_ALIGN_8BYTES, TEXT("IMAGE_SCN_ALIGN_8BYTES") },
+	{ IMAGE_SCN_ALIGN_16BYTES, TEXT("IMAGE_SCN_ALIGN_16BYTES") },
+	{ IMAGE_SCN_ALIGN_32BYTES, TEXT("IMAGE_SCN_ALIGN_32BYTES") },
+	{ IMAGE_SCN_ALIGN_64BYTES, TEXT("IMAGE_SCN_ALIGN_64BYTES") },
+	{ IMAGE_SCN_ALIGN_128BYTES, TEXT("IMAGE_SCN_ALIGN_128BYTES") },
+	{ IMAGE_SCN_ALIGN_256BYTES, TEXT("IMAGE_SCN_ALIGN_256BYTES") },
+	{ IMAGE_SCN_ALIGN_512BYTES, TEXT("IMAGE_SCN_ALIGN_512BYTES") },
+	{ IMAGE_SCN_ALIGN_1024BYTES, TEXT("IMAGE_SCN_ALIGN_1024BYTES") },
+	{ IMAGE_SCN_ALIGN_2048BYTES, TEXT("IMAGE_SCN_ALIGN_2048BYTES") },
+	{ IMAGE_SCN_ALIGN_4096BYTES, TEXT("IMAGE_SCN_ALIGN_4096BYTES") },
+	{ IMAGE_SCN_ALIGN_8192BYTES, TEXT("IMAGE_SCN_ALIGN_8192BYTES") },
+	{ IMAGE_SCN_ALIGN_MASK, TEXT("IMAGE_SCN_ALIGN_MASK") }
+	};
+
+	int _listindex = 0;
+	TCHAR str[MAX_PATH] { };
+
+	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
+	{
+		const IMAGE_TLS_DIRECTORY32*  _pTLSDir32 = &std::get<0>(*_pTLSDir);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex, _T("StartAddressOfRawData"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->StartAddressOfRawData));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 9, L"%08X", _pTLSDir32->StartAddressOfRawData);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("EndAddressOfRawData"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->EndAddressOfRawData));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 9, L"%08X", _pTLSDir32->EndAddressOfRawData);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("AddressOfIndex"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->AddressOfIndex));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 9, L"%08X", _pTLSDir32->AddressOfIndex);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("AddressOfCallBacks"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->AddressOfCallBacks));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 9, L"%08X", _pTLSDir32->AddressOfCallBacks);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("SizeOfZeroFill"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->SizeOfZeroFill));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 9, L"%08X", _pTLSDir32->SizeOfZeroFill);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("Characteristics"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->Characteristics));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 9, L"%08X", _pTLSDir32->Characteristics);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+		for (auto& i : _mapCharact)
+			if (i.first == _pTLSDir32->Characteristics)
+				m_listTLSDir.SetItemToolTip(_listindex, 2, i.second, TEXT("Characteristics:"));
+	}
+	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
+	{
+		const IMAGE_TLS_DIRECTORY64* _pTLSDir64 = &std::get<1>(*_pTLSDir);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex, _T("StartAddressOfRawData"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->StartAddressOfRawData));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 17, L"%016llX", _pTLSDir64->StartAddressOfRawData);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("EndAddressOfRawData"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->EndAddressOfRawData));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 17, L"%016llX", _pTLSDir64->EndAddressOfRawData);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("AddressOfIndex"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->AddressOfIndex));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 17, L"%016llX", _pTLSDir64->AddressOfIndex);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("AddressOfCallBacks"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->AddressOfCallBacks));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 17, L"%016llX", _pTLSDir64->AddressOfCallBacks);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("SizeOfZeroFill"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->SizeOfZeroFill));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 9, L"%08X", _pTLSDir64->SizeOfZeroFill);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("Characteristics"));
+		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->Characteristics));
+		m_listTLSDir.SetItemText(_listindex, 1, str);
+		swprintf_s(str, 9, L"%08X", _pTLSDir64->Characteristics);
+		m_listTLSDir.SetItemText(_listindex, 2, str);
+
+		for (auto& i : _mapCharact)
+			if (i.first == _pTLSDir64->Characteristics)
+				m_listTLSDir.SetItemToolTip(_listindex, 2, i.second, TEXT("Characteristics:"));
+	}
+
+	return 0;
+}
+
 int CViewRightTop::listCreateLoadConfigDir()
 {
 	PLIBPE_LOADCONFIGTABLE _pLoadConfigTable { };
@@ -3041,7 +3178,7 @@ int CViewRightTop::listCreateDelayImportDir()
 	m_listDelayImportDir.InsertColumn(8, _T("TimeDateStamp"), LVCFMT_LEFT, 115);
 
 	int _listindex = 0;
-	TCHAR str[MAX_PATH] { };
+	WCHAR str[MAX_PATH] { };
 
 	for (auto& i : *_pDelayImport)
 	{
@@ -3071,128 +3208,114 @@ int CViewRightTop::listCreateDelayImportDir()
 	return 0;
 }
 
-int CViewRightTop::listCreateTLSDir()
+int CViewRightTop::listCreateCOMDir()
 {
-	PLIBPE_TLS _pTLSDir { };
-	if (m_pLibpe->GetTLSTable(&_pTLSDir) != S_OK)
+	PLIBPE_COM_DESCRIPTOR _pCOMDesc { };
+
+	if (m_pLibpe->GetCOMDescriptorTable(&_pCOMDesc) != S_OK)
 		return -1;
 
-	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_TLS_DIR);
-	m_listTLSDir.ShowWindow(SW_HIDE);
-	m_listTLSDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
-	m_listTLSDir.InsertColumn(0, _T("Name"), LVCFMT_CENTER, 250);
-	m_listTLSDir.InsertColumn(1, _T("Size [BYTES]"), LVCFMT_LEFT, 110);
-	m_listTLSDir.InsertColumn(2, _T("Value"), LVCFMT_LEFT, 150);
+	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DIR);
+	m_listCOMDir.ShowWindow(SW_HIDE);
+	m_listCOMDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listCOMDir.InsertColumn(0, _T("Name"), LVCFMT_CENTER, 300);
+	m_listCOMDir.InsertColumn(1, _T("Value"), LVCFMT_LEFT, 100);
 
-	std::map<DWORD, std::wstring> _mapCharact {
-		{ IMAGE_SCN_ALIGN_1BYTES, TEXT("IMAGE_SCN_ALIGN_1BYTES") },
-	{ IMAGE_SCN_ALIGN_2BYTES, TEXT("IMAGE_SCN_ALIGN_2BYTES") },
-	{ IMAGE_SCN_ALIGN_4BYTES, TEXT("IMAGE_SCN_ALIGN_4BYTES") },
-	{ IMAGE_SCN_ALIGN_8BYTES, TEXT("IMAGE_SCN_ALIGN_8BYTES") },
-	{ IMAGE_SCN_ALIGN_16BYTES, TEXT("IMAGE_SCN_ALIGN_16BYTES") },
-	{ IMAGE_SCN_ALIGN_32BYTES, TEXT("IMAGE_SCN_ALIGN_32BYTES") },
-	{ IMAGE_SCN_ALIGN_64BYTES, TEXT("IMAGE_SCN_ALIGN_64BYTES") },
-	{ IMAGE_SCN_ALIGN_128BYTES, TEXT("IMAGE_SCN_ALIGN_128BYTES") },
-	{ IMAGE_SCN_ALIGN_256BYTES, TEXT("IMAGE_SCN_ALIGN_256BYTES") },
-	{ IMAGE_SCN_ALIGN_512BYTES, TEXT("IMAGE_SCN_ALIGN_512BYTES") },
-	{ IMAGE_SCN_ALIGN_1024BYTES, TEXT("IMAGE_SCN_ALIGN_1024BYTES") },
-	{ IMAGE_SCN_ALIGN_2048BYTES, TEXT("IMAGE_SCN_ALIGN_2048BYTES") },
-	{ IMAGE_SCN_ALIGN_4096BYTES, TEXT("IMAGE_SCN_ALIGN_4096BYTES") },
-	{ IMAGE_SCN_ALIGN_8192BYTES, TEXT("IMAGE_SCN_ALIGN_8192BYTES") },
-	{ IMAGE_SCN_ALIGN_MASK, TEXT("IMAGE_SCN_ALIGN_MASK") }
+	std::map<DWORD, std::wstring> _mapFlags {
+		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_ILONLY, L"COMIMAGE_FLAGS_ILONLY" },
+	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITREQUIRED, L"COMIMAGE_FLAGS_32BITREQUIRED" },
+	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_IL_LIBRARY, L"COMIMAGE_FLAGS_IL_LIBRARY" },
+	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_STRONGNAMESIGNED, L"COMIMAGE_FLAGS_STRONGNAMESIGNED" },
+	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_NATIVE_ENTRYPOINT, L"COMIMAGE_FLAGS_NATIVE_ENTRYPOINT" },
+	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_TRACKDEBUGDATA, L"COMIMAGE_FLAGS_TRACKDEBUGDATA" },
+	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITPREFERRED, L"COMIMAGE_FLAGS_32BITPREFERRED" }
 	};
 
 	int _listindex = 0;
-	TCHAR str[MAX_PATH] { };
+	WCHAR str[MAX_PATH] { };
+	std::wstring _strToolTip { };
 
-	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
-	{
-		const IMAGE_TLS_DIRECTORY32*  _pTLSDir32 = &std::get<0>(*_pTLSDir);
+	m_listCOMDir.InsertItem(_listindex, L"cb");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->cb);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex, _T("StartAddressOfRawData"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->StartAddressOfRawData));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 9, L"%08X", _pTLSDir32->StartAddressOfRawData);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"MajorRuntimeVersion");
+	swprintf_s(str, 5, L"%04X", _pCOMDesc->MajorRuntimeVersion);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("EndAddressOfRawData"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->EndAddressOfRawData));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 9, L"%08X", _pTLSDir32->EndAddressOfRawData);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"MinorRuntimeVersion");
+	swprintf_s(str, 5, L"%04X", _pCOMDesc->MinorRuntimeVersion);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("AddressOfIndex"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->AddressOfIndex));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 9, L"%08X", _pTLSDir32->AddressOfIndex);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"MetaData.RVA");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->MetaData.VirtualAddress);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("AddressOfCallBacks"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->AddressOfCallBacks));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 9, L"%08X", _pTLSDir32->AddressOfCallBacks);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"MetaData.Size");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->MetaData.Size);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("SizeOfZeroFill"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->SizeOfZeroFill));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 9, L"%08X", _pTLSDir32->SizeOfZeroFill);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"Flags");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->Flags);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
+	for (auto&i : _mapFlags)
+		if (i.first & _pCOMDesc->Flags)
+			_strToolTip += i.second + L"\n";
+	if (!_strToolTip.empty())
+		m_listCOMDir.SetItemToolTip(_listindex, 1, _strToolTip, L"Flags:");
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("Characteristics"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir32->Characteristics));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 9, L"%08X", _pTLSDir32->Characteristics);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
-		for (auto& i : _mapCharact)
-			if (i.first == _pTLSDir32->Characteristics)
-				m_listTLSDir.SetItemToolTip(_listindex, 2, i.second, TEXT("Characteristics:"));
-	}
-	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
-	{
-		const IMAGE_TLS_DIRECTORY64* _pTLSDir64 = &std::get<1>(*_pTLSDir);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"EntryPointToken");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->EntryPointToken);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex, _T("StartAddressOfRawData"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->StartAddressOfRawData));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 17, L"%016llX", _pTLSDir64->StartAddressOfRawData);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"Resources.RVA");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->Resources.VirtualAddress);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("EndAddressOfRawData"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->EndAddressOfRawData));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 17, L"%016llX", _pTLSDir64->EndAddressOfRawData);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"Resources.Size");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->Resources.Size);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("AddressOfIndex"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->AddressOfIndex));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 17, L"%016llX", _pTLSDir64->AddressOfIndex);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"StrongNameSignature.RVA");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->StrongNameSignature.VirtualAddress);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("AddressOfCallBacks"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->AddressOfCallBacks));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 17, L"%016llX", _pTLSDir64->AddressOfCallBacks);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"StrongNameSignature.Size");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->StrongNameSignature.Size);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("SizeOfZeroFill"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->SizeOfZeroFill));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 9, L"%08X", _pTLSDir64->SizeOfZeroFill);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"CodeManagerTable.RVA");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->CodeManagerTable.VirtualAddress);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		_listindex = m_listTLSDir.InsertItem(_listindex + 1, _T("Characteristics"));
-		swprintf_s(str, 3, L"%u", sizeof(_pTLSDir64->Characteristics));
-		m_listTLSDir.SetItemText(_listindex, 1, str);
-		swprintf_s(str, 9, L"%08X", _pTLSDir64->Characteristics);
-		m_listTLSDir.SetItemText(_listindex, 2, str);
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"CodeManagerTable.Size");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->CodeManagerTable.Size);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
-		for (auto& i : _mapCharact)
-			if (i.first == _pTLSDir64->Characteristics)
-				m_listTLSDir.SetItemToolTip(_listindex, 2, i.second, TEXT("Characteristics:"));
-	}
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"VTableFixups.RVA");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->VTableFixups.VirtualAddress);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
+
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"VTableFixups.Size");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->VTableFixups.Size);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
+
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"ExportAddressTableJumps.RVA");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->ExportAddressTableJumps.VirtualAddress);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
+
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"ExportAddressTableJumps.Size");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->ExportAddressTableJumps.Size);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
+
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"ManagedNativeHeader.RVA");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->ManagedNativeHeader.VirtualAddress);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
+
+	_listindex = m_listCOMDir.InsertItem(_listindex + 1, L"ManagedNativeHeader.Size");
+	swprintf_s(str, 9, L"%08X", _pCOMDesc->ManagedNativeHeader.Size);
+	m_listCOMDir.SetItemText(_listindex, 1, str);
 
 	return 0;
 }

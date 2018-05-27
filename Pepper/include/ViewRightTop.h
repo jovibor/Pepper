@@ -45,6 +45,7 @@ private:
 	CPepperList m_listBoundImportDir;
 	CPepperList m_listDelayImportDir;
 	CPepperList m_listTLSDir;
+	CPepperList m_listCOMDir;
 	CPepperTreeCtrl m_treeResourceDirTop;
 	bool m_fFileSummaryShow = false;
 	LONG m_dwPeStart { };
@@ -72,8 +73,9 @@ private:
 	int listCreateSecurityDir();
 	int listCreateRelocDir();
 	int listCreateDebugDir();
+	int listCreateTLSDir();
 	int listCreateLoadConfigDir();
 	int listCreateBoundImportDir();
 	int listCreateDelayImportDir();
-	int listCreateTLSDir();
+	int listCreateCOMDir();
 };
