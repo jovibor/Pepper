@@ -178,8 +178,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories);include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>cd $(TargetDir)
-call "$(TargetDir)BuildNumIncrease.cmd" $(ProjectName).exe</Command>
+      <Command>powershell.exe $(ProjectDir)set_verinfo.ps1 $(TargetDir)$(ProjectName).exe</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -265,7 +264,6 @@ call "$(TargetDir)BuildNumIncrease.cmd" $(ProjectName).exe</Command>
     <ClInclude Include="include\ViewRightTop.h" />
     <ClInclude Include="include\PepperTreeCtrl.h" />
     <ClInclude Include="include\stdafx.h" />
-    <ClInclude Include="resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
