@@ -6,7 +6,7 @@
 
 BEGIN_MESSAGE_MAP(CPepperApp, CWinAppEx)
 	ON_COMMAND(ID_APP_ABOUT, &CPepperApp::OnAppAbout)
-	ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
+	ON_COMMAND(ID_FILE_OPEN, &CPepperApp::OnFileOpen)
 END_MESSAGE_MAP()
 
 CPepperApp::CPepperApp()
@@ -20,7 +20,7 @@ BOOL CPepperApp::InitInstance()
 {
 	CWinAppEx::InitInstance();
 
-	SetRegistryKey(_T(""));
+	SetRegistryKey(L"Pepper - PE files viewer");
 
 	CMultiDocTemplate* pDocTemplate;
 	pDocTemplate = new CMultiDocTemplate(IDR_PepperTYPE,
@@ -42,6 +42,7 @@ BOOL CPepperApp::InitInstance()
 	ParseCommandLine(cmdInfo);
 	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)
 		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
+
 	// Dispatch commands specified on the command line.  Will return FALSE if
 	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
 	if (!ProcessShellCommand(cmdInfo))
@@ -50,12 +51,13 @@ BOOL CPepperApp::InitInstance()
 	pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();
 
+	OnFileOpen();
+
 	return TRUE;
 }
 
 int CPepperApp::ExitInstance()
 {
-	//TODO: handle additional resources you may have added
 	return CWinAppEx::ExitInstance();
 }
 
@@ -76,11 +78,45 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
-// App command to run the dialog
 void CPepperApp::OnAppAbout()
 {
 	CAboutDlg aboutDlg;
 	aboutDlg.DoModal();
+}
+
+void CPepperApp::OnFileOpen()
+{
+	WCHAR _strFilePath[1024] { };
+
+	OPENFILENAME _stOFN { };
+	_stOFN.lStructSize = sizeof(_stOFN);
+	_stOFN.hwndOwner = AfxGetMainWnd()->GetSafeHwnd();
+	_stOFN.lpstrFilter = L"All files (*.*)\0*.*\0\0";
+	_stOFN.lpstrFile = _strFilePath;
+	_stOFN.nMaxFile = sizeof(_strFilePath) / sizeof(WCHAR);
+	_stOFN.lpstrTitle = L"Select one or more PE files";
+	_stOFN.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
+		OFN_EXPLORER | OFN_ENABLESIZING | OFN_DONTADDTORECENT;
+
+	GetOpenFileName(&_stOFN);
+
+	//Checking for multi file selection
+	if (_strFilePath[_stOFN.nFileOffset - 1] == '\0')
+	{
+		WCHAR* _str = _stOFN.lpstrFile;
+		std::wstring _strDir = _str;
+		_str += (_strDir.length() + 1);
+		while (*_str)
+		{
+			std::wstring _strFileName = _str;
+			_str += (_strFileName.length() + 1);
+			std::wstring _strFullPath = _strDir + L"\\" + _strFileName;
+
+			CWinAppEx::OpenDocumentFile(_strFullPath.c_str());
+		}
+	}
+	else
+		CWinAppEx::OpenDocumentFile(_stOFN.lpstrFile);
 }
 
 void CPepperApp::PreLoadState()

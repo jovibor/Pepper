@@ -21,7 +21,7 @@ BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 
 BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 {
-	CRect rect { };
+	CRect rect;
 	::GetClientRect(AfxGetMainWnd()->m_hWnd, &rect);
 
 	m_MainSplitter.CreateStatic(this, 1, 2, WS_CHILD | WS_VISIBLE);

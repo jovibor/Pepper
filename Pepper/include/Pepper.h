@@ -7,10 +7,10 @@ public:
 	CPepperApp();
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();
-
 	BOOL  m_bHiColorIcons;
 	virtual void PreLoadState();
 	afx_msg void OnAppAbout();
+	void OnFileOpen();
 	DECLARE_MESSAGE_MAP()
 };
 
