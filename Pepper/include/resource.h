@@ -18,6 +18,8 @@
 #define IDS_EDIT_MENU                   306
 #define IDI_TREE_MAIN_HEADER_ICON       314
 #define IDI_TREE_MAIN_DIR_ICON          315
+#define IDC_STATIC_VERSION              1004
+
 
 // Next default values for new objects
 // 

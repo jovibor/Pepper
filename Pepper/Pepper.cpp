@@ -3,6 +3,7 @@
 #include "MainFrm.h"
 #include "ChildFrm.h"
 #include "PepperDoc.h"
+#include "version.h"
 
 BEGIN_MESSAGE_MAP(CPepperApp, CWinAppEx)
 	ON_COMMAND(ID_APP_ABOUT, &CPepperApp::OnAppAbout)
@@ -65,6 +66,7 @@ class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
+	virtual BOOL OnInitDialog();
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	DECLARE_MESSAGE_MAP()
@@ -100,7 +102,10 @@ void CPepperApp::OnFileOpen()
 
 	GetOpenFileName(&_stOFN);
 
-	//Checking for multi file selection
+	//Checking for multi file selection:
+	//If _strFilePath at offset [_stOFN.nFileOffset - 1] equals '\0'
+	//it means that we have multiple file names following
+	//path name, divided by NULLs. See OFN_ALLOWMULTISELECT description.
 	if (_strFilePath[_stOFN.nFileOffset - 1] == '\0')
 	{
 		WCHAR* _str = _stOFN.lpstrFile;
@@ -122,4 +127,15 @@ void CPepperApp::OnFileOpen()
 void CPepperApp::PreLoadState()
 {
 
+}
+
+BOOL CAboutDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+	WCHAR _strVersion[MAX_PATH] { };
+	swprintf(_strVersion, L"%S, Version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
+
+	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, _strVersion);
+
+	return TRUE;
 }

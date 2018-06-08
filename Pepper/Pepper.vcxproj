@@ -265,6 +265,7 @@
     <ClInclude Include="include\ViewRightTop.h" />
     <ClInclude Include="include\PepperTreeCtrl.h" />
     <ClInclude Include="include\stdafx.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
