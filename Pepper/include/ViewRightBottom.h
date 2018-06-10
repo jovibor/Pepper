@@ -17,7 +17,7 @@ protected:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 private:
-	PLIBPE_SECURITY _vecSec { };
+	PLIBPE_SECURITY_VEC m_vecSec { };
 	CHexEdit m_HexEdit;
 	Ilibpe * m_pLibpe { };
 	CChildFrame* m_ChildFrame { };

@@ -15,7 +15,7 @@ public:
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	virtual void DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	void SetItemToolTip(int nItem, int nSubitem, const std::wstring& TooltipText, const std::wstring& ToolTipCaption = TEXT(""));
+	void SetItemToolTip(int nItem, int nSubitem, const std::wstring& TooltipText, const std::wstring& ToolTipCaption = L"");
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);

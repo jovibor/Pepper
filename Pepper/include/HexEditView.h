@@ -48,7 +48,7 @@ private:
 	UINT m_nLetterWidth { };
 	//	UINT m_nSecondHex { };
 	WCHAR m_strOffset[90] { };
-	const wchar_t* m_strHexMap = TEXT("0123456789ABCDEF");
+	const wchar_t* m_strHexMap = L"0123456789ABCDEF";
 	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
 	bool m_fSecondLaunch = false;
 	bool m_fEraseBkgnd = false;

@@ -48,14 +48,14 @@ void CChildFrame::OnSize(UINT nType, int cx, int cy)
 		{
 			if (m_cx > 0 && m_cy > 0)
 			{
-				int _cxCur, _min;
-				m_MainSplitter.GetColumnInfo(0, _cxCur, _min);
-				double ratio = m_cx / _cxCur;
-				m_MainSplitter.SetColumnInfo(0, cx / ratio, _min);
+				int cxCur, min;
+				m_MainSplitter.GetColumnInfo(0, cxCur, min);
+				double ratio = m_cx / cxCur;
+				m_MainSplitter.SetColumnInfo(0, cx / ratio, min);
 
-				m_RightSplitter.GetRowInfo(0, _cxCur, _min);
-				ratio = m_cy / _cxCur;
-				m_RightSplitter.SetRowInfo(0, cy / ratio, _min);
+				m_RightSplitter.GetRowInfo(0, cxCur, min);
+				ratio = m_cy / cxCur;
+				m_RightSplitter.SetRowInfo(0, cy / ratio, min);
 			}
 			else
 			{

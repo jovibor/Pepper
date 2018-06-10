@@ -13,8 +13,8 @@ typedef const DWORD* PCDWORD;
 typedef const IMAGE_DOS_HEADER *PLIBPE_DOSHEADER;
 
 //Vector of undocumented DOUBLE DWORDs of "Rich" structure.
-typedef std::vector<std::tuple<WORD, WORD, DWORD>> LIBPE_RICH;
-typedef const LIBPE_RICH *PLIBPE_RICH;
+typedef std::vector<std::tuple<WORD, WORD, DWORD>> LIBPE_RICH_VEC;
+typedef const LIBPE_RICH_VEC *PLIBPE_RICH_VEC;
 
 //Only one IMAGE_OPTIONAL_HEADER structure of tuple will be filled, 
 //x86 or x64 — depending on file type. Second will be zeroed.
@@ -29,12 +29,12 @@ typedef std::tuple<IMAGE_OPTIONAL_HEADER32, IMAGE_OPTIONAL_HEADER64> LIBPE_OPTHE
 typedef const LIBPE_OPTHEADER *PLIBPE_OPTHEADER;
 
 //Vector of IMAGE_DATA_DIRECTORY and section name this dir resides in.
-typedef std::vector<std::tuple<IMAGE_DATA_DIRECTORY, std::string>> LIBPE_DATADIRS;
-typedef const LIBPE_DATADIRS *PLIBPE_DATADIRS;
+typedef std::vector<std::tuple<IMAGE_DATA_DIRECTORY, std::string>> LIBPE_DATADIRS_VEC;
+typedef const LIBPE_DATADIRS_VEC *PLIBPE_DATADIRS_VEC;
 
 //Sections.
-typedef std::vector<IMAGE_SECTION_HEADER> LIBPE_SECHEADER;
-typedef LIBPE_SECHEADER *PLIBPE_SECHEADER;
+typedef std::vector<IMAGE_SECTION_HEADER> LIBPE_SECHEADER_VEC;
+typedef LIBPE_SECHEADER_VEC *PLIBPE_SECHEADER_VEC;
 
 //Tuple of: IMAGE_EXPORT_DIRECTORY, Actual export module name
 //and vector of exported funcs: RVA, ordinal, func name, func forwarder name.
@@ -44,52 +44,52 @@ typedef const LIBPE_EXPORT *PLIBPE_EXPORT;
 //Vector of import modules:
 //IMAGE_IMPORT_DESCRIPTOR, import module name, vector of:
 //Ordinal/Hint (depending on import type), func name, import thunk RVA.
-typedef std::vector<std::tuple<IMAGE_IMPORT_DESCRIPTOR, std::string, std::vector<std::tuple<LONGLONG, std::string, LONGLONG>>>> LIBPE_IMPORT;
-typedef const LIBPE_IMPORT *PLIBPE_IMPORT;
+typedef std::vector<std::tuple<IMAGE_IMPORT_DESCRIPTOR, std::string, std::vector<std::tuple<LONGLONG, std::string, LONGLONG>>>> LIBPE_IMPORT_VEC;
+typedef const LIBPE_IMPORT_VEC *PLIBPE_IMPORT_VEC;
 
 /*****************************Resources by Levels**************************************
 * Totally 3 levels of resources. Highest level include lowest levels.
 **************************************************************************************/
 //Level 3 (the lowest) Resources.
 typedef std::vector<std::tuple<IMAGE_RESOURCE_DIRECTORY_ENTRY, std::wstring/*ResName*/,
-	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*resource LVL3 RAW data*/>> LIBPE_RESOURCE_VEC_LVL3;
-typedef const LIBPE_RESOURCE_VEC_LVL3 *PLIBPE_RESOURCE_VEC_LVL3;
-typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_VEC_LVL3> LIBPE_RESOURCE_LVL3;
+	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*resource LVL3 RAW data*/>> LIBPE_RESOURCE_LVL3_VEC;
+typedef const LIBPE_RESOURCE_LVL3_VEC *PLIBPE_RESOURCE_LVL3_VEC;
+typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_LVL3_VEC> LIBPE_RESOURCE_LVL3;
 typedef const LIBPE_RESOURCE_LVL3 *PLIBPE_RESOURCE_LVL3;
 
 //Level 2 Resources — Includes LVL3 Resourses
 typedef std::vector<std::tuple<IMAGE_RESOURCE_DIRECTORY_ENTRY, std::wstring/*ResName*/,
-	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*LVL2 RAW data*/, LIBPE_RESOURCE_LVL3>> LIBPE_RESOURCE_VEC_LVL2;
-typedef const LIBPE_RESOURCE_VEC_LVL2 *PLIBPE_RESOURCE_VEC_LVL2;
-typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_VEC_LVL2> LIBPE_RESOURCE_LVL2;
+	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*LVL2 RAW data*/, LIBPE_RESOURCE_LVL3>> LIBPE_RESOURCE_LVL2_VEC;
+typedef const LIBPE_RESOURCE_LVL2_VEC *PLIBPE_RESOURCE_LVL2_VEC;
+typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_LVL2_VEC> LIBPE_RESOURCE_LVL2;
 typedef const LIBPE_RESOURCE_LVL2 *PLIBPE_RESOURCE_LVL2;
 
 //Level 1 (Root) Resources — Includes LVL2 Resources
 typedef std::vector<std::tuple<IMAGE_RESOURCE_DIRECTORY_ENTRY, std::wstring/*ResName*/,
-	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*LVL1 RAW data*/, LIBPE_RESOURCE_LVL2>> LIBPE_RESOURCE_VEC_ROOT;
-typedef const LIBPE_RESOURCE_VEC_ROOT *PLIBPE_RESOURCE_VEC_LVL1;
-typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_VEC_ROOT> LIBPE_RESOURCE_ROOT;
+	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*LVL1 RAW data*/, LIBPE_RESOURCE_LVL2>> LIBPE_RESOURCE_ROOT_VEC;
+typedef const LIBPE_RESOURCE_ROOT_VEC *PLIBPE_RESOURCE_LVL1_VEC;
+typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_ROOT_VEC> LIBPE_RESOURCE_ROOT;
 typedef const LIBPE_RESOURCE_ROOT *PLIBPE_RESOURCE_ROOT;
 /***************************************************************************************
 ***************************************************************************************/
 
 //Vector of Exception table
-typedef std::vector<_IMAGE_RUNTIME_FUNCTION_ENTRY> LIBPE_EXCEPTION;
-typedef const LIBPE_EXCEPTION *PLIBPE_EXCEPTION;
+typedef std::vector<_IMAGE_RUNTIME_FUNCTION_ENTRY> LIBPE_EXCEPTION_VEC;
+typedef const LIBPE_EXCEPTION_VEC *PLIBPE_EXCEPTION_VEC;
 
 //Vector of security table:
 //WIN_CERTIFICATE and vector of actual data in form of std::bytes
-typedef std::vector<std::tuple<WIN_CERTIFICATE, std::vector<std::byte>>> LIBPE_SECURITY;
-typedef const LIBPE_SECURITY *PLIBPE_SECURITY;
+typedef std::vector<std::tuple<WIN_CERTIFICATE, std::vector<std::byte>>> LIBPE_SECURITY_VEC;
+typedef const LIBPE_SECURITY_VEC *PLIBPE_SECURITY_VEC;
 
 //Vector of relocations:
 //IMAGE_BASE_RELOCATION, vector of: Reloc type and Offset
-typedef std::vector<std::tuple<IMAGE_BASE_RELOCATION, std::vector<std::tuple<WORD, WORD>>>> LIBPE_RELOCATION;
-typedef const LIBPE_RELOCATION *PLIBPE_RELOCATION;
+typedef std::vector<std::tuple<IMAGE_BASE_RELOCATION, std::vector<std::tuple<WORD, WORD>>>> LIBPE_RELOCATION_VEC;
+typedef const LIBPE_RELOCATION_VEC *PLIBPE_RELOCATION_VEC;
 
 //Vector of Debug entries
-typedef std::vector<IMAGE_DEBUG_DIRECTORY> LIBPE_DEBUG;
-typedef LIBPE_DEBUG *PLIBPE_DEBUG;
+typedef std::vector<IMAGE_DEBUG_DIRECTORY> LIBPE_DEBUG_VEC;
+typedef LIBPE_DEBUG_VEC *PLIBPE_DEBUG_VEC;
 
 //TLS tuple. Only one structure is filled depending on file type - x86 or x64, second is zeroed.
 //vector of std::byte — TLS Raw data, vector of TLS Callbacks. 
@@ -103,14 +103,14 @@ typedef const LIBPE_LOADCONFIGTABLE *PLIBPE_LOADCONFIGTABLE;
 //Vector of: IMAGE_BOUND_IMPORT_DESCRIPTOR, import module name, 
 //vector of: IMAGE_BOUND_FORWARDER_REF, forwarder module name
 typedef std::vector<std::tuple<IMAGE_BOUND_IMPORT_DESCRIPTOR, std::string,
-	std::vector<std::tuple<IMAGE_BOUND_FORWARDER_REF, std::string>>>> LIBPE_BOUNDIMPORT;
-typedef const LIBPE_BOUNDIMPORT *PLIBPE_BOUNDIMPORT;
+	std::vector<std::tuple<IMAGE_BOUND_FORWARDER_REF, std::string>>>> LIBPE_BOUNDIMPORT_VEC;
+typedef const LIBPE_BOUNDIMPORT_VEC *PLIBPE_BOUNDIMPORT_VEC;
 
 //Delay import vector: IMAGE_DELAYLOAD_DESCRIPTOR, module name, vector of:
 //Hint/Ordinal, Func name, ThunkName RVA, ThunkIAT RVA, ThunkBoundIAT RVA, ThunkUnloadedInfoIAT RVA.
 typedef std::vector<std::tuple<IMAGE_DELAYLOAD_DESCRIPTOR, std::string,
-	std::vector<std::tuple<LONGLONG, std::string, LONGLONG, LONGLONG, LONGLONG, LONGLONG>>>> LIBPE_DELAYIMPORT;
-typedef const LIBPE_DELAYIMPORT *PLIBPE_DELAYIMPORT;
+	std::vector<std::tuple<LONGLONG, std::string, LONGLONG, LONGLONG, LONGLONG, LONGLONG>>>> LIBPE_DELAYIMPORT_VEC;
+typedef const LIBPE_DELAYIMPORT_VEC *PLIBPE_DELAYIMPORT_VEC;
 
 //COM descriptor table
 typedef const IMAGE_COR20_HEADER *PLIBPE_COM_DESCRIPTOR;
@@ -122,23 +122,23 @@ public:
 	virtual HRESULT LoadPe(LPCWSTR lpszFileName) = 0;
 	virtual HRESULT GetFileSummary(PCDWORD*) = 0;
 	virtual HRESULT GetMSDOSHeader(PLIBPE_DOSHEADER*) = 0;
-	virtual HRESULT GetMSDOSRichHeader(PLIBPE_RICH*) = 0;
+	virtual HRESULT GetMSDOSRichHeader(PLIBPE_RICH_VEC*) = 0;
 	virtual HRESULT GetNTHeader(PLIBPE_NTHEADER*) = 0;
 	virtual HRESULT GetFileHeader(PLIBPE_FILEHEADER*) = 0;
 	virtual HRESULT GetOptionalHeader(PLIBPE_OPTHEADER*) = 0;
-	virtual HRESULT GetDataDirectories(PLIBPE_DATADIRS*) = 0;
-	virtual HRESULT GetSectionHeaders(PLIBPE_SECHEADER*) = 0;
+	virtual HRESULT GetDataDirectories(PLIBPE_DATADIRS_VEC*) = 0;
+	virtual HRESULT GetSectionHeaders(PLIBPE_SECHEADER_VEC*) = 0;
 	virtual HRESULT GetExportTable(PLIBPE_EXPORT*) = 0;
-	virtual HRESULT GetImportTable(PLIBPE_IMPORT*) = 0;
+	virtual HRESULT GetImportTable(PLIBPE_IMPORT_VEC*) = 0;
 	virtual HRESULT GetResourceTable(PLIBPE_RESOURCE_ROOT*) = 0;
-	virtual HRESULT GetExceptionTable(PLIBPE_EXCEPTION*) = 0;
-	virtual HRESULT GetSecurityTable(PLIBPE_SECURITY*) = 0;
-	virtual HRESULT GetRelocationTable(PLIBPE_RELOCATION*) = 0;
-	virtual HRESULT GetDebugTable(PLIBPE_DEBUG*) = 0;
+	virtual HRESULT GetExceptionTable(PLIBPE_EXCEPTION_VEC*) = 0;
+	virtual HRESULT GetSecurityTable(PLIBPE_SECURITY_VEC*) = 0;
+	virtual HRESULT GetRelocationTable(PLIBPE_RELOCATION_VEC*) = 0;
+	virtual HRESULT GetDebugTable(PLIBPE_DEBUG_VEC*) = 0;
 	virtual HRESULT GetTLSTable(PLIBPE_TLS*) = 0;
 	virtual HRESULT GetLoadConfigTable(PLIBPE_LOADCONFIGTABLE*) = 0;
-	virtual HRESULT GetBoundImportTable(PLIBPE_BOUNDIMPORT*) = 0;
-	virtual HRESULT GetDelayImportTable(PLIBPE_DELAYIMPORT*) = 0;
+	virtual HRESULT GetBoundImportTable(PLIBPE_BOUNDIMPORT_VEC*) = 0;
+	virtual HRESULT GetDelayImportTable(PLIBPE_DELAYIMPORT_VEC*) = 0;
 	virtual HRESULT GetCOMDescriptorTable(PLIBPE_COM_DESCRIPTOR*) = 0;
 
 	virtual HRESULT Release() = 0;

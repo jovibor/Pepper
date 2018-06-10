@@ -124,8 +124,8 @@ void CPepperList::DrawItem(LPDRAWITEMSTRUCT pDIS)
 		return;
 
 	CDC* pDC = CDC::FromHandle(pDIS->hDC);
-	CPen* _oldPen = pDC->SelectObject(&m_PenForRect);
-	CFont* _defFont = pDC->SelectObject(&m_fontList);
+	CPen* oldPen = pDC->SelectObject(&m_PenForRect);
+	CFont* defFont = pDC->SelectObject(&m_fontList);
 	CRect rect;
 
 	switch (pDIS->itemAction)
@@ -183,8 +183,8 @@ void CPepperList::DrawItem(LPDRAWITEMSTRUCT pDIS)
 			pDC->LineTo(rect.right, rect.bottom);
 		}
 
-		pDC->SelectObject(_oldPen);
-		pDC->SelectObject(_defFont);
+		pDC->SelectObject(oldPen);
+		pDC->SelectObject(defFont);
 		break;
 
 	case ODA_FOCUS:
@@ -199,7 +199,7 @@ void CPepperList::OnRButtonDown(UINT nFlags, CPoint point)
 
 void CPepperList::SetItemToolTip(int nItem, int nSubitem, const std::wstring& strTipText, const std::wstring& strTipCaption)
 {
-	UINT _iter { };
+	UINT iter { };
 
 	for (auto& i : m_vecToolTips)
 	{
@@ -207,13 +207,13 @@ void CPepperList::SetItemToolTip(int nItem, int nSubitem, const std::wstring& st
 		{
 			if (strTipText.empty())
 				//delete subitem tooltip
-				m_vecToolTips.erase(m_vecToolTips.begin() + _iter);
+				m_vecToolTips.erase(m_vecToolTips.begin() + iter);
 			else
 				i = { nItem, nSubitem, strTipText, strTipCaption };
 
 			return;
 		}
-		_iter++;
+		iter++;
 	}
 	if (strTipText.empty())
 		return;
@@ -226,19 +226,19 @@ void CPepperList::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (m_fToolTip)
 	{
-		LVHITTESTINFO _hitInfo { };
-		_hitInfo.pt = point;
-		ListView_SubItemHitTest(m_hWnd, &_hitInfo);
+		LVHITTESTINFO hitInfo { };
+		hitInfo.pt = point;
+		ListView_SubItemHitTest(m_hWnd, &hitInfo);
 
 		std::wstring _tipText { }, _tipCaption { };
-		bool _fTip = HasToolTip(_hitInfo.iItem, _hitInfo.iSubItem, _tipText, _tipCaption);
-		if (_fTip)
+		bool fTip = HasToolTip(hitInfo.iItem, hitInfo.iSubItem, _tipText, _tipCaption);
+		if (fTip)
 		{
-			if (m_curSubItem.iItem == _hitInfo.iItem && m_curSubItem.iSubItem == _hitInfo.iSubItem)
+			if (m_curSubItem.iItem == hitInfo.iItem && m_curSubItem.iSubItem == hitInfo.iSubItem)
 				return;
 
-			m_curSubItem.iItem = _hitInfo.iItem;
-			m_curSubItem.iSubItem = _hitInfo.iSubItem;
+			m_curSubItem.iItem = hitInfo.iItem;
+			m_curSubItem.iSubItem = hitInfo.iSubItem;
 			m_ti.lpszText = const_cast<LPWSTR>(_tipText.c_str());
 
 			ClientToScreen(&point);
@@ -250,8 +250,8 @@ void CPepperList::OnMouseMove(UINT nFlags, CPoint point)
 		}
 		else
 		{
-			m_curSubItem.iItem = _hitInfo.iItem;
-			m_curSubItem.iSubItem = _hitInfo.iSubItem;
+			m_curSubItem.iItem = hitInfo.iItem;
+			m_curSubItem.iSubItem = hitInfo.iSubItem;
 			::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_ti);
 		}
 	}
@@ -282,21 +282,21 @@ bool CPepperList::HasToolTip(int iItem, int iSubItem)
 void CPepperList::OnTimer(UINT_PTR nIDEvent)
 {	//Checking if mouse pointer left list subitem area
 	//if so —> hiding tooltip and killing timer
-	LVHITTESTINFO _hitInfo { };
+	LVHITTESTINFO hitInfo { };
 	CPoint point;
 	GetCursorPos(&point);
 	ScreenToClient(&point);
-	_hitInfo.pt = point;
-	ListView_SubItemHitTest(m_hWnd, &_hitInfo);
+	hitInfo.pt = point;
+	ListView_SubItemHitTest(m_hWnd, &hitInfo);
 
 	//if cursor is still hovers subitem then do nothing
-	if (m_curSubItem.iItem == _hitInfo.iItem && m_curSubItem.iSubItem == _hitInfo.iSubItem)
+	if (m_curSubItem.iItem == hitInfo.iItem && m_curSubItem.iSubItem == hitInfo.iSubItem)
 		return;
 	else {//if it left —>
 		::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_ti);
 		KillTimer(TIMER_TOOLTIP);
-		m_curSubItem.iItem = _hitInfo.iItem;
-		m_curSubItem.iSubItem = _hitInfo.iSubItem;
+		m_curSubItem.iItem = hitInfo.iItem;
+		m_curSubItem.iSubItem = hitInfo.iSubItem;
 	}
 
 	CMFCListCtrl::OnTimer(nIDEvent);

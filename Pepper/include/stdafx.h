@@ -1,11 +1,11 @@
 #pragma once
 #define VC_EXTRALEAN            // Exclude rarely-used stuff from Windows headers
-#define _HAS_EXCEPTIONS 0
+#define HAS_EXCEPTIONS 0
 #include <SDKDDKVer.h>
-//#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // some CString constructors will be explicit
+//#define ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // some CString constructors will be explicit
 
 // turns off MFC's hiding of some common and often safely ignored warning messages
-#define _AFX_ALL_WARNINGS
+#define AFX_ALL_WARNINGS
 
 #include <afxwin.h>         // MFC core and standard components
 #include <afxcontrolbars.h>     // MFC support for ribbons and control bars

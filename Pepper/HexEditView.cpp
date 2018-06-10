@@ -151,7 +151,7 @@ BOOL CHexEditView::SetData(const std::string_view strData, UINT nCount)
 
 CFont* CHexEditView::SetFont(CFont *pFont)
 {
-	CFont* _pOldFont = m_pFontHexView;
+	CFont* pOldFont = m_pFontHexView;
 
 	if (!pFont)
 	{
@@ -173,7 +173,7 @@ CFont* CHexEditView::SetFont(CFont *pFont)
 
 	Recalc();
 
-	return _pOldFont;
+	return pOldFont;
 }
 
 void CHexEditView::SetFontSize(UINT nSize)
@@ -196,10 +196,10 @@ UINT CHexEditView::GetFontSize()
 	if (!m_pFontHexView)
 		return 0;
 
-	LOGFONT _logFont { };
-	m_pFontHexView->GetLogFont(&_logFont);
+	LOGFONT logFont { };
+	m_pFontHexView->GetLogFont(&logFont);
 
-	return _logFont.lfHeight;
+	return logFont.lfHeight;
 }
 
 void CHexEditView::OnDraw(CDC* pDC)
@@ -208,16 +208,18 @@ void CHexEditView::OnDraw(CDC* pDC)
 
 	pDC->SelectObject(&m_penLines);
 	pDC->SelectObject(m_pFontHexView);
+
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
 
-	//find the _nLineStart and _nLineEnd posion, print the visible portion
-	UINT _nLineStart = m_stScrollInfo.nPos / m_sizeText.cy;
-	UINT _nLineEnd = _nLineStart + (m_rectClient.Height() - m_nTopHeaderWidth - m_nBottomRectWidth) / m_sizeText.cy;
+	//find the nLineStart and nLineEnd posion, print the visible portion
+	UINT nLineStart = m_stScrollInfo.nPos / m_sizeText.cy;
+	UINT nLineEnd = nLineStart + (m_rectClient.Height() - m_nTopHeaderWidth - m_nBottomRectWidth) / m_sizeText.cy;
 	if (m_dwRawDataCount == 0)
-		_nLineEnd = 0;
-	else if (_nLineEnd > m_dwRawDataCount / 16 + 1)
-		_nLineEnd = m_dwRawDataCount / 16 + 1;
+		nLineEnd = 0;
+	else if (nLineEnd > m_dwRawDataCount / 16 + 1)
+		nLineEnd = m_dwRawDataCount / 16 + 1;
 
+	//Horizontal lines coords depending on scroll position
 	m_nFirstHorizLine = m_stScrollInfo.nPos;
 	m_nSecondHorizLine = m_nTopHeaderWidth - 1 + m_stScrollInfo.nPos;
 	m_nThirdHorizLine = m_rectClient.Height() + m_stScrollInfo.nPos - m_nBottomRectWidth;
@@ -226,116 +228,135 @@ void CHexEditView::OnDraw(CDC* pDC)
 	//First horizontal line
 	pDC->MoveTo(0, m_nFirstHorizLine);
 	pDC->LineTo(m_nFourthVertLine, m_nFirstHorizLine);
+
 	//Second horizontal line
 	pDC->MoveTo(0, m_nSecondHorizLine);
 	pDC->LineTo(m_nFourthVertLine, m_nSecondHorizLine);
+
 	//Third horizontal line
 	pDC->MoveTo(0, m_nThirdHorizLine);
 	pDC->LineTo(m_nFourthVertLine, m_nThirdHorizLine);
+
 	//Fourth horizontal line
 	pDC->MoveTo(0, m_nFourthHorizLine);
 	pDC->LineTo(m_nFourthVertLine, m_nFourthHorizLine);
-	ETO_CLIPPED;
+
 	pDC->SetTextColor(m_colorTextOffset);
+	//"Offset" text
 	ExtTextOutW(pDC->m_hDC, m_sizeText.cx / 6, m_stScrollInfo.nPos + (m_sizeText.cy / 6), NULL, nullptr, L"Offset", 6, 0);
+
+	//"Ascii" text
 	ExtTextOutW(pDC->m_hDC, m_nOffsetAscii + m_nIndentBetweenAscii * 6, m_stScrollInfo.nPos + (m_sizeText.cy / 6), NULL, nullptr, L"Ascii", 5, 0);
 
 	for (unsigned i = 0; i < 16; i++)
 		if (i > 7)//Top Offset text
 			ExtTextOutW(pDC->m_hDC, m_nFirstHexChunkIndent + m_nLetterWidth + (m_nIndentBetweenHex*i) + m_nIndentBetween78, m_stScrollInfo.nPos + (m_sizeText.cy / 6),
 				NULL, nullptr, &m_strHexMap[i], 1, nullptr);
-		else//Part after 7
+		else//Top Offset text, part after 7
 			ExtTextOutW(pDC->m_hDC, m_nFirstHexChunkIndent + m_nLetterWidth + (m_nIndentBetweenHex*i), m_stScrollInfo.nPos + (m_sizeText.cy / 6),
 				NULL, nullptr, &m_strHexMap[i], 1, nullptr);
 
 	//First Vertical line
 	pDC->MoveTo(m_nFirstVertLine, m_stScrollInfo.nPos);
 	pDC->LineTo(m_nFirstVertLine, m_nFourthHorizLine);
+
 	//Second Vertical line
 	pDC->MoveTo(m_nSecondVertLine, m_stScrollInfo.nPos);
 	pDC->LineTo(m_nSecondVertLine, m_nThirdHorizLine);
+
 	//Third Vertical line
-	pDC->MoveTo(m_nThirdVertLine, m_stScrollInfo.nPos);//Second Vertical line
+	pDC->MoveTo(m_nThirdVertLine, m_stScrollInfo.nPos);
 	pDC->LineTo(m_nThirdVertLine, m_nThirdHorizLine);
+
 	//Fourth Vertical line
 	pDC->MoveTo(m_nFourthVertLine, m_stScrollInfo.nPos);
 	pDC->LineTo(m_nFourthVertLine, m_nFourthHorizLine);
 
-	int _nIndentHexX = 0, _nIndentAsciiX = 0, _nLine = 0, _nIndent78 = 0;
-	UINT _nFirstHexPosToPrintX { }, _nFirstHexPosToPrintY { };
-	//	UINT _nSecondHexPosToPrintX { }, _nSecondHexPosToPrintY { };
-	UINT _nAsciiPosToPrintX { }, _nAsciiPosToPrintY { };
+	int nIndentHexX = 0, nIndentAsciiX = 0, nLine = 0, nIndent78 = 0;
+	UINT nFirstHexPosToPrintX { }, nFirstHexPosToPrintY { };
+	//	UINT nSecondHexPosToPrintX { }, nSecondHexPosToPrintY { };
+	UINT nAsciiPosToPrintX { }, nAsciiPosToPrintY { };
 
-	UINT _nIndexDataToPrint { };
-	char _chAsciiToPrint { };//Ascii to print
-	wchar_t _strHexToPrint[2] { };
+	//Index of byte in m_pRawData to print
+	size_t nIndexDataToPrint { };
+	
+	//Ascii to print
+	char chAsciiToPrint { };
+	//HEX chunk to print
+	wchar_t strHexToPrint[2] { };
 
-	for (unsigned int i = _nLineStart; i < _nLineEnd; i++)
+	for (unsigned int i = nLineStart; i < nLineEnd; i++)
 	{
 		swprintf_s(m_strOffset, 9, L"%08X", i * 16);
 		pDC->SetTextColor(m_colorTextOffset);
-		//Offset Print
-		ExtTextOutW(pDC->m_hDC, m_nLetterWidth, m_nTopHeaderWidth + (m_sizeText.cy*_nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
+		
+		//Left column offset Print (00000001...000000A1...)
+		ExtTextOutW(pDC->m_hDC, m_nLetterWidth, m_nTopHeaderWidth + (m_sizeText.cy*nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
 		pDC->SetTextColor(m_colorTextHex);
 
-		_nIndentHexX = 0;
-		_nIndentAsciiX = 0;
-		_nIndent78 = 0;
-
+		nIndentHexX = 0;
+		nIndentAsciiX = 0;
+		nIndent78 = 0;
+		
+		//Main loop to print Hex chunks and Ascii chars (right column)
 		for (int j = 0; j < 16; j++)
 		{
 			if (j > 7)
-				_nIndent78 = m_nIndentBetween78;
+				nIndent78 = m_nIndentBetween78;
 
-			_nFirstHexPosToPrintX = m_nFirstHexChunkIndent + _nIndentHexX + _nIndent78;
-			_nFirstHexPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*_nLine + m_stScrollInfo.nPos;
-			//	_nSecondHexPosToPrintX = m_nSecondHex + _nIndentHexX + _nIndent78;
-			//	_nSecondHexPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*_nLine + m_stScrollInfo.nPos;
-			_nAsciiPosToPrintX = m_nOffsetAscii + _nIndentAsciiX;
-			_nAsciiPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*_nLine + m_stScrollInfo.nPos;
+			nFirstHexPosToPrintX = m_nFirstHexChunkIndent + nIndentHexX + nIndent78;
+			nFirstHexPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*nLine + m_stScrollInfo.nPos;
+			//	nSecondHexPosToPrintX = m_nSecondHex + nIndentHexX + nIndent78;
+			//	nSecondHexPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*nLine + m_stScrollInfo.nPos;
+			nAsciiPosToPrintX = m_nOffsetAscii + nIndentAsciiX;
+			nAsciiPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*nLine + m_stScrollInfo.nPos;
 
 			//Index of next char (in m_pRawData) to print.
-			_nIndexDataToPrint = i * 16 + j;
+			nIndexDataToPrint = i * 16 + j;
 
-			if (_nIndexDataToPrint < m_dwRawDataCount)
+			if (nIndexDataToPrint < m_dwRawDataCount)
 			{
-				_strHexToPrint[0] = m_strHexMap[((const unsigned char)m_pRawData[_nIndexDataToPrint] & 0xF0) >> 4];
-				_strHexToPrint[1] = m_strHexMap[((const unsigned char)m_pRawData[_nIndexDataToPrint] & 0x0F)];
-				//HEX chunk print.
-				ExtTextOutW(pDC->m_hDC, _nFirstHexPosToPrintX, _nFirstHexPosToPrintY, 0, nullptr, &_strHexToPrint[0], 2, nullptr);
+				strHexToPrint[0] = m_strHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0xF0) >> 4];
+				strHexToPrint[1] = m_strHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0x0F)];
 
-				_chAsciiToPrint = m_pRawData[_nIndexDataToPrint];
-				if (_chAsciiToPrint < 32 || _chAsciiToPrint == 127)//for non printable Ascii
-					_chAsciiToPrint = '.';
-				//ASCII Print
-				ExtTextOutA(pDC->m_hDC, _nAsciiPosToPrintX, _nAsciiPosToPrintY, 0, nullptr, &_chAsciiToPrint, 1, nullptr);
+				//HEX chunk print.
+				ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, &strHexToPrint[0], 2, nullptr);
+
+				chAsciiToPrint = m_pRawData[nIndexDataToPrint];
+				//for non printable Ascii
+				if (chAsciiToPrint < 32 || chAsciiToPrint == 127)
+					chAsciiToPrint = '.';
+				
+				//Ascii Print
+				ExtTextOutA(pDC->m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
 			}
 			else
 			{
-				ExtTextOutW(pDC->m_hDC, _nFirstHexPosToPrintX, _nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
-				ExtTextOutA(pDC->m_hDC, _nAsciiPosToPrintX, _nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
+				ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
+				ExtTextOutA(pDC->m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
 			}
-			_nIndentHexX += m_nIndentBetweenHex;
-			_nIndentAsciiX += m_nIndentBetweenAscii;
+			//Increasing indents for nex print for both - Hex and Ascii
+			nIndentHexX += m_nIndentBetweenHex;
+			nIndentAsciiX += m_nIndentBetweenAscii;
 		}
-		_nLine++;
+		nLine++;
 	}
 }
 
 void CHexEditView::Recalc()
 {
-	UINT _nLineStart { };
+	UINT nLineStart { };
 	if (m_fSecondLaunch)
 	{
 		GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
-		_nLineStart = m_stScrollInfo.nPos / m_sizeText.cy;
+		nLineStart = m_stScrollInfo.nPos / m_sizeText.cy;
 	}
 
-	CDC* _pDC = GetDC();
-	CFont* _oldFont = _pDC->SelectObject(m_pFontHexView);
-	GetTextExtentPoint32W(_pDC->m_hDC, TEXT("00000000"), 8, &m_sizeText);
-	_pDC->SelectObject(_oldFont);
-	ReleaseDC(_pDC);
+	CDC* pDC = GetDC();
+	CFont* oldFont = pDC->SelectObject(m_pFontHexView);
+	GetTextExtentPoint32W(pDC->m_hDC, L"00000000", 8, &m_sizeText);
+	pDC->SelectObject(oldFont);
+	ReleaseDC(pDC);
 
 	m_nLetterWidth = m_sizeText.cx / 8;
 	m_nFirstVertLine = 0;
@@ -354,14 +375,14 @@ void CHexEditView::Recalc()
 	m_nTopHeaderWidth = m_sizeText.cy*1.5;
 
 	//Scroll sizes according to current font size
-	CSize _size(m_sizeText.cx, m_sizeText.cy);
+	CSize size(m_sizeText.cx, m_sizeText.cy);
 	SetScrollSizes(MM_TEXT, CSize(m_nFourthVertLine + 1, m_nTopHeaderWidth + m_nBottomRectWidth + (m_sizeText.cy * ((m_dwRawDataCount / 16) + 2))),
-		_size, _size);
+		size, size);
 
 	if (m_fSecondLaunch)//First launch? Do we need to ajust scroll bars?
 	{
 		GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
-		m_stScrollInfo.nPos = m_sizeText.cy * _nLineStart;
+		m_stScrollInfo.nPos = m_sizeText.cy * nLineStart;
 		int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
 		if (m_stScrollInfo.nPos > max)
 			m_stScrollInfo.nPos = max;

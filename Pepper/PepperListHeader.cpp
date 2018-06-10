@@ -27,19 +27,19 @@ void CPepperListHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPres
 	pDC->SetTextColor(RGB(255, 255, 255));
 	pDC->DrawEdge(&rect, EDGE_RAISED, BF_RECT);
 
-	WCHAR _strHeaderText[MAX_PATH] { };
+	WCHAR strHeaderText[MAX_PATH] { };
 	HDITEMW hdItem;
 	hdItem.mask = HDI_TEXT;
 	hdItem.cchTextMax = MAX_PATH;
-	hdItem.pszText = _strHeaderText;
+	hdItem.pszText = strHeaderText;
 	GetItem(iItem, &hdItem);
 
 	CFont* def_font = pDC->SelectObject(&m_fontHeader);
 
-	if (StrStrW(_strHeaderText, L"\n"))
-		pDC->DrawTextW(_strHeaderText, &rect, DT_VCENTER | DT_CENTER);
+	if (StrStrW(strHeaderText, L"\n"))
+		pDC->DrawTextW(strHeaderText, &rect, DT_VCENTER | DT_CENTER);
 	else
-		pDC->DrawTextW(_strHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
+		pDC->DrawTextW(strHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
 
 	pDC->SelectObject(def_font);
 }

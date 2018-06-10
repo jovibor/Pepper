@@ -88,40 +88,40 @@ void CPepperApp::OnAppAbout()
 
 void CPepperApp::OnFileOpen()
 {
-	WCHAR _strFilePath[1024] { };
+	WCHAR strFilePath[1024] { };
 
-	OPENFILENAME _stOFN { };
-	_stOFN.lStructSize = sizeof(_stOFN);
-	_stOFN.hwndOwner = AfxGetMainWnd()->GetSafeHwnd();
-	_stOFN.lpstrFilter = L"All files (*.*)\0*.*\0\0";
-	_stOFN.lpstrFile = _strFilePath;
-	_stOFN.nMaxFile = sizeof(_strFilePath) / sizeof(WCHAR);
-	_stOFN.lpstrTitle = L"Select one or more PE files";
-	_stOFN.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
+	OPENFILENAME stOFN { };
+	stOFN.lStructSize = sizeof(stOFN);
+	stOFN.hwndOwner = AfxGetMainWnd()->GetSafeHwnd();
+	stOFN.lpstrFilter = L"All files (*.*)\0*.*\0\0";
+	stOFN.lpstrFile = strFilePath;
+	stOFN.nMaxFile = sizeof(strFilePath) / sizeof(WCHAR);
+	stOFN.lpstrTitle = L"Select one or more PE files";
+	stOFN.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
 		OFN_EXPLORER | OFN_ENABLESIZING | OFN_DONTADDTORECENT;
 
-	GetOpenFileName(&_stOFN);
+	GetOpenFileName(&stOFN);
 
 	//Checking for multi file selection:
-	//If _strFilePath at offset [_stOFN.nFileOffset - 1] equals '\0'
+	//If strFilePath at offset [stOFN.nFileOffset - 1] equals '\0'
 	//it means that we have multiple file names following
 	//path name, divided by NULLs. See OFN_ALLOWMULTISELECT description.
-	if (_strFilePath[_stOFN.nFileOffset - 1] == '\0')
+	if (strFilePath[stOFN.nFileOffset - 1] == '\0')
 	{
-		WCHAR* _str = _stOFN.lpstrFile;
-		std::wstring _strDir = _str;
-		_str += (_strDir.length() + 1);
-		while (*_str)
+		WCHAR* str = stOFN.lpstrFile;
+		std::wstring strDir = str;
+		str += (strDir.length() + 1);
+		while (*str)
 		{
-			std::wstring _strFileName = _str;
-			_str += (_strFileName.length() + 1);
-			std::wstring _strFullPath = _strDir + L"\\" + _strFileName;
+			std::wstring strFileName = str;
+			str += (strFileName.length() + 1);
+			std::wstring strFullPath = strDir + L"\\" + strFileName;
 
-			CWinAppEx::OpenDocumentFile(_strFullPath.c_str());
+			CWinAppEx::OpenDocumentFile(strFullPath.c_str());
 		}
 	}
 	else
-		CWinAppEx::OpenDocumentFile(_stOFN.lpstrFile);
+		CWinAppEx::OpenDocumentFile(stOFN.lpstrFile);
 }
 
 void CPepperApp::PreLoadState()
@@ -132,10 +132,10 @@ void CPepperApp::PreLoadState()
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	WCHAR _strVersion[MAX_PATH] { };
-	swprintf(_strVersion, L"%S, Version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
+	WCHAR strVersion[MAX_PATH] { };
+	swprintf_s(strVersion, MAX_PATH, L"%S, Version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
 
-	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, _strVersion);
+	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, strVersion);
 
 	return TRUE;
 }

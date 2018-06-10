@@ -53,10 +53,10 @@ private:
 	LONG m_ScrollWidth { };
 	LONG m_ScrollHeight { };
 	std::map<DWORD, std::wstring> m_mapSecFlags { };
-	PLIBPE_SECHEADER m_pSectianHeaders { };
-	PLIBPE_IMPORT m_pImportTable { };
-	PLIBPE_EXCEPTION m_pExceptionDir { };
-	PLIBPE_RELOCATION m_pRelocTable { };
+	PLIBPE_SECHEADER_VEC m_pSectionHeaders { };
+	PLIBPE_IMPORT_VEC m_pImportTable { };
+	PLIBPE_EXCEPTION_VEC m_pExceptionDir { };
+	PLIBPE_RELOCATION_VEC m_pRelocTable { };
 	CWnd* m_pActiveList { };
 
 	int listCreateDOSHeader();
