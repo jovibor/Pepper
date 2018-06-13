@@ -20,7 +20,6 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	virtual BOOL OnScrollBy(CSize sizeScroll, BOOL bDoScroll = TRUE);
 	virtual void OnInitialUpdate();     // first time after construct
 	void Recalc();
 
@@ -29,23 +28,21 @@ private:
 	const BYTE* m_pRawData { };
 	CRect m_rectClient;
 	UINT m_dwRawDataCount { };
-	SIZE m_sizeText { };
+	SIZE m_sizeLetter { };//Current font's letter size (width, height)
 	CFont* m_pFontHexView { };
 	CFont* m_pFontHexViewDefault { };
 	CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
 	COLORREF m_colorTextOffset { RGB(0, 0, 180) };
 	COLORREF m_colorTextHex { RGB(0, 0, 0) };
 	UINT m_nOffsetAscii { };//Indent of Ascii text
-	UINT m_nIndentBetweenHex { };//indent between two HEX chunks
+	UINT m_nIndentBetweenHexChunk { };//indent between two HEX chunks
 	UINT m_nIndentBetweenAscii { };//Indent between ASCII chars
-	UINT m_nIndentBetween78 { };//indent between 7-th and 8-th HEX chunks
+	UINT m_nIndentBetween78 { };//Additional indent to add after 7-th Hex chunk
 	UINT m_nTopHeaderWidth { };
 	UINT m_nFirstVertLine { }, m_nSecondVertLine { }, m_nThirdVertLine { }, m_nFourthVertLine { };
 	UINT m_nFirstHorizLine { }, m_nSecondHorizLine { }, m_nThirdHorizLine { }, m_nFourthHorizLine { };
 	UINT m_nBottomRectWidth { 25 };
 	UINT m_nFirstHexChunkIndent { };
-	//Width of current font letter
-	UINT m_nLetterWidth { };
 	//	UINT m_nSecondHex { };
 	WCHAR m_strOffset[90] { };
 	const wchar_t* m_strHexMap = L"0123456789ABCDEF";

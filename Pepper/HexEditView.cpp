@@ -40,11 +40,6 @@ BOOL CHexEditView::OnEraseBkgnd(CDC* pDC)
 	return TRUE;// CScrollView::OnEraseBkgnd(pDC);
 }
 
-BOOL CHexEditView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
-{
-	return CScrollView::OnScrollBy(sizeScroll, bDoScroll);
-}
-
 void CHexEditView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
@@ -52,20 +47,22 @@ void CHexEditView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	int pos = m_stScrollInfo.nPos;
 	switch (nSBCode)
 	{
-	case SB_LEFT: pos = m_stScrollInfo.nMin; break;
-	case SB_RIGHT: pos = m_stScrollInfo.nMax; break;
-	case SB_LINEUP: pos -= m_sizeText.cy; break;
-	case SB_LINEDOWN: pos += m_sizeText.cy;  break;
-	case SB_PAGEUP: pos -= m_stScrollInfo.nPage; break;
-	case SB_PAGEDOWN: pos += m_stScrollInfo.nPage; break;
+	case SB_TOP: pos = m_stScrollInfo.nMin; break;
+	case SB_BOTTOM: pos = m_stScrollInfo.nMax; break;
+	case SB_LINEUP: pos -= m_sizeLetter.cy; break;
+	case SB_LINEDOWN: pos += m_sizeLetter.cy;  break;
+	case SB_PAGEUP: pos -= m_sizeLetter.cy * 16; break;
+	case SB_PAGEDOWN: pos += m_sizeLetter.cy * 16; break;
 	case SB_THUMBPOSITION: pos = m_stScrollInfo.nTrackPos; break;
 	case SB_THUMBTRACK: pos = m_stScrollInfo.nTrackPos; break;
 	}
 
-	//make sure the new position is within range
-	if (pos < m_stScrollInfo.nMin) pos = m_stScrollInfo.nMin;
+	//Make sure the new position is within range
+	if (pos < m_stScrollInfo.nMin)
+		pos = m_stScrollInfo.nMin;
 	int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
-	if (pos > max) pos = max;
+	if (pos > max)
+		pos = max;
 
 	m_stScrollInfo.nPos = pos;
 	SetScrollInfo(SB_VERT, &m_stScrollInfo);
@@ -75,8 +72,6 @@ void CHexEditView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CHexEditView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	CScrollView::OnVScroll(nSBCode, nPos, pScrollBar);
-
 	GetScrollInfo(SB_HORZ, &m_stScrollInfo, SIF_ALL);
 
 	int pos = m_stScrollInfo.nPos;
@@ -84,21 +79,24 @@ void CHexEditView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	{
 	case SB_LEFT: pos = m_stScrollInfo.nMin; break;
 	case SB_RIGHT: pos = m_stScrollInfo.nMax; break;
-	case SB_LINELEFT: pos -= m_sizeText.cy; break;
-	case SB_LINERIGHT: pos += m_sizeText.cy;  break;
+	case SB_LINELEFT: pos -= m_sizeLetter.cy; break;
+	case SB_LINERIGHT: pos += m_sizeLetter.cy;  break;
 	case SB_PAGELEFT: pos -= m_stScrollInfo.nPage; break;
 	case SB_PAGERIGHT: pos += m_stScrollInfo.nPage; break;
 	case SB_THUMBPOSITION: pos = m_stScrollInfo.nTrackPos; break;
 	case SB_THUMBTRACK: pos = m_stScrollInfo.nTrackPos; break;
 	}
 
-	//make sure the new position is within range
-	if (pos < m_stScrollInfo.nMin) pos = m_stScrollInfo.nMin;
+	//Make sure the new position is within range
+	if (pos < m_stScrollInfo.nMin)
+		pos = m_stScrollInfo.nMin;
 	int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
-	if (pos > max) pos = max;
+	if (pos > max)
+		pos = max;
 
 	m_stScrollInfo.nPos = pos;
 	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
+
 	m_fEraseBkgnd = true;
 
 	Invalidate();
@@ -211,9 +209,9 @@ void CHexEditView::OnDraw(CDC* pDC)
 
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
 
-	//find the nLineStart and nLineEnd posion, print the visible portion
-	UINT nLineStart = m_stScrollInfo.nPos / m_sizeText.cy;
-	UINT nLineEnd = nLineStart + (m_rectClient.Height() - m_nTopHeaderWidth - m_nBottomRectWidth) / m_sizeText.cy;
+	//find the nStartLine and nLineEnd posion, print the visible portion
+	UINT nLineStart = m_stScrollInfo.nPos / m_sizeLetter.cy;
+	UINT nLineEnd = nLineStart + (m_rectClient.Height() - m_nTopHeaderWidth - m_nBottomRectWidth) / m_sizeLetter.cy;
 	if (m_dwRawDataCount == 0)
 		nLineEnd = 0;
 	else if (nLineEnd > m_dwRawDataCount / 16 + 1)
@@ -242,18 +240,24 @@ void CHexEditView::OnDraw(CDC* pDC)
 	pDC->LineTo(m_nFourthVertLine, m_nFourthHorizLine);
 
 	pDC->SetTextColor(m_colorTextOffset);
+
+	RECT rect;
 	//"Offset" text
-	ExtTextOutW(pDC->m_hDC, m_sizeText.cx / 6, m_stScrollInfo.nPos + (m_sizeText.cy / 6), NULL, nullptr, L"Offset", 6, 0);
+	rect.left = m_nFirstVertLine; rect.top = m_nFirstHorizLine;
+	rect.right = m_nSecondVertLine; rect.bottom = m_nSecondHorizLine;
+	DrawTextW(pDC->m_hDC, L"Offset", 6, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//"Ascii" text
-	ExtTextOutW(pDC->m_hDC, m_nOffsetAscii + m_nIndentBetweenAscii * 6, m_stScrollInfo.nPos + (m_sizeText.cy / 6), NULL, nullptr, L"Ascii", 5, 0);
+	rect.left = m_nThirdVertLine; rect.top = m_nFirstHorizLine;
+	rect.right = m_nFourthVertLine; rect.bottom = m_nSecondHorizLine;
+	DrawTextW(pDC->m_hDC, L"Ascii", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	for (unsigned i = 0; i < 16; i++)
-		if (i > 7)//Top Offset text
-			ExtTextOutW(pDC->m_hDC, m_nFirstHexChunkIndent + m_nLetterWidth + (m_nIndentBetweenHex*i) + m_nIndentBetween78, m_stScrollInfo.nPos + (m_sizeText.cy / 6),
+		if (i > 7)//Top offset text (0 1 2 3 4 5 6 7)
+			ExtTextOutW(pDC->m_hDC, m_nFirstHexChunkIndent + m_sizeLetter.cx + (m_nIndentBetweenHexChunk*i) + m_nIndentBetween78, m_stScrollInfo.nPos + (m_sizeLetter.cy / 6),
 				NULL, nullptr, &m_strHexMap[i], 1, nullptr);
-		else//Top Offset text, part after 7
-			ExtTextOutW(pDC->m_hDC, m_nFirstHexChunkIndent + m_nLetterWidth + (m_nIndentBetweenHex*i), m_stScrollInfo.nPos + (m_sizeText.cy / 6),
+		else//Top Offset text, part after 7 (8 9 A B C D E F)
+			ExtTextOutW(pDC->m_hDC, m_nFirstHexChunkIndent + m_sizeLetter.cx + (m_nIndentBetweenHexChunk*i), m_stScrollInfo.nPos + (m_sizeLetter.cy / 6),
 				NULL, nullptr, &m_strHexMap[i], 1, nullptr);
 
 	//First Vertical line
@@ -279,7 +283,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 
 	//Index of byte in m_pRawData to print
 	size_t nIndexDataToPrint { };
-	
+
 	//Ascii to print
 	char chAsciiToPrint { };
 	//HEX chunk to print
@@ -289,15 +293,15 @@ void CHexEditView::OnDraw(CDC* pDC)
 	{
 		swprintf_s(m_strOffset, 9, L"%08X", i * 16);
 		pDC->SetTextColor(m_colorTextOffset);
-		
+
 		//Left column offset Print (00000001...000000A1...)
-		ExtTextOutW(pDC->m_hDC, m_nLetterWidth, m_nTopHeaderWidth + (m_sizeText.cy*nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
+		ExtTextOutW(pDC->m_hDC, m_sizeLetter.cx, m_nTopHeaderWidth + (m_sizeLetter.cy*nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
 		pDC->SetTextColor(m_colorTextHex);
 
 		nIndentHexX = 0;
 		nIndentAsciiX = 0;
 		nIndent78 = 0;
-		
+
 		//Main loop to print Hex chunks and Ascii chars (right column)
 		for (int j = 0; j < 16; j++)
 		{
@@ -305,11 +309,11 @@ void CHexEditView::OnDraw(CDC* pDC)
 				nIndent78 = m_nIndentBetween78;
 
 			nFirstHexPosToPrintX = m_nFirstHexChunkIndent + nIndentHexX + nIndent78;
-			nFirstHexPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*nLine + m_stScrollInfo.nPos;
+			nFirstHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
 			//	nSecondHexPosToPrintX = m_nSecondHex + nIndentHexX + nIndent78;
-			//	nSecondHexPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*nLine + m_stScrollInfo.nPos;
+			//	nSecondHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
 			nAsciiPosToPrintX = m_nOffsetAscii + nIndentAsciiX;
-			nAsciiPosToPrintY = m_nTopHeaderWidth + m_sizeText.cy*nLine + m_stScrollInfo.nPos;
+			nAsciiPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
 
 			//Index of next char (in m_pRawData) to print.
 			nIndexDataToPrint = i * 16 + j;
@@ -323,11 +327,11 @@ void CHexEditView::OnDraw(CDC* pDC)
 				ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, &strHexToPrint[0], 2, nullptr);
 
 				chAsciiToPrint = m_pRawData[nIndexDataToPrint];
-				//for non printable Ascii
+				//For non printable Ascii
 				if (chAsciiToPrint < 32 || chAsciiToPrint == 127)
 					chAsciiToPrint = '.';
-				
-				//Ascii Print
+
+				//Ascii print
 				ExtTextOutA(pDC->m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
 			}
 			else
@@ -335,8 +339,8 @@ void CHexEditView::OnDraw(CDC* pDC)
 				ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
 				ExtTextOutA(pDC->m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
 			}
-			//Increasing indents for nex print for both - Hex and Ascii
-			nIndentHexX += m_nIndentBetweenHex;
+			//Increasing indents for next print, for both - Hex and Ascii
+			nIndentHexX += m_nIndentBetweenHexChunk;
 			nIndentAsciiX += m_nIndentBetweenAscii;
 		}
 		nLine++;
@@ -345,49 +349,46 @@ void CHexEditView::OnDraw(CDC* pDC)
 
 void CHexEditView::Recalc()
 {
-	UINT nLineStart { };
+	UINT nStartLine { };
 	if (m_fSecondLaunch)
 	{
 		GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
-		nLineStart = m_stScrollInfo.nPos / m_sizeText.cy;
+		nStartLine = m_stScrollInfo.nPos / m_sizeLetter.cy;
 	}
 
 	CDC* pDC = GetDC();
 	CFont* oldFont = pDC->SelectObject(m_pFontHexView);
-	GetTextExtentPoint32W(pDC->m_hDC, L"00000000", 8, &m_sizeText);
+	GetTextExtentPoint32W(pDC->m_hDC, L"0", 1, &m_sizeLetter);
 	pDC->SelectObject(oldFont);
 	ReleaseDC(pDC);
 
-	m_nLetterWidth = m_sizeText.cx / 8;
 	m_nFirstVertLine = 0;
-	m_nSecondVertLine = m_sizeText.cx + m_sizeText.cx / 4;
-	m_nIndentBetweenHex = m_sizeText.cx / 2.5;
-	m_nIndentBetween78 = m_sizeText.cx / 4;
-	m_nThirdVertLine = m_nSecondVertLine + (m_nIndentBetweenHex * 16) + m_nIndentBetween78 + m_nLetterWidth;
+	m_nSecondVertLine = m_sizeLetter.cx * 10;
+	m_nIndentBetweenHexChunk = m_sizeLetter.cx * 3;
+	m_nIndentBetween78 = m_sizeLetter.cx*2;
+	m_nThirdVertLine = m_nSecondVertLine + (m_nIndentBetweenHexChunk * 16) + m_nIndentBetween78 + m_sizeLetter.cx;
+	m_nOffsetAscii = m_nThirdVertLine + m_sizeLetter.cx;
+	m_nIndentBetweenAscii = m_sizeLetter.cx + 1;
+	m_nFourthVertLine = m_nOffsetAscii + (m_nIndentBetweenAscii * 16) + m_sizeLetter.cx;
 
-	m_nOffsetAscii = m_nThirdVertLine + m_nLetterWidth;
-	m_nIndentBetweenAscii = m_nLetterWidth + 1;
-	m_nFourthVertLine = m_nOffsetAscii + (m_nIndentBetweenAscii * 16) + m_nLetterWidth;
+	m_nFirstHexChunkIndent = m_nSecondVertLine + m_sizeLetter.cx;
+	//	m_nSecondHex = m_nFirstHexChunkIndent + m_sizeLetter.cx;
 
-	m_nFirstHexChunkIndent = m_nSecondVertLine + m_nLetterWidth;
-	//	m_nSecondHex = m_nFirstHexChunkIndent + m_nLetterWidth;
-
-	m_nTopHeaderWidth = m_sizeText.cy*1.5;
+	m_nTopHeaderWidth = m_sizeLetter.cy*1.5;
 
 	//Scroll sizes according to current font size
-	CSize size(m_sizeText.cx, m_sizeText.cy);
-	SetScrollSizes(MM_TEXT, CSize(m_nFourthVertLine + 1, m_nTopHeaderWidth + m_nBottomRectWidth + (m_sizeText.cy * ((m_dwRawDataCount / 16) + 2))),
-		size, size);
+	SetScrollSizes(MM_TEXT, CSize(m_nFourthVertLine + 1, m_nTopHeaderWidth + m_nBottomRectWidth + (m_sizeLetter.cy * ((m_dwRawDataCount / 16) + 2))));
 
 	if (m_fSecondLaunch)//First launch? Do we need to ajust scroll bars?
 	{
 		GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
-		m_stScrollInfo.nPos = m_sizeText.cy * nLineStart;
+		m_stScrollInfo.nPos = m_sizeLetter.cy * nStartLine;
+
 		int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
 		if (m_stScrollInfo.nPos > max)
 			m_stScrollInfo.nPos = max;
 
-		SetScrollInfo(SB_VERT, &m_stScrollInfo, TRUE);
+		SetScrollInfo(SB_VERT, &m_stScrollInfo);
 	}
 	else
 		m_fSecondLaunch = true;
