@@ -253,7 +253,6 @@
     <ClInclude Include="include\defines.h" />
     <ClInclude Include="include\Hexedit.h" />
     <ClInclude Include="include\HexEditView.h" />
-    <ClInclude Include="include\libpe.h" />
     <ClInclude Include="include\ViewLeft.h" />
     <ClInclude Include="include\MainFrm.h" />
     <ClInclude Include="include\Pepper.h" />

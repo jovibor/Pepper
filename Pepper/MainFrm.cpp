@@ -23,9 +23,10 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CMDITabInfo mdiTabParams;
 	mdiTabParams.m_style = CMFCTabCtrl::STYLE_3D_ONENOTE; // other styles available...
 	mdiTabParams.m_bActiveTabCloseButton = TRUE;      // set to FALSE to place close button at right of tab area
-	mdiTabParams.m_bTabIcons = FALSE;    // set to TRUE to enable document icons on MDI taba
+	mdiTabParams.m_bTabIcons = TRUE;    // set to TRUE to enable document icons on MDI taba
 	mdiTabParams.m_bAutoColor = FALSE;    // set to FALSE to disable auto-coloring of MDI tabs
-	mdiTabParams.m_bDocumentMenu = TRUE; // enable the document menu at the right edge of the tab area
+	mdiTabParams.m_bDocumentMenu = FALSE; // enable the document menu at the right edge of the tab area
+	mdiTabParams.m_bFlatFrame = TRUE;
 	EnableMDITabbedGroups(TRUE, mdiTabParams);
 	
 	m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
@@ -51,6 +52,9 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
 	if (!CMDIFrameWndEx::PreCreateWindow(cs))
 		return FALSE;
+
+	cs.style = WS_OVERLAPPED | WS_CAPTION | FWS_ADDTOTITLE
+		| WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU;
 
 	return TRUE;
 }
@@ -82,6 +86,4 @@ void CMainFrame::OnSizing(UINT fwSide, LPRECT pRect)
 		pRect->right = pRect->left + 400;
 	if ((pRect->bottom - pRect->top) < 200)
 		pRect->bottom = pRect->top + 200;
-	
-	//	CMDIFrameWndEx::OnSizing(fwSide, pRect);
 }

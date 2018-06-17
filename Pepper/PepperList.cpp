@@ -64,14 +64,14 @@ CPepperList::CPepperList()
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		NULL, NULL, NULL, NULL);
 
-	m_ti.cbSize = TTTOOLINFOW_V1_SIZE;
-	m_ti.uFlags = TTF_TRACK;
-	m_ti.uId = 1;
+	m_stToolInfo.cbSize = TTTOOLINFOW_V1_SIZE;
+	m_stToolInfo.uFlags = TTF_TRACK;
+	m_stToolInfo.uId = 1;
 
 	m_colorListToolTipSubitem = RGB(170, 170, 230);
 	m_colorListSelected = RGB(0, 120, 215);
 
-	::SendMessage(m_hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&m_ti);
+	::SendMessage(m_hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 	::SendMessage(m_hwndToolTip, TTM_SETTIPBKCOLOR, (WPARAM)RGB(0, 132, 132), 0);
 	::SendMessage(m_hwndToolTip, TTM_SETTIPTEXTCOLOR, (WPARAM)RGB(255, 255, 255), 0);
 	::SendMessage(m_hwndToolTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)400);//to allow using of newline \n
@@ -233,37 +233,37 @@ void CPepperList::OnMouseMove(UINT nFlags, CPoint point)
 		std::wstring _tipText { }, _tipCaption { };
 		bool fTip = HasToolTip(hitInfo.iItem, hitInfo.iSubItem, _tipText, _tipCaption);
 		if (fTip)
-		{
-			if (m_curSubItem.iItem == hitInfo.iItem && m_curSubItem.iSubItem == hitInfo.iSubItem)
+		{	//Check if cursor is still in cell's rect
+			if (m_stCurrentSubItem.iItem == hitInfo.iItem && m_stCurrentSubItem.iSubItem == hitInfo.iSubItem)
 				return;
 
-			m_curSubItem.iItem = hitInfo.iItem;
-			m_curSubItem.iSubItem = hitInfo.iSubItem;
-			m_ti.lpszText = const_cast<LPWSTR>(_tipText.c_str());
+			m_stCurrentSubItem.iItem = hitInfo.iItem;
+			m_stCurrentSubItem.iSubItem = hitInfo.iSubItem;
+			m_stToolInfo.lpszText = const_cast<LPWSTR>(_tipText.c_str());
 
 			ClientToScreen(&point);
 			::SendMessage(m_hwndToolTip, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(point.x, point.y));
 			::SendMessage(m_hwndToolTip, TTM_SETTITLE, (WPARAM)TTI_NONE, (LPARAM)_tipCaption.c_str());
-			::SendMessage(m_hwndToolTip, TTM_UPDATETIPTEXT, 0, (LPARAM)(LPTOOLINFO)&m_ti);
-			::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)(LPTOOLINFO)&m_ti);
-			SetTimer(TIMER_TOOLTIP, 200, 0);//setting timer to check mouse pointer leaving subitem rect.
+			::SendMessage(m_hwndToolTip, TTM_UPDATETIPTEXT, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
+			::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
+			SetTimer(TIMER_TOOLTIP, 200, 0);//timer to check whether mouse pointer left subitem rect.
 		}
 		else
 		{
-			m_curSubItem.iItem = hitInfo.iItem;
-			m_curSubItem.iSubItem = hitInfo.iSubItem;
-			::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_ti);
+			m_stCurrentSubItem.iItem = hitInfo.iItem;
+			m_stCurrentSubItem.iSubItem = hitInfo.iSubItem;
+			::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 		}
 	}
 }
 
-bool CPepperList::HasToolTip(int iItem, int iSubItem, std::wstring& TipText, std::wstring& TipCaption)
+bool CPepperList::HasToolTip(int iItem, int iSubItem, std::wstring& strTipText, std::wstring& strTipCaption)
 {
 	for (auto& i : m_vecToolTips)
 		if (std::get<0>(i) == iItem && std::get<1>(i) == iSubItem)
 		{
-			TipText = std::get<2>(i);
-			TipCaption = std::get<3>(i);
+			strTipText = std::get<2>(i);
+			strTipCaption = std::get<3>(i);
 			return true;
 		}
 
@@ -280,7 +280,8 @@ bool CPepperList::HasToolTip(int iItem, int iSubItem)
 }
 
 void CPepperList::OnTimer(UINT_PTR nIDEvent)
-{	//Checking if mouse pointer left list subitem area
+{	
+	//Checking if mouse pointer left list subitem rect,
 	//if so —> hiding tooltip and killing timer
 	LVHITTESTINFO hitInfo { };
 	CPoint point;
@@ -290,13 +291,14 @@ void CPepperList::OnTimer(UINT_PTR nIDEvent)
 	ListView_SubItemHitTest(m_hWnd, &hitInfo);
 
 	//if cursor is still hovers subitem then do nothing
-	if (m_curSubItem.iItem == hitInfo.iItem && m_curSubItem.iSubItem == hitInfo.iSubItem)
+	if (m_stCurrentSubItem.iItem == hitInfo.iItem && m_stCurrentSubItem.iSubItem == hitInfo.iSubItem)
 		return;
-	else {//if it left —>
-		::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_ti);
+	else 
+	{	//if it left —>
+		::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 		KillTimer(TIMER_TOOLTIP);
-		m_curSubItem.iItem = hitInfo.iItem;
-		m_curSubItem.iSubItem = hitInfo.iSubItem;
+		m_stCurrentSubItem.iItem = hitInfo.iItem;
+		m_stCurrentSubItem.iSubItem = hitInfo.iSubItem;
 	}
 
 	CMFCListCtrl::OnTimer(nIDEvent);

@@ -23,9 +23,13 @@ BOOL CPepperApp::InitInstance()
 
 	SetRegistryKey(L"Pepper - PE files viewer");
 
+	CMFCToolTipInfo ttParams;
+	ttParams.m_bVislManagerTheme = TRUE;
+	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL, RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
+
 	CMultiDocTemplate* pDocTemplate;
 	pDocTemplate = new CMultiDocTemplate(IDR_PepperTYPE,
-		RUNTIME_CLASS(CPepperDoc), RUNTIME_CLASS(CChildFrame), 0);
+		RUNTIME_CLASS(CPepperDoc), RUNTIME_CLASS(CChildFrame), nullptr);
 
 	AddDocTemplate(pDocTemplate);
 

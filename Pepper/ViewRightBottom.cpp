@@ -88,7 +88,7 @@ void CViewRightBottom::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHi
 		HexCtrlRightBottom(HIWORD(lHint));
 		m_pActiveList = &m_HexEdit;
 		break;
-	case LISTID_RELOCATION_DIR_RELOCS_DESCRIPTION:
+	case LISTID_RELOCATION_DIR_RELOCS_DESC:
 		listCreateRelocations(HIWORD(lHint));
 		m_pActiveList = &m_listRelocationsDescription;
 		break;

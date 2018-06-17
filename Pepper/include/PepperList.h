@@ -29,9 +29,9 @@ private:
 	std::vector<std::tuple<int/*Item*/, int/*subItem*/, std::wstring/*tip text*/, std::wstring/*caption text*/>> m_vecToolTips { };
 	bool m_fToolTip = false;
 	HWND m_hwndToolTip { };
-	TOOLINFO m_ti { };
+	TOOLINFO m_stToolInfo { };
 	bool m_fToolTipShow = false;
-	LVHITTESTINFO m_curSubItem { };
+	LVHITTESTINFO m_stCurrentSubItem { };
 	COLORREF m_colorListToolTipSubitem { }, m_colorListSelected { };
 	bool HasToolTip(int iItem, int iSubItem, std::wstring& TipText, std::wstring& TipCaption);
 	bool HasToolTip(int iItem, int iSubItem);

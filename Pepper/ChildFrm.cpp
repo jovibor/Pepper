@@ -50,16 +50,16 @@ void CChildFrame::OnSize(UINT nType, int cx, int cy)
 			{
 				int cxCur, min;
 				m_MainSplitter.GetColumnInfo(0, cxCur, min);
-				double ratio = m_cx / cxCur;
-				m_MainSplitter.SetColumnInfo(0, cx / ratio, min);
+				double ratio = (double)m_cx / cxCur;
+				m_MainSplitter.SetColumnInfo(0, cx / ratio + 0.5, min);
 
 				m_RightSplitter.GetRowInfo(0, cxCur, min);
-				ratio = m_cy / cxCur;
-				m_RightSplitter.SetRowInfo(0, cy / ratio, min);
+				ratio = (double)m_cy / cxCur;
+				m_RightSplitter.SetRowInfo(0, cy / ratio + 0.5, min);
 			}
 			else
 			{
-				CRect rect { };
+				CRect rect;
 				::GetClientRect(GetParent()->m_hWnd, &rect);
 
 				m_MainSplitter.SetColumnInfo(0, rect.Width() / 5, 0);

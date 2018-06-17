@@ -475,7 +475,7 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		break;
 	case LISTID_RELOCATION_DIR:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LISTID_RELOCATION_DIR_RELOCS_DESCRIPTION, pNMI->iItem));
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LISTID_RELOCATION_DIR_RELOCS_DESC, pNMI->iItem));
 		break;
 	case LISTID_DELAY_IMPORT_DIR:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
