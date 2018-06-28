@@ -92,7 +92,7 @@ void CPepperApp::OnAppAbout()
 
 void CPepperApp::OnFileOpen()
 {
-	WCHAR strFilePath[1024] { };
+	WCHAR strFilePath[2048] { };
 
 	OPENFILENAME stOFN { };
 	stOFN.lStructSize = sizeof(stOFN);
@@ -109,7 +109,7 @@ void CPepperApp::OnFileOpen()
 	//Checking for multi file selection:
 	//If strFilePath at offset [stOFN.nFileOffset - 1] equals '\0'
 	//it means that we have multiple file names following
-	//path name, divided by NULLs. See OFN_ALLOWMULTISELECT description.
+	//path name, divided by NULLs ('\0'). See OFN_ALLOWMULTISELECT description.
 	if (strFilePath[stOFN.nFileOffset - 1] == '\0')
 	{
 		WCHAR* str = stOFN.lpstrFile;

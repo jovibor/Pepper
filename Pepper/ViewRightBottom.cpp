@@ -37,7 +37,7 @@ void CViewRightBottom::OnInitialUpdate()
 
 	listCreateExportFuncs();
 	treeCreateResourceDir();
-	m_HexEdit.CreateCtrl(this, CRect(0, 0, 0, 0), HEXCTRLID_SECURITY_DIR_SERTIFICATE_ID);
+	m_HexEdit.Create(this, CRect(0, 0, 0, 0), HEXCTRLID_SECURITY_DIR_SERTIFICATE_ID);
 }
 
 int CViewRightBottom::HexCtrlRightBottom(unsigned nSertId)

@@ -53,9 +53,6 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 	if (!CMDIFrameWndEx::PreCreateWindow(cs))
 		return FALSE;
 
-	cs.style = WS_OVERLAPPED | WS_CAPTION | FWS_ADDTOTITLE
-		| WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU;
-
 	return TRUE;
 }
 

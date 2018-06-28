@@ -4,6 +4,7 @@
 #include "PepperTreeCtrl.h"
 #include "PepperList.h"
 #include "ViewRightTop.h"
+#include "version.h"
 
 IMPLEMENT_DYNCREATE(CViewRightTop, CView)
 
@@ -17,17 +18,38 @@ BEGIN_MESSAGE_MAP(CViewRightTop, CView)
 END_MESSAGE_MAP()
 
 void CViewRightTop::OnDraw(CDC* pDC)
-{
+{	//Printing (drawing) app version/name info and
+	//currently oppened file type and name.
 	if (m_fFileSummaryShow)
 	{
 		pDC->SelectObject(m_fontSummary);
-		pDC->Rectangle(20, 20, 400, 150);
-		GetTextExtentPoint32W(pDC->m_hDC, m_strFileType.c_str(), m_strFileType.length(), &m_sizeLineDistance);
+		
+		int nLeftIndent = 20, nTopIndent = 20, nRectRight = 400, nRectHeight = 150;
+		GetTextExtentPoint32W(pDC->m_hDC, m_strVersion.c_str(), m_strVersion.length(), &m_sizeTextToDraw);
+		int xToPrint;
+		if (m_sizeTextToDraw.cx < (nRectRight - nLeftIndent))//Rect width
+			xToPrint = (nRectRight - nLeftIndent - m_sizeTextToDraw.cx) / 2 + nLeftIndent;
+		else
+		{
+			nRectRight = m_sizeTextToDraw.cx + nLeftIndent + 30;
+			xToPrint = nLeftIndent + 15;
+		}
+
+		GetTextExtentPoint32W(pDC->m_hDC, m_strFileName.c_str(), m_strFileName.length(), &m_sizeTextToDraw);
+		if (m_sizeTextToDraw.cx > (nRectRight - nLeftIndent))//Rect width
+			nRectRight = m_sizeTextToDraw.cx + nLeftIndent + 30;
+
+		CRect rect { nLeftIndent, nTopIndent, nRectRight, nRectHeight };
+		pDC->Rectangle(&rect);
+
+		GetTextExtentPoint32W(pDC->m_hDC, m_strFileType.c_str(), m_strFileType.length(), &m_sizeTextToDraw);
+
 		pDC->SetTextColor(RGB(200, 50, 30));
-		ExtTextOutW(pDC->m_hDC, 125, 10, 0, nullptr, L"Pepper 0.1 (beta)", 17, nullptr);
+		ExtTextOutW(pDC->m_hDC, xToPrint, 10, 0, nullptr, m_strVersion.c_str(), m_strVersion.length(), nullptr);
+
 		pDC->SetTextColor(RGB(0, 0, 255));
-		ExtTextOutW(pDC->m_hDC, 35, 25 + m_sizeLineDistance.cy, 0, nullptr, m_strFileType.c_str(), m_strFileType.length(), nullptr);
-		ExtTextOutW(pDC->m_hDC, 35, 55 + m_sizeLineDistance.cy, 0, nullptr, m_strFileName.c_str(), m_strFileName.length(), nullptr);
+		ExtTextOutW(pDC->m_hDC, 35, 25 + m_sizeTextToDraw.cy, 0, nullptr, m_strFileType.c_str(), m_strFileType.length(), nullptr);
+		ExtTextOutW(pDC->m_hDC, 35, 55 + m_sizeTextToDraw.cy, 0, nullptr, m_strFileName.c_str(), m_strFileName.length(), nullptr);
 	}
 }
 
@@ -64,6 +86,12 @@ void CViewRightTop::OnInitialUpdate()
 		m_strFileType = L"File type: PE32 (x86)";
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 		m_strFileType = L"File type: PE32+ (x64)";
+	else
+		m_strFileType = L"File type: unknown";
+
+	WCHAR strVersion[MAX_PATH] { };
+	swprintf_s(strVersion, MAX_PATH, L"%S, version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
+	m_strVersion = strVersion;
 
 	m_pLibpe->GetSectionHeaders(&m_pSectionHeaders);
 	m_pLibpe->GetImportTable(&m_pImportTable);

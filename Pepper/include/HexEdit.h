@@ -7,7 +7,7 @@ class CHexEdit : public CWnd
 public:
 	CHexEdit() {};
 	virtual ~CHexEdit() {};
-	BOOL CreateCtrl(CWnd* pParent, const RECT& rect, UINT nID, CFont* pFont = nullptr/*default*/);
+	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CFont* pFont = nullptr/*default*/);
 	CHexEditView* GetActiveView() { return m_pHexEditView; };
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);

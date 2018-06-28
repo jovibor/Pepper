@@ -7,7 +7,7 @@ public:
 	CHexEditView() {};           // protected constructor used by dynamic creation
 	virtual ~CHexEditView();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	BOOL CreateView(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, CFont* pFont);
+	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, CFont* pFont);
 	BOOL SetData(const std::vector<std::byte> *vecData);
 	BOOL SetData(const std::string_view strData, UINT nCount);
 	void SetFontSize(UINT nSize);
@@ -30,7 +30,7 @@ private:
 	UINT m_dwRawDataCount { };
 	SIZE m_sizeLetter { };//Current font's letter size (width, height)
 	CFont* m_pFontHexView { };
-	CFont* m_pFontHexViewDefault { };
+	CFont* m_pFontDefaultHexView { };
 	CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
 	COLORREF m_colorTextOffset { RGB(0, 0, 180) };
 	COLORREF m_colorTextHex { RGB(0, 0, 0) };

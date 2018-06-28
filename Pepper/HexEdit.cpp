@@ -2,8 +2,6 @@
 #include "HexEditView.h"
 #include "HexEdit.h"
 
-#define ID_HEX_VIEW 0x01
-
 IMPLEMENT_DYNAMIC(CHexEdit, CWnd)
 
 BEGIN_MESSAGE_MAP(CHexEdit, CWnd)
@@ -35,17 +33,17 @@ int CHexEdit::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	context.m_pNewViewClass = pNewViewClass;
 
 	m_pHexEditView = (CHexEditView*)pNewViewClass->CreateObject();
-	m_pHexEditView->CreateView(this, CRect(0, 0, 0, 0), ID_HEX_VIEW, &context, m_pFontHexEditView);
+	m_pHexEditView->Create(this, CRect(0, 0, 0, 0), 0x01, &context, m_pFontHexEditView);
 	m_pHexEditView->ShowWindow(SW_SHOW);
 
 	return 0;
 }
 
-BOOL CHexEdit::CreateCtrl(CWnd * pParent, const RECT & rect, UINT nID, CFont* pFont)
+BOOL CHexEdit::Create(CWnd * pParent, const RECT & rect, UINT nID, CFont* pFont)
 {
 	m_pFontHexEditView = pFont;
 
-	return Create(0, 0, WS_VISIBLE | WS_CHILD, rect, pParent, nID);
+	return CWnd::Create(0, 0, WS_VISIBLE | WS_CHILD, rect, pParent, nID);
 }
 
 BOOL CHexEdit::SetData(const std::vector<std::byte>* vecData)

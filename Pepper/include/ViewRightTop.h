@@ -21,7 +21,8 @@ protected:
 	afx_msg void OnListExceptionGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	DECLARE_MESSAGE_MAP()
 private:
-	SIZE m_sizeLineDistance { };
+	std::wstring m_strVersion { };
+	SIZE m_sizeTextToDraw { };
 	CFont m_fontSummary;
 	std::wstring m_strFileName { };
 	std::wstring m_strFileType { };

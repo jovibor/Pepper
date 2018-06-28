@@ -14,15 +14,14 @@ END_MESSAGE_MAP()
 
 CHexEditView::~CHexEditView()
 {
-	delete m_pFontHexViewDefault;
+	delete m_pFontDefaultHexView;
 }
 
-BOOL CHexEditView::CreateView(CWnd * pParent, const RECT & rect, UINT nID, CCreateContext* pContext, CFont* pFont)
+BOOL CHexEditView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCreateContext* pContext, CFont* pFont)
 {
 	SetFont(pFont);
-	Create(0, 0, WS_VISIBLE | WS_CHILD /*| WS_VSCROLL | WS_HSCROLL*/, CRect(0, 0, 0, 0), pParent, nID, pContext);
 
-	return TRUE;
+	return CScrollView::Create(0, 0, WS_VISIBLE | WS_CHILD, CRect(0, 0, 0, 0), pParent, nID, pContext);
 }
 
 void CHexEditView::OnInitialUpdate()
@@ -151,20 +150,21 @@ CFont* CHexEditView::SetFont(CFont *pFont)
 {
 	CFont* pOldFont = m_pFontHexView;
 
+	//If pFont is nullptr then assigning default font.
 	if (!pFont)
 	{
-		if (!m_pFontHexViewDefault)
-			m_pFontHexViewDefault = new CFont();
+		if (!m_pFontDefaultHexView)
+			m_pFontDefaultHexView = new CFont();
 
 		LOGFONT lf { };
 		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
 		lf.lfHeight = 18;
-		if (!m_pFontHexViewDefault->CreateFontIndirectW(&lf))
+		if (!m_pFontDefaultHexView->CreateFontIndirectW(&lf))
 		{
 			StringCchCopyW(lf.lfFaceName, 16, L"Times New Roman");
-			m_pFontHexViewDefault->CreateFontIndirectW(&lf);
+			m_pFontDefaultHexView->CreateFontIndirectW(&lf);
 		}
-		m_pFontHexView = m_pFontHexViewDefault;
+		m_pFontHexView = m_pFontDefaultHexView;
 	}
 	else
 		m_pFontHexView = pFont;
@@ -176,7 +176,8 @@ CFont* CHexEditView::SetFont(CFont *pFont)
 
 void CHexEditView::SetFontSize(UINT nSize)
 {
-	if (nSize < 7 || nSize>80 || !m_pFontHexView)
+	//Prevent font size being too small or too big.
+	if (nSize < 7 || nSize > 80 || !m_pFontHexView)
 		return;
 
 	LOGFONT lf { };
@@ -302,7 +303,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 		nIndentAsciiX = 0;
 		nIndent78 = 0;
 
-		//Main loop to print Hex chunks and Ascii chars (right column)
+		//Main loop for printing Hex chunks and Ascii chars (right column)
 		for (int j = 0; j < 16; j++)
 		{
 			if (j > 7)
@@ -365,7 +366,7 @@ void CHexEditView::Recalc()
 	m_nFirstVertLine = 0;
 	m_nSecondVertLine = m_sizeLetter.cx * 10;
 	m_nIndentBetweenHexChunk = m_sizeLetter.cx * 3;
-	m_nIndentBetween78 = m_sizeLetter.cx*2;
+	m_nIndentBetween78 = m_sizeLetter.cx * 2;
 	m_nThirdVertLine = m_nSecondVertLine + (m_nIndentBetweenHexChunk * 16) + m_nIndentBetween78 + m_sizeLetter.cx;
 	m_nOffsetAscii = m_nThirdVertLine + m_sizeLetter.cx;
 	m_nIndentBetweenAscii = m_sizeLetter.cx + 1;
