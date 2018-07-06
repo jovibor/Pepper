@@ -11,10 +11,10 @@ IMPLEMENT_DYNCREATE(CViewRightTop, CView)
 BEGIN_MESSAGE_MAP(CViewRightTop, CView)
 	ON_WM_SIZE()
 	ON_WM_MOUSEWHEEL()
-	ON_NOTIFY(LVN_GETDISPINFO, LISTID_SECHEADERS, OnListSectionsGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, LISTID_IMPORT_DIR, OnListImportGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, LISTID_RELOCATION_DIR, OnListRelocGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, LISTID_EXCEPTION_DIR, OnListExceptionGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, LISTID_SECHEADERS, &CViewRightTop::OnListSectionsGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, LISTID_IMPORT_DIR, &CViewRightTop::OnListImportGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, LISTID_RELOCATION_DIR, &CViewRightTop::OnListRelocGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, LISTID_EXCEPTION_DIR, &CViewRightTop::OnListExceptionGetDispInfo)
 END_MESSAGE_MAP()
 
 void CViewRightTop::OnDraw(CDC* pDC)
@@ -23,7 +23,7 @@ void CViewRightTop::OnDraw(CDC* pDC)
 	if (m_fFileSummaryShow)
 	{
 		pDC->SelectObject(m_fontSummary);
-		
+
 		int nLeftIndent = 20, nTopIndent = 20, nRectRight = 400, nRectHeight = 150;
 		GetTextExtentPoint32W(pDC->m_hDC, m_strVersion.c_str(), m_strVersion.length(), &m_sizeTextToDraw);
 		int xToPrint;
@@ -599,8 +599,8 @@ int CViewRightTop::listCreateDOSHeader()
 	m_listDOSHeader.SetItemText(listindex, 1, str);
 	swprintf_s(str, 2, L"%X", sizeof(pDosHeader->e_magic));
 	m_listDOSHeader.SetItemText(listindex, 2, str);
-	swprintf_s(str, 3, L"%02X", BYTE(pDosHeader->e_magic));
-	swprintf_s(&str[2], 3, L"%02X", *((BYTE*)(&pDosHeader->e_magic) + 1));
+	swprintf_s(str, 3, L"%02X", pDosHeader->e_magic & 0xFF);
+	swprintf_s(&str[2], 3, L"%02X", (pDosHeader->e_magic >> 8) & 0xFF);
 	m_listDOSHeader.SetItemText(listindex, 3, str);
 
 	listindex = m_listDOSHeader.InsertItem(listindex + 1, L"e_cblp");

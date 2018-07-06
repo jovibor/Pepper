@@ -55,3 +55,19 @@ BOOL CHexEdit::SetData(const std::string_view strData, UINT nCount)
 {
 	return GetActiveView()->SetData(strData, nCount);
 }
+
+CFont* CHexEdit::SetFont(CFont* pFont)
+{
+	return GetActiveView()->SetFont(pFont);
+}
+
+void CHexEdit::SetFontSize(UINT nSize)
+{
+	return GetActiveView()->SetFontSize(nSize);
+}
+
+
+void CHexEdit::SetFontColor(COLORREF clrHex, COLORREF clrOffset)
+{
+	GetActiveView()->SetFontColor(clrHex, clrOffset);
+}

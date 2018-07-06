@@ -34,7 +34,7 @@ if ($fields[1] -eq "MAINTENANCE_VERSION"){
 [int]$MAINTENANCE=$fields[2]
 $MAINTENANCE=$MAINTENANCE + 1
 $regexA=[regex]"#define MAINTENANCE_VERSION(.*)"
-$content = [System.IO.File]::ReadAllText($versionfile) -Replace($regexA,"#define MAINTENANCE_VERSION		$MAINTENANCE")
+$content = [System.IO.File]::ReadAllText($versionfile) -Replace($regexA,"#define MAINTENANCE_VERSION		$MAINTENANCE`r")
 [System.IO.File]::WriteAllText($versionfile, $content)
 }
 if ($fields[1] -eq "REVISION_VERSION"){

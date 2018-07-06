@@ -154,15 +154,16 @@ CFont* CHexEditView::SetFont(CFont *pFont)
 	if (!pFont)
 	{
 		if (!m_pFontDefaultHexView)
-			m_pFontDefaultHexView = new CFont();
-
-		LOGFONT lf { };
-		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
-		lf.lfHeight = 18;
-		if (!m_pFontDefaultHexView->CreateFontIndirectW(&lf))
 		{
-			StringCchCopyW(lf.lfFaceName, 16, L"Times New Roman");
-			m_pFontDefaultHexView->CreateFontIndirectW(&lf);
+			m_pFontDefaultHexView = new CFont();
+			LOGFONT lf { };
+			StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+			lf.lfHeight = 18;
+			if (!m_pFontDefaultHexView->CreateFontIndirectW(&lf))
+			{
+				StringCchCopyW(lf.lfFaceName, 16, L"Times New Roman");
+				m_pFontDefaultHexView->CreateFontIndirectW(&lf);
+			}
 		}
 		m_pFontHexView = m_pFontDefaultHexView;
 	}
@@ -397,4 +398,12 @@ void CHexEditView::Recalc()
 	m_fEraseBkgnd = true;
 
 	Invalidate();
+}
+
+void CHexEditView::SetFontColor(COLORREF clrHex, COLORREF clrOffset)
+{
+	m_colorTextHex = clrHex;
+
+	if (clrOffset)/*if zero use default*/
+		m_colorTextOffset = clrOffset;
 }

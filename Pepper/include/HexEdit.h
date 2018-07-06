@@ -13,12 +13,16 @@ public:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	BOOL SetData(const std::vector<std::byte> *vecData);
-	BOOL SetData(const std::string_view strData, UINT nCount=0);
+	BOOL SetData(const std::string_view strData, UINT nCount = 0);
 private:
 	CHexEditView * m_pHexEditView { };
 	CFont* m_pFontHexEditView { };
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+	CFont * SetFont(CFont* pFont);
+	void SetFontSize(UINT nSize);
+	void SetFontColor(COLORREF clrHex, COLORREF clrOffset);
 };
 
 
