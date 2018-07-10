@@ -14,14 +14,18 @@ public:
 	void SetFontColor(COLORREF clrHex, COLORREF clrOffset = 0);
 	UINT GetFontSize();
 protected:
+	virtual void OnInitialUpdate();     // first time after construct
+	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
-	virtual void OnInitialUpdate();     // first time after construct
+	int HitTest(LPPOINT);
 	void Recalc();
 	DECLARE_MESSAGE_MAP()
 private:
@@ -32,23 +36,30 @@ private:
 	CFont* m_pFontHexView { };
 	CFont* m_pFontDefaultHexView { };
 	CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
-	COLORREF m_colorTextOffset { RGB(0, 0, 180) };
-	COLORREF m_colorTextHex { RGB(0, 0, 0) };
-	UINT m_nOffsetAscii { }; //Indent of Ascii text
-	UINT m_nIndentBetweenHexChunk { }; //indent between two HEX chunks
-	UINT m_nIndentBetweenAscii { }; //Indent between ASCII chars
-	UINT m_nIndentBetween78 { }; //Additional indent to add after 7-th Hex chunk
-	UINT m_nTopHeaderWidth { };
-	UINT m_nFirstVertLine { }, m_nSecondVertLine { }, m_nThirdVertLine { }, m_nFourthVertLine { };
-	UINT m_nFirstHorizLine { }, m_nSecondHorizLine { }, m_nThirdHorizLine { }, m_nFourthHorizLine { };
-	UINT m_nBottomRectWidth { 25 };
-	UINT m_nFirstHexChunkIndent { };
+	COLORREF m_clrTextOffset { RGB(0, 0, 180) };
+	COLORREF m_clrTextHex { RGB(0, 0, 0) };
+	COLORREF m_clrTextBkSelected { RGB(200, 200, 255) };
+	COLORREF m_clrTextBkDefault { RGB(255, 255, 255) };
+	int m_nIndentAscii { }; //Offset of Ascii text begining.
+	int m_nIndentFirstHexChunk { }; //First HEX chunk indentation
+	int m_nIndentBetweenHexChunks { }; //Indent between begining of two HEX chunks.
+	int m_nIndentBetweenAscii { }; //Indent between ASCII chars
+	int m_nIndentBetween78 { }; //Additional indent to add after 7-th Hex chunk
+	int m_nTopHeaderWidth { }; //Width of the header where offset (0 1 2... D E F) resides.
+	int m_nFirstVertLine { }, m_nSecondVertLine { }, m_nThirdVertLine { }, m_nFourthVertLine { };
+	int m_nFirstHorizLine { }, m_nSecondHorizLine { }, m_nThirdHorizLine { }, m_nFourthHorizLine { };
+	int m_nBottomRectWidth { 25 };
 	//	UINT m_nSecondHex { };
-	WCHAR m_strOffset[90] { };
-	const wchar_t* m_strHexMap = L"0123456789ABCDEF";
+	WCHAR m_strOffset[9] { };
+	const wchar_t* const m_strHexMap = L"0123456789ABCDEF";
 	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
 	bool m_fSecondLaunch = false;
 	bool m_fEraseBkgnd = false;
+	bool m_fLMousePressed = false;
+	bool m_fSelection = false;
+	DWORD m_dwSelectionStart { 1}, m_dwSelectionEnd {16 };
+public:
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 };
 
 

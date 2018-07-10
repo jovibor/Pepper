@@ -10,6 +10,10 @@ BEGIN_MESSAGE_MAP(CHexEditView, CScrollView)
 	ON_WM_HSCROLL()
 	ON_WM_MBUTTONDOWN()
 	ON_WM_MOUSEWHEEL()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_RBUTTONUP()
+	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
 CHexEditView::~CHexEditView()
@@ -69,6 +73,38 @@ void CHexEditView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	Invalidate();
 }
 
+int CHexEditView::HitTest(LPPOINT pPoint)
+{
+	DWORD nHexChunk { };
+	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
+
+	//Checkig if cursor is within HEX chunks area
+	if ((pPoint->x >= m_nIndentFirstHexChunk) && (pPoint->x < m_nThirdVertLine) && (pPoint->y >= m_nTopHeaderWidth))
+	{
+		int tmp78 { };
+		if (pPoint->x > m_nIndentFirstHexChunk + (m_nIndentBetweenHexChunks * 8))
+			tmp78 = m_nIndentBetween78;
+		else
+			tmp78 = 0;
+
+		nHexChunk = ((pPoint->x - m_nIndentFirstHexChunk - tmp78) / (m_sizeLetter.cx * 3)) +
+			((pPoint->y - m_nTopHeaderWidth) / m_sizeLetter.cy) * 16 + ((m_stScrollInfo.nPos / m_sizeLetter.cy) * 16);
+	}
+	else if ((pPoint->x >= m_nIndentAscii) && (pPoint->x < m_nIndentAscii + m_nIndentBetweenAscii * 16) && (pPoint->y >= m_nTopHeaderWidth))
+	{
+		nHexChunk = ((pPoint->x - m_nIndentAscii) / (m_nIndentBetweenAscii)) +
+			((pPoint->y - m_nTopHeaderWidth) / m_sizeLetter.cy) * 16 + ((m_stScrollInfo.nPos / m_sizeLetter.cy) * 16);
+	}
+	else
+		nHexChunk = -1;
+
+	//If cursor is out of end-bound of HEX chunks or ASCII chars.
+	if (nHexChunk >= m_dwRawDataCount)
+		nHexChunk = -1;
+
+	return nHexChunk;
+}
+
 void CHexEditView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	GetScrollInfo(SB_HORZ, &m_stScrollInfo, SIF_ALL);
@@ -101,6 +137,20 @@ void CHexEditView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	Invalidate();
 }
 
+void CHexEditView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	if (m_fLMousePressed)
+	{
+		UINT tmpEnd = HitTest(&point);
+		if (tmpEnd != -1) {
+			m_dwSelectionEnd = tmpEnd;
+			Invalidate();
+		}
+	}
+
+	CScrollView::OnMouseMove(nFlags, point);
+}
+
 BOOL CHexEditView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	if (nFlags == MK_CONTROL)
@@ -111,12 +161,40 @@ BOOL CHexEditView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	return CScrollView::OnMouseWheel(nFlags, zDelta, pt);
 }
 
+void CHexEditView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	m_dwSelectionStart = m_dwSelectionEnd = HitTest(&point);
+	
+	if (m_dwSelectionStart != -1)
+	{
+		m_fLMousePressed = true;
+		m_fSelection = true;
+		Invalidate();
+	}
+}
+
+void CHexEditView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	m_fLMousePressed = false;
+
+	CScrollView::OnLButtonUp(nFlags, point);
+}
+
+void CHexEditView::OnRButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	CScrollView::OnRButtonUp(nFlags, point);
+}
+
 void CHexEditView::OnMButtonDown(UINT nFlags, CPoint point)
 {
 }
 
 void CHexEditView::OnSize(UINT nType, int cx, int cy)
 {
+	GetClientRect(&m_rectClient);
+
 	CScrollView::OnSize(nType, cx, cy);
 }
 
@@ -204,14 +282,13 @@ UINT CHexEditView::GetFontSize()
 
 void CHexEditView::OnDraw(CDC* pDC)
 {
-	GetClientRect(&m_rectClient);
-
 	pDC->SelectObject(&m_penLines);
 	pDC->SelectObject(m_pFontHexView);
 
+	//Needed to properly Draw content
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
 
-	//find the nStartLine and nLineEnd posion, print the visible portion
+	//find the nStartLine and nLineEnd posion, draw the visible portion
 	UINT nLineStart = m_stScrollInfo.nPos / m_sizeLetter.cy;
 	UINT nLineEnd = nLineStart + (m_rectClient.Height() - m_nTopHeaderWidth - m_nBottomRectWidth) / m_sizeLetter.cy;
 	if (m_dwRawDataCount == 0)
@@ -241,26 +318,25 @@ void CHexEditView::OnDraw(CDC* pDC)
 	pDC->MoveTo(0, m_nFourthHorizLine);
 	pDC->LineTo(m_nFourthVertLine, m_nFourthHorizLine);
 
-	pDC->SetTextColor(m_colorTextOffset);
-
+	pDC->SetTextColor(m_clrTextOffset);
 	RECT rect;
 	//"Offset" text
 	rect.left = m_nFirstVertLine; rect.top = m_nFirstHorizLine;
 	rect.right = m_nSecondVertLine; rect.bottom = m_nSecondHorizLine;
 	DrawTextW(pDC->m_hDC, L"Offset", 6, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
-	//"Ascii" text
+	//"ASCII" text
 	rect.left = m_nThirdVertLine; rect.top = m_nFirstHorizLine;
 	rect.right = m_nFourthVertLine; rect.bottom = m_nSecondHorizLine;
-	DrawTextW(pDC->m_hDC, L"Ascii", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	DrawTextW(pDC->m_hDC, L"ASCII", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	for (unsigned i = 0; i < 16; i++)
-		if (i > 7)//Top offset text (0 1 2 3 4 5 6 7)
-			ExtTextOutW(pDC->m_hDC, m_nFirstHexChunkIndent + m_sizeLetter.cx + (m_nIndentBetweenHexChunk*i) + m_nIndentBetween78, m_stScrollInfo.nPos + (m_sizeLetter.cy / 6),
-				NULL, nullptr, &m_strHexMap[i], 1, nullptr);
-		else//Top Offset text, part after 7 (8 9 A B C D E F)
-			ExtTextOutW(pDC->m_hDC, m_nFirstHexChunkIndent + m_sizeLetter.cx + (m_nIndentBetweenHexChunk*i), m_stScrollInfo.nPos + (m_sizeLetter.cy / 6),
-				NULL, nullptr, &m_strHexMap[i], 1, nullptr);
+		if (i <= 7) //Top offset text (0 1 2 3 4 5 6 7)
+			ExtTextOutW(pDC->m_hDC, m_nIndentFirstHexChunk + m_sizeLetter.cx + (m_nIndentBetweenHexChunks*i),
+				m_stScrollInfo.nPos + (m_sizeLetter.cy / 6), NULL, nullptr, &m_strHexMap[i], 1, nullptr);
+		else //Top Offset text, part after 7 (8 9 A B C D E F)
+			ExtTextOutW(pDC->m_hDC, m_nIndentFirstHexChunk + m_sizeLetter.cx + (m_nIndentBetweenHexChunks*i) + m_nIndentBetween78,
+				m_stScrollInfo.nPos + (m_sizeLetter.cy / 6), NULL, nullptr, &m_strHexMap[i], 1, nullptr);
 
 	//First Vertical line
 	pDC->MoveTo(m_nFirstVertLine, m_stScrollInfo.nPos);
@@ -278,7 +354,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 	pDC->MoveTo(m_nFourthVertLine, m_stScrollInfo.nPos);
 	pDC->LineTo(m_nFourthVertLine, m_nFourthHorizLine);
 
-	int nIndentHexX = 0, nIndentAsciiX = 0, nLine = 0, nIndent78 = 0;
+	int nIndentHexX { }, nIndentAsciiX { }, nLine { }, nIndent78 { };
 	UINT nFirstHexPosToPrintX { }, nFirstHexPosToPrintY { };
 	//	UINT nSecondHexPosToPrintX { }, nSecondHexPosToPrintY { };
 	UINT nAsciiPosToPrintX { }, nAsciiPosToPrintY { };
@@ -294,30 +370,30 @@ void CHexEditView::OnDraw(CDC* pDC)
 	for (unsigned int i = nLineStart; i < nLineEnd; i++)
 	{
 		swprintf_s(m_strOffset, 9, L"%08X", i * 16);
-		pDC->SetTextColor(m_colorTextOffset);
+		pDC->SetTextColor(m_clrTextOffset);
 
 		//Left column offset Print (00000001...000000A1...)
-		ExtTextOutW(pDC->m_hDC, m_sizeLetter.cx, m_nTopHeaderWidth + (m_sizeLetter.cy*nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
-		pDC->SetTextColor(m_colorTextHex);
+		ExtTextOutW(pDC->m_hDC, m_sizeLetter.cx, m_nTopHeaderWidth + (m_sizeLetter.cy * nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
+		pDC->SetTextColor(m_clrTextHex);
 
 		nIndentHexX = 0;
 		nIndentAsciiX = 0;
 		nIndent78 = 0;
 
-		//Main loop for printing Hex chunks and Ascii chars (right column)
+		//Main loop for printing Hex chunks and ASCII chars (right column)
 		for (int j = 0; j < 16; j++)
 		{
 			if (j > 7)
 				nIndent78 = m_nIndentBetween78;
 
-			nFirstHexPosToPrintX = m_nFirstHexChunkIndent + nIndentHexX + nIndent78;
+			nFirstHexPosToPrintX = m_nIndentFirstHexChunk + nIndentHexX + nIndent78;
 			nFirstHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
 			//	nSecondHexPosToPrintX = m_nSecondHex + nIndentHexX + nIndent78;
 			//	nSecondHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
-			nAsciiPosToPrintX = m_nOffsetAscii + nIndentAsciiX;
+			nAsciiPosToPrintX = m_nIndentAscii + nIndentAsciiX;
 			nAsciiPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
 
-			//Index of next char (in m_pRawData) to print.
+			//Index of next char (in m_pRawData) to draw.
 			nIndexDataToPrint = i * 16 + j;
 
 			if (nIndexDataToPrint < m_dwRawDataCount)
@@ -325,24 +401,39 @@ void CHexEditView::OnDraw(CDC* pDC)
 				strHexToPrint[0] = m_strHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0xF0) >> 4];
 				strHexToPrint[1] = m_strHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0x0F)];
 
-				//HEX chunk print.
+				//Selection draw with different BK color
+				if (m_fSelection && nIndexDataToPrint >= min(m_dwSelectionStart, m_dwSelectionEnd) && nIndexDataToPrint <= max(m_dwSelectionStart, m_dwSelectionEnd))
+					pDC->SetBkColor(m_clrTextBkSelected);
+
+				//HEX chunk draw.
 				ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, &strHexToPrint[0], 2, nullptr);
 
 				chAsciiToPrint = m_pRawData[nIndexDataToPrint];
-				//For non printable Ascii
+				//For non printable ASCII
 				if (chAsciiToPrint < 32 || chAsciiToPrint == 127)
 					chAsciiToPrint = '.';
 
-				//Ascii print
+				//ASCII draw.
 				ExtTextOutA(pDC->m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
+
+				//To prevent change bk color of following space of the last selected HEX chunk.
+				if (m_fSelection && nIndexDataToPrint == max(m_dwSelectionStart, m_dwSelectionEnd))
+					pDC->SetBkColor(m_clrTextBkDefault);
+
+				//Print space after each HEX chunk, excluding last chunk in a row.
+				if (j < 15)
+					if (j == 7)
+						ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX + m_sizeLetter.cx * 2, nFirstHexPosToPrintY, 0, nullptr, L"   ", 3, nullptr);
+					else
+						ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX + m_sizeLetter.cx * 2, nFirstHexPosToPrintY, 0, nullptr, L" ", 1, nullptr);
 			}
 			else
 			{
 				ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
 				ExtTextOutA(pDC->m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
 			}
-			//Increasing indents for next print, for both - Hex and Ascii
-			nIndentHexX += m_nIndentBetweenHexChunk;
+			//Increasing indents for next print, for both - Hex and ASCII
+			nIndentHexX += m_nIndentBetweenHexChunks;
 			nIndentAsciiX += m_nIndentBetweenAscii;
 		}
 		nLine++;
@@ -366,15 +457,15 @@ void CHexEditView::Recalc()
 
 	m_nFirstVertLine = 0;
 	m_nSecondVertLine = m_sizeLetter.cx * 10;
-	m_nIndentBetweenHexChunk = m_sizeLetter.cx * 3;
+	m_nIndentBetweenHexChunks = m_sizeLetter.cx * 3;
 	m_nIndentBetween78 = m_sizeLetter.cx * 2;
-	m_nThirdVertLine = m_nSecondVertLine + (m_nIndentBetweenHexChunk * 16) + m_nIndentBetween78 + m_sizeLetter.cx;
-	m_nOffsetAscii = m_nThirdVertLine + m_sizeLetter.cx;
+	m_nThirdVertLine = m_nSecondVertLine + (m_nIndentBetweenHexChunks * 16) + m_nIndentBetween78 + m_sizeLetter.cx;
+	m_nIndentAscii = m_nThirdVertLine + m_sizeLetter.cx;
 	m_nIndentBetweenAscii = m_sizeLetter.cx + 1;
-	m_nFourthVertLine = m_nOffsetAscii + (m_nIndentBetweenAscii * 16) + m_sizeLetter.cx;
+	m_nFourthVertLine = m_nIndentAscii + (m_nIndentBetweenAscii * 16) + m_sizeLetter.cx;
 
-	m_nFirstHexChunkIndent = m_nSecondVertLine + m_sizeLetter.cx;
-	//	m_nSecondHex = m_nFirstHexChunkIndent + m_sizeLetter.cx;
+	m_nIndentFirstHexChunk = m_nSecondVertLine + m_sizeLetter.cx;
+	//	m_nSecondHex = m_nIndentFirstHexChunk + m_sizeLetter.cx;
 
 	m_nTopHeaderWidth = m_sizeLetter.cy*1.5;
 
@@ -402,8 +493,8 @@ void CHexEditView::Recalc()
 
 void CHexEditView::SetFontColor(COLORREF clrHex, COLORREF clrOffset)
 {
-	m_colorTextHex = clrHex;
+	m_clrTextHex = clrHex;
 
 	if (clrOffset)/*if zero use default*/
-		m_colorTextOffset = clrOffset;
+		m_clrTextOffset = clrOffset;
 }
