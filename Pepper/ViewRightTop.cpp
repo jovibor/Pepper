@@ -856,7 +856,7 @@ int CViewRightTop::listCreateDOSRich()
 		CRect(0, 0, 0, 0), this, LISTID_DOS_RICH);
 	m_listDOSRich.ShowWindow(SW_HIDE);
 	m_listDOSRich.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
-	m_listDOSRich.InsertColumn(0, L"№", LVCFMT_CENTER, 30);
+	m_listDOSRich.InsertColumn(0, L"\u2116", LVCFMT_CENTER, 35);
 	m_listDOSRich.InsertColumn(1, L"ID [Hex]", LVCFMT_LEFT, 100);
 	m_listDOSRich.InsertColumn(2, L"Version", LVCFMT_LEFT, 100);
 	m_listDOSRich.InsertColumn(3, L"Occurrences", LVCFMT_LEFT, 100);

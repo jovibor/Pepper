@@ -108,8 +108,8 @@ void CPepperApp::OnFileOpen()
 
 	//Checking for multi file selection:
 	//If strFilePath at offset [stOFN.nFileOffset - 1] equals '\0'
-	//it means that we have multiple file names following
-	//path name, divided by NULLs ('\0'). See OFN_ALLOWMULTISELECT description.
+	//it means that we have multiple file names following path name,
+	//divided with NULLs ('\0'). See OFN_ALLOWMULTISELECT description.
 	if (strFilePath[stOFN.nFileOffset - 1] == '\0')
 	{
 		WCHAR* str = stOFN.lpstrFile;
@@ -130,7 +130,6 @@ void CPepperApp::OnFileOpen()
 
 void CPepperApp::PreLoadState()
 {
-
 }
 
 BOOL CAboutDlg::OnInitDialog()

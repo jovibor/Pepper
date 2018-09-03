@@ -55,13 +55,13 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	{
 		WCHAR str[MAX_PATH] { };
 		std::wstring strError { };
-		for (auto& i : m_mapLibpeErrors)
-			if (i.first == hr)
-				strError = i.second;
-	
+		auto it = m_mapLibpeErrors.find(hr);
+		if (it != m_mapLibpeErrors.end())
+			strError = it->second;
+		
 		swprintf_s(str, L"File load failed with error code: 0x0%X\n%s", hr, strError.c_str());
-
 		MessageBoxW(0, str, L"File Load Failed", MB_ICONERROR);
+
 		return FALSE;
 	}
 

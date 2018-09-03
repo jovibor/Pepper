@@ -19,13 +19,14 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	int HitTest(LPPOINT);
+	int HitTest(LPPOINT); // Is any hex chunks withing given LPPOINT? 
 	void Recalc();
 	DECLARE_MESSAGE_MAP()
 private:
@@ -46,8 +47,8 @@ private:
 	int m_nIndentBetweenAscii { }; //Indent between ASCII chars
 	int m_nIndentBetween78 { }; //Additional indent to add after 7-th Hex chunk
 	int m_nTopHeaderWidth { }; //Width of the header where offset (0 1 2... D E F) resides.
-	int m_nFirstVertLine { }, m_nSecondVertLine { }, m_nThirdVertLine { }, m_nFourthVertLine { };
-	int m_nFirstHorizLine { }, m_nSecondHorizLine { }, m_nThirdHorizLine { }, m_nFourthHorizLine { };
+	int m_nFirstVertLine { }, m_nSecondVertLine { }, m_nThirdVertLine { }, m_nFourthVertLine { }; //Vertical lines indent
+	int m_nFirstHorizLine { }, m_nSecondHorizLine { }, m_nThirdHorizLine { }, m_nFourthHorizLine { }; //Horizontal lines indent
 	int m_nBottomRectWidth { 25 };
 	//	UINT m_nSecondHex { };
 	WCHAR m_strOffset[9] { };
@@ -58,8 +59,6 @@ private:
 	bool m_fLMousePressed = false;
 	bool m_fSelection = false;
 	DWORD m_dwSelectionStart { 1}, m_dwSelectionEnd {16 };
-public:
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 };
 
 

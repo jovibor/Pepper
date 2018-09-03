@@ -15,7 +15,7 @@ END_MESSAGE_MAP()
 
 void CViewRightBottom::OnDraw(CDC* pDC)
 {
-	
+
 }
 
 void CViewRightBottom::OnInitialUpdate()
@@ -302,6 +302,7 @@ int CViewRightBottom::listCreateRelocations(UINT blockID)
 			swprintf_s(str, MAX_PATH, L"%S", relocTypes[std::get<0>(i)]);
 		else
 			swprintf_s(str, MAX_PATH, L"%u", std::get<0>(i));
+
 		m_listRelocationsDescription.InsertItem(listindex, str);
 		swprintf_s(str, 5, L"%04X", std::get<1>(i));
 		m_listRelocationsDescription.SetItemText(listindex, 1, str);

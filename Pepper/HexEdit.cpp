@@ -66,7 +66,6 @@ void CHexEdit::SetFontSize(UINT nSize)
 	return GetActiveView()->SetFontSize(nSize);
 }
 
-
 void CHexEdit::SetFontColor(COLORREF clrHex, COLORREF clrOffset)
 {
 	GetActiveView()->SetFontColor(clrHex, clrOffset);
