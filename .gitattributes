@@ -1,2 +1,2 @@
-*.h		diff=localizedutf8
-*.cpp	diff=localizedutf8
+*.rc	diff
+*.rc2	diff
