@@ -14,6 +14,10 @@ CPepperListHeader::CPepperListHeader()
 	lf.lfWeight = FW_BOLD;
 	StringCchCopyW(lf.lfFaceName, 16, L"Times New Roman");
 	m_fontHeader.CreateFontIndirectW(&lf);
+
+	m_hdItem.mask = HDI_TEXT;
+	m_hdItem.cchTextMax = MAX_PATH;
+	m_hdItem.pszText = m_strHeaderText;
 }
 
 CPepperListHeader::~CPepperListHeader()
@@ -26,22 +30,14 @@ void CPepperListHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPres
 	pDC->FillSolidRect(&rect, m_colorHeader);
 	pDC->SetTextColor(RGB(255, 255, 255));
 	pDC->DrawEdge(&rect, EDGE_RAISED, BF_RECT);
+	pDC->SelectObject(&m_fontHeader);
 
-	WCHAR strHeaderText[MAX_PATH] { };
-	HDITEMW hdItem;
-	hdItem.mask = HDI_TEXT;
-	hdItem.cchTextMax = MAX_PATH;
-	hdItem.pszText = strHeaderText;
-	GetItem(iItem, &hdItem);
+	GetItem(iItem, &m_hdItem);
 
-	CFont* def_font = pDC->SelectObject(&m_fontHeader);
-
-	if (StrStrW(strHeaderText, L"\n"))
-		pDC->DrawTextW(strHeaderText, &rect, DT_VCENTER | DT_CENTER);
+	if (StrStrW(m_strHeaderText, L"\n"))
+		pDC->DrawTextW(m_strHeaderText, &rect, DT_VCENTER | DT_CENTER);
 	else
-		pDC->DrawTextW(strHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
-
-	pDC->SelectObject(def_font);
+		pDC->DrawTextW(m_strHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
 }
 
 LRESULT  CPepperListHeader::OnLayout(WPARAM wParam, LPARAM lParam)

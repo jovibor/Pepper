@@ -5,6 +5,37 @@
 #include "PepperDoc.h"
 #include "version.h"
 
+class CAboutDlg : public CDialogEx
+{
+public:
+	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
+	virtual BOOL OnInitDialog();
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	DECLARE_MESSAGE_MAP()
+};
+
+BOOL CAboutDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+	WCHAR strVersion[MAX_PATH] { };
+	swprintf_s(strVersion, MAX_PATH, L"%S, Version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
+
+	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, strVersion);
+
+	return TRUE;
+}
+
+void CAboutDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+END_MESSAGE_MAP()
+
+CPepperApp theApp;
+
 BEGIN_MESSAGE_MAP(CPepperApp, CWinAppEx)
 	ON_COMMAND(ID_APP_ABOUT, &CPepperApp::OnAppAbout)
 	ON_COMMAND(ID_FILE_OPEN, &CPepperApp::OnFileOpen)
@@ -14,8 +45,6 @@ CPepperApp::CPepperApp()
 {
 	m_bHiColorIcons = TRUE;
 }
-
-CPepperApp theApp;
 
 BOOL CPepperApp::InitInstance()
 {
@@ -65,35 +94,6 @@ int CPepperApp::ExitInstance()
 {
 	return CWinAppEx::ExitInstance();
 }
-
-class CAboutDlg : public CDialogEx
-{
-public:
-	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
-	virtual BOOL OnInitDialog();
-protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	DECLARE_MESSAGE_MAP()
-};
-
-BOOL CAboutDlg::OnInitDialog()
-{
-	CDialogEx::OnInitDialog();
-	WCHAR strVersion[MAX_PATH] { };
-	swprintf_s(strVersion, MAX_PATH, L"%S, Version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
-
-	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, strVersion);
-
-	return TRUE;
-}
-
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
-	CDialogEx::DoDataExchange(pDX);
-}
-
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-END_MESSAGE_MAP()
 
 void CPepperApp::OnAppAbout()
 {

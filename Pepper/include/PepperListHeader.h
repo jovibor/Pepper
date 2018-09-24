@@ -13,4 +13,6 @@ protected:
 private:
 	CFont m_fontHeader;
 	COLORREF m_colorHeader { RGB(0, 132, 132) };
+	HDITEMW m_hdItem { };
+	WCHAR m_strHeaderText[MAX_PATH] { };
 };
