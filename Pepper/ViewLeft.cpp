@@ -37,12 +37,10 @@ void CViewLeft::OnInitialUpdate()
 	HTREEITEM hTreeDelayImportDir { };
 	HTREEITEM hTreeCOMDescriptorDir { };
 
-	m_pMainDoc = (CPepperDoc*)GetDocument();
-	if (!m_pMainDoc)
+	if(!(m_pMainDoc = (CPepperDoc*)GetDocument()))
 		return;
 
-	m_pLibpe = m_pMainDoc->m_pLibpe;
-	if (!m_pLibpe)
+	if(!(m_pLibpe = m_pMainDoc->m_pLibpe))
 		return;
 
 	const DWORD* m_pFileSummary { };
@@ -178,9 +176,9 @@ void CViewLeft::OnInitialUpdate()
 
 BOOL CViewLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	LPNMTREEVIEW _tree = reinterpret_cast<LPNMTREEVIEW>(lParam);
-	if (_tree->hdr.idFrom == TREEID_LEFT_MAIN && _tree->hdr.code == TVN_SELCHANGED)
-		m_pMainDoc->UpdateAllViews(this, m_TreeMain.GetItemData(_tree->itemNew.hItem));
+	LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
+	if (pTree->hdr.idFrom == TREEID_LEFT_MAIN && pTree->hdr.code == TVN_SELCHANGED)
+		m_pMainDoc->UpdateAllViews(this, m_TreeMain.GetItemData(pTree->itemNew.hItem));
 
 	return CView::OnNotify(wParam, lParam, pResult);
 }

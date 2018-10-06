@@ -32,6 +32,7 @@ void CPepperListHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPres
 	pDC->DrawEdge(&rect, EDGE_RAISED, BF_RECT);
 	pDC->SelectObject(&m_fontHeader);
 
+	m_strHeaderText[0] = L'\0';
 	GetItem(iItem, &m_hdItem);
 
 	if (StrStrW(m_strHeaderText, L"\n"))

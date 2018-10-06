@@ -27,7 +27,7 @@ private:
 	std::wstring m_strFileName { };
 	std::wstring m_strFileType { };
 	Ilibpe * m_pLibpe { };
-	CChildFrame* m_ChildFrame { };
+	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CPepperList m_listDOSHeader;
 	CPepperList m_listDOSRich;
