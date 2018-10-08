@@ -501,13 +501,13 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
 	if (pTree->hdr.idFrom == TREEID_RESOURCE_TOP && pTree->hdr.code == TVN_SELCHANGED)
 	{
-		PLIBPE_RESOURCE_ROOT pTupleResRoot { };
+		PCLIBPE_RESOURCE_ROOT pTupleResRoot { };
 
 		if (m_pLibpe->GetResourceTable(&pTupleResRoot) != S_OK)
 			return -1;
 
-		PLIBPE_RESOURCE_LVL2 pTupleResLvL2 { };
-		PLIBPE_RESOURCE_LVL3 pTupleResLvL3 { };
+		PCLIBPE_RESOURCE_LVL2 pTupleResLvL2 { };
+		PCLIBPE_RESOURCE_LVL3 pTupleResLvL3 { };
 
 		DWORD_PTR nResId = m_treeResourceDirTop.GetItemData(pTree->itemNew.hItem);
 
@@ -563,7 +563,7 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 
 int CViewRightTop::listCreateDOSHeader()
 {
-	PLIBPE_DOSHEADER pDosHeader { };
+	PCLIBPE_DOSHEADER pDosHeader { };
 	if (m_pLibpe->GetMSDOSHeader(&pDosHeader) != S_OK)
 		return -1;
 
@@ -835,8 +835,8 @@ int CViewRightTop::listCreateDOSHeader()
 
 int CViewRightTop::listCreateDOSRich()
 {
-	PLIBPE_RICH_VEC pRichHeader { };
-	if (m_pLibpe->GetMSDOSRichHeader(&pRichHeader) != S_OK)
+	PCLIBPE_RICH_VEC pRichHeader { };
+	if (m_pLibpe->GetRichHeader(&pRichHeader) != S_OK)
 		return -1;
 
 	m_listDOSRich.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
@@ -870,7 +870,7 @@ int CViewRightTop::listCreateDOSRich()
 
 int CViewRightTop::listCreateNTHeader()
 {
-	PLIBPE_NTHEADER pNTHeader { };
+	PCLIBPE_NTHEADER pNTHeader { };
 	if (m_pLibpe->GetNTHeader(&pNTHeader) != S_OK)
 		return -1;
 
@@ -924,7 +924,7 @@ int CViewRightTop::listCreateNTHeader()
 
 int CViewRightTop::listCreateFileHeader()
 {
-	PLIBPE_FILEHEADER pFileHeader { };
+	PCLIBPE_FILEHEADER pFileHeader { };
 	if (m_pLibpe->GetFileHeader(&pFileHeader) != S_OK)
 		return -1;
 
@@ -1072,7 +1072,7 @@ int CViewRightTop::listCreateFileHeader()
 
 int CViewRightTop::listCreateOptHeader()
 {
-	PLIBPE_OPTHEADER pOptHeader { };
+	PCLIBPE_OPTHEADER pOptHeader { };
 	if (m_pLibpe->GetOptionalHeader(&pOptHeader) != S_OK)
 		return -1;
 
@@ -1651,7 +1651,7 @@ int CViewRightTop::listCreateOptHeader()
 
 int CViewRightTop::listCreateDataDirs()
 {
-	PLIBPE_DATADIRS_VEC pLibPeDataDirs { };
+	PCLIBPE_DATADIRS_VEC pLibPeDataDirs { };
 	if (m_pLibpe->GetDataDirectories(&pLibPeDataDirs) != S_OK)
 		return -1;
 
@@ -1920,7 +1920,7 @@ int CViewRightTop::listCreateSections()
 
 int CViewRightTop::listCreateExportDir()
 {
-	PLIBPE_EXPORT pExportTable { };
+	PCLIBPE_EXPORT pExportTable { };
 	if (m_pLibpe->GetExportTable(&pExportTable) != S_OK)
 		return -1;
 
@@ -2033,13 +2033,13 @@ int CViewRightTop::listCreateImportDir()
 
 int CViewRightTop::treeCreateResourceDir()
 {
-	PLIBPE_RESOURCE_ROOT pTupleResRoot { };
+	PCLIBPE_RESOURCE_ROOT pTupleResRoot { };
 
 	if (m_pLibpe->GetResourceTable(&pTupleResRoot) != S_OK)
 		return -1;
 
-	PLIBPE_RESOURCE_LVL2 pTupleResLvL2 { };
-	PLIBPE_RESOURCE_LVL3 pTupleResLvL3 { };
+	PCLIBPE_RESOURCE_LVL2 pTupleResLvL2 { };
+	PCLIBPE_RESOURCE_LVL3 pTupleResLvL3 { };
 
 	m_treeResourceDirTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		CRect(0, 0, 0, 0), this, TREEID_RESOURCE_TOP);
@@ -2138,7 +2138,7 @@ int CViewRightTop::listCreateExceptionDir()
 
 int CViewRightTop::listCreateSecurityDir()
 {
-	PLIBPE_SECURITY_VEC pSecurityDir { };
+	PCLIBPE_SECURITY_VEC pSecurityDir { };
 	if (m_pLibpe->GetSecurityTable(&pSecurityDir) != S_OK)
 		return -1;
 
@@ -2187,7 +2187,7 @@ int CViewRightTop::listCreateRelocDir()
 
 int CViewRightTop::listCreateDebugDir()
 {
-	PLIBPE_DEBUG_VEC pDebugDir { };
+	PCLIBPE_DEBUG_VEC pDebugDir { };
 
 	if (m_pLibpe->GetDebugTable(&pDebugDir) != S_OK)
 		return -1;
@@ -2264,7 +2264,7 @@ int CViewRightTop::listCreateDebugDir()
 
 int CViewRightTop::listCreateTLSDir()
 {
-	PLIBPE_TLS pTLSDir { };
+	PCLIBPE_TLS pTLSDir { };
 	if (m_pLibpe->GetTLSTable(&pTLSDir) != S_OK)
 		return -1;
 
@@ -2390,11 +2390,11 @@ int CViewRightTop::listCreateTLSDir()
 
 int CViewRightTop::listCreateLoadConfigDir()
 {
-	PLIBPE_LOADCONFIGTABLE pLoadConfigTable { };
+	PCLIBPE_LOADCONFIGTABLE pLoadConfigTable { };
 	if (m_pLibpe->GetLoadConfigTable(&pLoadConfigTable) != S_OK)
 		return -1;
 
-	PLIBPE_DATADIRS_VEC pDirs { };
+	PCLIBPE_DATADIRS_VEC pDirs { };
 	if (m_pLibpe->GetDataDirectories(&pDirs) != S_OK)
 		return -1;
 
@@ -3129,7 +3129,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 
 int CViewRightTop::listCreateBoundImportDir()
 {
-	PLIBPE_BOUNDIMPORT_VEC pBoundImport { };
+	PCLIBPE_BOUNDIMPORT_VEC pBoundImport { };
 
 	if (m_pLibpe->GetBoundImportTable(&pBoundImport) != S_OK)
 		return -1;
@@ -3173,7 +3173,7 @@ int CViewRightTop::listCreateBoundImportDir()
 
 int CViewRightTop::listCreateDelayImportDir()
 {
-	PLIBPE_DELAYIMPORT_VEC pDelayImport { };
+	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
 	if (m_pLibpe->GetDelayImportTable(&pDelayImport) != S_OK)
 		return -1;
@@ -3225,7 +3225,7 @@ int CViewRightTop::listCreateDelayImportDir()
 
 int CViewRightTop::listCreateCOMDir()
 {
-	PLIBPE_COM_DESCRIPTOR pCOMDesc { };
+	PCLIBPE_COM_DESCRIPTOR pCOMDesc { };
 
 	if (m_pLibpe->GetCOMDescriptorTable(&pCOMDesc) != S_OK)
 		return -1;

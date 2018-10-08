@@ -101,7 +101,7 @@ void CViewLeft::OnInitialUpdate()
 		m_TreeMain.SetItemData(hTreeSecHeaders, LISTID_SECHEADERS);
 	}
 
-	PLIBPE_DATADIRS_VEC vecDataDirs { };
+	PCLIBPE_DATADIRS_VEC vecDataDirs { };
 	if (m_pLibpe->GetDataDirectories(&vecDataDirs) == S_OK)
 	{
 		hTreeDataDirs = m_TreeMain.InsertItem(L"Data Directories [IMAGE_DATA_DIRECTORY]", iconHdr, iconHdr, hTreeOptHeader);

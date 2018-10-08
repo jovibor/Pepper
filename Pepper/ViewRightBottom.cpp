@@ -116,7 +116,7 @@ void CViewRightBottom::OnSize(UINT nType, int cx, int cy)
 
 int CViewRightBottom::listCreateImportFuncs(UINT dllId)
 {
-	PLIBPE_IMPORT_VEC m_pImportTable { };
+	PCLIBPE_IMPORT_VEC m_pImportTable { };
 
 	if (m_pLibpe->GetImportTable(&m_pImportTable) != S_OK)
 		return -1;
@@ -162,7 +162,7 @@ int CViewRightBottom::listCreateImportFuncs(UINT dllId)
 
 int CViewRightBottom::listCreateDelayImportFuncs(UINT dllId)
 {
-	PLIBPE_DELAYIMPORT_VEC pDelayImport { };
+	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
 	if (m_pLibpe->GetDelayImportTable(&pDelayImport) != S_OK)
 		return -1;
@@ -226,7 +226,7 @@ int CViewRightBottom::listCreateDelayImportFuncs(UINT dllId)
 
 int CViewRightBottom::listCreateExportFuncs()
 {
-	PLIBPE_EXPORT pExportTable { };
+	PCLIBPE_EXPORT pExportTable { };
 
 	if (m_pLibpe->GetExportTable(&pExportTable) != S_OK)
 		return -1;
@@ -264,7 +264,7 @@ int CViewRightBottom::listCreateExportFuncs()
 
 int CViewRightBottom::listCreateRelocations(UINT blockID)
 {
-	PLIBPE_RELOCATION_VEC pRelocTable { };
+	PCLIBPE_RELOCATION_VEC pRelocTable { };
 
 	if (m_pLibpe->GetRelocationTable(&pRelocTable) != S_OK)
 		return -1;
@@ -320,7 +320,7 @@ int CViewRightBottom::listCreateRelocations(UINT blockID)
 
 int CViewRightBottom::treeCreateResourceDir()
 {
-	PLIBPE_RESOURCE_ROOT pResourceTable { };
+	PCLIBPE_RESOURCE_ROOT pResourceTable { };
 
 	if (m_pLibpe->GetResourceTable(&pResourceTable) != S_OK)
 		return -1;
