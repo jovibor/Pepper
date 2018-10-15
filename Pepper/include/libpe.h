@@ -33,9 +33,13 @@ typedef const LIBPE_OPTHEADER *PCLIBPE_OPTHEADER;
 typedef std::vector<std::tuple<IMAGE_DATA_DIRECTORY, std::string>> LIBPE_DATADIRS_VEC;
 typedef const LIBPE_DATADIRS_VEC *PCLIBPE_DATADIRS_VEC;
 
-//Sections.
-typedef std::vector<IMAGE_SECTION_HEADER> LIBPE_SECHEADER_VEC;
-typedef LIBPE_SECHEADER_VEC *PCLIBPE_SECHEADER_VEC;
+//Section header and section real name if presented.
+//For more info check:
+//docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_image_section_header#members
+//«An 8-byte, null-padded UTF-8 string. For longer names, this member contains a forward slash (/) 
+//followed by an ASCII representation of a decimal number that is an offset into the string table.»
+typedef std::vector<std::tuple<IMAGE_SECTION_HEADER, std::string>> LIBPE_SECHEADER_VEC;
+typedef const LIBPE_SECHEADER_VEC *PCLIBPE_SECHEADER_VEC;
 
 //Tuple of: IMAGE_EXPORT_DIRECTORY, Actual export module name
 //and vector of exported funcs: RVA, ordinal, func name, func forwarder name.
@@ -90,7 +94,7 @@ typedef const LIBPE_RELOCATION_VEC *PCLIBPE_RELOCATION_VEC;
 
 //Vector of Debug entries.
 typedef std::vector<IMAGE_DEBUG_DIRECTORY> LIBPE_DEBUG_VEC;
-typedef LIBPE_DEBUG_VEC *PCLIBPE_DEBUG_VEC;
+typedef const LIBPE_DEBUG_VEC *PCLIBPE_DEBUG_VEC;
 
 //TLS tuple. Only one structure is filled depending on file type - x86 or x64, second is zeroed.
 //vector of std::byte — TLS Raw data, vector of TLS Callbacks. 
@@ -120,7 +124,7 @@ typedef const IMAGE_COR20_HEADER *PCLIBPE_COM_DESCRIPTOR;
 class __declspec(novtable) Ilibpe
 {
 public:
-	virtual HRESULT LoadPe(LPCWSTR lpszFileName) = 0;
+	virtual HRESULT LoadPe(LPCWSTR) = 0;
 	virtual HRESULT GetFileSummary(PCDWORD*) = 0;
 	virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER*) = 0;
 	virtual HRESULT GetRichHeader(PCLIBPE_RICH_VEC*) = 0;
@@ -152,9 +156,9 @@ public:
 
 extern "C" HRESULT ILIBPEAPI Getlibpe(Ilibpe**);
 
-/*
-*  Return errors.
-*/
+/*************************************************
+* Return errors.								 *
+*************************************************/
 #define	CALL_LOADPE_FIRST					0xFFFF
 #define	FILE_OPEN_FAILED					0x0010
 #define	FILE_SIZE_TOO_SMALL					0x0011
@@ -186,9 +190,9 @@ extern "C" HRESULT ILIBPEAPI Getlibpe(Ilibpe**);
 #define	IMAGE_HAS_NO_DELAY_IMPORT_DIR		0x002B
 #define	IMAGE_HAS_NO_COMDESCRIPTOR_DIR		0x002C
 
-/*
-* Flags according to loaded PE file properties.
-*/
+/*****************************************************
+* Flags according to loaded PE file properties.		 *
+*****************************************************/
 #define IMAGE_HAS_FLAG(dword, flag) ((dword) & (flag))
 #define IMAGE_PE32_FLAG						0x00000001
 #define IMAGE_PE64_FLAG						0x00000002

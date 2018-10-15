@@ -334,39 +334,43 @@ void CViewRightTop::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 
 	if (pItem->mask & LVIF_TEXT)
 	{
-		WCHAR str[9] { };
+		WCHAR str[50] { };
 
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(str, 9, L"%.8S", m_pSectionHeaders->at(pItem->iItem).Name);
+			if (std::get<1>(m_pSectionHeaders->at(pItem->iItem)).empty())
+				swprintf_s(str, 9, L"%.8S", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).Name);
+			else
+				swprintf_s(str, 50, L"%.8S (%S)", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).Name,
+					std::get<1>(m_pSectionHeaders->at(pItem->iItem)).c_str());
 			break;
 		case 1:
-			swprintf_s(str, 9, L"%08X", m_pSectionHeaders->at(pItem->iItem).Misc.VirtualSize);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).Misc.VirtualSize);
 			break;
 		case 2:
-			swprintf_s(str, 9, L"%08X", m_pSectionHeaders->at(pItem->iItem).VirtualAddress);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).VirtualAddress);
 			break;
 		case 3:
-			swprintf_s(str, 9, L"%08X", m_pSectionHeaders->at(pItem->iItem).SizeOfRawData);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).SizeOfRawData);
 			break;
 		case 4:
-			swprintf_s(str, 9, L"%08X", m_pSectionHeaders->at(pItem->iItem).PointerToRawData);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).PointerToRawData);
 			break;
 		case 5:
-			swprintf_s(str, 9, L"%08X", m_pSectionHeaders->at(pItem->iItem).PointerToRelocations);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).PointerToRelocations);
 			break;
 		case 6:
-			swprintf_s(str, 9, L"%08X", m_pSectionHeaders->at(pItem->iItem).PointerToLinenumbers);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).PointerToLinenumbers);
 			break;
 		case 7:
-			swprintf_s(str, 5, L"%04X", m_pSectionHeaders->at(pItem->iItem).NumberOfRelocations);
+			swprintf_s(str, 5, L"%04X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).NumberOfRelocations);
 			break;
 		case 8:
-			swprintf_s(str, 5, L"%04X", m_pSectionHeaders->at(pItem->iItem).NumberOfLinenumbers);
+			swprintf_s(str, 5, L"%04X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).NumberOfLinenumbers);
 			break;
 		case 9:
-			swprintf_s(str, 9, L"%08X", m_pSectionHeaders->at(pItem->iItem).Characteristics);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).Characteristics);
 			break;
 		}
 		lstrcpynW(pItem->pszText, str, pItem->cchTextMax);
@@ -1885,7 +1889,7 @@ int CViewRightTop::listCreateSections()
 		CRect(0, 0, 0, 0), this, LISTID_SECHEADERS);
 	m_listSecHeaders.ShowWindow(SW_HIDE);
 	m_listSecHeaders.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
-	m_listSecHeaders.InsertColumn(0, L"Name", LVCFMT_CENTER, 75);
+	m_listSecHeaders.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
 	m_listSecHeaders.InsertColumn(1, L"Virtual Size", LVCFMT_LEFT, 100);
 	m_listSecHeaders.InsertColumn(2, L"Virtual Address", LVCFMT_LEFT, 125);
 	m_listSecHeaders.InsertColumn(3, L"SizeOfRawData", LVCFMT_LEFT, 125);
@@ -1903,7 +1907,7 @@ int CViewRightTop::listCreateSections()
 	for (auto &i : *m_pSectionHeaders)
 	{
 		for (auto& flags : m_mapSecFlags)
-			if (flags.first & i.Characteristics)
+			if (flags.first & std::get<0>(i).Characteristics)
 				strTipText += flags.second + L"\n";
 
 		if (!strTipText.empty())
