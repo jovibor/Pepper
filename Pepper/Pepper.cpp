@@ -19,7 +19,7 @@ BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	WCHAR strVersion[MAX_PATH] { };
-	swprintf_s(strVersion, MAX_PATH, L"%S, Version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
+	swprintf_s(strVersion, MAX_PATH, L"%S, Version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION, REVISION_VERSION);
 
 	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, strVersion);
 

@@ -226,7 +226,7 @@ int CViewRightBottom::listCreateDelayImportFuncs(UINT dllId)
 
 int CViewRightBottom::listCreateExportFuncs()
 {
-	PCLIBPE_EXPORT pExportTable { };
+	PCLIBPE_EXPORT_TUP pExportTable { };
 
 	if (m_pLibpe->GetExportTable(&pExportTable) != S_OK)
 		return -1;
@@ -320,13 +320,13 @@ int CViewRightBottom::listCreateRelocations(UINT blockID)
 
 int CViewRightBottom::treeCreateResourceDir()
 {
-	PCLIBPE_RESOURCE_ROOT pResourceTable { };
+	PCLIBPE_RESOURCE_ROOT_TUP pResourceTable { };
 
 	if (m_pLibpe->GetResourceTable(&pResourceTable) != S_OK)
 		return -1;
 
-	LIBPE_RESOURCE_LVL2 pResourceLvL2 { };
-	LIBPE_RESOURCE_LVL3 pResourceLvL3 { };
+	LIBPE_RESOURCE_LVL2_TUP pResourceLvL2 { };
+	LIBPE_RESOURCE_LVL3_TUP pResourceLvL3 { };
 
 	m_treeResourceDirBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, TREEID_RESOURCE_BOTTOM);

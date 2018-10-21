@@ -505,13 +505,13 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
 	if (pTree->hdr.idFrom == TREEID_RESOURCE_TOP && pTree->hdr.code == TVN_SELCHANGED)
 	{
-		PCLIBPE_RESOURCE_ROOT pTupleResRoot { };
+		PCLIBPE_RESOURCE_ROOT_TUP pTupleResRoot { };
 
 		if (m_pLibpe->GetResourceTable(&pTupleResRoot) != S_OK)
 			return -1;
 
-		PCLIBPE_RESOURCE_LVL2 pTupleResLvL2 { };
-		PCLIBPE_RESOURCE_LVL3 pTupleResLvL3 { };
+		PCLIBPE_RESOURCE_LVL2_TUP pTupleResLvL2 { };
+		PCLIBPE_RESOURCE_LVL3_TUP pTupleResLvL3 { };
 
 		DWORD_PTR nResId = m_treeResourceDirTop.GetItemData(pTree->itemNew.hItem);
 
@@ -839,7 +839,7 @@ int CViewRightTop::listCreateDOSHeader()
 
 int CViewRightTop::listCreateDOSRich()
 {
-	PCLIBPE_RICH_VEC pRichHeader { };
+	PCLIBPE_RICHHEADER_VEC pRichHeader { };
 	if (m_pLibpe->GetRichHeader(&pRichHeader) != S_OK)
 		return -1;
 
@@ -874,7 +874,7 @@ int CViewRightTop::listCreateDOSRich()
 
 int CViewRightTop::listCreateNTHeader()
 {
-	PCLIBPE_NTHEADER pNTHeader { };
+	PCLIBPE_NTHEADER_TUP pNTHeader { };
 	if (m_pLibpe->GetNTHeader(&pNTHeader) != S_OK)
 		return -1;
 
@@ -1076,7 +1076,7 @@ int CViewRightTop::listCreateFileHeader()
 
 int CViewRightTop::listCreateOptHeader()
 {
-	PCLIBPE_OPTHEADER pOptHeader { };
+	PCLIBPE_OPTHEADER_TUP pOptHeader { };
 	if (m_pLibpe->GetOptionalHeader(&pOptHeader) != S_OK)
 		return -1;
 
@@ -1924,7 +1924,7 @@ int CViewRightTop::listCreateSections()
 
 int CViewRightTop::listCreateExportDir()
 {
-	PCLIBPE_EXPORT pExportTable { };
+	PCLIBPE_EXPORT_TUP pExportTable { };
 	if (m_pLibpe->GetExportTable(&pExportTable) != S_OK)
 		return -1;
 
@@ -2037,13 +2037,13 @@ int CViewRightTop::listCreateImportDir()
 
 int CViewRightTop::treeCreateResourceDir()
 {
-	PCLIBPE_RESOURCE_ROOT pTupleResRoot { };
+	PCLIBPE_RESOURCE_ROOT_TUP pTupleResRoot { };
 
 	if (m_pLibpe->GetResourceTable(&pTupleResRoot) != S_OK)
 		return -1;
 
-	PCLIBPE_RESOURCE_LVL2 pTupleResLvL2 { };
-	PCLIBPE_RESOURCE_LVL3 pTupleResLvL3 { };
+	PCLIBPE_RESOURCE_LVL2_TUP pTupleResLvL2 { };
+	PCLIBPE_RESOURCE_LVL3_TUP pTupleResLvL3 { };
 
 	m_treeResourceDirTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		CRect(0, 0, 0, 0), this, TREEID_RESOURCE_TOP);
@@ -2268,7 +2268,7 @@ int CViewRightTop::listCreateDebugDir()
 
 int CViewRightTop::listCreateTLSDir()
 {
-	PCLIBPE_TLS pTLSDir { };
+	PCLIBPE_TLS_TUP pTLSDir { };
 	if (m_pLibpe->GetTLSTable(&pTLSDir) != S_OK)
 		return -1;
 
@@ -2394,7 +2394,7 @@ int CViewRightTop::listCreateTLSDir()
 
 int CViewRightTop::listCreateLoadConfigDir()
 {
-	PCLIBPE_LOADCONFIGTABLE pLoadConfigTable { };
+	PCLIBPE_LOADCONFIGTABLE_TUP pLoadConfigTable { };
 	if (m_pLibpe->GetLoadConfigTable(&pLoadConfigTable) != S_OK)
 		return -1;
 

@@ -14,26 +14,26 @@ typedef const DWORD* PCDWORD;
 typedef const IMAGE_DOS_HEADER *PCLIBPE_DOSHEADER;
 
 //Vector of undocumented DOUBLE DWORDs of "Rich" structure.
-typedef std::vector<std::tuple<WORD, WORD, DWORD>> LIBPE_RICH_VEC;
-typedef const LIBPE_RICH_VEC *PCLIBPE_RICH_VEC;
+typedef std::vector<std::tuple<WORD, WORD, DWORD>> LIBPE_RICHHEADER_VEC;
+typedef const LIBPE_RICHHEADER_VEC *PCLIBPE_RICHHEADER_VEC;
 
 //Only one IMAGE_OPTIONAL_HEADER structure of tuple will be filled, 
 //x86 or x64 — depending on file type. Second will be zeroed.
-typedef std::tuple<IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64> LIBPE_NTHEADER;
-typedef const LIBPE_NTHEADER *PCLIBPE_NTHEADER;
+typedef std::tuple<IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64> LIBPE_NTHEADER_TUP;
+typedef const LIBPE_NTHEADER_TUP *PCLIBPE_NTHEADER_TUP;
 
 typedef const IMAGE_FILE_HEADER *PCLIBPE_FILEHEADER;
 
 //Only one structure of tuple will be filled depending on file type
 //x86 or x64. Second will be zeroed.
-typedef std::tuple<IMAGE_OPTIONAL_HEADER32, IMAGE_OPTIONAL_HEADER64> LIBPE_OPTHEADER;
-typedef const LIBPE_OPTHEADER *PCLIBPE_OPTHEADER;
+typedef std::tuple<IMAGE_OPTIONAL_HEADER32, IMAGE_OPTIONAL_HEADER64> LIBPE_OPTHEADER_TUP;
+typedef const LIBPE_OPTHEADER_TUP *PCLIBPE_OPTHEADER_TUP;
 
 //Vector of IMAGE_DATA_DIRECTORY and section name this dir resides in.
 typedef std::vector<std::tuple<IMAGE_DATA_DIRECTORY, std::string>> LIBPE_DATADIRS_VEC;
 typedef const LIBPE_DATADIRS_VEC *PCLIBPE_DATADIRS_VEC;
 
-//Section header and section real name if presented.
+//Section header and section real name, if presented.
 //For more info check:
 //docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_image_section_header#members
 //«An 8-byte, null-padded UTF-8 string. For longer names, this member contains a forward slash (/) 
@@ -43,8 +43,8 @@ typedef const LIBPE_SECHEADER_VEC *PCLIBPE_SECHEADER_VEC;
 
 //Tuple of: IMAGE_EXPORT_DIRECTORY, Actual export module name
 //and vector of exported funcs: RVA, ordinal, func name, func forwarder name.
-typedef std::tuple<IMAGE_EXPORT_DIRECTORY, std::string, std::vector<std::tuple<DWORD, DWORD, std::string, std::string>>> LIBPE_EXPORT;
-typedef const LIBPE_EXPORT *PCLIBPE_EXPORT;
+typedef std::tuple<IMAGE_EXPORT_DIRECTORY, std::string, std::vector<std::tuple<DWORD, DWORD, std::string, std::string>>> LIBPE_EXPORT_TUP;
+typedef const LIBPE_EXPORT_TUP *PCLIBPE_EXPORT_TUP;
 
 //Vector of import modules:
 //IMAGE_IMPORT_DESCRIPTOR, import module name, vector of:
@@ -59,22 +59,22 @@ typedef const LIBPE_IMPORT_VEC *PCLIBPE_IMPORT_VEC;
 typedef std::vector<std::tuple<IMAGE_RESOURCE_DIRECTORY_ENTRY, std::wstring/*ResName*/,
 	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*resource LVL3 RAW data*/>> LIBPE_RESOURCE_LVL3_VEC;
 typedef const LIBPE_RESOURCE_LVL3_VEC *PLIBPE_RESOURCE_LVL3_VEC;
-typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_LVL3_VEC> LIBPE_RESOURCE_LVL3;
-typedef const LIBPE_RESOURCE_LVL3 *PCLIBPE_RESOURCE_LVL3;
+typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_LVL3_VEC> LIBPE_RESOURCE_LVL3_TUP;
+typedef const LIBPE_RESOURCE_LVL3_TUP *PCLIBPE_RESOURCE_LVL3_TUP;
 
 //Level 2 Resources — Includes LVL3 Resourses.
 typedef std::vector<std::tuple<IMAGE_RESOURCE_DIRECTORY_ENTRY, std::wstring/*ResName*/,
-	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*LVL2 RAW data*/, LIBPE_RESOURCE_LVL3>> LIBPE_RESOURCE_LVL2_VEC;
+	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*LVL2 RAW data*/, LIBPE_RESOURCE_LVL3_TUP>> LIBPE_RESOURCE_LVL2_VEC;
 typedef const LIBPE_RESOURCE_LVL2_VEC *PLIBPE_RESOURCE_LVL2_VEC;
-typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_LVL2_VEC> LIBPE_RESOURCE_LVL2;
-typedef const LIBPE_RESOURCE_LVL2 *PCLIBPE_RESOURCE_LVL2;
+typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_LVL2_VEC> LIBPE_RESOURCE_LVL2_TUP;
+typedef const LIBPE_RESOURCE_LVL2_TUP *PCLIBPE_RESOURCE_LVL2_TUP;
 
 //Level 1 (Root) Resources — Includes LVL2 Resources.
 typedef std::vector<std::tuple<IMAGE_RESOURCE_DIRECTORY_ENTRY, std::wstring/*ResName*/,
-	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*LVL1 RAW data*/, LIBPE_RESOURCE_LVL2>> LIBPE_RESOURCE_ROOT_VEC;
+	IMAGE_RESOURCE_DATA_ENTRY, std::vector<std::byte>/*LVL1 RAW data*/, LIBPE_RESOURCE_LVL2_TUP>> LIBPE_RESOURCE_ROOT_VEC;
 typedef const LIBPE_RESOURCE_ROOT_VEC *PLIBPE_RESOURCE_LVL1_VEC;
-typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_ROOT_VEC> LIBPE_RESOURCE_ROOT;
-typedef const LIBPE_RESOURCE_ROOT *PCLIBPE_RESOURCE_ROOT;
+typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_ROOT_VEC> LIBPE_RESOURCE_ROOT_TUP;
+typedef const LIBPE_RESOURCE_ROOT_TUP *PCLIBPE_RESOURCE_ROOT_TUP;
 /***************************************************************************************
 ***************************************************************************************/
 
@@ -98,12 +98,12 @@ typedef const LIBPE_DEBUG_VEC *PCLIBPE_DEBUG_VEC;
 
 //TLS tuple. Only one structure is filled depending on file type - x86 or x64, second is zeroed.
 //vector of std::byte — TLS Raw data, vector of TLS Callbacks. 
-typedef std::tuple<IMAGE_TLS_DIRECTORY32, IMAGE_TLS_DIRECTORY64, std::vector<std::byte>/*Raw Data*/, std::vector<DWORD>> LIBPE_TLS;
-typedef const LIBPE_TLS *PCLIBPE_TLS;
+typedef std::tuple<IMAGE_TLS_DIRECTORY32, IMAGE_TLS_DIRECTORY64, std::vector<std::byte>/*Raw Data*/, std::vector<DWORD>> LIBPE_TLS_TUP;
+typedef const LIBPE_TLS_TUP *PCLIBPE_TLS_TUP;
 
 //Filled depending on file type - x86 or x64, second is zeroed.
-typedef std::tuple<IMAGE_LOAD_CONFIG_DIRECTORY32, IMAGE_LOAD_CONFIG_DIRECTORY64> LIBPE_LOADCONFIGTABLE;
-typedef const LIBPE_LOADCONFIGTABLE *PCLIBPE_LOADCONFIGTABLE;
+typedef std::tuple<IMAGE_LOAD_CONFIG_DIRECTORY32, IMAGE_LOAD_CONFIG_DIRECTORY64> LIBPE_LOADCONFIGTABLE_TUP;
+typedef const LIBPE_LOADCONFIGTABLE_TUP *PCLIBPE_LOADCONFIGTABLE_TUP;
 
 //Vector of: IMAGE_BOUND_IMPORT_DESCRIPTOR, import module name, 
 //vector of: IMAGE_BOUND_FORWARDER_REF, forwarder module name.
@@ -121,27 +121,27 @@ typedef const LIBPE_DELAYIMPORT_VEC *PCLIBPE_DELAYIMPORT_VEC;
 typedef const IMAGE_COR20_HEADER *PCLIBPE_COM_DESCRIPTOR;
 
 //Pure Virtual base class Ilibpe.
-class __declspec(novtable) Ilibpe
+class  Ilibpe
 {
 public:
 	virtual HRESULT LoadPe(LPCWSTR) = 0;
 	virtual HRESULT GetFileSummary(PCDWORD*) = 0;
 	virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER*) = 0;
-	virtual HRESULT GetRichHeader(PCLIBPE_RICH_VEC*) = 0;
-	virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER*) = 0;
+	virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC*) = 0;
+	virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER_TUP*) = 0;
 	virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER*) = 0;
-	virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER*) = 0;
+	virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_TUP*) = 0;
 	virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC*) = 0;
 	virtual HRESULT GetSectionHeaders(PCLIBPE_SECHEADER_VEC*) = 0;
-	virtual HRESULT GetExportTable(PCLIBPE_EXPORT*) = 0;
+	virtual HRESULT GetExportTable(PCLIBPE_EXPORT_TUP*) = 0;
 	virtual HRESULT GetImportTable(PCLIBPE_IMPORT_VEC*) = 0;
-	virtual HRESULT GetResourceTable(PCLIBPE_RESOURCE_ROOT*) = 0;
+	virtual HRESULT GetResourceTable(PCLIBPE_RESOURCE_ROOT_TUP*) = 0;
 	virtual HRESULT GetExceptionTable(PCLIBPE_EXCEPTION_VEC*) = 0;
 	virtual HRESULT GetSecurityTable(PCLIBPE_SECURITY_VEC*) = 0;
 	virtual HRESULT GetRelocationTable(PCLIBPE_RELOCATION_VEC*) = 0;
 	virtual HRESULT GetDebugTable(PCLIBPE_DEBUG_VEC*) = 0;
-	virtual HRESULT GetTLSTable(PCLIBPE_TLS*) = 0;
-	virtual HRESULT GetLoadConfigTable(PCLIBPE_LOADCONFIGTABLE*) = 0;
+	virtual HRESULT GetTLSTable(PCLIBPE_TLS_TUP*) = 0;
+	virtual HRESULT GetLoadConfigTable(PCLIBPE_LOADCONFIGTABLE_TUP*) = 0;
 	virtual HRESULT GetBoundImportTable(PCLIBPE_BOUNDIMPORT_VEC*) = 0;
 	virtual HRESULT GetDelayImportTable(PCLIBPE_DELAYIMPORT_VEC*) = 0;
 	virtual HRESULT GetCOMDescriptorTable(PCLIBPE_COM_DESCRIPTOR*) = 0;
