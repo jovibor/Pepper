@@ -38,8 +38,8 @@ typedef const LIBPE_DATADIRS_VEC *PCLIBPE_DATADIRS_VEC;
 //docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_image_section_header#members
 //«An 8-byte, null-padded UTF-8 string. For longer names, this member contains a forward slash (/) 
 //followed by an ASCII representation of a decimal number that is an offset into the string table.»
-typedef std::vector<std::tuple<IMAGE_SECTION_HEADER, std::string>> LIBPE_SECHEADER_VEC;
-typedef const LIBPE_SECHEADER_VEC *PCLIBPE_SECHEADER_VEC;
+typedef std::vector<std::tuple<IMAGE_SECTION_HEADER, std::string>> LIBPE_SECHEADERS_VEC;
+typedef const LIBPE_SECHEADERS_VEC *PCLIBPE_SECHEADERS_VEC;
 
 //Tuple of: IMAGE_EXPORT_DIRECTORY, Actual export module name
 //and vector of exported funcs: RVA, ordinal, func name, func forwarder name.
@@ -132,7 +132,7 @@ public:
 	virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER*) = 0;
 	virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_TUP*) = 0;
 	virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC*) = 0;
-	virtual HRESULT GetSectionHeaders(PCLIBPE_SECHEADER_VEC*) = 0;
+	virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC*) = 0;
 	virtual HRESULT GetExportTable(PCLIBPE_EXPORT_TUP*) = 0;
 	virtual HRESULT GetImportTable(PCLIBPE_IMPORT_VEC*) = 0;
 	virtual HRESULT GetResourceTable(PCLIBPE_RESOURCE_ROOT_TUP*) = 0;

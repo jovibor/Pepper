@@ -4,7 +4,7 @@ class CHexEditView : public CScrollView
 {
 public:
 	DECLARE_DYNCREATE(CHexEditView)
-	CHexEditView() {};           // protected constructor used by dynamic creation
+	CHexEditView() {}; // protected constructor used by dynamic creation
 	virtual ~CHexEditView();
 	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, CFont* pFont);
 	BOOL SetData(const std::vector<std::byte> *vecData);
@@ -39,7 +39,7 @@ private:
 	CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
 	COLORREF m_clrTextOffset { RGB(0, 0, 180) };
 	COLORREF m_clrTextHex { RGB(0, 0, 0) };
-	COLORREF m_clrTextBkSelected { RGB(200, 200, 255) };
+	COLORREF m_clrTextBkSelection { RGB(200, 200, 255) };
 	COLORREF m_clrTextBkDefault { RGB(255, 255, 255) };
 	int m_nIndentAscii { }; //Offset of Ascii text begining.
 	int m_nIndentFirstHexChunk { }; //First HEX chunk indentation
@@ -58,7 +58,10 @@ private:
 	bool m_fEraseBkgnd = false;
 	bool m_fLMousePressed = false;
 	bool m_fSelection = false;
-	DWORD m_dwSelectionStart { 1}, m_dwSelectionEnd {16 };
+	DWORD m_dwSelectionStart { }, m_dwSelectionEnd { };
+	CRect m_rectSpaceBetweenHex { }; //Space between hex chunks, needs for selection draw.
+	CBrush m_brTextBkSelection { m_clrTextBkSelection };
+	CBrush m_brTextBkDefault { m_clrTextBkDefault };
 };
 
 

@@ -93,7 +93,7 @@ void CViewRightTop::OnInitialUpdate()
 	swprintf_s(strVersion, MAX_PATH, L"%S, version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
 	m_strVersion = strVersion;
 
-	m_pLibpe->GetSectionHeaders(&m_pSectionHeaders);
+	m_pLibpe->GetSectionsHeaders(&m_pSectionHeaders);
 	m_pLibpe->GetImportTable(&m_pImportTable);
 	m_pLibpe->GetExceptionTable(&m_pExceptionDir);
 	m_pLibpe->GetRelocationTable(&m_pRelocTable);

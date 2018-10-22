@@ -54,7 +54,7 @@ private:
 	LONG m_ScrollWidth { };
 	LONG m_ScrollHeight { };
 	std::map<DWORD, std::wstring> m_mapSecFlags { };
-	PCLIBPE_SECHEADER_VEC m_pSectionHeaders { };
+	PCLIBPE_SECHEADERS_VEC m_pSectionHeaders { };
 	PCLIBPE_IMPORT_VEC m_pImportTable { };
 	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
 	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
