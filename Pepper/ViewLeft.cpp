@@ -72,7 +72,7 @@ void CViewLeft::OnInitialUpdate()
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_RICH_HEADER_FLAG))
 	{
 		hTreeDosRich = m_TreeMain.InsertItem(L"\u00ABRich\u00BB Header", iconHdr, iconHdr, hTreeRoot);
-		m_TreeMain.SetItemData(hTreeDosRich, LISTID_DOS_RICH);
+		m_TreeMain.SetItemData(hTreeDosRich, LISTID_RICH_HEADER);
 	}
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))

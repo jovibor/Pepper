@@ -169,9 +169,8 @@ void CViewRightTop::OnInitialUpdate()
 
 void CViewRightTop::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
 {
-	//to prevent some UB.
-	//OnUpdate can be invoked before OnInitialUpdate
-	//Weird MFC.
+	//Check to prevent some UB.
+	//OnUpdate can be invoked before OnInitialUpdate, weird MFC.
 	if (!m_pChildFrame)
 		return;
 
@@ -195,7 +194,7 @@ void CViewRightTop::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*
 		m_pActiveList = &m_listDOSHeader;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_DOS_RICH:
+	case LISTID_RICH_HEADER:
 		m_listDOSRich.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDOSRich;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
@@ -477,6 +476,8 @@ void CViewRightTop::OnListExceptionGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult
 
 BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
+	CScrollView::OnNotify(wParam, lParam, pResult);
+
 	LPNMITEMACTIVATE pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 	if (pNMI->iItem == -1)
 		return TRUE;
@@ -486,19 +487,19 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	case LISTID_IMPORT_DIR:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LISTID_IMPORT_DLL_FUNCS, pNMI->iItem));
-		break;
+		return TRUE;
 	case LISTID_SECURITY_DIR:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(HEXCTRLID_SECURITY_DIR_SERTIFICATE_ID, pNMI->iItem));
-		break;
+		return TRUE;
 	case LISTID_RELOCATION_DIR:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LISTID_RELOCATION_DIR_RELOCS_DESC, pNMI->iItem));
-		break;
+		return TRUE;
 	case LISTID_DELAY_IMPORT_DIR:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LISTID_DELAY_IMPORT_DLL_FUNCS, pNMI->iItem));
-		break;
+		return TRUE;
 	}
 
 
@@ -514,12 +515,10 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		PCLIBPE_RESOURCE_LVL3_TUP pTupleResLvL3 { };
 
 		DWORD_PTR nResId = m_treeResourceDirTop.GetItemData(pTree->itemNew.hItem);
-
 		PIMAGE_RESOURCE_DIRECTORY_ENTRY pResDirEntry { };
+		DWORD_PTR i = 1;//Resource ID (incremental) to set as SetItemData.
 
-		DWORD_PTR i = 1;//Resource ID (incremental) to set as SetItemData
-
-		//Main loop to extract Resources from tuple
+		//Main loop to extract Resources from tuple.
 		for (auto& iterRoot : std::get<1>(*pTupleResRoot))
 		{
 			if (i == nResId)
@@ -562,7 +561,7 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		}
 	}
 
-	return CScrollView::OnNotify(wParam, lParam, pResult);
+	return TRUE;
 }
 
 int CViewRightTop::listCreateDOSHeader()
@@ -844,7 +843,7 @@ int CViewRightTop::listCreateDOSRich()
 		return -1;
 
 	m_listDOSRich.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_DOS_RICH);
+		CRect(0, 0, 0, 0), this, LISTID_RICH_HEADER);
 	m_listDOSRich.ShowWindow(SW_HIDE);
 	m_listDOSRich.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDOSRich.InsertColumn(0, L"\u2116", LVCFMT_CENTER, 35);
@@ -2037,13 +2036,13 @@ int CViewRightTop::listCreateImportDir()
 
 int CViewRightTop::treeCreateResourceDir()
 {
-	PCLIBPE_RESOURCE_ROOT_TUP pTupleResRoot { };
+	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
-	if (m_pLibpe->GetResourceTable(&pTupleResRoot) != S_OK)
+	if (m_pLibpe->GetResourceTable(&pTupResRoot) != S_OK)
 		return -1;
 
-	PCLIBPE_RESOURCE_LVL2_TUP pTupleResLvL2 { };
-	PCLIBPE_RESOURCE_LVL3_TUP pTupleResLvL3 { };
+	PCLIBPE_RESOURCE_LVL2_TUP pTupResLvL2 { };
+	PCLIBPE_RESOURCE_LVL3_TUP pTupResLvL3 { };
 
 	m_treeResourceDirTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		CRect(0, 0, 0, 0), this, TREEID_RESOURCE_TOP);
@@ -2053,12 +2052,12 @@ int CViewRightTop::treeCreateResourceDir()
 
 	const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry { };
 	WCHAR str[MAX_PATH] { };
-	HTREEITEM _treeRoot { }, _treeLvL2 { }, _treeLvL3 { };
+	HTREEITEM treeRoot { }, treeLvL2 { }, treeLvL3 { };
 	int idRootEntry = 0, idLvL2Entry = 0, idLvL3Entry = 0;
-	DWORD_PTR nResId { };//Resource ID (incremental) to set as SetItemData
+	DWORD_PTR nResId { }; //Resource ID (incremental) to set as SetItemData.
 
-	////Main loop to extract Resources from tuple
-	for (auto& iterRoot : std::get<1>(*pTupleResRoot))
+	//Main loop to extract Resources from tuple.
+	for (auto& iterRoot : std::get<1>(*pTupResRoot))
 	{
 		pResDirEntry = &std::get<0>(iterRoot);
 		if (pResDirEntry->DataIsDirectory)
@@ -2068,16 +2067,17 @@ int CViewRightTop::treeCreateResourceDir()
 			else
 				swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", idRootEntry, pResDirEntry->Id);
 
-			_treeRoot = m_treeResourceDirTop.InsertItem(str, hTreeResDir);
+			treeRoot = m_treeResourceDirTop.InsertItem(str, hTreeResDir);
 			nResId++;
-			m_treeResourceDirTop.SetItemData(_treeRoot, nResId);
+			m_treeResourceDirTop.SetItemData(treeRoot, nResId);
 		}
 		else
 		{
 			//DATA
 		}
-		pTupleResLvL2 = &std::get<4>(iterRoot);
-		for (auto& iterLvL2 : std::get<1>(*pTupleResLvL2))
+		
+		pTupResLvL2 = &std::get<4>(iterRoot);
+		for (auto& iterLvL2 : std::get<1>(*pTupResLvL2))
 		{
 			pResDirEntry = &std::get<0>(iterLvL2);
 			if (pResDirEntry->DataIsDirectory)
@@ -2087,16 +2087,17 @@ int CViewRightTop::treeCreateResourceDir()
 				else
 					swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", idLvL2Entry, pResDirEntry->Id);
 
-				_treeLvL2 = m_treeResourceDirTop.InsertItem(str, _treeRoot);
+				treeLvL2 = m_treeResourceDirTop.InsertItem(str, treeRoot);
 				nResId++;
-				m_treeResourceDirTop.SetItemData(_treeLvL2, nResId);
+				m_treeResourceDirTop.SetItemData(treeLvL2, nResId);
 			}
 			else
 			{
 				//DATA
 			}
-			pTupleResLvL3 = &std::get<4>(iterLvL2);
-			for (auto& iterLvL3 : std::get<1>(*pTupleResLvL3))
+
+			pTupResLvL3 = &std::get<4>(iterLvL2);
+			for (auto& iterLvL3 : std::get<1>(*pTupResLvL3))
 			{
 				pResDirEntry = &std::get<0>(iterLvL3);
 
@@ -2105,9 +2106,9 @@ int CViewRightTop::treeCreateResourceDir()
 				else
 					swprintf(str, MAX_PATH, L"Entry: %i, lang: %u", idLvL3Entry, pResDirEntry->Id);
 
-				_treeLvL3 = m_treeResourceDirTop.InsertItem(str, _treeLvL2);
+				treeLvL3 = m_treeResourceDirTop.InsertItem(str, treeLvL2);
 				nResId++;
-				m_treeResourceDirTop.SetItemData(_treeLvL3, nResId);
+				m_treeResourceDirTop.SetItemData(treeLvL3, nResId);
 
 				idLvL3Entry++;
 			}
@@ -3229,7 +3230,7 @@ int CViewRightTop::listCreateDelayImportDir()
 
 int CViewRightTop::listCreateCOMDir()
 {
-	PCLIBPE_COM_DESCRIPTOR pCOMDesc { };
+	PCLIBPE_COMDESCRIPTOR pCOMDesc { };
 
 	if (m_pLibpe->GetCOMDescriptorTable(&pCOMDesc) != S_OK)
 		return -1;

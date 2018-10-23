@@ -1,4 +1,5 @@
 #pragma once
+using namespace libpe;
 
 class CPepperDoc : public CDocument
 {
