@@ -17,42 +17,6 @@ BEGIN_MESSAGE_MAP(CViewRightTop, CView)
 	ON_NOTIFY(LVN_GETDISPINFO, LISTID_EXCEPTION_DIR, &CViewRightTop::OnListExceptionGetDispInfo)
 END_MESSAGE_MAP()
 
-void CViewRightTop::OnDraw(CDC* pDC)
-{	//Printing (drawing) app version/name info and
-	//currently oppened file type and name.
-	if (m_fFileSummaryShow)
-	{
-		pDC->SelectObject(m_fontSummary);
-
-		int nLeftIndent = 20, nTopIndent = 20, nRectRight = 400, nRectHeight = 150;
-		GetTextExtentPoint32W(pDC->m_hDC, m_strVersion.c_str(), m_strVersion.length(), &m_sizeTextToDraw);
-		int xToPrint;
-		if (m_sizeTextToDraw.cx < (nRectRight - nLeftIndent))//Rect width
-			xToPrint = (nRectRight - nLeftIndent - m_sizeTextToDraw.cx) / 2 + nLeftIndent;
-		else
-		{
-			nRectRight = m_sizeTextToDraw.cx + nLeftIndent + 30;
-			xToPrint = nLeftIndent + 15;
-		}
-
-		GetTextExtentPoint32W(pDC->m_hDC, m_strFileName.c_str(), m_strFileName.length(), &m_sizeTextToDraw);
-		if (m_sizeTextToDraw.cx > (nRectRight - nLeftIndent))//Rect width
-			nRectRight = m_sizeTextToDraw.cx + nLeftIndent + 30;
-
-		CRect rect { nLeftIndent, nTopIndent, nRectRight, nRectHeight };
-		pDC->Rectangle(&rect);
-
-		GetTextExtentPoint32W(pDC->m_hDC, m_strFileType.c_str(), m_strFileType.length(), &m_sizeTextToDraw);
-
-		pDC->SetTextColor(RGB(200, 50, 30));
-		ExtTextOutW(pDC->m_hDC, xToPrint, 10, 0, nullptr, m_strVersion.c_str(), m_strVersion.length(), nullptr);
-
-		pDC->SetTextColor(RGB(0, 0, 255));
-		ExtTextOutW(pDC->m_hDC, 35, 25 + m_sizeTextToDraw.cy, 0, nullptr, m_strFileType.c_str(), m_strFileType.length(), nullptr);
-		ExtTextOutW(pDC->m_hDC, 35, 55 + m_sizeTextToDraw.cy, 0, nullptr, m_strFileName.c_str(), m_strFileName.length(), nullptr);
-	}
-}
-
 void CViewRightTop::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
@@ -90,7 +54,7 @@ void CViewRightTop::OnInitialUpdate()
 		m_strFileType = L"File type: unknown";
 
 	WCHAR strVersion[MAX_PATH] { };
-	swprintf_s(strVersion, MAX_PATH, L"%S, version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION + 1, REVISION_VERSION);
+	swprintf_s(strVersion, MAX_PATH, L"%S, version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION, REVISION_VERSION);
 	m_strVersion = strVersion;
 
 	m_pLibpe->GetSectionsHeaders(&m_pSectionHeaders);
@@ -287,6 +251,42 @@ void CViewRightTop::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*
 		break;
 	}
 	m_pChildFrame->m_RightSplitter.RecalcLayout();
+}
+
+void CViewRightTop::OnDraw(CDC* pDC)
+{	//Printing (drawing) app version/name info and
+	//currently oppened file type and name.
+	if (m_fFileSummaryShow)
+	{
+		pDC->SelectObject(m_fontSummary);
+
+		int nLeftIndent = 20, nTopIndent = 20, nRectRight = 400, nRectHeight = 150;
+		GetTextExtentPoint32W(pDC->m_hDC, m_strVersion.c_str(), m_strVersion.length(), &m_sizeTextToDraw);
+		int xToPrint;
+		if (m_sizeTextToDraw.cx < (nRectRight - nLeftIndent)) //Rect width
+			xToPrint = (nRectRight - nLeftIndent - m_sizeTextToDraw.cx) / 2 + nLeftIndent;
+		else
+		{
+			nRectRight = m_sizeTextToDraw.cx + nLeftIndent + 30;
+			xToPrint = nLeftIndent + 15;
+		}
+
+		GetTextExtentPoint32W(pDC->m_hDC, m_strFileName.c_str(), m_strFileName.length(), &m_sizeTextToDraw);
+		if (m_sizeTextToDraw.cx > (nRectRight - nLeftIndent)) //Rect width
+			nRectRight = m_sizeTextToDraw.cx + nLeftIndent + 30;
+
+		CRect rect { nLeftIndent, nTopIndent, nRectRight, nRectHeight };
+		pDC->Rectangle(&rect);
+
+		GetTextExtentPoint32W(pDC->m_hDC, m_strFileType.c_str(), m_strFileType.length(), &m_sizeTextToDraw);
+
+		pDC->SetTextColor(RGB(200, 50, 30));
+		ExtTextOutW(pDC->m_hDC, xToPrint, 10, 0, nullptr, m_strVersion.c_str(), m_strVersion.length(), nullptr);
+
+		pDC->SetTextColor(RGB(0, 0, 255));
+		ExtTextOutW(pDC->m_hDC, 35, 25 + m_sizeTextToDraw.cy, 0, nullptr, m_strFileType.c_str(), m_strFileType.length(), nullptr);
+		ExtTextOutW(pDC->m_hDC, 35, 55 + m_sizeTextToDraw.cy, 0, nullptr, m_strFileName.c_str(), m_strFileName.length(), nullptr);
+	}
 }
 
 void CViewRightTop::OnSize(UINT nType, int cx, int cy)
@@ -2075,7 +2075,7 @@ int CViewRightTop::treeCreateResourceDir()
 		{
 			//DATA
 		}
-		
+
 		pTupResLvL2 = &std::get<4>(iterRoot);
 		for (auto& iterLvL2 : std::get<1>(*pTupResLvL2))
 		{

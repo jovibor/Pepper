@@ -19,7 +19,7 @@
 #define IDI_TREE_MAIN_HEADER_ICON       314
 #define IDI_TREE_MAIN_DIR_ICON          315
 #define IDC_STATIC_VERSION              1004
-
+#define IDC_STATIC_HTTP_GITHUB          1005
 
 // Next default values for new objects
 // 

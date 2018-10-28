@@ -10,18 +10,45 @@ class CAboutDlg : public CDialogEx
 public:
 	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
 	virtual BOOL OnInitDialog();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual void DoDataExchange(CDataExchange* pDX);
+	bool m_fGithubLink { true };
+	HCURSOR m_curHand { };
+	HCURSOR m_curArrow { };
+	HFONT m_fontDefault { };
+	HFONT m_fontUnderline { };
 	DECLARE_MESSAGE_MAP()
 };
+
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+	ON_WM_LBUTTONDOWN()
+	ON_WM_MOUSEMOVE()
+	ON_WM_CTLCOLOR()
+END_MESSAGE_MAP()
 
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	WCHAR strVersion[MAX_PATH] { };
-	swprintf_s(strVersion, MAX_PATH, L"%S, Version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION, REVISION_VERSION);
-
+	swprintf_s(strVersion, MAX_PATH, L"Version: %u.%u.%u.%u", MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION, REVISION_VERSION);
 	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, strVersion);
+
+	//to prevent cursor from blinking
+	SetClassLongPtr(m_hWnd, GCL_HCURSOR, 0);
+
+	m_fontDefault = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+
+	LOGFONT logFont { };
+	GetObject(m_fontDefault, sizeof(logFont), &logFont);
+	logFont.lfUnderline = TRUE;
+
+	m_fontUnderline = CreateFontIndirect(&logFont);
+
+	m_curHand = LoadCursor(nullptr, IDC_HAND);
+	m_curArrow = LoadCursor(nullptr, IDC_ARROW);
 
 	return TRUE;
 }
@@ -31,8 +58,49 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-END_MESSAGE_MAP()
+HBRUSH CAboutDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	switch (pWnd->GetDlgCtrlID())
+	{
+	case IDC_STATIC_HTTP_GITHUB:
+		pDC->SetTextColor(RGB(0, 255, 50));
+		pDC->SelectObject(m_fGithubLink ? m_fontDefault : m_fontUnderline);
+		break;
+	}
+
+	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+void CAboutDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	CWnd* pWnd = ChildWindowFromPoint(point);
+
+	if (!pWnd)
+		return;
+
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB)
+		ShellExecute(nullptr, L"open", L"https://github.com/jovibor/Pepper", nullptr, nullptr, NULL);
+
+	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+void CAboutDlg::OnMouseMove(UINT nFlags, CPoint point)
+{
+	CWnd* pWnd = ChildWindowFromPoint(point);
+
+	if (!pWnd)
+		return;
+
+	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB))
+	{
+		m_fGithubLink = !m_fGithubLink;
+		::InvalidateRect(GetDlgItem(IDC_STATIC_HTTP_GITHUB)->m_hWnd, nullptr, FALSE);
+		SetCursor(m_fGithubLink ? m_curArrow : m_curHand);
+	}
+
+	CDialogEx::OnMouseMove(nFlags, point);
+}
+
 
 CPepperApp theApp;
 
@@ -77,7 +145,7 @@ BOOL CPepperApp::InitInstance()
 	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)
 		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
 
-	// Dispatch commands specified on the command line.  Will return FALSE if
+	// Dispatch commands specified on the command line. Will return FALSE if
 	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
 	if (!ProcessShellCommand(cmdInfo))
 		return FALSE;
@@ -85,7 +153,11 @@ BOOL CPepperApp::InitInstance()
 	pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();
 
-	OnFileOpen();
+	//To prevent OpenFileDialog popup if app was launched by
+	//dropping any file on app's shortcut 
+	//(with command line arg file name to be opened).
+	if (cmdInfo.m_strFileName == "")
+		OnFileOpen();
 
 	return TRUE;
 }
