@@ -5,9 +5,9 @@ class CMainFrame : public CMDIFrameWndEx
 public:
 	DECLARE_DYNAMIC(CMainFrame)
 	CMainFrame() {};
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, 
-		CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr);
+	BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+	BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, 
+		CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr) override;
 	virtual ~CMainFrame() {};
 	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 protected:  // control bar embedded members
@@ -15,7 +15,7 @@ protected:  // control bar embedded members
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnWindowManager();
 	DECLARE_MESSAGE_MAP()
-	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
+	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
 public:
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 };

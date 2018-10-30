@@ -5,7 +5,7 @@ class CChildFrame : public CMDIChildWndEx
 public:
 	DECLARE_DYNCREATE(CChildFrame)
 	CChildFrame() {};
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 	virtual ~CChildFrame() {};
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -13,6 +13,6 @@ public:
 protected:
 	bool m_fSpliterCreated = false;
 	DECLARE_MESSAGE_MAP()
-	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
+	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
 	UINT m_cx { }, m_cy { };
 };

@@ -7,8 +7,8 @@ public:
 	DECLARE_DYNAMIC(CPepperList)
 	CPepperList();
 	virtual ~CPepperList() { m_fontList.DeleteObject(); m_vecToolTips.clear(); };
-	virtual CMFCHeaderCtrl& GetHeaderCtrl() { return m_PepperListHeader; }
-	virtual void InitHeader();
+	CMFCHeaderCtrl& GetHeaderCtrl() override { return m_PepperListHeader; }
+	void InitHeader() override;
 	void SetItemToolTip(int nItem, int nSubitem, const std::wstring& TooltipText, const std::wstring& ToolTipCaption = L"");
 	DECLARE_MESSAGE_MAP()
 private:
@@ -27,8 +27,8 @@ private:
 	bool HasToolTip(int iItem, int iSubItem);
 	bool m_fEraseBkgnd = false;
 	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
-	
-	virtual void DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/);
+
+	void DrawItem(LPDRAWITEMSTRUCT /*lpDrawItemStruct*/) override;
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult);

@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "Pepper.h"
 #include "MainFrm.h"
+#include "resource.h"
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWndEx)
 
@@ -17,9 +17,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CMDIFrameWndEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	SetMenu(0);
-
-	BOOL bNameValid;
+	SetMenu(nullptr);
 
 	CMDITabInfo mdiTabParams;
 	mdiTabParams.m_style = CMFCTabCtrl::STYLE_3D_ONENOTE; // other styles available...
@@ -34,7 +32,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndToolBar.LoadToolBar(IDR_MAINFRAME_256);
 
 	CString strToolBarName;
-	bNameValid = strToolBarName.LoadString(IDS_TOOLBAR_STANDARD);
+	BOOL bNameValid = strToolBarName.LoadString(IDS_TOOLBAR_STANDARD);
 	ASSERT(bNameValid);
 	m_wndToolBar.SetWindowText(strToolBarName);
 

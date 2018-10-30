@@ -6,8 +6,8 @@ class CPepperDoc : public CDocument
 public:
 	virtual ~CPepperDoc() {};
 	CPepperDoc();
-	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
-	virtual void OnCloseDocument();
+	BOOL OnOpenDocument(LPCTSTR lpszPathName) override;
+	void OnCloseDocument() override;
 	Ilibpe* m_pLibpe { };
 protected: // create from serialization only
 	DECLARE_DYNCREATE(CPepperDoc)

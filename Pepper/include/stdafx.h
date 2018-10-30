@@ -14,5 +14,5 @@
 #include <map>
 
 #include "libpe.h"
-#include "Strsafe.h"
+#include "strsafe.h"
 #include "defines.h"

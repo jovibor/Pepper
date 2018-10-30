@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "PepperListHeader.h"
 #include "PepperList.h"
 
 #define TIMER_TOOLTIP 0x1
@@ -44,7 +43,7 @@ BOOL CPepperList::OnEraseBkgnd(CDC* pDC)
 
 void CPepperList::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+//	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 
 	*pResult = 0;
 }

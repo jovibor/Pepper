@@ -14,8 +14,8 @@ public:
 	void SetFontColor(COLORREF clrHex, COLORREF clrOffset = 0);
 	UINT GetFontSize();
 protected:
-	virtual void OnInitialUpdate();     // first time after construct
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+	void OnInitialUpdate() override;     // first time after construct
+	void OnDraw(CDC* pDC) override;      // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
@@ -58,7 +58,7 @@ private:
 	bool m_fEraseBkgnd = false;
 	bool m_fLMousePressed = false;
 	bool m_fSelection = false;
-	DWORD m_dwSelectionStart { }, m_dwSelectionEnd { };
+	long m_dwSelectionStart { }, m_dwSelectionEnd { };
 	CRect m_rectSpaceBetweenHex { }; //Space between hex chunks, needs for selection draw.
 	CBrush m_brTextBkSelection { m_clrTextBkSelection };
 	CBrush m_brTextBkDefault { m_clrTextBkDefault };

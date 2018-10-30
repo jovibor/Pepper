@@ -1,8 +1,5 @@
 #include "stdafx.h"
 #include "ChildFrm.h"
-#include "PepperDoc.h"
-#include "PepperTreeCtrl.h"
-#include "PepperList.h"
 #include "ViewRightTop.h"
 #include "version.h"
 
@@ -511,11 +508,8 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		if (m_pLibpe->GetResourceTable(&pTupleResRoot) != S_OK)
 			return -1;
 
-		PCLIBPE_RESOURCE_LVL2_TUP pTupleResLvL2 { };
-		PCLIBPE_RESOURCE_LVL3_TUP pTupleResLvL3 { };
+		const DWORD_PTR nResId = m_treeResourceDirTop.GetItemData(pTree->itemNew.hItem);
 
-		DWORD_PTR nResId = m_treeResourceDirTop.GetItemData(pTree->itemNew.hItem);
-		PIMAGE_RESOURCE_DIRECTORY_ENTRY pResDirEntry { };
 		DWORD_PTR i = 1;//Resource ID (incremental) to set as SetItemData.
 
 		//Main loop to extract Resources from tuple.
@@ -531,7 +525,7 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			}
 			i++;
 
-			pTupleResLvL2 = &std::get<4>(iterRoot);
+			PCLIBPE_RESOURCE_LVL2_TUP pTupleResLvL2 = &std::get<4>(iterRoot);
 			for (auto& iterLvL2 : std::get<1>(*pTupleResLvL2))
 			{
 				if (i == nResId)
@@ -544,7 +538,7 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 				}
 				i++;
 
-				pTupleResLvL3 = &std::get<4>(iterLvL2);
+				PCLIBPE_RESOURCE_LVL3_TUP pTupleResLvL3 = &std::get<4>(iterLvL2);
 				for (auto& iterLvL3 : std::get<1>(*pTupleResLvL3))
 				{
 					if (i == nResId)
@@ -573,7 +567,7 @@ int CViewRightTop::listCreateDOSHeader()
 	m_listDOSHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_DOS_HEADER);
 	m_listDOSHeader.ShowWindow(SW_HIDE);
-	m_listDOSHeader.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listDOSHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDOSHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
 	m_listDOSHeader.InsertColumn(1, L"Offset", LVCFMT_LEFT, 100);
 	m_listDOSHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
@@ -845,7 +839,7 @@ int CViewRightTop::listCreateDOSRich()
 	m_listDOSRich.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_RICH_HEADER);
 	m_listDOSRich.ShowWindow(SW_HIDE);
-	m_listDOSRich.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listDOSRich.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDOSRich.InsertColumn(0, L"\u2116", LVCFMT_CENTER, 35);
 	m_listDOSRich.InsertColumn(1, L"ID [Hex]", LVCFMT_LEFT, 100);
 	m_listDOSRich.InsertColumn(2, L"Version", LVCFMT_LEFT, 100);
@@ -880,20 +874,18 @@ int CViewRightTop::listCreateNTHeader()
 	m_listNTHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_NT_HEADER);
 	m_listNTHeader.ShowWindow(SW_HIDE);
-	m_listNTHeader.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listNTHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listNTHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 100);
 	m_listNTHeader.InsertColumn(1, L"Offset", LVCFMT_LEFT, 100);
 	m_listNTHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listNTHeader.InsertColumn(3, L"Value", LVCFMT_LEFT, 100);
 
-	const IMAGE_NT_HEADERS32* pNTHeader32 { };
-	const IMAGE_NT_HEADERS64* pNTHeader64 { };
 	WCHAR str[9] { };
 	UINT listindex = 0;
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
 	{
-		pNTHeader32 = &std::get<0>(*pNTHeader);
+		const IMAGE_NT_HEADERS32* pNTHeader32 = &std::get<0>(*pNTHeader);
 
 		listindex = m_listNTHeader.InsertItem(listindex, L"Signature");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, Signature) + m_dwPeStart);
@@ -908,7 +900,7 @@ int CViewRightTop::listCreateNTHeader()
 	}
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 	{
-		pNTHeader64 = &std::get<1>(*pNTHeader);
+		const IMAGE_NT_HEADERS64* pNTHeader64 = &std::get<1>(*pNTHeader);
 
 		listindex = m_listNTHeader.InsertItem(listindex, L"Signature");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS64, Signature) + m_dwPeStart);
@@ -935,8 +927,7 @@ int CViewRightTop::listCreateFileHeader()
 		CRect(0, 0, 0, 0), this, LISTID_FILE_HEADER);
 
 	m_listFileHeader.ShowWindow(SW_HIDE);
-	m_listFileHeader.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
-
+	m_listFileHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listFileHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 200);
 	m_listFileHeader.InsertColumn(1, L"Offset", LVCFMT_LEFT, 100);
 	m_listFileHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
@@ -1125,16 +1116,13 @@ int CViewRightTop::listCreateOptHeader()
 	{ IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE, L"IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE" }
 	};
 
-	const IMAGE_OPTIONAL_HEADER32* pOptHeader32 { };
-	const IMAGE_OPTIONAL_HEADER64* pOptHeader64 { };
-
 	WCHAR str[MAX_PATH] { };
 	std::wstring strTmp { };
 	int listindex = 0;
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
 	{
-		pOptHeader32 = &std::get<0>(*pOptHeader);
+		const IMAGE_OPTIONAL_HEADER32* pOptHeader32 = &std::get<0>(*pOptHeader);
 
 		listindex = m_listOptHeader.InsertItem(listindex, L"Magic");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, OptionalHeader.Magic) + m_dwPeStart);
@@ -1340,7 +1328,7 @@ int CViewRightTop::listCreateOptHeader()
 			if (i.first & pOptHeader32->DllCharacteristics)
 				strTmp += i.second + L"\n";
 		}
-		if (strTmp.size())
+		if (!strTmp.empty())
 		{
 			strTmp.erase(strTmp.size() - 1);//to remove last '\n'
 			m_listOptHeader.SetItemToolTip(listindex, 3, strTmp, L"DllCharacteristics:");
@@ -1396,7 +1384,7 @@ int CViewRightTop::listCreateOptHeader()
 	}
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 	{
-		pOptHeader64 = &std::get<1>(*pOptHeader);
+		const IMAGE_OPTIONAL_HEADER64* pOptHeader64 = &std::get<1>(*pOptHeader);
 
 		listindex = m_listOptHeader.InsertItem(listindex, L"Magic");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS64, OptionalHeader.Magic) + m_dwPeStart);
@@ -1661,18 +1649,15 @@ int CViewRightTop::listCreateDataDirs()
 	m_listDataDirs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_DATA_DIRS);
 	m_listDataDirs.ShowWindow(SW_HIDE);
-	m_listDataDirs.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listDataDirs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDataDirs.InsertColumn(0, L"Name", LVCFMT_CENTER, 200);
 	m_listDataDirs.InsertColumn(1, L"Offset", LVCFMT_LEFT, 100);
 	m_listDataDirs.InsertColumn(2, L"Directory RVA", LVCFMT_LEFT, 100);
 	m_listDataDirs.InsertColumn(3, L"Directory Size", LVCFMT_LEFT, 100);
 	m_listDataDirs.InsertColumn(4, L"Resides in Section", LVCFMT_LEFT, 125);
 
-	PIMAGE_NT_HEADERS32 ntH32 { };
-	PIMAGE_NT_HEADERS64 ntH64 { };
 	WCHAR str[9] { };
 	UINT listindex = 0;
-
 	DWORD dwDataDirsOffset { };
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
@@ -1887,7 +1872,7 @@ int CViewRightTop::listCreateSections()
 	m_listSecHeaders.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_SECHEADERS);
 	m_listSecHeaders.ShowWindow(SW_HIDE);
-	m_listSecHeaders.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	m_listSecHeaders.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 	m_listSecHeaders.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
 	m_listSecHeaders.InsertColumn(1, L"Virtual Size", LVCFMT_LEFT, 100);
 	m_listSecHeaders.InsertColumn(2, L"Virtual Address", LVCFMT_LEFT, 125);
@@ -1934,7 +1919,7 @@ int CViewRightTop::listCreateExportDir()
 	m_listExportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_EXPORT_DIR);
 	m_listExportDir.ShowWindow(SW_HIDE);
-	m_listExportDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listExportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 250);
 	m_listExportDir.InsertColumn(1, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listExportDir.InsertColumn(2, L"Value", LVCFMT_LEFT, 300);
@@ -2022,7 +2007,7 @@ int CViewRightTop::listCreateImportDir()
 	m_listImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_IMPORT_DIR);
 	m_listImportDir.ShowWindow(SW_HIDE);
-	m_listImportDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 330);
 	m_listImportDir.InsertColumn(1, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_LEFT, 170);
 	m_listImportDir.InsertColumn(2, L"TimeDateStamp", LVCFMT_LEFT, 115);
@@ -2041,25 +2026,21 @@ int CViewRightTop::treeCreateResourceDir()
 	if (m_pLibpe->GetResourceTable(&pTupResRoot) != S_OK)
 		return -1;
 
-	PCLIBPE_RESOURCE_LVL2_TUP pTupResLvL2 { };
-	PCLIBPE_RESOURCE_LVL3_TUP pTupResLvL3 { };
-
 	m_treeResourceDirTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		CRect(0, 0, 0, 0), this, TREEID_RESOURCE_TOP);
 	m_treeResourceDirTop.ShowWindow(SW_HIDE);
 
-	HTREEITEM hTreeResDir = m_treeResourceDirTop.InsertItem(L"Root Directory");
+	const HTREEITEM hTreeResDir = m_treeResourceDirTop.InsertItem(L"Root Directory");
 
-	const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry { };
 	WCHAR str[MAX_PATH] { };
-	HTREEITEM treeRoot { }, treeLvL2 { }, treeLvL3 { };
+	HTREEITEM treeRoot { }, treeLvL2 { };
 	int idRootEntry = 0, idLvL2Entry = 0, idLvL3Entry = 0;
 	DWORD_PTR nResId { }; //Resource ID (incremental) to set as SetItemData.
 
 	//Main loop to extract Resources from tuple.
 	for (auto& iterRoot : std::get<1>(*pTupResRoot))
 	{
-		pResDirEntry = &std::get<0>(iterRoot);
+		const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry = &std::get<0>(iterRoot);
 		if (pResDirEntry->DataIsDirectory)
 		{
 			if (pResDirEntry->NameIsString)
@@ -2076,7 +2057,7 @@ int CViewRightTop::treeCreateResourceDir()
 			//DATA
 		}
 
-		pTupResLvL2 = &std::get<4>(iterRoot);
+		PCLIBPE_RESOURCE_LVL2_TUP pTupResLvL2 = &std::get<4>(iterRoot);
 		for (auto& iterLvL2 : std::get<1>(*pTupResLvL2))
 		{
 			pResDirEntry = &std::get<0>(iterLvL2);
@@ -2096,7 +2077,7 @@ int CViewRightTop::treeCreateResourceDir()
 				//DATA
 			}
 
-			pTupResLvL3 = &std::get<4>(iterLvL2);
+			PCLIBPE_RESOURCE_LVL3_TUP pTupResLvL3 = &std::get<4>(iterLvL2);
 			for (auto& iterLvL3 : std::get<1>(*pTupResLvL3))
 			{
 				pResDirEntry = &std::get<0>(iterLvL3);
@@ -2106,7 +2087,7 @@ int CViewRightTop::treeCreateResourceDir()
 				else
 					swprintf(str, MAX_PATH, L"Entry: %i, lang: %u", idLvL3Entry, pResDirEntry->Id);
 
-				treeLvL3 = m_treeResourceDirTop.InsertItem(str, treeLvL2);
+				HTREEITEM treeLvL3 = m_treeResourceDirTop.InsertItem(str, treeLvL2);
 				nResId++;
 				m_treeResourceDirTop.SetItemData(treeLvL3, nResId);
 
@@ -2132,7 +2113,7 @@ int CViewRightTop::listCreateExceptionDir()
 	m_listExceptionDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_EXCEPTION_DIR);
 	m_listExceptionDir.ShowWindow(SW_HIDE);
-	m_listExceptionDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listExceptionDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExceptionDir.InsertColumn(0, L"BeginAddress", LVCFMT_CENTER, 100);
 	m_listExceptionDir.InsertColumn(1, L"EndAddress", LVCFMT_LEFT, 100);
 	m_listExceptionDir.InsertColumn(2, L"UnwindData/InfoAddress", LVCFMT_LEFT, 180);
@@ -2150,7 +2131,7 @@ int CViewRightTop::listCreateSecurityDir()
 	m_listSecurityDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_SECURITY_DIR);
 	m_listSecurityDir.ShowWindow(SW_HIDE);
-	m_listSecurityDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listSecurityDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listSecurityDir.InsertColumn(0, L"dwLength", LVCFMT_CENTER, 100);
 	m_listSecurityDir.InsertColumn(1, L"wRevision", LVCFMT_LEFT, 100);
 	m_listSecurityDir.InsertColumn(2, L"wCertificateType", LVCFMT_LEFT, 180);
@@ -2181,7 +2162,7 @@ int CViewRightTop::listCreateRelocDir()
 	m_listRelocDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_RELOCATION_DIR);
 	m_listRelocDir.ShowWindow(SW_HIDE);
-	m_listRelocDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listRelocDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocDir.InsertColumn(0, L"Virtual Address", LVCFMT_CENTER, 115);
 	m_listRelocDir.InsertColumn(1, L"Block Size", LVCFMT_LEFT, 100);
 	m_listRelocDir.InsertColumn(2, L"Entries", LVCFMT_LEFT, 100);
@@ -2200,7 +2181,7 @@ int CViewRightTop::listCreateDebugDir()
 	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_DEBUG_DIR);
 	m_listDebugDir.ShowWindow(SW_HIDE);
-	m_listDebugDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listDebugDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDebugDir.InsertColumn(0, L"Characteristics", LVCFMT_CENTER, 115);
 	m_listDebugDir.InsertColumn(1, L"TimeDateStamp", LVCFMT_LEFT, 150);
 	m_listDebugDir.InsertColumn(2, L"MajorVersion", LVCFMT_LEFT, 100);
@@ -2276,7 +2257,7 @@ int CViewRightTop::listCreateTLSDir()
 	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_TLS_DIR);
 	m_listTLSDir.ShowWindow(SW_HIDE);
-	m_listTLSDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listTLSDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listTLSDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 250);
 	m_listTLSDir.InsertColumn(1, L"Size [BYTES]", LVCFMT_LEFT, 110);
 	m_listTLSDir.InsertColumn(2, L"Value", LVCFMT_LEFT, 150);
@@ -2406,7 +2387,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_LOAD_CONFIG_DIR);
 	m_listLoadConfigDir.ShowWindow(SW_HIDE);
-	m_listLoadConfigDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listLoadConfigDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listLoadConfigDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 330);
 	m_listLoadConfigDir.InsertColumn(1, L"Size [BYTES]", LVCFMT_LEFT, 110);
 	m_listLoadConfigDir.InsertColumn(2, L"Value", LVCFMT_LEFT, 300);
@@ -2428,8 +2409,6 @@ int CViewRightTop::listCreateLoadConfigDir()
 	{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT\n Shift to right-justify Guard CF function table stride" }
 	};
 
-	const IMAGE_LOAD_CONFIG_DIRECTORY32* pLoadConfDir32 { };
-	const IMAGE_LOAD_CONFIG_DIRECTORY64* pLoadConfDir64 { };
 	int listindex = 0;
 	TCHAR str[MAX_PATH] { };
 	std::wstring _tooltip { };
@@ -2438,7 +2417,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
 	{
-		pLoadConfDir32 = &std::get<0>(*pLoadConfigTable);
+		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLoadConfDir32 = &std::get<0>(*pLoadConfigTable);
 
 		listindex = m_listLoadConfigDir.InsertItem(listindex, L"Size");
 		swprintf_s(str, 3, L"%u", sizeof(pLoadConfDir32->Size));
@@ -2718,7 +2697,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 	}
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 	{
-		pLoadConfDir64 = &std::get<1>(*pLoadConfigTable);
+		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLoadConfDir64 = &std::get<1>(*pLoadConfigTable);
 
 		dwTotalSize += sizeof(pLoadConfDir64->Size);
 		if (dwTotalSize > dwLCTSize)
@@ -3142,7 +3121,7 @@ int CViewRightTop::listCreateBoundImportDir()
 	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DIR);
 	m_listBoundImportDir.ShowWindow(SW_HIDE);
-	m_listBoundImportDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listBoundImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listBoundImportDir.InsertColumn(0, L"Module Name", LVCFMT_CENTER, 290);
 	m_listBoundImportDir.InsertColumn(1, L"TimeDateStamp", LVCFMT_LEFT, 130);
 	m_listBoundImportDir.InsertColumn(2, L"OffsetModuleName", LVCFMT_LEFT, 140);
@@ -3150,11 +3129,10 @@ int CViewRightTop::listCreateBoundImportDir()
 
 	WCHAR str[MAX_PATH] { };
 	int listindex = 0;
-	const IMAGE_BOUND_IMPORT_DESCRIPTOR* pBoundImpDir { };
 
 	for (auto& i : *pBoundImport)
 	{
-		pBoundImpDir = &std::get<0>(i);
+		const IMAGE_BOUND_IMPORT_DESCRIPTOR* pBoundImpDir = &std::get<0>(i);
 		swprintf_s(str, MAX_PATH, L"%S", std::get<1>(i).c_str());
 		m_listBoundImportDir.InsertItem(listindex, str);
 		swprintf_s(str, MAX_PATH, L"%08X", pBoundImpDir->TimeDateStamp);
@@ -3186,7 +3164,7 @@ int CViewRightTop::listCreateDelayImportDir()
 	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DIR);
 	m_listDelayImportDir.ShowWindow(SW_HIDE);
-	m_listDelayImportDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listDelayImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 290);
 	m_listDelayImportDir.InsertColumn(1, L"Attributes", LVCFMT_LEFT, 100);
 	m_listDelayImportDir.InsertColumn(2, L"DllNameRVA", LVCFMT_LEFT, 105);
@@ -3238,7 +3216,7 @@ int CViewRightTop::listCreateCOMDir()
 	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DIR);
 	m_listCOMDir.ShowWindow(SW_HIDE);
-	m_listCOMDir.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listCOMDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listCOMDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 300);
 	m_listCOMDir.InsertColumn(1, L"Value", LVCFMT_LEFT, 100);
 

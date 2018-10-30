@@ -1,9 +1,8 @@
 #include "stdafx.h"
-#include "Pepper.h"
 #include "PepperDoc.h"
-#include "PepperTreeCtrl.h"
-#include "PepperList.h"
+#include "ChildFrm.h"
 #include "ViewRightBottom.h"
+#include "resource.h"
 
 IMPLEMENT_DYNCREATE(CViewRightBottom, CView)
 
@@ -15,7 +14,6 @@ END_MESSAGE_MAP()
 
 void CViewRightBottom::OnDraw(CDC* pDC)
 {
-
 }
 
 void CViewRightBottom::OnInitialUpdate()
@@ -128,7 +126,7 @@ int CViewRightBottom::listCreateImportFuncs(UINT dllId)
 	m_listImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_IMPORT_DLL_FUNCS);
 
-	m_listImportFuncs.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 175);
 	m_listImportFuncs.InsertColumn(1, L"Ordinal / Hint", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
 	m_listImportFuncs.InsertColumn(2, L"ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 150);
@@ -174,7 +172,7 @@ int CViewRightBottom::listCreateDelayImportFuncs(UINT dllId)
 	m_listDelayImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DLL_FUNCS);
 
-	m_listDelayImportFuncs.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listDelayImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
 	m_listDelayImportFuncs.InsertColumn(1, L"Ordinal / Hint", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
 	m_listDelayImportFuncs.InsertColumn(2, L"ImportNameTable ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 200);
@@ -234,7 +232,7 @@ int CViewRightBottom::listCreateExportFuncs()
 	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_EXPORT_FUNCS);
 	m_listExportFuncs.ShowWindow(SW_HIDE);
-	m_listExportFuncs.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listExportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportFuncs.InsertColumn(0, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
 	m_listExportFuncs.InsertColumn(1, L"Ordinal", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
 	m_listExportFuncs.InsertColumn(2, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
@@ -274,7 +272,7 @@ int CViewRightBottom::listCreateRelocations(UINT blockID)
 	m_listRelocationsDescription.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
 		CRect(0, 0, 0, 0), this, LISTID_RELOCATION_TYPE);
 	m_listRelocationsDescription.ShowWindow(SW_HIDE);
-	m_listRelocationsDescription.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listRelocationsDescription.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocationsDescription.InsertColumn(0, L"Reloc type", LVCFMT_CENTER, 250);
 	m_listRelocationsDescription.InsertColumn(1, L"Offset", LVCFMT_LEFT, 100);
 
@@ -356,9 +354,7 @@ int CViewRightBottom::treeCreateResourceDir()
 	{ 24, L"MANIFEST" }
 	};
 
-	const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry { };
 	WCHAR str[MAX_PATH] { };
-	HTREEITEM _treeRoot { };
 
 	m_imglTreeResource.Create(16, 16, ILC_COLOR32, 0, 4);
 	int iconDirs = m_imglTreeResource.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_DIR_ICON));
@@ -367,7 +363,7 @@ int CViewRightBottom::treeCreateResourceDir()
 
 	for (auto& iterRoot : std::get<1>(*pResourceTable))
 	{
-		pResDirEntry = &std::get<0>(iterRoot);
+		const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry = &std::get<0>(iterRoot);
 		if (pResDirEntry->NameIsString)
 			//Enclose in double quotes
 			swprintf(str, MAX_PATH, L"\u00AB%s\u00BB", std::get<1>(iterRoot).c_str());
@@ -378,9 +374,9 @@ int CViewRightBottom::treeCreateResourceDir()
 			else
 				swprintf(str, MAX_PATH, L"%u", pResDirEntry->Id);
 		}
-		_treeRoot = m_treeResourceDirBottom.InsertItem(str, iconDirs, iconDirs);
+		const HTREEITEM treeRoot = m_treeResourceDirBottom.InsertItem(str, iconDirs, iconDirs);
 		nResId++;
-		m_treeResourceDirBottom.SetItemData(_treeRoot, nResId);
+		m_treeResourceDirBottom.SetItemData(treeRoot, nResId);
 
 		pResourceLvL2 = std::get<4>(iterRoot);
 		for (auto& iterLvL2 : std::get<1>(pResourceLvL2))
@@ -397,7 +393,7 @@ int CViewRightBottom::treeCreateResourceDir()
 				else
 					swprintf(str, MAX_PATH, L"%u - lang: %i", std::get<0>(iterLvL2).Id, pResDirEntry->Id);
 
-				m_treeResourceDirBottom.SetItemData(m_treeResourceDirBottom.InsertItem(str, _treeRoot), nResId);
+				m_treeResourceDirBottom.SetItemData(m_treeResourceDirBottom.InsertItem(str, treeRoot), nResId);
 				nResId++;
 			}
 		}

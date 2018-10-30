@@ -4,17 +4,18 @@
 #include "ChildFrm.h"
 #include "PepperDoc.h"
 #include "version.h"
+#include "resource.h"
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
-	virtual BOOL OnInitDialog();
+	BOOL OnInitDialog() override;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);
+	void DoDataExchange(CDataExchange* pDX) override;
 	bool m_fGithubLink { true };
 	HCURSOR m_curHand { };
 	HCURSOR m_curArrow { };

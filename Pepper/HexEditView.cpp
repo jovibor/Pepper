@@ -108,13 +108,13 @@ void CHexEditView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 int CHexEditView::HitTest(LPPOINT pPoint)
 {
-	DWORD nHexChunk { };
+	DWORD nHexChunk;
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
 
 	//Checkig if cursor is within HEX chunks area.
 	if ((pPoint->x >= m_nIndentFirstHexChunk) && (pPoint->x < m_nThirdVertLine) && (pPoint->y >= m_nTopHeaderWidth))
 	{
-		int tmp78 { };
+		int tmp78;
 		if (pPoint->x > m_nIndentFirstHexChunk + (m_nIndentBetweenHexChunks * 8))
 			tmp78 = m_nIndentBetween78;
 		else
@@ -142,7 +142,7 @@ void CHexEditView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (m_fLMousePressed)
 	{
-		UINT tmpEnd = HitTest(&point);
+		const int tmpEnd = HitTest(&point);
 		if (tmpEnd != -1) {
 			m_dwSelectionEnd = tmpEnd;
 			Invalidate();
@@ -183,8 +183,6 @@ void CHexEditView::OnLButtonUp(UINT nFlags, CPoint point)
 
 void CHexEditView::OnRButtonUp(UINT nFlags, CPoint point)
 {
-	// TODO: Add your message handler code here and/or call default
-
 	CScrollView::OnRButtonUp(nFlags, point);
 }
 
@@ -290,7 +288,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
 
 	//Find the nStartLine and nLineEnd posion, draw the visible portion.
-	UINT nLineStart = m_stScrollInfo.nPos / m_sizeLetter.cy;
+	const UINT nLineStart = m_stScrollInfo.nPos / m_sizeLetter.cy;
 	UINT nLineEnd = nLineStart + (m_rectClient.Height() - m_nTopHeaderWidth - m_nBottomRectWidth) / m_sizeLetter.cy;
 	if (m_dwRawDataCount == 0)
 		nLineEnd = 0;
@@ -355,13 +353,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 	pDC->MoveTo(m_nFourthVertLine, m_stScrollInfo.nPos);
 	pDC->LineTo(m_nFourthVertLine, m_nFourthHorizLine);
 
-	int nIndentHexX { }, nIndentAsciiX { }, nLine { }, nIndent78 { };
-	UINT nFirstHexPosToPrintX { }, nFirstHexPosToPrintY { };
-	//	UINT nSecondHexPosToPrintX { }, nSecondHexPosToPrintY { };
-	UINT nAsciiPosToPrintX { }, nAsciiPosToPrintY { };
-
-	//Index of byte in m_pRawData to print.
-	size_t nIndexDataToPrint { };
+	int nLine { };
 
 	//Ascii to print.
 	char chAsciiToPrint { };
@@ -377,9 +369,9 @@ void CHexEditView::OnDraw(CDC* pDC)
 		ExtTextOutW(pDC->m_hDC, m_sizeLetter.cx, m_nTopHeaderWidth + (m_sizeLetter.cy * nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
 		pDC->SetTextColor(m_clrTextHex);
 
-		nIndentHexX = 0;
-		nIndentAsciiX = 0;
-		nIndent78 = 0;
+		int nIndentHexX = 0;
+		int nIndentAsciiX = 0;
+		int nIndent78 = 0;
 
 		//Main loop for printing Hex chunks and ASCII chars (right column).
 		for (int iterChunks = 0; iterChunks < 16; iterChunks++)
@@ -387,15 +379,15 @@ void CHexEditView::OnDraw(CDC* pDC)
 			if (iterChunks > 7)
 				nIndent78 = m_nIndentBetween78;
 
-			nFirstHexPosToPrintX = m_nIndentFirstHexChunk + nIndentHexX + nIndent78;
-			nFirstHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
+			const UINT nFirstHexPosToPrintX = m_nIndentFirstHexChunk + nIndentHexX + nIndent78;
+			const UINT nFirstHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy * nLine + m_stScrollInfo.nPos;
 			//	nSecondHexPosToPrintX = m_nSecondHex + nIndentHexX + nIndent78;
 			//	nSecondHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
-			nAsciiPosToPrintX = m_nIndentAscii + nIndentAsciiX;
-			nAsciiPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
+			const UINT nAsciiPosToPrintX = m_nIndentAscii + nIndentAsciiX;
+			const UINT nAsciiPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy * nLine + m_stScrollInfo.nPos;
 
 			//Index of next char (in m_pRawData) to draw.
-			nIndexDataToPrint = iterLines * 16 + iterChunks;
+			const size_t nIndexDataToPrint = iterLines * 16 + iterChunks;
 
 			//Rect of the Space between HEX chunks, for proper selection drawing.
 			m_rectSpaceBetweenHex.left = nFirstHexPosToPrintX + m_sizeLetter.cx * 2;
@@ -439,7 +431,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 				//ASCII draw.
 				ExtTextOutA(pDC->m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
 			}
-			else 
+			else
 			{	//Fill remaining chunks with blank spaces.
 				pDC->SetBkColor(m_clrTextBkDefault);
 				ExtTextOutW(pDC->m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);

@@ -1,14 +1,13 @@
 #pragma once
-#include "resource.h"       // main symbols
 
 class CPepperApp : public CWinAppEx
 {
 public:
 	CPepperApp();
-	virtual BOOL InitInstance();
-	virtual int ExitInstance();
+	BOOL InitInstance() override;
+	int ExitInstance() override;
 	BOOL  m_bHiColorIcons;
-	virtual void PreLoadState();
+	void PreLoadState() override;
 	afx_msg void OnAppAbout();
 	void OnFileOpen();
 	DECLARE_MESSAGE_MAP()

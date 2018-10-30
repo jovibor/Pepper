@@ -1,6 +1,7 @@
 #pragma once
-#include "ChildFrm.h"
-#include "HexEdit.h"
+#include "Hexedit.h"
+#include "PepperList.h"
+#include "PepperTreeCtrl.h"
 
 class CViewRightBottom : public CScrollView
 {
@@ -10,10 +11,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	CViewRightBottom() {};
 	virtual ~CViewRightBottom() {};
-	virtual void OnInitialUpdate();
-	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
+	void OnInitialUpdate() override;
+	void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/) override;
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+	void OnDraw(CDC* pDC) override;      // overridden to draw this view
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 private:

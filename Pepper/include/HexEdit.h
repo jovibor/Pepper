@@ -5,15 +5,15 @@ class CHexEdit : public CWnd
 {
 	DECLARE_DYNAMIC(CHexEdit)
 public:
-	CHexEdit() {};
-	virtual ~CHexEdit() {};
+	CHexEdit() {}
+	virtual ~CHexEdit() {}
 	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CFont* pFont = nullptr/*default*/);
-	CHexEditView* GetActiveView() { return m_pHexEditView; };
-	BOOL SetData(const std::vector<std::byte> *vecData);
-	BOOL SetData(const std::string_view strData, UINT nCount = 0);
-	CFont* SetFont(CFont* pFont);
-	void SetFontSize(UINT nSize);
-	void SetFontColor(COLORREF clrHex, COLORREF clrOffset);
+	CHexEditView* GetActiveView() const { return m_pHexEditView; };
+	BOOL SetData(const std::vector<std::byte> *vecData) const;
+	BOOL SetData(std::string_view strData, UINT nCount = 0) const;
+	CFont* SetFont(CFont* pFont) const;
+	void SetFontSize(UINT nSize) const;
+	void SetFontColor(COLORREF clrHex, COLORREF clrOffset) const;
 private:
 	CHexEditView* m_pHexEditView { };
 	CFont* m_pFontHexEditView { };

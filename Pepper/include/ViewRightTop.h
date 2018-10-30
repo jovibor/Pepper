@@ -1,20 +1,22 @@
 #pragma once
+
+#include "PepperDoc.h"
 #include "PepperTreeCtrl.h"
 #include "PepperList.h"
 
 class CViewRightTop : public CScrollView
 {
 public:
-	virtual void OnDraw(CDC* pDC); // overridden to draw this view
-	virtual void OnInitialUpdate();
+	void OnDraw(CDC* pDC) override; // overridden to draw this view
+	void OnInitialUpdate() override;
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
 	DECLARE_DYNCREATE(CViewRightTop)
 protected:
 	CViewRightTop() {}; // protected constructor used by dynamic creation
 	virtual ~CViewRightTop() {};
-	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
+	void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/) override;
 	afx_msg void OnListSectionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListRelocGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);

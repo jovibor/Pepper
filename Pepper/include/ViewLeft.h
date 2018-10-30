@@ -6,9 +6,9 @@ class CViewLeft : public CView
 {
 public:
 	DECLARE_DYNCREATE(CViewLeft)
-	virtual void OnInitialUpdate();
-	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
-	virtual void OnDraw(CDC* /*pDC*/);
+	void OnInitialUpdate() override;
+	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
+	void OnDraw(CDC* /*pDC*/) override;
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 protected:
 	CViewLeft() {};           // protected constructor used by dynamic creation

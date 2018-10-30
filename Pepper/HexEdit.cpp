@@ -1,6 +1,5 @@
 #include "stdafx.h"
-#include "HexEditView.h"
-#include "HexEdit.h"
+#include "Hexedit.h"
 
 IMPLEMENT_DYNAMIC(CHexEdit, CWnd)
 
@@ -43,30 +42,30 @@ BOOL CHexEdit::Create(CWnd * pParent, const RECT & rect, UINT nID, CFont* pFont)
 {
 	m_pFontHexEditView = pFont;
 
-	return CWnd::Create(0, 0, WS_VISIBLE | WS_CHILD, rect, pParent, nID);
+	return CWnd::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID);
 }
 
-BOOL CHexEdit::SetData(const std::vector<std::byte>* vecData)
+BOOL CHexEdit::SetData(const std::vector<std::byte>* vecData) const
 {
 	return GetActiveView()->SetData(vecData);
 }
 
-BOOL CHexEdit::SetData(const std::string_view strData, UINT nCount)
+BOOL CHexEdit::SetData(const std::string_view strData, UINT nCount) const
 {
 	return GetActiveView()->SetData(strData, nCount);
 }
 
-CFont* CHexEdit::SetFont(CFont* pFont)
+CFont* CHexEdit::SetFont(CFont* pFont) const
 {
 	return GetActiveView()->SetFont(pFont);
 }
 
-void CHexEdit::SetFontSize(UINT nSize)
+void CHexEdit::SetFontSize(UINT nSize) const
 {
 	return GetActiveView()->SetFontSize(nSize);
 }
 
-void CHexEdit::SetFontColor(COLORREF clrHex, COLORREF clrOffset)
+void CHexEdit::SetFontColor(COLORREF clrHex, COLORREF clrOffset) const
 {
 	GetActiveView()->SetFontColor(clrHex, clrOffset);
 }
