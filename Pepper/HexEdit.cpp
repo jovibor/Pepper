@@ -9,17 +9,11 @@ BEGIN_MESSAGE_MAP(CHexEdit, CWnd)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-BOOL CHexEdit::OnEraseBkgnd(CDC* pDC)
+BOOL CHexEdit::Create(CWnd * pParent, const RECT & rect, UINT nID, CFont* pFont)
 {
-	return CWnd::OnEraseBkgnd(pDC);
-}
+	m_pFontHexEditView = pFont;
 
-void CHexEdit::OnSize(UINT nType, int cx, int cy)
-{
-	CWnd::OnSize(nType, cx, cy);
-
-	if (m_pHexEditView)
-		m_pHexEditView->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	return CWnd::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID);
 }
 
 int CHexEdit::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -30,19 +24,27 @@ int CHexEdit::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CRuntimeClass* pNewViewClass = RUNTIME_CLASS(CHexEditView);
 	CCreateContext context;
 	context.m_pNewViewClass = pNewViewClass;
-
+	
 	m_pHexEditView = (CHexEditView*)pNewViewClass->CreateObject();
-	m_pHexEditView->Create(this, CRect(0, 0, 0, 0), 0x01, &context, m_pFontHexEditView);
+	CRect rect;
+	GetClientRect(rect);
+	m_pHexEditView->Create(this, rect, 0x01, &context, m_pFontHexEditView);
 	m_pHexEditView->ShowWindow(SW_SHOW);
 
 	return 0;
 }
 
-BOOL CHexEdit::Create(CWnd * pParent, const RECT & rect, UINT nID, CFont* pFont)
+void CHexEdit::OnSize(UINT nType, int cx, int cy)
 {
-	m_pFontHexEditView = pFont;
+	CWnd::OnSize(nType, cx, cy);
 
-	return CWnd::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID);
+	if (m_pHexEditView)
+		m_pHexEditView->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+}
+
+BOOL CHexEdit::OnEraseBkgnd(CDC* pDC)
+{
+	return FALSE;
 }
 
 BOOL CHexEdit::SetData(const std::vector<std::byte>* vecData) const

@@ -13,7 +13,6 @@
 #define IDR_MAINFRAME                   128
 #define IDR_MAINFRAME_256               129
 #define IDR_PepperTYPE                  130
-#define IDR_PepperTYPE1                 130
 #define ID_WINDOW_MANAGER               131
 #define IDS_EDIT_MENU                   306
 #define IDI_TREE_MAIN_HEADER_ICON       314

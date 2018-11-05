@@ -12,7 +12,7 @@ public:
 	CFont* SetFont(CFont* pFont);
 	void SetFontSize(UINT nSize);
 	void SetFontColor(COLORREF clrHex, COLORREF clrOffset = 0);
-	UINT GetFontSize();
+	UINT GetFontSize() const;
 protected:
 	void OnInitialUpdate() override;     // first time after construct
 	void OnDraw(CDC* pDC) override;      // overridden to draw this view
@@ -31,7 +31,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	const BYTE* m_pRawData { };
-	CRect m_rectClient;
+	CRect m_rcClient;
 	UINT m_dwRawDataCount { };
 	SIZE m_sizeLetter { }; //Current font's letter size (width, height)
 	CFont* m_pFontHexView { };
@@ -47,21 +47,18 @@ private:
 	int m_nIndentBetweenAscii { }; //Indent between ASCII chars
 	int m_nIndentBetween78 { }; //Additional indent to add after 7-th Hex chunk
 	int m_nTopHeaderWidth { }; //Width of the header where offset (0 1 2... D E F) resides.
-	int m_nFirstVertLine { }, m_nSecondVertLine { }, m_nThirdVertLine { }, m_nFourthVertLine { }; //Vertical lines indent
-	int m_nFirstHorizLine { }, m_nSecondHorizLine { }, m_nThirdHorizLine { }, m_nFourthHorizLine { }; //Horizontal lines indent
+	int m_nFirstVertLine { }, m_nSecondVertLine { }, m_nThirdVertLine { }, m_nFourthVertLine { }; //Vertical line indent
+	int m_nFirstHorizLine { }, m_nSecondHorizLine { }, m_nThirdHorizLine { }, m_nFourthHorizLine { }; //Horizontal line indent
 	int m_nBottomRectWidth { 25 };
 	//	UINT m_nSecondHex { };
 	WCHAR m_strOffset[9] { };
 	const wchar_t* const m_strHexMap = L"0123456789ABCDEF";
 	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
 	bool m_fSecondLaunch = false;
-	bool m_fEraseBkgnd = false;
 	bool m_fLMousePressed = false;
 	bool m_fSelection = false;
-	long m_dwSelectionStart { }, m_dwSelectionEnd { };
-	CRect m_rectSpaceBetweenHex { }; //Space between hex chunks, needs for selection draw.
+	DWORD m_dwSelectionStart { }, m_dwSelectionEnd { };
+	CRect m_rcSpaceBetweenHex { }; //Space between hex chunks, needs for selection draw.
 	CBrush m_brTextBkSelection { m_clrTextBkSelection };
 	CBrush m_brTextBkDefault { m_clrTextBkDefault };
 };
-
-

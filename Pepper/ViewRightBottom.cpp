@@ -34,11 +34,12 @@ void CViewRightBottom::OnInitialUpdate()
 	m_dwFileSummary = *m_pFileSummary;
 
 	listCreateExportFuncs();
-	treeCreateResourceDir();
-	m_HexEdit.Create(this, CRect(0, 0, 0, 0), HEXCTRLID_SECURITY_DIR_SERTIFICATE_ID);
+	treeCreateResDir();
+	m_HexEdit.Create(this, CRect(0, 0, 0, 0), HEXCTRL_SECURITY_SERTIFICATEID);
+	m_HexEdit.ShowWindow(SW_HIDE);
 }
 
-int CViewRightBottom::HexCtrlRightBottom(unsigned nSertId)
+int CViewRightBottom::HexCreateSecuritySertId(unsigned nSertId)
 {
 	if (m_pLibpe->GetSecurityTable(&m_vecSec) != S_OK)
 		return -1;
@@ -46,13 +47,54 @@ int CViewRightBottom::HexCtrlRightBottom(unsigned nSertId)
 		return -1;
 
 	m_HexEdit.SetData(&std::get<1>(m_vecSec->at(nSertId)));
-	m_HexEdit.ShowWindow(SW_SHOW);
 
 	CRect rect;
 	GetClientRect(&rect);
 	m_HexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	return 0;
+}
+
+BOOL CViewRightBottom::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+{
+	const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
+	if (pTree->hdr.idFrom == TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
+	{
+		PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
+
+		if (m_pLibpe->GetResourceTable(&pTupResRoot) != S_OK)
+			return -1;
+
+		const DWORD_PTR dwResId = m_treeResBottom.GetItemData(pTree->itemNew.hItem);
+		const long idlvlRoot = std::get<0>(m_vecResId.at(dwResId));
+		const long idlvl2 = std::get<1>(m_vecResId.at(dwResId));
+		const long idlvl3 = std::get<2>(m_vecResId.at(dwResId));
+
+		auto rootvec = std::get<1>(*pTupResRoot);
+		if (idlvl2 >= 0)
+		{
+			auto lvl2tup = std::get<4>(rootvec.at(idlvlRoot));
+			auto lvl2vec = std::get<1>(lvl2tup);
+
+			if (!lvl2vec.empty())
+			{
+				if (idlvl3 >= 0)
+				{
+					auto lvl3tup = std::get<4>(lvl2vec.at(idlvl2));
+					auto lvl3vec = std::get<1>(lvl3tup);
+
+					if (!lvl3vec.empty())
+					{
+						auto data = std::get<3>(lvl3vec.at(idlvl3));
+
+						if (!data.empty()) { }
+					}
+				}
+			}
+		}
+	}
+
+	return CScrollView::OnNotify(wParam, lParam, pResult);
 }
 
 BOOL CViewRightBottom::OnEraseBkgnd(CDC* pDC)
@@ -70,29 +112,29 @@ void CViewRightBottom::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHi
 
 	switch (LOWORD(lHint))
 	{
-	case LISTID_IMPORT_DLL_FUNCS:
+	case LIST_IMPORT_FUNCS:
 		listCreateImportFuncs(HIWORD(lHint));
 		m_pActiveList = &m_listImportFuncs;
 		break;
-	case LISTID_DELAY_IMPORT_DLL_FUNCS:
+	case LIST_DELAYIMPORT_FUNCS:
 		listCreateDelayImportFuncs(HIWORD(lHint));
 		m_pActiveList = &m_listDelayImportFuncs;
 		break;
-	case LISTID_EXPORT_DIR:
+	case LIST_EXPORT:
 		m_listExportFuncs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listExportFuncs;
 		break;
-	case HEXCTRLID_SECURITY_DIR_SERTIFICATE_ID:
-		HexCtrlRightBottom(HIWORD(lHint));
+	case HEXCTRL_SECURITY_SERTIFICATEID:
+		HexCreateSecuritySertId(HIWORD(lHint));
 		m_pActiveList = &m_HexEdit;
 		break;
-	case LISTID_RELOCATION_DIR_RELOCS_DESC:
-		listCreateRelocations(HIWORD(lHint));
-		m_pActiveList = &m_listRelocationsDescription;
+	case LIST_RELOCATIONS_TOPCHANGEDMSG:
+		listCreateRelocs(HIWORD(lHint));
+		m_pActiveList = &m_listRelocsDesc;
 		break;
-	case LISTID_RESOURCE_DIR:
-		m_treeResourceDirBottom.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_treeResourceDirBottom;
+	case LIST_RESOURCE:
+		m_treeResBottom.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pActiveList = &m_treeResBottom;
 		break;
 	}
 }
@@ -124,7 +166,7 @@ int CViewRightBottom::listCreateImportFuncs(UINT dllId)
 
 	m_listImportFuncs.DestroyWindow();
 	m_listImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_IMPORT_DLL_FUNCS);
+		CRect(0, 0, 0, 0), this, LIST_IMPORT_FUNCS);
 
 	m_listImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 175);
@@ -170,7 +212,7 @@ int CViewRightBottom::listCreateDelayImportFuncs(UINT dllId)
 
 	m_listDelayImportFuncs.DestroyWindow();
 	m_listDelayImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DLL_FUNCS);
+		CRect(0, 0, 0, 0), this, LIST_DELAYIMPORT_FUNCS);
 
 	m_listDelayImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
@@ -230,7 +272,7 @@ int CViewRightBottom::listCreateExportFuncs()
 		return -1;
 
 	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_EXPORT_FUNCS);
+		CRect(0, 0, 0, 0), this, LIST_EXPORT_FUNCS);
 	m_listExportFuncs.ShowWindow(SW_HIDE);
 	m_listExportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportFuncs.InsertColumn(0, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
@@ -260,23 +302,29 @@ int CViewRightBottom::listCreateExportFuncs()
 	return 0;
 }
 
-int CViewRightBottom::listCreateRelocations(UINT blockID)
+int CViewRightBottom::listCreateRelocs(UINT uBlockID)
 {
 	PCLIBPE_RELOCATION_VEC pRelocTable { };
 
 	if (m_pLibpe->GetRelocationTable(&pRelocTable) != S_OK)
 		return -1;
+	if (pRelocTable->empty())
+		return -1;
+	if (pRelocTable->size() < uBlockID)
+		return -1;
+	if (std::get<1>(pRelocTable->at(uBlockID)).empty())
+		return -1;
 
-	m_listRelocationsDescription.DestroyWindow();
+	m_listRelocsDesc.DestroyWindow();
 
-	m_listRelocationsDescription.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_RELOCATION_TYPE);
-	m_listRelocationsDescription.ShowWindow(SW_HIDE);
-	m_listRelocationsDescription.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
-	m_listRelocationsDescription.InsertColumn(0, L"Reloc type", LVCFMT_CENTER, 250);
-	m_listRelocationsDescription.InsertColumn(1, L"Offset", LVCFMT_LEFT, 100);
+	m_listRelocsDesc.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, LIST_RELOCATIONS_TYPE);
+	m_listRelocsDesc.ShowWindow(SW_HIDE);
+	m_listRelocsDesc.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listRelocsDesc.InsertColumn(0, L"Reloc type", LVCFMT_CENTER, 250);
+	m_listRelocsDesc.InsertColumn(1, L"Offset", LVCFMT_LEFT, 100);
 
-	char* relocTypes [] {
+	const char* relocTypes [] {
 		"IMAGE_REL_BASED_ABSOLUTE",
 		"IMAGE_REL_BASED_HIGH",
 		"IMAGE_REL_BASED_LOW",
@@ -291,101 +339,81 @@ int CViewRightBottom::listCreateRelocations(UINT blockID)
 	};
 
 	int listindex = 0;
-	TCHAR str[MAX_PATH] { };
+	WCHAR str[MAX_PATH] { };
 
-	m_listRelocationsDescription.SetRedraw(FALSE);
-	for (auto& i : std::get<1>(pRelocTable->at(blockID)))
+	m_listRelocsDesc.SetRedraw(FALSE);
+	for (auto& i : std::get<1>(pRelocTable->at(uBlockID)))
 	{
 		if (std::get<0>(i) <= sizeof(relocTypes) / sizeof(char*))
 			swprintf_s(str, MAX_PATH, L"%S", relocTypes[std::get<0>(i)]);
 		else
 			swprintf_s(str, MAX_PATH, L"%u", std::get<0>(i));
 
-		m_listRelocationsDescription.InsertItem(listindex, str);
+		m_listRelocsDesc.InsertItem(listindex, str);
 		swprintf_s(str, 5, L"%04X", std::get<1>(i));
-		m_listRelocationsDescription.SetItemText(listindex, 1, str);
+		m_listRelocsDesc.SetItemText(listindex, 1, str);
 
 		listindex++;
 	}
-	m_listRelocationsDescription.SetRedraw(TRUE);
+	m_listRelocsDesc.SetRedraw(TRUE);
 
 	CRect rect;
 	GetClientRect(&rect);
-	m_listRelocationsDescription.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_listRelocsDesc.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	return 0;
 }
 
-int CViewRightBottom::treeCreateResourceDir()
+int CViewRightBottom::treeCreateResDir()
 {
-	PCLIBPE_RESOURCE_ROOT_TUP pResourceTable { };
+	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
-	if (m_pLibpe->GetResourceTable(&pResourceTable) != S_OK)
+	if (m_pLibpe->GetResourceTable(&pTupResRoot) != S_OK)
 		return -1;
 
-	LIBPE_RESOURCE_LVL2_TUP pResourceLvL2 { };
-	LIBPE_RESOURCE_LVL3_TUP pResourceLvL3 { };
-
-	m_treeResourceDirBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
-		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, TREEID_RESOURCE_BOTTOM);
-	m_treeResourceDirBottom.ShowWindow(SW_HIDE);
-
-	std::map<WORD, std::wstring> mapResType {
-		{ 1, L"CURSOR" },
-	{ 2, L"BITMAP" },
-	{ 3, L"ICON" },
-	{ 4, L"MENU" },
-	{ 5, L"DIALOG" },
-	{ 6, L"STRING" },
-	{ 7, L"FONTDIR" },
-	{ 8, L"FONT" },
-	{ 9, L"ACCELERATOR" },
-	{ 10, L"RCDATA" },
-	{ 11, L"MESSAGETABLE" },
-	{ 12, L"GROUP_CURSOR" },
-	{ 14, L"GROUP_ICON" },
-	{ 16, L"VERSION" },
-	{ 17, L"DLGINCLUDE" },
-	{ 19, L"PLUGPLAY" },
-	{ 20, L"VXD" },
-	{ 21, L"ANICURSOR" },
-	{ 22, L"ANIICON" },
-	{ 23, L"HTML" },
-	{ 24, L"MANIFEST" }
-	};
+	m_treeResBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
+		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, TREE_RESOURCE_BOTTOM);
+	m_treeResBottom.ShowWindow(SW_HIDE);
 
 	WCHAR str[MAX_PATH] { };
 
-	m_imglTreeResource.Create(16, 16, ILC_COLOR32, 0, 4);
-	int iconDirs = m_imglTreeResource.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_DIR_ICON));
-	m_treeResourceDirBottom.SetImageList(&m_imglTreeResource, TVSIL_NORMAL);
-	DWORD_PTR nResId { };//Resource ID (incremental) to extract later on
+	m_imglTreeRes.Create(16, 16, ILC_COLOR32, 0, 4);
+	const int iconDirs = m_imglTreeRes.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_DIR_ICON));
+	m_treeResBottom.SetImageList(&m_imglTreeRes, TVSIL_NORMAL);
+	long ilvlRoot = 0, ilvl2 = 0, ilvl3 = 0;
 
-	for (auto& iterRoot : std::get<1>(*pResourceTable))
+	//Creating a treeCtrl and setting, with SetItemData(...),
+	//a unique id for each node, that is an index in vector (m_vecResId),
+	//that holds tuple of three IDs of resource — Type, Name, LangID. 
+	for (auto& iterRoot : std::get<1>(*pTupResRoot))
 	{
 		const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry = &std::get<0>(iterRoot);
 		if (pResDirEntry->NameIsString)
-			//Enclose in double quotes
+			//Enclose in double quotes.
 			swprintf(str, MAX_PATH, L"\u00AB%s\u00BB", std::get<1>(iterRoot).c_str());
 		else
 		{
-			if (mapResType.find(pResDirEntry->Id) != mapResType.end())
-				swprintf(str, MAX_PATH, L"%s", mapResType.at(pResDirEntry->Id).c_str());
+			if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
+				swprintf(str, MAX_PATH, L"%s", g_mapResType.at(pResDirEntry->Id).c_str());
 			else
 				swprintf(str, MAX_PATH, L"%u", pResDirEntry->Id);
 		}
-		const HTREEITEM treeRoot = m_treeResourceDirBottom.InsertItem(str, iconDirs, iconDirs);
-		nResId++;
-		m_treeResourceDirBottom.SetItemData(treeRoot, nResId);
 
-		pResourceLvL2 = std::get<4>(iterRoot);
-		for (auto& iterLvL2 : std::get<1>(pResourceLvL2))
+		const HTREEITEM treeRoot = m_treeResBottom.InsertItem(str, iconDirs, iconDirs);
+		m_vecResId.emplace_back(ilvlRoot, -1, -1);
+		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
+		ilvl2 = 0;
+		LIBPE_RESOURCE_LVL2_TUP pTupResLvL2 = std::get<4>(iterRoot);
+
+		for (auto& iterLvL2 : std::get<1>(pTupResLvL2))
 		{
-			pResDirEntry = &std::get<0>(iterLvL2);
-			nResId++;
+			m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
+			ilvl3 = 0;
 
-			pResourceLvL3 = std::get<4>(iterLvL2);
-			for (auto& iterLvL3 : std::get<1>(pResourceLvL3))
+			//			pResDirEntry = &std::get<0>(iterLvL2);
+			LIBPE_RESOURCE_LVL3_TUP pTupResLvL3 = std::get<4>(iterLvL2);
+
+			for (auto& iterLvL3 : std::get<1>(pTupResLvL3))
 			{
 				pResDirEntry = &std::get<0>(iterLvL3);
 				if (pResDirEntry->NameIsString)
@@ -393,10 +421,13 @@ int CViewRightBottom::treeCreateResourceDir()
 				else
 					swprintf(str, MAX_PATH, L"%u - lang: %i", std::get<0>(iterLvL2).Id, pResDirEntry->Id);
 
-				m_treeResourceDirBottom.SetItemData(m_treeResourceDirBottom.InsertItem(str, treeRoot), nResId);
-				nResId++;
+				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
+				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(str, treeRoot), m_vecResId.size() - 1);
+				ilvl3++;
 			}
+			ilvl2++;
 		}
+		ilvlRoot++;
 	}
 
 	return 0;

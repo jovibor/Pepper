@@ -169,7 +169,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDR_MAINFRAME           "Pepper (beta)"
+    IDR_MAINFRAME           "Pepper"
     IDR_PepperTYPE          "\nPepper\nPepper\n\n\nPepper.Document\nPepper.Document"
     ID_WINDOW_MANAGER       "&Windows..."
 END

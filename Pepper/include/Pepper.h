@@ -12,5 +12,3 @@ public:
 	void OnFileOpen();
 	DECLARE_MESSAGE_MAP()
 };
-
-extern CPepperApp theApp;

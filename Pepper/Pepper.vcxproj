@@ -145,7 +145,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <ExceptionHandling>false</ExceptionHandling>
+      <ExceptionHandling>Sync</ExceptionHandling>
       <ProgramDataBaseFileName />
       <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -253,7 +253,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ChildFrm.h" />
-    <ClInclude Include="include\defines.h" />
+    <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\Hexedit.h" />
     <ClInclude Include="include\HexEditView.h" />
     <ClInclude Include="include\ViewLeft.h" />

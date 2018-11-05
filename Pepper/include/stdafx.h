@@ -15,4 +15,4 @@
 
 #include "libpe.h"
 #include "strsafe.h"
-#include "defines.h"
+#include "constants.h"

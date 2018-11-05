@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "PepperList.h"
 
-#define TIMER_TOOLTIP 0x1
+constexpr auto TIMER_TOOLTIP = 0x01;
 
 IMPLEMENT_DYNAMIC(CPepperList, CMFCListCtrl)
 
@@ -18,35 +18,8 @@ BEGIN_MESSAGE_MAP(CPepperList, CMFCListCtrl)
 	ON_WM_ERASEBKGND()
 	ON_WM_VSCROLL()
 	ON_WM_MOUSEWHEEL()
+	ON_WM_PAINT()
 END_MESSAGE_MAP()
-
-BOOL CPepperList::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
-{
-	SetFocus();
-
-	return CMFCListCtrl::OnSetCursor(pWnd, nHitTest, message);
-}
-
-void CPepperList::OnKillFocus(CWnd* pNewWnd)
-{
-}
-
-BOOL CPepperList::OnEraseBkgnd(CDC* pDC)
-{
-	if (m_fEraseBkgnd) {
-		CMFCListCtrl::OnEraseBkgnd(pDC);
-		m_fEraseBkgnd = false;
-	}
-
-	return TRUE;
-}
-
-void CPepperList::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
-{
-//	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
-
-	*pResult = 0;
-}
 
 CPepperList::CPepperList()
 {
@@ -74,7 +47,48 @@ CPepperList::CPepperList()
 	::SendMessage(m_hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 	::SendMessage(m_hwndToolTip, TTM_SETTIPBKCOLOR, (WPARAM)RGB(0, 132, 132), 0);
 	::SendMessage(m_hwndToolTip, TTM_SETTIPTEXTCOLOR, (WPARAM)RGB(255, 255, 255), 0);
-	::SendMessage(m_hwndToolTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)400);//to allow using of newline \n
+	::SendMessage(m_hwndToolTip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)400); //to allow using of newline \n.
+}
+
+BOOL CPepperList::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+{
+	SetFocus();
+
+	return CMFCListCtrl::OnSetCursor(pWnd, nHitTest, message);
+}
+
+void CPepperList::OnKillFocus(CWnd* pNewWnd)
+{
+}
+
+BOOL CPepperList::OnEraseBkgnd(CDC* pDC)
+{
+	return FALSE;
+}
+
+void CPepperList::OnPaint()
+{
+	CPaintDC dc(this);
+
+	//To avoid flickering.
+	//Drawing to CMemDC, excluding CListHeader area (rect).
+	CRect rcClient, rcHdr;
+	GetClientRect(&rcClient);
+	GetHeaderCtrl().GetClientRect(rcHdr);
+	rcClient.top += rcHdr.Height();
+	CMemDC memDC(dc, rcClient);
+
+	CRect clip;
+	memDC.GetDC().GetClipBox(&clip);
+	memDC.GetDC().FillSolidRect(clip, GetSysColor(COLOR_WINDOW));
+
+	DefWindowProc(WM_PAINT, (WPARAM)memDC.GetDC().m_hDC, (LPARAM)0);
+}
+
+void CPepperList::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	//	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	*pResult = 0;
 }
 
 void CPepperList::InitHeader()
@@ -86,14 +100,14 @@ void CPepperList::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CMFCListCtrl::OnVScroll(nSBCode, nPos, pScrollBar);
 
-	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
+	/*	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
 
-	int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
-	if (m_stScrollInfo.nPos >= max)
-	{
-		m_fEraseBkgnd = true;
-		Invalidate();
-	}
+		int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
+		if (m_stScrollInfo.nPos >= max)
+		{
+			m_fEraseBkgnd = true;
+			Invalidate();
+		}*/
 }
 
 void CPepperList::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
@@ -106,14 +120,17 @@ void CPepperList::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 BOOL CPepperList::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
+	/*	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
 
-	int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
-	if (m_stScrollInfo.nPos >= max)
-	{
-		m_fEraseBkgnd = true;
-		Invalidate();
-	}
+		int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
+		if (m_stScrollInfo.nPos >= max)
+		{
+			m_fEraseBkgnd = true;
+			Invalidate();
+		}
+		*/
+	GetHeaderCtrl().Invalidate();
+	GetHeaderCtrl().UpdateWindow();
 
 	return CMFCListCtrl::OnMouseWheel(nFlags, zDelta, pt);
 }
@@ -124,8 +141,8 @@ void CPepperList::DrawItem(LPDRAWITEMSTRUCT pDIS)
 		return;
 
 	CDC* pDC = CDC::FromHandle(pDIS->hDC);
-	CPen* oldPen = pDC->SelectObject(&m_PenForRect);
-	CFont* defFont = pDC->SelectObject(&m_fontList);
+	pDC->SelectObject(&m_penForRect);
+	pDC->SelectObject(&m_fontList);
 	CRect rect;
 
 	switch (pDIS->itemAction)
@@ -152,7 +169,7 @@ void CPepperList::DrawItem(LPDRAWITEMSTRUCT pDIS)
 		pDC->DrawText(GetItemText(pDIS->itemID, 0), &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 		rect.left -= 3;
 
-		//Drawing rect lines
+		//Drawing Item's rect lines. 
 		pDC->MoveTo(rect.left, rect.top);
 		pDC->LineTo(rect.right, rect.top);
 		pDC->MoveTo(rect.left, rect.top);
@@ -165,14 +182,16 @@ void CPepperList::DrawItem(LPDRAWITEMSTRUCT pDIS)
 		for (int i = 1; i < GetHeaderCtrl().GetItemCount(); i++)
 		{
 			GetSubItemRect(pDIS->itemID, i, LVIR_BOUNDS, rect);
+
 			if (HasToolTip(pDIS->itemID, i))
-			{
 				pDC->FillSolidRect(&rect, m_colorListToolTipSubitem);
-			}
-			rect.left += 3;//Drawing text +-3 px from rect bounds
-			pDC->DrawText(GetItemText(pDIS->itemID, i), &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
+			CString textItem = GetItemText(pDIS->itemID, i);
+			rect.left += 3; //Drawing text +-3 px from rect bounds
+			ExtTextOutW(pDC->m_hDC, rect.left, rect.top, ETO_CLIPPED, rect, textItem, textItem.GetLength(), nullptr);
 			rect.left -= 3;
 
+			//Drawing Subitem's rect lines. 
 			pDC->MoveTo(rect.left, rect.top);
 			pDC->LineTo(rect.right, rect.top);
 			pDC->MoveTo(rect.left, rect.top);
@@ -183,8 +202,6 @@ void CPepperList::DrawItem(LPDRAWITEMSTRUCT pDIS)
 			pDC->LineTo(rect.right, rect.bottom);
 		}
 
-		pDC->SelectObject(oldPen);
-		pDC->SelectObject(defFont);
 		break;
 
 	case ODA_FOCUS:
@@ -192,30 +209,55 @@ void CPepperList::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	}
 }
 
-void CPepperList::SetItemToolTip(int nItem, int nSubitem, const std::wstring& strTipText, const std::wstring& strTipCaption)
+void CPepperList::SetItemTooltip(int nItem, int nSubitem, const std::wstring& strTipText, const std::wstring& strTipCaption)
 {
-	int nIter { };
-	
-	for (auto& i : m_vecToolTips)
+	//If there is no tooltip for such item/subitem we just set it.
+	if (m_unmapTooltip.find(nItem) == m_unmapTooltip.end())
 	{
-		if (std::get<0>(i) == nItem && std::get<1>(i) == nSubitem)
-		{
-			if (strTipText.empty())
-				//delete subitem's tooltip
-				m_vecToolTips.erase(m_vecToolTips.begin() + nIter);
-			else
-				i = { nItem, nSubitem, strTipText, strTipCaption };
-
-			return;
-		}
-		nIter++;
+		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> mapInner;
+		mapInner.insert({ nSubitem, { strTipText, strTipCaption } });
+		m_unmapTooltip.insert({ nItem, mapInner });
 	}
-	if (strTipText.empty())
-		return;
-
-	m_vecToolTips.push_back({ nItem, nSubitem, strTipText, strTipCaption });
+	else
+	{	//If there is Item's tooltip but no Subitem's tooltip
+		//inserting new Subitem into inner map.
+		if (m_unmapTooltip.at(nItem).find(nSubitem) == m_unmapTooltip.at(nItem).end())
+		{
+			std::unordered_map<int, std::tuple< std::wstring, std::wstring>> &mapInner=m_unmapTooltip.at(nItem);
+			mapInner.insert({ nSubitem, { strTipText, strTipCaption } });
+			m_unmapTooltip.at(nItem) = mapInner;
+		}
+		else //If there is already such an Item-Subitem's tooltip, just change it.
+		{
+			std::unordered_map<int, std::tuple< std::wstring, std::wstring>> &mapInner = m_unmapTooltip.at(nItem);
+			mapInner.at(nSubitem) = { strTipText, strTipCaption };
+			m_unmapTooltip.at(nItem) = mapInner;
+		}
+	}
 
 	m_fToolTip = true;
+}
+
+bool CPepperList::HasToolTip(int nItem, int nSubitem, std::wstring& strTipText, std::wstring& strTipCaption)
+{
+	if (m_unmapTooltip.find(nItem) != m_unmapTooltip.end())
+		if (m_unmapTooltip.at(nItem).find(nSubitem) != m_unmapTooltip.at(nItem).end())
+		{
+			strTipText = std::get<0>(m_unmapTooltip.at(nItem).at(nSubitem));
+			strTipCaption = std::get<1>(m_unmapTooltip.at(nItem).at(nSubitem));
+			return true;
+		}
+
+	return false;
+}
+
+bool CPepperList::HasToolTip(int nItem, int nSubItem)
+{
+	if (m_unmapTooltip.find(nItem) != m_unmapTooltip.end())
+		if (m_unmapTooltip.at(nItem).find(nSubItem) != m_unmapTooltip.at(nItem).end())
+			return true;
+
+	return false;
 }
 
 void CPepperList::OnLButtonDown(UINT nFlags, CPoint point)
@@ -223,7 +265,7 @@ void CPepperList::OnLButtonDown(UINT nFlags, CPoint point)
 	LVHITTESTINFO hitInfo { };
 	hitInfo.pt = point;
 	ListView_SubItemHitTest(m_hWnd, &hitInfo);
-	if (hitInfo.iSubItem == -1)
+	if (hitInfo.iSubItem == -1 || hitInfo.iItem == -1)
 		return;
 
 	CMFCListCtrl::OnLButtonDown(nFlags, point);
@@ -234,7 +276,7 @@ void CPepperList::OnRButtonDown(UINT nFlags, CPoint point)
 	LVHITTESTINFO hitInfo { };
 	hitInfo.pt = point;
 	ListView_SubItemHitTest(m_hWnd, &hitInfo);
-	if (hitInfo.iSubItem == -1)
+	if (hitInfo.iSubItem == -1 || hitInfo.iItem == -1)
 		return;
 
 	CMFCListCtrl::OnRButtonDown(nFlags, point);
@@ -285,28 +327,6 @@ void CPepperList::OnMouseMove(UINT nFlags, CPoint point)
 			}
 		}
 	}
-}
-
-bool CPepperList::HasToolTip(int iItem, int iSubItem, std::wstring& strTipText, std::wstring& strTipCaption)
-{
-	for (auto& i : m_vecToolTips)
-		if (std::get<0>(i) == iItem && std::get<1>(i) == iSubItem)
-		{
-			strTipText = std::get<2>(i);
-			strTipCaption = std::get<3>(i);
-			return true;
-		}
-
-	return false;
-}
-
-bool CPepperList::HasToolTip(int iItem, int iSubItem)
-{
-	for (auto& i : m_vecToolTips)
-		if (std::get<0>(i) == iItem && std::get<1>(i) == iSubItem)
-			return true;
-
-	return false;
 }
 
 void CPepperList::OnTimer(UINT_PTR nIDEvent)

@@ -8,10 +8,10 @@ IMPLEMENT_DYNCREATE(CViewRightTop, CView)
 BEGIN_MESSAGE_MAP(CViewRightTop, CView)
 	ON_WM_SIZE()
 	ON_WM_MOUSEWHEEL()
-	ON_NOTIFY(LVN_GETDISPINFO, LISTID_SECHEADERS, &CViewRightTop::OnListSectionsGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, LISTID_IMPORT_DIR, &CViewRightTop::OnListImportGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, LISTID_RELOCATION_DIR, &CViewRightTop::OnListRelocGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, LISTID_EXCEPTION_DIR, &CViewRightTop::OnListExceptionGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, LIST_SECHEADERS, &CViewRightTop::OnListSectionsGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, LIST_IMPORT, &CViewRightTop::OnListImportGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, LIST_RELOCATIONS, &CViewRightTop::OnListRelocGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, LIST_EXCEPTION, &CViewRightTop::OnListExceptionGetDispInfo)
 END_MESSAGE_MAP()
 
 void CViewRightTop::OnInitialUpdate()
@@ -51,59 +51,13 @@ void CViewRightTop::OnInitialUpdate()
 		m_strFileType = L"File type: unknown";
 
 	WCHAR strVersion[MAX_PATH] { };
-	swprintf_s(strVersion, MAX_PATH, L"%S, version: %u.%u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION, REVISION_VERSION);
+	swprintf_s(strVersion, MAX_PATH, L"%S, version: %u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION);
 	m_strVersion = strVersion;
 
-	m_pLibpe->GetSectionsHeaders(&m_pSectionHeaders);
+	m_pLibpe->GetSectionsHeaders(&m_pSecHeaders);
 	m_pLibpe->GetImportTable(&m_pImportTable);
 	m_pLibpe->GetExceptionTable(&m_pExceptionDir);
 	m_pLibpe->GetRelocationTable(&m_pRelocTable);
-
-	m_mapSecFlags = {
-		{ 0x00000000, L"IMAGE_SCN_TYPE_REG\n Reserved." },
-	{ 0x00000001, L"IMAGE_SCN_TYPE_DSECT\n Reserved." },
-	{ 0x00000002, L"IMAGE_SCN_TYPE_NOLOAD\n Reserved." },
-	{ 0x00000004, L"IMAGE_SCN_TYPE_GROUP\n Reserved." },
-	{ IMAGE_SCN_TYPE_NO_PAD, L"IMAGE_SCN_TYPE_NO_PAD\n Reserved." },
-	{ 0x00000010, L"IMAGE_SCN_TYPE_COPY\n Reserved." },
-	{ IMAGE_SCN_CNT_CODE, L"IMAGE_SCN_CNT_CODE\n Section contains code." },
-	{ IMAGE_SCN_CNT_INITIALIZED_DATA, L"IMAGE_SCN_CNT_INITIALIZED_DATA\n Section contains initialized data." },
-	{ IMAGE_SCN_CNT_UNINITIALIZED_DATA, L"IMAGE_SCN_CNT_UNINITIALIZED_DATA\n Section contains uninitialized data." },
-	{ IMAGE_SCN_LNK_OTHER, L"IMAGE_SCN_LNK_OTHER\n Reserved." },
-	{ IMAGE_SCN_LNK_INFO, L"IMAGE_SCN_LNK_INFO\n Section contains comments or some other type of information." },
-	{ 0x00000400, L"IMAGE_SCN_TYPE_OVER\n Reserved." },
-	{ IMAGE_SCN_LNK_REMOVE, L"IMAGE_SCN_LNK_REMOVE\n Section contents will not become part of image." },
-	{ IMAGE_SCN_LNK_COMDAT, L"IMAGE_SCN_LNK_COMDAT\n Section contents comdat." },
-	{ IMAGE_SCN_NO_DEFER_SPEC_EXC, L"IMAGE_SCN_NO_DEFER_SPEC_EXC\n Reset speculative exceptions handling bits in the TLB entries for this section." },
-	{ IMAGE_SCN_GPREL, L"IMAGE_SCN_GPREL\n Section content can be accessed relative to GP" },
-	{ 0x00010000, L"IMAGE_SCN_MEM_SYSHEAP\n Obsolete" },
-	{ IMAGE_SCN_MEM_PURGEABLE, L"IMAGE_SCN_MEM_PURGEABLE" },
-	{ IMAGE_SCN_MEM_LOCKED, L"IMAGE_SCN_MEM_LOCKED" },
-	{ IMAGE_SCN_MEM_PRELOAD, L"IMAGE_SCN_MEM_PRELOAD" },
-	{ IMAGE_SCN_ALIGN_1BYTES, L"IMAGE_SCN_ALIGN_1BYTES" },
-	{ IMAGE_SCN_ALIGN_2BYTES, L"IMAGE_SCN_ALIGN_2BYTES" },
-	{ IMAGE_SCN_ALIGN_4BYTES, L"IMAGE_SCN_ALIGN_4BYTES" },
-	{ IMAGE_SCN_ALIGN_8BYTES, L"IMAGE_SCN_ALIGN_8BYTES" },
-	{ IMAGE_SCN_ALIGN_16BYTES, L"IMAGE_SCN_ALIGN_16BYTES\n Default alignment if no others are specified." },
-	{ IMAGE_SCN_ALIGN_32BYTES, L"IMAGE_SCN_ALIGN_32BYTES" },
-	{ IMAGE_SCN_ALIGN_64BYTES, L"IMAGE_SCN_ALIGN_64BYTES" },
-	{ IMAGE_SCN_ALIGN_128BYTES, L"IMAGE_SCN_ALIGN_128BYTES" },
-	{ IMAGE_SCN_ALIGN_256BYTES, L"IMAGE_SCN_ALIGN_256BYTES" },
-	{ IMAGE_SCN_ALIGN_512BYTES, L"IMAGE_SCN_ALIGN_512BYTES" },
-	{ IMAGE_SCN_ALIGN_1024BYTES, L"IMAGE_SCN_ALIGN_1024BYTES" },
-	{ IMAGE_SCN_ALIGN_2048BYTES, L"IMAGE_SCN_ALIGN_2048BYTES" },
-	{ IMAGE_SCN_ALIGN_4096BYTES, L"IMAGE_SCN_ALIGN_4096BYTES" },
-	{ IMAGE_SCN_ALIGN_8192BYTES, L"IMAGE_SCN_ALIGN_8192BYTES" },
-	{ IMAGE_SCN_ALIGN_MASK, L"IMAGE_SCN_ALIGN_MASK" },
-	{ IMAGE_SCN_LNK_NRELOC_OVFL, L"IMAGE_SCN_LNK_NRELOC_OVFL\n Section contains extended relocations." },
-	{ IMAGE_SCN_MEM_DISCARDABLE, L"IMAGE_SCN_MEM_DISCARDABLE\n Section can be discarded." },
-	{ IMAGE_SCN_MEM_NOT_CACHED, L"IMAGE_SCN_MEM_NOT_CACHED\n Section is not cachable." },
-	{ IMAGE_SCN_MEM_NOT_PAGED, L"IMAGE_SCN_MEM_NOT_PAGED\n Section is not pageable." },
-	{ IMAGE_SCN_MEM_SHARED, L"IMAGE_SCN_MEM_SHARED\n Section is shareable." },
-	{ IMAGE_SCN_MEM_EXECUTE, L"IMAGE_SCN_MEM_EXECUTE\n Section is executable." },
-	{ IMAGE_SCN_MEM_READ, L"IMAGE_SCN_MEM_READ\n Section is readable." },
-	{ IMAGE_SCN_MEM_WRITE, L"IMAGE_SCN_MEM_WRITE\n Section is writeable." }
-	};
 
 	m_fFileSummaryShow = true;
 
@@ -113,10 +67,10 @@ void CViewRightTop::OnInitialUpdate()
 	listCreateFileHeader();
 	listCreateOptHeader();
 	listCreateDataDirs();
-	listCreateSections();
+	listCreateSecHdrs();
 	listCreateExportDir();
 	listCreateImportDir();
-	treeCreateResourceDir();
+	treeCreateResDir();
 	listCreateExceptionDir();
 	listCreateSecurityDir();
 	listCreateRelocDir();
@@ -146,102 +100,102 @@ void CViewRightTop::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*
 
 	switch (lHint)
 	{
-	case LISTID_FILE_SUMMARY:
+	case PE_FILE_SUMMARY:
 		m_fFileSummaryShow = true;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_DOS_HEADER:
+	case LIST_DOSHEADER:
 		m_listDOSHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDOSHeader;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_RICH_HEADER:
+	case LIST_RICHHEADER:
 		m_listDOSRich.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDOSRich;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_NT_HEADER:
+	case LIST_NTHEADER:
 		m_listNTHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listNTHeader;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_FILE_HEADER:
+	case LIST_FILEHEADER:
 		m_listFileHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listFileHeader;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_OPTIONAL_HEADER:
+	case LIST_OPTIONALHEADER:
 		m_listOptHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listOptHeader;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_DATA_DIRS:
+	case LIST_DATADIRECTORIES:
 		m_listDataDirs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDataDirs;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_SECHEADERS:
+	case LIST_SECHEADERS:
 		m_listSecHeaders.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listSecHeaders;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_EXPORT_DIR:
+	case LIST_EXPORT:
 		m_listExportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listExportDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
-	case LISTID_IAT_DIR:
-	case LISTID_IMPORT_DIR:
+	case LIST_IAT:
+	case LIST_IMPORT:
 		m_listImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listImportDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
-	case LISTID_RESOURCE_DIR:
-		m_treeResourceDirTop.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_treeResourceDirTop;
+	case LIST_RESOURCE:
+		m_treeResTop.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pActiveList = &m_treeResTop;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
-	case LISTID_EXCEPTION_DIR:
+	case LIST_EXCEPTION:
 		m_listExceptionDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listExceptionDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_SECURITY_DIR:
+	case LIST_SECURITY:
 		m_listSecurityDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listSecurityDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
-	case LISTID_RELOCATION_DIR:
+	case LIST_RELOCATIONS:
 		m_listRelocDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listRelocDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
-	case LISTID_DEBUG_DIR:
+	case LIST_DEBUG:
 		m_listDebugDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDebugDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_TLS_DIR:
+	case LIST_TLS:
 		m_listTLSDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listTLSDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
-	case LISTID_LOAD_CONFIG_DIR:
+	case LIST_LOADCONFIG:
 		m_listLoadConfigDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listLoadConfigDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_BOUND_IMPORT_DIR:
+	case LIST_BOUNDIMPORT:
 		m_listBoundImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height() / 2, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listBoundImportDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
 		break;
-	case LISTID_DELAY_IMPORT_DIR:
+	case LIST_DELAYIMPORT:
 		m_listDelayImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDelayImportDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
-	case LISTID_COMDESCRIPTOR_DIR:
+	case LIST_COMDESCRIPTOR:
 		m_listCOMDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listCOMDir;
 		m_pChildFrame->m_RightSplitter.SetRowInfo(0, rectClient.Height(), 0);
@@ -251,8 +205,9 @@ void CViewRightTop::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*
 }
 
 void CViewRightTop::OnDraw(CDC* pDC)
-{	//Printing (drawing) app version/name info and
-	//currently oppened file type and name.
+{
+	//Printing app version/name info and
+	//currently oppened file's type and name.
 	if (m_fFileSummaryShow)
 	{
 		pDC->SelectObject(m_fontSummary);
@@ -260,7 +215,7 @@ void CViewRightTop::OnDraw(CDC* pDC)
 		int nLeftIndent = 20, nTopIndent = 20, nRectRight = 400, nRectHeight = 150;
 		GetTextExtentPoint32W(pDC->m_hDC, m_strVersion.c_str(), m_strVersion.length(), &m_sizeTextToDraw);
 		int xToPrint;
-		if (m_sizeTextToDraw.cx < (nRectRight - nLeftIndent)) //Rect width
+		if (m_sizeTextToDraw.cx < (nRectRight - nLeftIndent)) //Rect width.
 			xToPrint = (nRectRight - nLeftIndent - m_sizeTextToDraw.cx) / 2 + nLeftIndent;
 		else
 		{
@@ -269,7 +224,7 @@ void CViewRightTop::OnDraw(CDC* pDC)
 		}
 
 		GetTextExtentPoint32W(pDC->m_hDC, m_strFileName.c_str(), m_strFileName.length(), &m_sizeTextToDraw);
-		if (m_sizeTextToDraw.cx > (nRectRight - nLeftIndent)) //Rect width
+		if (m_sizeTextToDraw.cx > (nRectRight - nLeftIndent)) //Rect width.
 			nRectRight = m_sizeTextToDraw.cx + nLeftIndent + 30;
 
 		CRect rect { nLeftIndent, nTopIndent, nRectRight, nRectHeight };
@@ -288,10 +243,10 @@ void CViewRightTop::OnDraw(CDC* pDC)
 
 void CViewRightTop::OnSize(UINT nType, int cx, int cy)
 {
+	CScrollView::OnSize(nType, cx, cy);
+
 	if (m_pActiveList)
 		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
-
-	CView::OnSize(nType, cx, cy);
 }
 
 BOOL CViewRightTop::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
@@ -335,38 +290,38 @@ void CViewRightTop::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			if (std::get<1>(m_pSectionHeaders->at(pItem->iItem)).empty())
-				swprintf_s(str, 9, L"%.8S", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).Name);
+			if (std::get<1>(m_pSecHeaders->at(pItem->iItem)).empty())
+				swprintf_s(str, 9, L"%.8S", std::get<0>(m_pSecHeaders->at(pItem->iItem)).Name);
 			else
-				swprintf_s(str, 50, L"%.8S (%S)", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).Name,
-					std::get<1>(m_pSectionHeaders->at(pItem->iItem)).c_str());
+				swprintf_s(str, 50, L"%.8S (%S)", std::get<0>(m_pSecHeaders->at(pItem->iItem)).Name,
+					std::get<1>(m_pSecHeaders->at(pItem->iItem)).c_str());
 			break;
 		case 1:
-			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).Misc.VirtualSize);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).Misc.VirtualSize);
 			break;
 		case 2:
-			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).VirtualAddress);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).VirtualAddress);
 			break;
 		case 3:
-			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).SizeOfRawData);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).SizeOfRawData);
 			break;
 		case 4:
-			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).PointerToRawData);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).PointerToRawData);
 			break;
 		case 5:
-			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).PointerToRelocations);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).PointerToRelocations);
 			break;
 		case 6:
-			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).PointerToLinenumbers);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).PointerToLinenumbers);
 			break;
 		case 7:
-			swprintf_s(str, 5, L"%04X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).NumberOfRelocations);
+			swprintf_s(str, 5, L"%04X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).NumberOfRelocations);
 			break;
 		case 8:
-			swprintf_s(str, 5, L"%04X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).NumberOfLinenumbers);
+			swprintf_s(str, 5, L"%04X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).NumberOfLinenumbers);
 			break;
 		case 9:
-			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSectionHeaders->at(pItem->iItem)).Characteristics);
+			swprintf_s(str, 9, L"%08X", std::get<0>(m_pSecHeaders->at(pItem->iItem)).Characteristics);
 			break;
 		}
 		lstrcpynW(pItem->pszText, str, pItem->cchTextMax);
@@ -475,86 +430,68 @@ BOOL CViewRightTop::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
 	CScrollView::OnNotify(wParam, lParam, pResult);
 
-	LPNMITEMACTIVATE pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+	const LPNMITEMACTIVATE pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 	if (pNMI->iItem == -1)
 		return TRUE;
 
 	switch (pNMI->hdr.idFrom)
 	{
-	case LISTID_IMPORT_DIR:
+	case LIST_IMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LISTID_IMPORT_DLL_FUNCS, pNMI->iItem));
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LIST_IMPORT_FUNCS, pNMI->iItem));
 		return TRUE;
-	case LISTID_SECURITY_DIR:
+	case LIST_SECURITY:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(HEXCTRLID_SECURITY_DIR_SERTIFICATE_ID, pNMI->iItem));
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(HEXCTRL_SECURITY_SERTIFICATEID, pNMI->iItem));
 		return TRUE;
-	case LISTID_RELOCATION_DIR:
+	case LIST_RELOCATIONS:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LISTID_RELOCATION_DIR_RELOCS_DESC, pNMI->iItem));
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LIST_RELOCATIONS_TOPCHANGEDMSG, pNMI->iItem));
 		return TRUE;
-	case LISTID_DELAY_IMPORT_DIR:
+	case LIST_DELAYIMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LISTID_DELAY_IMPORT_DLL_FUNCS, pNMI->iItem));
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(LIST_DELAYIMPORT_FUNCS, pNMI->iItem));
 		return TRUE;
-	}
-
-
-	LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
-	if (pTree->hdr.idFrom == TREEID_RESOURCE_TOP && pTree->hdr.code == TVN_SELCHANGED)
-	{
-		PCLIBPE_RESOURCE_ROOT_TUP pTupleResRoot { };
-
-		if (m_pLibpe->GetResourceTable(&pTupleResRoot) != S_OK)
-			return -1;
-
-		const DWORD_PTR nResId = m_treeResourceDirTop.GetItemData(pTree->itemNew.hItem);
-
-		DWORD_PTR i = 1;//Resource ID (incremental) to set as SetItemData.
-
-		//Main loop to extract Resources from tuple.
-		for (auto& iterRoot : std::get<1>(*pTupleResRoot))
+	case TREE_RESOURCE_TOP:
+		const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
+		if (pTree->hdr.code == TVN_SELCHANGED && pTree->itemNew.hItem != m_hTreeResDir)
 		{
-			if (i == nResId)
+			PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
+
+			if (m_pLibpe->GetResourceTable(&pTupResRoot) != S_OK)
+				return -1;
+
+			const DWORD_PTR dwResId = m_treeResTop.GetItemData(pTree->itemNew.hItem);
+			const long idlvlRoot = std::get<0>(m_vecResId.at(dwResId));
+			const long idlvl2 = std::get<1>(m_vecResId.at(dwResId));
+			const long idlvl3 = std::get<2>(m_vecResId.at(dwResId));
+
+			auto rootvec = std::get<1>(*pTupResRoot);
+			if (idlvl2 >= 0)
 			{
-				if (!std::get<3>(iterRoot).empty())
-				{
+				auto lvl2tup = std::get<4>(rootvec.at(idlvlRoot));
+				auto lvl2vec = std::get<1>(lvl2tup);
 
-				}
-				break;
-			}
-			i++;
-
-			PCLIBPE_RESOURCE_LVL2_TUP pTupleResLvL2 = &std::get<4>(iterRoot);
-			for (auto& iterLvL2 : std::get<1>(*pTupleResLvL2))
-			{
-				if (i == nResId)
+				if (!lvl2vec.empty())
 				{
-					if (!std::get<3>(iterLvL2).empty())
+					if (idlvl3 >= 0)
 					{
+						auto lvl3tup = std::get<4>(lvl2vec.at(idlvl2));
+						auto lvl3vec = std::get<1>(lvl3tup);
 
-					}
-					break;
-				}
-				i++;
-
-				PCLIBPE_RESOURCE_LVL3_TUP pTupleResLvL3 = &std::get<4>(iterLvL2);
-				for (auto& iterLvL3 : std::get<1>(*pTupleResLvL3))
-				{
-					if (i == nResId)
-					{
-						if (!std::get<3>(iterLvL3).empty())
+						if (!lvl3vec.empty())
 						{
+							auto data = std::get<3>(lvl3vec.at(idlvl3));
 
+							if (!data.empty())
+							{
+							}
 						}
-						break;
 					}
-					i++;
 				}
 			}
 		}
 	}
-
 	return TRUE;
 }
 
@@ -565,7 +502,7 @@ int CViewRightTop::listCreateDOSHeader()
 		return -1;
 
 	m_listDOSHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_DOS_HEADER);
+		CRect(0, 0, 0, 0), this, LIST_DOSHEADER);
 	m_listDOSHeader.ShowWindow(SW_HIDE);
 	m_listDOSHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDOSHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
@@ -837,7 +774,7 @@ int CViewRightTop::listCreateDOSRich()
 		return -1;
 
 	m_listDOSRich.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_RICH_HEADER);
+		CRect(0, 0, 0, 0), this, LIST_RICHHEADER);
 	m_listDOSRich.ShowWindow(SW_HIDE);
 	m_listDOSRich.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDOSRich.InsertColumn(0, L"\u2116", LVCFMT_CENTER, 35);
@@ -872,7 +809,7 @@ int CViewRightTop::listCreateNTHeader()
 		return -1;
 
 	m_listNTHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_NT_HEADER);
+		CRect(0, 0, 0, 0), this, LIST_NTHEADER);
 	m_listNTHeader.ShowWindow(SW_HIDE);
 	m_listNTHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listNTHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 100);
@@ -924,7 +861,7 @@ int CViewRightTop::listCreateFileHeader()
 		return -1;
 
 	m_listFileHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_FILE_HEADER);
+		CRect(0, 0, 0, 0), this, LIST_FILEHEADER);
 
 	m_listFileHeader.ShowWindow(SW_HIDE);
 	m_listFileHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
@@ -997,7 +934,7 @@ int CViewRightTop::listCreateFileHeader()
 	m_listFileHeader.SetItemText(listindex, 3, str);
 	for (auto&i : mapMachineType)
 		if (i.first == pFileHeader->Machine)
-			m_listFileHeader.SetItemToolTip(listindex, 3, i.second, L"Machine:");
+			m_listFileHeader.SetItemTooltip(listindex, 3, i.second, L"Machine:");
 
 	listindex = m_listFileHeader.InsertItem(listindex + 1, L"NumberOfSections");
 	swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, FileHeader.NumberOfSections) + m_dwPeStart);
@@ -1018,7 +955,7 @@ int CViewRightTop::listCreateFileHeader()
 	{
 		__time64_t _time = pFileHeader->TimeDateStamp;
 		_wctime64_s(str, MAX_PATH, &_time);
-		m_listFileHeader.SetItemToolTip(listindex, 3, str, L"Time / Date:");
+		m_listFileHeader.SetItemTooltip(listindex, 3, str, L"Time / Date:");
 	}
 
 	listindex = m_listFileHeader.InsertItem(listindex + 1, L"PointerToSymbolTable");
@@ -1059,7 +996,7 @@ int CViewRightTop::listCreateFileHeader()
 	if (strCharact.size())
 	{
 		strCharact.erase(strCharact.size() - 1);//to remove last '\n'
-		m_listFileHeader.SetItemToolTip(listindex, 3, strCharact, L"Characteristics:");
+		m_listFileHeader.SetItemTooltip(listindex, 3, strCharact, L"Characteristics:");
 	}
 	return 0;
 }
@@ -1071,7 +1008,7 @@ int CViewRightTop::listCreateOptHeader()
 		return -1;
 
 	m_listOptHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_OPTIONAL_HEADER);
+		CRect(0, 0, 0, 0), this, LIST_OPTIONALHEADER);
 	m_listOptHeader.ShowWindow(SW_HIDE);
 	m_listOptHeader.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
@@ -1131,7 +1068,7 @@ int CViewRightTop::listCreateOptHeader()
 		m_listOptHeader.SetItemText(listindex, 2, str);
 		swprintf_s(str, 5, L"%04X", pOptHeader32->Magic);
 		m_listOptHeader.SetItemText(listindex, 3, str);
-		m_listOptHeader.SetItemToolTip(listindex, 3, L"IMAGE_NT_OPTIONAL_HDR32_MAGIC", L"Magic:");
+		m_listOptHeader.SetItemTooltip(listindex, 3, L"IMAGE_NT_OPTIONAL_HDR32_MAGIC", L"Magic:");
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"MajorLinkerVersion");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, OptionalHeader.MajorLinkerVersion) + m_dwPeStart);
@@ -1311,7 +1248,7 @@ int CViewRightTop::listCreateOptHeader()
 		if (mapSubSystem.find(pOptHeader32->Subsystem) != mapSubSystem.end())
 		{
 			swprintf_s(str, MAX_PATH, L"%S", mapSubSystem.at(pOptHeader32->Subsystem).c_str());
-			m_listOptHeader.SetItemToolTip(listindex, 3, str, L"Subsystem:");
+			m_listOptHeader.SetItemTooltip(listindex, 3, str, L"Subsystem:");
 		}
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"DllCharacteristics");
@@ -1331,7 +1268,7 @@ int CViewRightTop::listCreateOptHeader()
 		if (!strTmp.empty())
 		{
 			strTmp.erase(strTmp.size() - 1);//to remove last '\n'
-			m_listOptHeader.SetItemToolTip(listindex, 3, strTmp, L"DllCharacteristics:");
+			m_listOptHeader.SetItemTooltip(listindex, 3, strTmp, L"DllCharacteristics:");
 		}
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"SizeOfStackReserve");
@@ -1393,7 +1330,7 @@ int CViewRightTop::listCreateOptHeader()
 		m_listOptHeader.SetItemText(listindex, 2, str);
 		swprintf_s(str, 5, L"%04X", pOptHeader64->Magic);
 		m_listOptHeader.SetItemText(listindex, 3, str);
-		m_listOptHeader.SetItemToolTip(listindex, 3, L"IMAGE_NT_OPTIONAL_HDR64_MAGIC", L"Magic:");
+		m_listOptHeader.SetItemTooltip(listindex, 3, L"IMAGE_NT_OPTIONAL_HDR64_MAGIC", L"Magic:");
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"MajorLinkerVersion");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS64, OptionalHeader.MajorLinkerVersion) + m_dwPeStart);
@@ -1565,7 +1502,7 @@ int CViewRightTop::listCreateOptHeader()
 		if (mapSubSystem.find(pOptHeader64->Subsystem) != mapSubSystem.end())
 		{
 			swprintf_s(str, MAX_PATH, L"%S", mapSubSystem.at(pOptHeader64->Subsystem).c_str());
-			m_listOptHeader.SetItemToolTip(listindex, 3, str, L"Subsystem:");
+			m_listOptHeader.SetItemTooltip(listindex, 3, str, L"Subsystem:");
 		}
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"DllCharacteristics");
@@ -1585,7 +1522,7 @@ int CViewRightTop::listCreateOptHeader()
 		if (strTmp.size())
 		{
 			strTmp.erase(strTmp.size() - 1);//to remove last '\n'
-			m_listOptHeader.SetItemToolTip(listindex, 3, strTmp, L"DllCharacteristics:");
+			m_listOptHeader.SetItemTooltip(listindex, 3, strTmp, L"DllCharacteristics:");
 		}
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"SizeOfStackReserve");
@@ -1647,7 +1584,7 @@ int CViewRightTop::listCreateDataDirs()
 		return -1;
 
 	m_listDataDirs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_DATA_DIRS);
+		CRect(0, 0, 0, 0), this, LIST_DATADIRECTORIES);
 	m_listDataDirs.ShowWindow(SW_HIDE);
 	m_listDataDirs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDataDirs.InsertColumn(0, L"Name", LVCFMT_CENTER, 200);
@@ -1725,7 +1662,7 @@ int CViewRightTop::listCreateDataDirs()
 	swprintf_s(str, 9, L"%08X", pDataDirs->VirtualAddress);
 	m_listDataDirs.SetItemText(listindex, 2, str);
 	if (pDataDirs->VirtualAddress)
-		m_listDataDirs.SetItemToolTip(listindex, 2, L"This address is file RAW offset on disk");
+		m_listDataDirs.SetItemTooltip(listindex, 2, L"This address is file RAW offset on disk");
 	swprintf_s(str, 9, L"%08X", pDataDirs->Size);
 	m_listDataDirs.SetItemText(listindex, 3, str);
 	swprintf_s(str, 9, L"%.8S", std::get<1>(pLibPeDataDirs->at(IMAGE_DIRECTORY_ENTRY_SECURITY)).c_str());
@@ -1864,15 +1801,15 @@ int CViewRightTop::listCreateDataDirs()
 	return 0;
 }
 
-int CViewRightTop::listCreateSections()
+int CViewRightTop::listCreateSecHdrs()
 {
-	if (!m_pSectionHeaders)
+	if (!m_pSecHeaders)
 		return -1;
 
 	m_listSecHeaders.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_SECHEADERS);
+		CRect(0, 0, 0, 0), this, LIST_SECHEADERS);
 	m_listSecHeaders.ShowWindow(SW_HIDE);
-	m_listSecHeaders.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	m_listSecHeaders.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listSecHeaders.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
 	m_listSecHeaders.InsertColumn(1, L"Virtual Size", LVCFMT_LEFT, 100);
 	m_listSecHeaders.InsertColumn(2, L"Virtual Address", LVCFMT_LEFT, 125);
@@ -1883,20 +1820,66 @@ int CViewRightTop::listCreateSections()
 	m_listSecHeaders.InsertColumn(7, L"NumberOfRelocations", LVCFMT_LEFT, 150);
 	m_listSecHeaders.InsertColumn(8, L"NumberOfLinenumbers", LVCFMT_LEFT, 160);
 	m_listSecHeaders.InsertColumn(9, L"Characteristics", LVCFMT_LEFT, 115);
-	m_listSecHeaders.SetItemCountEx(m_pSectionHeaders->size(), LVSICF_NOSCROLL);
+	m_listSecHeaders.SetItemCountEx(m_pSecHeaders->size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+
+	std::map<DWORD, std::wstring> mapSecFlags = {
+		{ 0x00000000, L"IMAGE_SCN_TYPE_REG\n Reserved." },
+	{ 0x00000001, L"IMAGE_SCN_TYPE_DSECT\n Reserved." },
+	{ 0x00000002, L"IMAGE_SCN_TYPE_NOLOAD\n Reserved." },
+	{ 0x00000004, L"IMAGE_SCN_TYPE_GROUP\n Reserved." },
+	{ IMAGE_SCN_TYPE_NO_PAD, L"IMAGE_SCN_TYPE_NO_PAD\n Reserved." },
+	{ 0x00000010, L"IMAGE_SCN_TYPE_COPY\n Reserved." },
+	{ IMAGE_SCN_CNT_CODE, L"IMAGE_SCN_CNT_CODE\n Section contains code." },
+	{ IMAGE_SCN_CNT_INITIALIZED_DATA, L"IMAGE_SCN_CNT_INITIALIZED_DATA\n Section contains initialized data." },
+	{ IMAGE_SCN_CNT_UNINITIALIZED_DATA, L"IMAGE_SCN_CNT_UNINITIALIZED_DATA\n Section contains uninitialized data." },
+	{ IMAGE_SCN_LNK_OTHER, L"IMAGE_SCN_LNK_OTHER\n Reserved." },
+	{ IMAGE_SCN_LNK_INFO, L"IMAGE_SCN_LNK_INFO\n Section contains comments or some other type of information." },
+	{ 0x00000400, L"IMAGE_SCN_TYPE_OVER\n Reserved." },
+	{ IMAGE_SCN_LNK_REMOVE, L"IMAGE_SCN_LNK_REMOVE\n Section contents will not become part of image." },
+	{ IMAGE_SCN_LNK_COMDAT, L"IMAGE_SCN_LNK_COMDAT\n Section contents comdat." },
+	{ IMAGE_SCN_NO_DEFER_SPEC_EXC, L"IMAGE_SCN_NO_DEFER_SPEC_EXC\n Reset speculative exceptions handling bits in the TLB entries for this section." },
+	{ IMAGE_SCN_GPREL, L"IMAGE_SCN_GPREL\n Section content can be accessed relative to GP" },
+	{ 0x00010000, L"IMAGE_SCN_MEM_SYSHEAP\n Obsolete" },
+	{ IMAGE_SCN_MEM_PURGEABLE, L"IMAGE_SCN_MEM_PURGEABLE" },
+	{ IMAGE_SCN_MEM_LOCKED, L"IMAGE_SCN_MEM_LOCKED" },
+	{ IMAGE_SCN_MEM_PRELOAD, L"IMAGE_SCN_MEM_PRELOAD" },
+	{ IMAGE_SCN_ALIGN_1BYTES, L"IMAGE_SCN_ALIGN_1BYTES" },
+	{ IMAGE_SCN_ALIGN_2BYTES, L"IMAGE_SCN_ALIGN_2BYTES" },
+	{ IMAGE_SCN_ALIGN_4BYTES, L"IMAGE_SCN_ALIGN_4BYTES" },
+	{ IMAGE_SCN_ALIGN_8BYTES, L"IMAGE_SCN_ALIGN_8BYTES" },
+	{ IMAGE_SCN_ALIGN_16BYTES, L"IMAGE_SCN_ALIGN_16BYTES\n Default alignment if no others are specified." },
+	{ IMAGE_SCN_ALIGN_32BYTES, L"IMAGE_SCN_ALIGN_32BYTES" },
+	{ IMAGE_SCN_ALIGN_64BYTES, L"IMAGE_SCN_ALIGN_64BYTES" },
+	{ IMAGE_SCN_ALIGN_128BYTES, L"IMAGE_SCN_ALIGN_128BYTES" },
+	{ IMAGE_SCN_ALIGN_256BYTES, L"IMAGE_SCN_ALIGN_256BYTES" },
+	{ IMAGE_SCN_ALIGN_512BYTES, L"IMAGE_SCN_ALIGN_512BYTES" },
+	{ IMAGE_SCN_ALIGN_1024BYTES, L"IMAGE_SCN_ALIGN_1024BYTES" },
+	{ IMAGE_SCN_ALIGN_2048BYTES, L"IMAGE_SCN_ALIGN_2048BYTES" },
+	{ IMAGE_SCN_ALIGN_4096BYTES, L"IMAGE_SCN_ALIGN_4096BYTES" },
+	{ IMAGE_SCN_ALIGN_8192BYTES, L"IMAGE_SCN_ALIGN_8192BYTES" },
+	{ IMAGE_SCN_ALIGN_MASK, L"IMAGE_SCN_ALIGN_MASK" },
+	{ IMAGE_SCN_LNK_NRELOC_OVFL, L"IMAGE_SCN_LNK_NRELOC_OVFL\n Section contains extended relocations." },
+	{ IMAGE_SCN_MEM_DISCARDABLE, L"IMAGE_SCN_MEM_DISCARDABLE\n Section can be discarded." },
+	{ IMAGE_SCN_MEM_NOT_CACHED, L"IMAGE_SCN_MEM_NOT_CACHED\n Section is not cachable." },
+	{ IMAGE_SCN_MEM_NOT_PAGED, L"IMAGE_SCN_MEM_NOT_PAGED\n Section is not pageable." },
+	{ IMAGE_SCN_MEM_SHARED, L"IMAGE_SCN_MEM_SHARED\n Section is shareable." },
+	{ IMAGE_SCN_MEM_EXECUTE, L"IMAGE_SCN_MEM_EXECUTE\n Section is executable." },
+	{ IMAGE_SCN_MEM_READ, L"IMAGE_SCN_MEM_READ\n Section is readable." },
+	{ IMAGE_SCN_MEM_WRITE, L"IMAGE_SCN_MEM_WRITE\n Section is writeable." }
+	};
 
 	UINT listindex = 0;
 	std::wstring strTipText { };
 
-	for (auto &i : *m_pSectionHeaders)
+	for (auto &i : *m_pSecHeaders)
 	{
-		for (auto& flags : m_mapSecFlags)
+		for (auto& flags : mapSecFlags)
 			if (flags.first & std::get<0>(i).Characteristics)
 				strTipText += flags.second + L"\n";
 
 		if (!strTipText.empty())
 		{
-			m_listSecHeaders.SetItemToolTip(listindex, 9, strTipText, L"Section Flags:");
+			m_listSecHeaders.SetItemTooltip(listindex, 9, strTipText, L"Section Flags:");
 			strTipText.clear();
 		}
 
@@ -1917,7 +1900,7 @@ int CViewRightTop::listCreateExportDir()
 	const IMAGE_EXPORT_DIRECTORY* pExportDir = &std::get<0>(*pExportTable);
 
 	m_listExportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_EXPORT_DIR);
+		CRect(0, 0, 0, 0), this, LIST_EXPORT);
 	m_listExportDir.ShowWindow(SW_HIDE);
 	m_listExportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 250);
@@ -1939,7 +1922,7 @@ int CViewRightTop::listCreateExportDir()
 	{
 		__time64_t _time = pExportDir->TimeDateStamp;
 		_wctime64_s(str, MAX_PATH, &_time);
-		m_listExportDir.SetItemToolTip(listindex, 2, str, L"Time / Date:");
+		m_listExportDir.SetItemTooltip(listindex, 2, str, L"Time / Date:");
 	}
 
 	listindex = m_listExportDir.InsertItem(listindex + 1, L"MajorVersion");
@@ -2005,7 +1988,7 @@ int CViewRightTop::listCreateImportDir()
 		return -1;
 
 	m_listImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_IMPORT_DIR);
+		CRect(0, 0, 0, 0), this, LIST_IMPORT);
 	m_listImportDir.ShowWindow(SW_HIDE);
 	m_listImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 330);
@@ -2019,23 +2002,22 @@ int CViewRightTop::listCreateImportDir()
 	return 0;
 }
 
-int CViewRightTop::treeCreateResourceDir()
+int CViewRightTop::treeCreateResDir()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
 	if (m_pLibpe->GetResourceTable(&pTupResRoot) != S_OK)
 		return -1;
 
-	m_treeResourceDirTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-		CRect(0, 0, 0, 0), this, TREEID_RESOURCE_TOP);
-	m_treeResourceDirTop.ShowWindow(SW_HIDE);
+	m_treeResTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+		CRect(0, 0, 0, 0), this, TREE_RESOURCE_TOP);
+	m_treeResTop.ShowWindow(SW_HIDE);
 
-	const HTREEITEM hTreeResDir = m_treeResourceDirTop.InsertItem(L"Root Directory");
+	m_hTreeResDir = m_treeResTop.InsertItem(L"Root Directory");
 
 	WCHAR str[MAX_PATH] { };
 	HTREEITEM treeRoot { }, treeLvL2 { };
-	int idRootEntry = 0, idLvL2Entry = 0, idLvL3Entry = 0;
-	DWORD_PTR nResId { }; //Resource ID (incremental) to set as SetItemData.
+	long ilvlRoot = 0, ilvl2 = 0, ilvl3 = 0;
 
 	//Main loop to extract Resources from tuple.
 	for (auto& iterRoot : std::get<1>(*pTupResRoot))
@@ -2044,63 +2026,69 @@ int CViewRightTop::treeCreateResourceDir()
 		if (pResDirEntry->DataIsDirectory)
 		{
 			if (pResDirEntry->NameIsString)
-				swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", idRootEntry, std::get<1>(iterRoot).c_str());
+				swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvlRoot, std::get<1>(iterRoot).c_str());
 			else
-				swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", idRootEntry, pResDirEntry->Id);
-
-			treeRoot = m_treeResourceDirTop.InsertItem(str, hTreeResDir);
-			nResId++;
-			m_treeResourceDirTop.SetItemData(treeRoot, nResId);
+			{
+				if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
+					swprintf(str, MAX_PATH, L"Entry: %i, Id: %u, %s", ilvlRoot, pResDirEntry->Id, g_mapResType.at(pResDirEntry->Id).c_str());
+				else
+					swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", ilvlRoot, pResDirEntry->Id);
+			}
+			treeRoot = m_treeResTop.InsertItem(str, m_hTreeResDir);
+			m_vecResId.emplace_back(ilvlRoot, -1, -1);
+			m_treeResTop.SetItemData(treeRoot, m_vecResId.size() - 1);
+			ilvl2 = 0;
 		}
 		else
 		{
 			//DATA
 		}
 
-		PCLIBPE_RESOURCE_LVL2_TUP pTupResLvL2 = &std::get<4>(iterRoot);
+		const PCLIBPE_RESOURCE_LVL2_TUP pTupResLvL2 = &std::get<4>(iterRoot);
 		for (auto& iterLvL2 : std::get<1>(*pTupResLvL2))
 		{
 			pResDirEntry = &std::get<0>(iterLvL2);
 			if (pResDirEntry->DataIsDirectory)
 			{
 				if (pResDirEntry->NameIsString)
-					swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", idLvL2Entry, std::get<1>(iterLvL2).c_str());
+					swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvl2, std::get<1>(iterLvL2).c_str());
 				else
-					swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", idLvL2Entry, pResDirEntry->Id);
+					swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", ilvl2, pResDirEntry->Id);
 
-				treeLvL2 = m_treeResourceDirTop.InsertItem(str, treeRoot);
-				nResId++;
-				m_treeResourceDirTop.SetItemData(treeLvL2, nResId);
+				treeLvL2 = m_treeResTop.InsertItem(str, treeRoot);
+				m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
+				m_treeResTop.SetItemData(treeLvL2, m_vecResId.size() - 1);
+				ilvl3 = 0;
 			}
 			else
 			{
 				//DATA
 			}
 
-			PCLIBPE_RESOURCE_LVL3_TUP pTupResLvL3 = &std::get<4>(iterLvL2);
+			const PCLIBPE_RESOURCE_LVL3_TUP pTupResLvL3 = &std::get<4>(iterLvL2);
 			for (auto& iterLvL3 : std::get<1>(*pTupResLvL3))
 			{
 				pResDirEntry = &std::get<0>(iterLvL3);
 
 				if (pResDirEntry->NameIsString)
-					swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", idLvL3Entry, std::get<1>(iterLvL3).c_str());
+					swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvl3, std::get<1>(iterLvL3).c_str());
 				else
-					swprintf(str, MAX_PATH, L"Entry: %i, lang: %u", idLvL3Entry, pResDirEntry->Id);
+					swprintf(str, MAX_PATH, L"Entry: %i, lang: %u", ilvl3, pResDirEntry->Id);
 
-				HTREEITEM treeLvL3 = m_treeResourceDirTop.InsertItem(str, treeLvL2);
-				nResId++;
-				m_treeResourceDirTop.SetItemData(treeLvL3, nResId);
+				const HTREEITEM treeLvL3 = m_treeResTop.InsertItem(str, treeLvL2);
+				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
+				m_treeResTop.SetItemData(treeLvL3, m_vecResId.size() - 1);
 
-				idLvL3Entry++;
+				ilvl3++;
 			}
-			idLvL3Entry = 0;
-			idLvL2Entry++;
+			ilvl2++;
 		}
-		idLvL2Entry = 0;
-		idRootEntry++;
+		ilvlRoot++;
 	}
+	m_treeResTop.Expand(m_hTreeResDir, TVE_EXPAND);
 
-	m_treeResourceDirTop.Expand(hTreeResDir, TVE_EXPAND);
+	m_hexRes.Create(this, CRect(0, 0, 0, 0), 0x01);
+	m_hexRes.ShowWindow(SW_HIDE);
 
 	return 0;
 }
@@ -2111,7 +2099,7 @@ int CViewRightTop::listCreateExceptionDir()
 		return -1;
 
 	m_listExceptionDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_EXCEPTION_DIR);
+		CRect(0, 0, 0, 0), this, LIST_EXCEPTION);
 	m_listExceptionDir.ShowWindow(SW_HIDE);
 	m_listExceptionDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExceptionDir.InsertColumn(0, L"BeginAddress", LVCFMT_CENTER, 100);
@@ -2129,7 +2117,7 @@ int CViewRightTop::listCreateSecurityDir()
 		return -1;
 
 	m_listSecurityDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_SECURITY_DIR);
+		CRect(0, 0, 0, 0), this, LIST_SECURITY);
 	m_listSecurityDir.ShowWindow(SW_HIDE);
 	m_listSecurityDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listSecurityDir.InsertColumn(0, L"dwLength", LVCFMT_CENTER, 100);
@@ -2160,7 +2148,7 @@ int CViewRightTop::listCreateRelocDir()
 		return -1;
 
 	m_listRelocDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_RELOCATION_DIR);
+		CRect(0, 0, 0, 0), this, LIST_RELOCATIONS);
 	m_listRelocDir.ShowWindow(SW_HIDE);
 	m_listRelocDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocDir.InsertColumn(0, L"Virtual Address", LVCFMT_CENTER, 115);
@@ -2179,7 +2167,7 @@ int CViewRightTop::listCreateDebugDir()
 		return -1;
 
 	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_DEBUG_DIR);
+		CRect(0, 0, 0, 0), this, LIST_DEBUG);
 	m_listDebugDir.ShowWindow(SW_HIDE);
 	m_listDebugDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDebugDir.InsertColumn(0, L"Characteristics", LVCFMT_CENTER, 115);
@@ -2224,7 +2212,7 @@ int CViewRightTop::listCreateDebugDir()
 		{
 			__time64_t _time = i.TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
-			m_listDebugDir.SetItemToolTip(listindex, 1, str, L"Time / Date:");
+			m_listDebugDir.SetItemTooltip(listindex, 1, str, L"Time / Date:");
 		}
 		swprintf_s(str, 5, L"%04u", i.MajorVersion);
 		m_listDebugDir.SetItemText(listindex, 2, str);
@@ -2234,7 +2222,7 @@ int CViewRightTop::listCreateDebugDir()
 		m_listDebugDir.SetItemText(listindex, 4, str);
 		for (auto&j : mapDebugType)
 			if (j.first == i.Type)
-				m_listDebugDir.SetItemToolTip(listindex, 4, j.second);
+				m_listDebugDir.SetItemTooltip(listindex, 4, j.second);
 		swprintf_s(str, 9, L"%08X", i.SizeOfData);
 		m_listDebugDir.SetItemText(listindex, 5, str);
 		swprintf_s(str, 9, L"%08X", i.AddressOfRawData);
@@ -2255,7 +2243,7 @@ int CViewRightTop::listCreateTLSDir()
 		return -1;
 
 	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_TLS_DIR);
+		CRect(0, 0, 0, 0), this, LIST_TLS);
 	m_listTLSDir.ShowWindow(SW_HIDE);
 	m_listTLSDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listTLSDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 250);
@@ -2324,7 +2312,7 @@ int CViewRightTop::listCreateTLSDir()
 		m_listTLSDir.SetItemText(listindex, 2, str);
 		for (auto& i : mapCharact)
 			if (i.first == pTLSDir32->Characteristics)
-				m_listTLSDir.SetItemToolTip(listindex, 2, i.second, L"Characteristics:");
+				m_listTLSDir.SetItemTooltip(listindex, 2, i.second, L"Characteristics:");
 	}
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 	{
@@ -2368,7 +2356,7 @@ int CViewRightTop::listCreateTLSDir()
 
 		for (auto& i : mapCharact)
 			if (i.first == pTLSDir64->Characteristics)
-				m_listTLSDir.SetItemToolTip(listindex, 2, i.second, L"Characteristics:");
+				m_listTLSDir.SetItemTooltip(listindex, 2, i.second, L"Characteristics:");
 	}
 
 	return 0;
@@ -2385,7 +2373,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 		return -1;
 
 	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_LOAD_CONFIG_DIR);
+		CRect(0, 0, 0, 0), this, LIST_LOADCONFIG);
 	m_listLoadConfigDir.ShowWindow(SW_HIDE);
 	m_listLoadConfigDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listLoadConfigDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 330);
@@ -2434,7 +2422,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 		{
 			__time64_t _time = pLoadConfDir32->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
-			m_listLoadConfigDir.SetItemToolTip(listindex, 2, str, L"Time / Date:");
+			m_listLoadConfigDir.SetItemTooltip(listindex, 2, str, L"Time / Date:");
 		}
 
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"MajorVersion");
@@ -2579,7 +2567,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 			if (i.first & pLoadConfDir32->GuardFlags)
 				_tooltip += i.second + L"\n";
 		if (!_tooltip.empty())
-			m_listLoadConfigDir.SetItemToolTip(listindex, 2, _tooltip, L"GuardFlags:");
+			m_listLoadConfigDir.SetItemTooltip(listindex, 2, _tooltip, L"GuardFlags:");
 
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.Flags");
 		swprintf_s(str, 3, L"%u", sizeof(pLoadConfDir32->CodeIntegrity.Flags));
@@ -2720,7 +2708,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 		{
 			__time64_t _time = pLoadConfDir64->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
-			m_listLoadConfigDir.SetItemToolTip(listindex, 2, str, L"Time / Date:");
+			m_listLoadConfigDir.SetItemTooltip(listindex, 2, str, L"Time / Date:");
 		}
 
 		dwTotalSize += sizeof(pLoadConfDir64->MajorVersion);
@@ -2934,7 +2922,7 @@ int CViewRightTop::listCreateLoadConfigDir()
 			if (i.first & pLoadConfDir64->GuardFlags)
 				_tooltip += i.second + L"\n";
 		if (!_tooltip.empty())
-			m_listLoadConfigDir.SetItemToolTip(listindex, 2, _tooltip, L"GuardFlags:");
+			m_listLoadConfigDir.SetItemTooltip(listindex, 2, _tooltip, L"GuardFlags:");
 
 		dwTotalSize += sizeof(pLoadConfDir64->CodeIntegrity.Flags);
 		if (dwTotalSize > dwLCTSize)
@@ -3119,7 +3107,7 @@ int CViewRightTop::listCreateBoundImportDir()
 		return -1;
 
 	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DIR);
+		CRect(0, 0, 0, 0), this, LIST_DELAYIMPORT);
 	m_listBoundImportDir.ShowWindow(SW_HIDE);
 	m_listBoundImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listBoundImportDir.InsertColumn(0, L"Module Name", LVCFMT_CENTER, 290);
@@ -3141,7 +3129,7 @@ int CViewRightTop::listCreateBoundImportDir()
 		{
 			__time64_t _time = pBoundImpDir->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
-			m_listBoundImportDir.SetItemToolTip(listindex, 1, str, L"Time / Date:");
+			m_listBoundImportDir.SetItemTooltip(listindex, 1, str, L"Time / Date:");
 		}
 		swprintf_s(str, 5, L"%04X", pBoundImpDir->OffsetModuleName);
 		m_listBoundImportDir.SetItemText(listindex, 2, str);
@@ -3162,7 +3150,7 @@ int CViewRightTop::listCreateDelayImportDir()
 		return -1;
 
 	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DIR);
+		CRect(0, 0, 0, 0), this, LIST_DELAYIMPORT);
 	m_listDelayImportDir.ShowWindow(SW_HIDE);
 	m_listDelayImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 290);
@@ -3214,7 +3202,7 @@ int CViewRightTop::listCreateCOMDir()
 		return -1;
 
 	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LISTID_DELAY_IMPORT_DIR);
+		CRect(0, 0, 0, 0), this, LIST_DELAYIMPORT);
 	m_listCOMDir.ShowWindow(SW_HIDE);
 	m_listCOMDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listCOMDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 300);
@@ -3261,7 +3249,7 @@ int CViewRightTop::listCreateCOMDir()
 		if (i.first & pCOMDesc->Flags)
 			strToolTip += i.second + L"\n";
 	if (!strToolTip.empty())
-		m_listCOMDir.SetItemToolTip(listindex, 1, strToolTip, L"Flags:");
+		m_listCOMDir.SetItemTooltip(listindex, 1, strToolTip, L"Flags:");
 
 	listindex = m_listCOMDir.InsertItem(listindex + 1, L"EntryPointToken");
 	swprintf_s(str, 9, L"%08X", pCOMDesc->EntryPointToken);

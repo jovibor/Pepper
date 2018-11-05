@@ -26,20 +26,20 @@ private:
 	CPepperList m_listImportFuncs;
 	CPepperList m_listDelayImportFuncs;
 	CPepperList m_listExportFuncs;
-	CPepperList m_listRelocationsDescription;
-	CPepperTreeCtrl m_treeResourceDirBottom;
+	CPepperList m_listRelocsDesc;
+	CPepperTreeCtrl m_treeResBottom;
 	DWORD m_dwFileSummary { };
-	LONG m_ScrollWidth { };
-	LONG m_ScrollHeight { };
-	CImageList m_imglTreeResource;
+	CImageList m_imglTreeRes;
 	CWnd* m_pActiveList { };
+	std::vector<std::tuple<long, long, long>> m_vecResId { };
 
 	int listCreateImportFuncs(UINT dllId);
 	int listCreateDelayImportFuncs(UINT dllId);
 	int listCreateExportFuncs();
-	int listCreateRelocations(UINT blockID);
-	int treeCreateResourceDir();
-	int HexCtrlRightBottom(unsigned nSertId);
+	int listCreateRelocs(UINT blockID);
+	int treeCreateResDir();
+	int HexCreateSecuritySertId(unsigned nSertId);
+	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };
 
 

@@ -51,14 +51,14 @@ void CChildFrame::OnSize(UINT nType, int cx, int cy)
 
 			m_MainSplitter.GetColumnInfo(0, cxCur, min);
 			ratio = (double)m_cx / cxCur;
-			m_MainSplitter.SetColumnInfo(0, cx / ratio + 0.5, min);
+			m_MainSplitter.SetColumnInfo(0, int(cx / ratio + 0.5), min);
 
 			m_RightSplitter.GetRowInfo(0, cyCur, min);
 			ratio = (double)m_cy / cyCur;
-			m_RightSplitter.SetRowInfo(0, cy / ratio + 0.5, min);
+			m_RightSplitter.SetRowInfo(0, int(cy / ratio + 0.5), min);
 			m_RightSplitter.GetRowInfo(1, cyCur, min);
 			ratio = (double)m_cy / cyCur;
-			m_RightSplitter.SetRowInfo(1, cy / ratio + 0.5, min);
+			m_RightSplitter.SetRowInfo(1, int(cy / ratio + 0.5), min);
 		}
 		else
 		{	//If it's the «first» WM_SIZE after CView fully created

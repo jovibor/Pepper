@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Hexedit.h"
 #include "PepperDoc.h"
 #include "PepperTreeCtrl.h"
 #include "PepperList.h"
@@ -49,18 +49,18 @@ private:
 	CPepperList m_listDelayImportDir;
 	CPepperList m_listTLSDir;
 	CPepperList m_listCOMDir;
-	CPepperTreeCtrl m_treeResourceDirTop;
+	CPepperTreeCtrl m_treeResTop;
+	HTREEITEM m_hTreeResDir { };
 	bool m_fFileSummaryShow = false;
 	LONG m_dwPeStart { };
 	DWORD m_dwFileSummary { };
-	LONG m_ScrollWidth { };
-	LONG m_ScrollHeight { };
-	std::map<DWORD, std::wstring> m_mapSecFlags { };
-	PCLIBPE_SECHEADERS_VEC m_pSectionHeaders { };
+	PCLIBPE_SECHEADERS_VEC m_pSecHeaders { };
 	PCLIBPE_IMPORT_VEC m_pImportTable { };
 	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
 	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
 	CWnd* m_pActiveList { };
+	std::vector<std::tuple<long, long, long>> m_vecResId { }; //Resource id for treeCtrl
+	CHexEdit m_hexRes;
 
 	int listCreateDOSHeader();
 	int listCreateDOSRich();
@@ -68,10 +68,10 @@ private:
 	int listCreateFileHeader();
 	int listCreateOptHeader();
 	int listCreateDataDirs();
-	int listCreateSections();
+	int listCreateSecHdrs();
 	int listCreateExportDir();
 	int listCreateImportDir();
-	int treeCreateResourceDir();
+	int treeCreateResDir();
 	int listCreateExceptionDir();
 	int listCreateSecurityDir();
 	int listCreateRelocDir();

@@ -20,11 +20,6 @@ CPepperListHeader::CPepperListHeader()
 	m_hdItem.pszText = m_strHeaderText;
 }
 
-CPepperListHeader::~CPepperListHeader()
-{
-	m_fontHeader.DeleteObject();
-}
-
 void CPepperListHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted)
 {
 	pDC->FillSolidRect(&rect, m_colorHeader);
@@ -32,6 +27,8 @@ void CPepperListHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPres
 	pDC->DrawEdge(&rect, EDGE_RAISED, BF_RECT);
 	pDC->SelectObject(&m_fontHeader);
 
+	//Set item's text buffer first char to zero,
+	//then getting item's text and Draw it.
 	m_strHeaderText[0] = L'\0';
 	GetItem(iItem, &m_hdItem);
 
@@ -41,15 +38,15 @@ void CPepperListHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPres
 		pDC->DrawTextW(m_strHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
 }
 
-LRESULT  CPepperListHeader::OnLayout(WPARAM wParam, LPARAM lParam)
+LRESULT CPepperListHeader::OnLayout(WPARAM wParam, LPARAM lParam)
 {
 	CHeaderCtrl::DefWindowProcW(HDM_LAYOUT, 0, lParam);
 
 	LPHDLAYOUT pHL = reinterpret_cast<LPHDLAYOUT>(lParam);
 
-	//New header height
+	//New header height.
 	pHL->pwpos->cy += 16;
-	//Decreases list height by the new header's height
+	//Decreases list height by the new header's height.
 	pHL->prc->top += 16;
 
 	return 0;
