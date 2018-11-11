@@ -1,26 +1,20 @@
 #include "stdafx.h"
-#include "PepperDoc.h"
-#include "ChildFrm.h"
-#include "ViewRightBottom.h"
+#include "ViewRightBottomLeft.h"
 #include "resource.h"
 
-IMPLEMENT_DYNCREATE(CViewRightBottom, CView)
+IMPLEMENT_DYNCREATE(CViewRightBottomLeft, CView)
 
-BEGIN_MESSAGE_MAP(CViewRightBottom, CView)
+BEGIN_MESSAGE_MAP(CViewRightBottomLeft, CView)
 	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
-void CViewRightBottom::OnDraw(CDC* pDC)
-{
-}
-
-void CViewRightBottom::OnInitialUpdate()
+void CViewRightBottomLeft::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
 
-	m_ChildFrame = (CChildFrame*)GetParentFrame();
+	m_pChildFrame = (CChildFrame*)GetParentFrame();
 
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
@@ -33,32 +27,82 @@ void CViewRightBottom::OnInitialUpdate()
 
 	m_dwFileSummary = *m_pFileSummary;
 
-	listCreateExportFuncs();
-	treeCreateResDir();
-	m_HexEdit.Create(this, CRect(0, 0, 0, 0), HEXCTRL_SECURITY_SERTIFICATEID);
-	m_HexEdit.ShowWindow(SW_HIDE);
+	//Hex control for SecurityDir and TLSdir.
+	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_BOTTOM_LEFT);
+	m_stHexEdit.ShowWindow(SW_HIDE);
+
+	CreateListExportFuncs();
+	CreateTreeResDir();
 }
 
-int CViewRightBottom::HexCreateSecuritySertId(unsigned nSertId)
+void CViewRightBottomLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
 {
-	if (m_pLibpe->GetSecurityTable(&m_vecSec) != S_OK)
-		return -1;
-	if (nSertId > m_vecSec->size())
-		return -1;
+	if (!m_pChildFrame)
+		return;
 
-	m_HexEdit.SetData(&std::get<1>(m_vecSec->at(nSertId)));
+	if (m_pActiveList)
+		m_pActiveList->ShowWindow(SW_HIDE);
 
 	CRect rect;
 	GetClientRect(&rect);
-	m_HexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
-	return 0;
+	switch (LOWORD(lHint))
+	{	
+	case IDC_LIST_EXPORT:
+		m_listExportFuncs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pActiveList = &m_listExportFuncs;
+		break;
+	case IDC_LIST_IMPORT_FUNCS:
+		CreateListImportFuncs(HIWORD(lHint));
+		m_pActiveList = &m_listImportFuncs;
+		break;
+	case IDC_TREE_RESOURCE:
+	case IDC_HEX_RESOURCES_RAW:
+		m_treeResBottom.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pActiveList = &m_treeResBottom;
+		break;
+	case IDC_LIST_SECURITY_SERTIFICATE_ID:
+		CreateHexSecuritySertId(HIWORD(lHint));
+		m_pActiveList = &m_stHexEdit;
+		break;
+	case IDC_LIST_RELOCATIONS_TOPCHANGEDMSG:
+		CreateListRelocs(HIWORD(lHint));
+		m_pActiveList = &m_listRelocsDesc;
+		break;
+	case IDC_LIST_TLS:
+		CreateHexTLS();
+		m_pActiveList = &m_stHexEdit;
+		break;
+	case IDC_LIST_DELAYIMPORT_FUNCS:
+		CreateListDelayImportFuncs(HIWORD(lHint));
+		m_pActiveList = &m_listDelayImportFuncs;
+		break;
+	}
 }
 
-BOOL CViewRightBottom::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+HBRUSH CViewRightBottomLeft::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CScrollView::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	return hbr;
+}
+
+void CViewRightBottomLeft::OnSize(UINT nType, int cx, int cy)
+{
+	CScrollView::OnSize(nType, cx, cy);
+
+	if (m_pActiveList)
+		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+}
+
+void CViewRightBottomLeft::OnDraw(CDC* pDC)
+{
+}
+
+BOOL CViewRightBottomLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
 	const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
-	if (pTree->hdr.idFrom == TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
+	if (pTree->hdr.idFrom == IDC_TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
 	{
 		PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
@@ -97,64 +141,28 @@ BOOL CViewRightBottom::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	return CScrollView::OnNotify(wParam, lParam, pResult);
 }
 
-BOOL CViewRightBottom::OnEraseBkgnd(CDC* pDC)
+BOOL CViewRightBottomLeft::OnEraseBkgnd(CDC* pDC)
 {
 	return CScrollView::OnEraseBkgnd(pDC);
 }
 
-void CViewRightBottom::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
+int CViewRightBottomLeft::CreateHexSecuritySertId(unsigned nSertId)
 {
-	if (m_pActiveList)
-		m_pActiveList->ShowWindow(SW_HIDE);
+	if (m_pLibpe->GetSecurityTable(&m_vecSec) != S_OK)
+		return -1;
+	if (nSertId > m_vecSec->size())
+		return -1;
+
+	m_stHexEdit.SetData(&std::get<1>(m_vecSec->at(nSertId)));
 
 	CRect rect;
 	GetClientRect(&rect);
+	m_stHexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
-	switch (LOWORD(lHint))
-	{
-	case LIST_IMPORT_FUNCS:
-		listCreateImportFuncs(HIWORD(lHint));
-		m_pActiveList = &m_listImportFuncs;
-		break;
-	case LIST_DELAYIMPORT_FUNCS:
-		listCreateDelayImportFuncs(HIWORD(lHint));
-		m_pActiveList = &m_listDelayImportFuncs;
-		break;
-	case LIST_EXPORT:
-		m_listExportFuncs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_listExportFuncs;
-		break;
-	case HEXCTRL_SECURITY_SERTIFICATEID:
-		HexCreateSecuritySertId(HIWORD(lHint));
-		m_pActiveList = &m_HexEdit;
-		break;
-	case LIST_RELOCATIONS_TOPCHANGEDMSG:
-		listCreateRelocs(HIWORD(lHint));
-		m_pActiveList = &m_listRelocsDesc;
-		break;
-	case LIST_RESOURCE:
-		m_treeResBottom.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_treeResBottom;
-		break;
-	}
+	return 0;
 }
 
-HBRUSH CViewRightBottom::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-	HBRUSH hbr = CScrollView::OnCtlColor(pDC, pWnd, nCtlColor);
-
-	return hbr;
-}
-
-void CViewRightBottom::OnSize(UINT nType, int cx, int cy)
-{
-	CScrollView::OnSize(nType, cx, cy);
-
-	if (m_pActiveList)
-		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
-}
-
-int CViewRightBottom::listCreateImportFuncs(UINT dllId)
+int CViewRightBottomLeft::CreateListImportFuncs(UINT dllId)
 {
 	PCLIBPE_IMPORT_VEC m_pImportTable { };
 
@@ -166,7 +174,7 @@ int CViewRightBottom::listCreateImportFuncs(UINT dllId)
 
 	m_listImportFuncs.DestroyWindow();
 	m_listImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LIST_IMPORT_FUNCS);
+		CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_FUNCS);
 
 	m_listImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 175);
@@ -200,7 +208,7 @@ int CViewRightBottom::listCreateImportFuncs(UINT dllId)
 	return 0;
 }
 
-int CViewRightBottom::listCreateDelayImportFuncs(UINT dllId)
+int CViewRightBottomLeft::CreateListDelayImportFuncs(UINT dllId)
 {
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
@@ -212,7 +220,7 @@ int CViewRightBottom::listCreateDelayImportFuncs(UINT dllId)
 
 	m_listDelayImportFuncs.DestroyWindow();
 	m_listDelayImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LIST_DELAYIMPORT_FUNCS);
+		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS);
 
 	m_listDelayImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
@@ -264,7 +272,7 @@ int CViewRightBottom::listCreateDelayImportFuncs(UINT dllId)
 	return 0;
 }
 
-int CViewRightBottom::listCreateExportFuncs()
+int CViewRightBottomLeft::CreateListExportFuncs()
 {
 	PCLIBPE_EXPORT_TUP pExportTable { };
 
@@ -272,7 +280,7 @@ int CViewRightBottom::listCreateExportFuncs()
 		return -1;
 
 	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LIST_EXPORT_FUNCS);
+		CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS);
 	m_listExportFuncs.ShowWindow(SW_HIDE);
 	m_listExportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportFuncs.InsertColumn(0, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
@@ -302,7 +310,7 @@ int CViewRightBottom::listCreateExportFuncs()
 	return 0;
 }
 
-int CViewRightBottom::listCreateRelocs(UINT uBlockID)
+int CViewRightBottomLeft::CreateListRelocs(UINT uBlockID)
 {
 	PCLIBPE_RELOCATION_VEC pRelocTable { };
 
@@ -318,7 +326,7 @@ int CViewRightBottom::listCreateRelocs(UINT uBlockID)
 	m_listRelocsDesc.DestroyWindow();
 
 	m_listRelocsDesc.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, LIST_RELOCATIONS_TYPE);
+		CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_TYPE);
 	m_listRelocsDesc.ShowWindow(SW_HIDE);
 	m_listRelocsDesc.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocsDesc.InsertColumn(0, L"Reloc type", LVCFMT_CENTER, 250);
@@ -364,7 +372,7 @@ int CViewRightBottom::listCreateRelocs(UINT uBlockID)
 	return 0;
 }
 
-int CViewRightBottom::treeCreateResDir()
+int CViewRightBottomLeft::CreateTreeResDir()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
@@ -372,7 +380,7 @@ int CViewRightBottom::treeCreateResDir()
 		return -1;
 
 	m_treeResBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
-		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, TREE_RESOURCE_BOTTOM);
+		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_BOTTOM);
 	m_treeResBottom.ShowWindow(SW_HIDE);
 
 	WCHAR str[MAX_PATH] { };
@@ -433,3 +441,17 @@ int CViewRightBottom::treeCreateResDir()
 	return 0;
 }
 
+int CViewRightBottomLeft::CreateHexTLS()
+{
+	PCLIBPE_TLS_TUP pTLSDir { };
+	if (m_pLibpe->GetTLSTable(&pTLSDir) != S_OK)
+		return -1;
+	
+	m_stHexEdit.SetData(&std::get<2>(*pTLSDir));
+
+	CRect rect;
+	GetClientRect(&rect);
+	m_stHexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+	return 0;
+}

@@ -8,8 +8,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_WM_CREATE()
 	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
-	ON_WM_SIZING()
 	ON_WM_DROPFILES()
+	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -89,10 +89,10 @@ void CMainFrame::OnDropFiles(HDROP hDropInfo)
 	CMDIFrameWndEx::OnDropFiles(hDropInfo);
 }
 
-void CMainFrame::OnSizing(UINT fwSide, LPRECT pRect)
+void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
-	if ((pRect->right - pRect->left) < 400)
-		pRect->right = pRect->left + 400;
-	if ((pRect->bottom - pRect->top) < 200)
-		pRect->bottom = pRect->top + 200;
+	lpMMI->ptMinTrackSize.x = 400;
+	lpMMI->ptMinTrackSize.y = 200;
+
+	CMDIFrameWndEx::OnGetMinMaxInfo(lpMMI);
 }

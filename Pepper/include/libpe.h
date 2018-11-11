@@ -10,7 +10,7 @@
 namespace libpe {
 	static_assert(_MSC_VER >= 1914, "MSVS 15.7 (C++17) or higher needed.");
 
-#include <Imagehlp.h>
+#include <ImageHlp.h>
 
 	typedef const DWORD* PCDWORD;
 	typedef const IMAGE_DOS_HEADER *PCLIBPE_DOSHEADER;
@@ -55,7 +55,17 @@ namespace libpe {
 	typedef const LIBPE_IMPORT_VEC *PCLIBPE_IMPORT_VEC;
 
 	/**************************************Resources by Levels*******************************************
-	* Totally 3 levels of resources — highest level includes lowest levels.								*
+	* There are 3 levels of resources: 1. Type 2. Name 3. Language.										*
+	* https://docs.microsoft.com/en-us/windows/desktop/Debug/pe-format#the-rsrc-section					*
+	* «Each directory table is followed by a series of directory entries that give the name				*
+	* or identifier (ID) for that level (Type, Name, or Language level) and an address of either a data *
+	* description or another directory table. If the address points to a data description, then 		*
+	* the data is a leaf in the tree. If the address points to another directory table, then that table *
+	* lists directory entries at the next level down.													*
+	* A leaf's Type, Name, and Language IDs are determined by the path that is taken through directory 	*
+	* tables to reach the leaf. The first table determines Type ID, the second table (pointed to by 	*
+	* the directory entry in the first table) determines Name ID, and the third table determines 		*
+	* Language ID.»																						*
 	* Highest (root) resource structure is LIBPE_RESOURCE_ROOT_TUP. It's, in fact, an std::tuple		*
 	* that includes: an IMAGE_RESOURCE_DIRECTORY of root resource directory itself, 					*
 	* and LIBPE_RESOURCE_ROOT_VEC, that is actually an std::vector that includes std::tuple of all		*
@@ -64,7 +74,7 @@ namespace libpe {
 	* std::vector<std::byte> (RAW resource data), and LIBPE_RESOURCE_LVL2_TUP that is, in fact,			*
 	* a tuple of the next, second, resource level, that replicates tuple of root resource level.		*
 	* LIBPE_RESOURCE_LVL2_TUP includes IMAGE_RESOURCE_DIRECTORY of second resource level, and 			*
-	* LIBPE_RESOURCE_LVL2_VEC that includes LIBPE_RESOURCE_LVL3_TUP	that is an std::tuple of the last,	* 
+	* LIBPE_RESOURCE_LVL2_VEC that includes LIBPE_RESOURCE_LVL3_TUP	that is an std::tuple of the last,	*
 	* third, level of resources.																		*
 	* Like previous two, this last level's tuple consist of IMAGE_RESOURCE_DIRECTORY 					*
 	* and LIBPE_RESOURCE_LVL3_VEC, that is again — vector of tuples of all 								*
@@ -172,36 +182,37 @@ namespace libpe {
 	constexpr auto FILE_SIZE_TOO_SMALL = 0x0011;
 	constexpr auto FILE_CREATE_FILE_MAPPING_FAILED = 0x0012;
 	constexpr auto FILE_MAP_VIEW_OF_FILE_FAILED = 0x0013;
-	constexpr auto IMAGE_TYPE_UNSUPPORTED = 0x0014;
-	constexpr auto IMAGE_DOS_SIGNATURE_MISMATCH = 0x0015;
-	constexpr auto IMAGE_HAS_NO_DOS_HEADER = 0x0016;
-	constexpr auto IMAGE_HAS_NO_RICH_HEADER = 0x0017;
-	constexpr auto IMAGE_NT_SIGNATURE_MISMATCH = 0x0018;
-	constexpr auto IMAGE_HAS_NO_NT_HEADER = 0x0019;
-	constexpr auto IMAGE_HAS_NO_FILE_HEADER = 0x001A;
-	constexpr auto IMAGE_HAS_NO_OPTIONAL_HEADER = 0x001B;
-	constexpr auto IMAGE_HAS_NO_DATA_DIRECTORIES = 0x001C;
-	constexpr auto IMAGE_HAS_NO_SECTIONS = 0x001D;
-	constexpr auto IMAGE_HAS_NO_EXPORT_DIR = 0x001E;
-	constexpr auto IMAGE_HAS_NO_IMPORT_DIR = 0x001F;
-	constexpr auto IMAGE_HAS_NO_RESOURCE_DIR = 0x0020;
-	constexpr auto IMAGE_HAS_NO_EXCEPTION_DIR = 0x0021;
-	constexpr auto IMAGE_HAS_NO_SECURITY_DIR = 0x0022;
-	constexpr auto IMAGE_HAS_NO_BASERELOC_DIR = 0x0023;
-	constexpr auto IMAGE_HAS_NO_DEBUG_DIR = 0x0024;
-	constexpr auto IMAGE_HAS_NO_ARCHITECTURE_DIR = 0x0025;
-	constexpr auto IMAGE_HAS_NO_GLOBALPTR_DIR = 0x0026;
-	constexpr auto IMAGE_HAS_NO_TLS_DIR = 0x0027;
-	constexpr auto IMAGE_HAS_NO_LOADCONFIG_DIR = 0x0028;
-	constexpr auto IMAGE_HAS_NO_BOUNDIMPORT_DIR = 0x0029;
-	constexpr auto IMAGE_HAS_NO_IAT_DIR = 0x002A;
-	constexpr auto IMAGE_HAS_NO_DELAY_IMPORT_DIR = 0x002B;
-	constexpr auto IMAGE_HAS_NO_COMDESCRIPTOR_DIR = 0x002C;
+	constexpr auto FILE_SECTION_DATA_CORRUPTED = 0x0014;
+	constexpr auto IMAGE_TYPE_UNSUPPORTED = 0x0015;
+	constexpr auto IMAGE_DOS_SIGNATURE_MISMATCH = 0x0016;
+	constexpr auto IMAGE_HAS_NO_DOS_HEADER = 0x0017;
+	constexpr auto IMAGE_HAS_NO_RICH_HEADER = 0x0018;
+	constexpr auto IMAGE_NT_SIGNATURE_MISMATCH = 0x0019;
+	constexpr auto IMAGE_HAS_NO_NT_HEADER = 0x001A;
+	constexpr auto IMAGE_HAS_NO_FILE_HEADER = 0x001B;
+	constexpr auto IMAGE_HAS_NO_OPTIONAL_HEADER = 0x001C;
+	constexpr auto IMAGE_HAS_NO_DATA_DIRECTORIES = 0x001D;
+	constexpr auto IMAGE_HAS_NO_SECTIONS = 0x001E;
+	constexpr auto IMAGE_HAS_NO_EXPORT_DIR = 0x001F;
+	constexpr auto IMAGE_HAS_NO_IMPORT_DIR = 0x0020;
+	constexpr auto IMAGE_HAS_NO_RESOURCE_DIR = 0x0021;
+	constexpr auto IMAGE_HAS_NO_EXCEPTION_DIR = 0x0022;
+	constexpr auto IMAGE_HAS_NO_SECURITY_DIR = 0x0023;
+	constexpr auto IMAGE_HAS_NO_BASERELOC_DIR = 0x0024;
+	constexpr auto IMAGE_HAS_NO_DEBUG_DIR = 0x0025;
+	constexpr auto IMAGE_HAS_NO_ARCHITECTURE_DIR = 0x0026;
+	constexpr auto IMAGE_HAS_NO_GLOBALPTR_DIR = 0x0027;
+	constexpr auto IMAGE_HAS_NO_TLS_DIR = 0x0028;
+	constexpr auto IMAGE_HAS_NO_LOADCONFIG_DIR = 0x0029;
+	constexpr auto IMAGE_HAS_NO_BOUNDIMPORT_DIR = 0x002A;
+	constexpr auto IMAGE_HAS_NO_IAT_DIR = 0x002B;
+	constexpr auto IMAGE_HAS_NO_DELAY_IMPORT_DIR = 0x002C;
+	constexpr auto IMAGE_HAS_NO_COMDESCRIPTOR_DIR = 0x002D;
 
 	/*****************************************************
 	* Flags according to loaded PE file properties.		 *
 	*****************************************************/
-
+	//Tiny function shows whether given DWORD has given flag.
 	constexpr bool IMAGE_HAS_FLAG(DWORD dwFileInfo, DWORD  dwFlag) { return dwFileInfo & dwFlag; };
 	constexpr auto IMAGE_PE32_FLAG = 0x00000001;
 	constexpr auto IMAGE_PE64_FLAG = 0x00000002;

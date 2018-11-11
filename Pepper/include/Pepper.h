@@ -1,14 +1,15 @@
 #pragma once
 
 class CPepperApp : public CWinAppEx
-{
+{	
 public:
 	CPepperApp();
+private:
 	BOOL InitInstance() override;
 	int ExitInstance() override;
-	BOOL  m_bHiColorIcons;
 	void PreLoadState() override;
 	afx_msg void OnAppAbout();
 	void OnFileOpen();
+	BOOL  m_bHiColorIcons;
 	DECLARE_MESSAGE_MAP()
 };

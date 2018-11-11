@@ -1,6 +1,5 @@
 #pragma once
 #define VC_EXTRALEAN            // Exclude rarely-used stuff from Windows headers
-#define _HAS_EXCEPTIONS 0
 #define WINVER 0x0600
 
 // turns off MFC's hiding of some common and often safely ignored warning messages

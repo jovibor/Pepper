@@ -10,12 +10,12 @@ class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
+protected:	
 	BOOL OnInitDialog() override;
+	void DoDataExchange(CDataExchange* pDX) override;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-protected:
-	void DoDataExchange(CDataExchange* pDX) override;
 	bool m_fGithubLink { true };
 	HCURSOR m_curHand { };
 	HCURSOR m_curArrow { };
@@ -157,7 +157,7 @@ BOOL CPepperApp::InitInstance()
 	//To prevent OpenFileDialog popup if app was launched by
 	//dropping any file on app's shortcut 
 	//(with command line arg file name to be opened).
-	if (cmdInfo.m_strFileName == "")
+	if (cmdInfo.m_strFileName.IsEmpty())
 		OnFileOpen();
 
 	return TRUE;

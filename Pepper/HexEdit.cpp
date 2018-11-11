@@ -47,14 +47,14 @@ BOOL CHexEdit::OnEraseBkgnd(CDC* pDC)
 	return FALSE;
 }
 
-BOOL CHexEdit::SetData(const std::vector<std::byte>* vecData) const
+BOOL CHexEdit::SetData(const std::vector<std::byte>* pVecData) const
 {
-	return GetActiveView()->SetData(vecData);
+	return GetActiveView()->SetData(pVecData);
 }
 
-BOOL CHexEdit::SetData(const std::string_view strData, UINT nCount) const
+BOOL CHexEdit::SetData(const std::string& strData) const
 {
-	return GetActiveView()->SetData(strData, nCount);
+	return GetActiveView()->SetData(strData);
 }
 
 CFont* CHexEdit::SetFont(CFont* pFont) const

@@ -77,12 +77,13 @@ void CPepperList::OnPaint()
 	GetHeaderCtrl().GetClientRect(rcHdr);
 	rcClient.top += rcHdr.Height();
 	CMemDC memDC(dc, rcClient);
+	CDC& rDC = memDC.GetDC();
 
 	CRect clip;
-	memDC.GetDC().GetClipBox(&clip);
-	memDC.GetDC().FillSolidRect(clip, GetSysColor(COLOR_WINDOW));
+	rDC.GetClipBox(&clip);
+	rDC.FillSolidRect(clip, GetSysColor(COLOR_WINDOW));
 
-	DefWindowProc(WM_PAINT, (WPARAM)memDC.GetDC().m_hDC, (LPARAM)0);
+	DefWindowProc(WM_PAINT, (WPARAM)rDC.m_hDC, (LPARAM)0);
 }
 
 void CPepperList::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
@@ -93,21 +94,12 @@ void CPepperList::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CPepperList::InitHeader()
 {
-	m_PepperListHeader.SubclassDlgItem(0, this);
+	m_stListHeader.SubclassDlgItem(0, this);
 }
 
 void CPepperList::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CMFCListCtrl::OnVScroll(nSBCode, nPos, pScrollBar);
-
-	/*	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
-
-		int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
-		if (m_stScrollInfo.nPos >= max)
-		{
-			m_fEraseBkgnd = true;
-			Invalidate();
-		}*/
 }
 
 void CPepperList::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
@@ -120,15 +112,6 @@ void CPepperList::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 BOOL CPepperList::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	/*	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
-
-		int max = m_stScrollInfo.nMax - m_stScrollInfo.nPage + 1;
-		if (m_stScrollInfo.nPos >= max)
-		{
-			m_fEraseBkgnd = true;
-			Invalidate();
-		}
-		*/
 	GetHeaderCtrl().Invalidate();
 	GetHeaderCtrl().UpdateWindow();
 
@@ -209,30 +192,28 @@ void CPepperList::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	}
 }
 
-void CPepperList::SetItemTooltip(int nItem, int nSubitem, const std::wstring& strTipText, const std::wstring& strTipCaption)
+void CPepperList::SetItemTooltip(int nItem, int nSubitem, const std::wstring& strTooltip, const std::wstring& strCaption)
 {
+	auto it = m_umapTooltip.find(nItem);
+
 	//If there is no tooltip for such item/subitem we just set it.
-	if (m_unmapTooltip.find(nItem) == m_unmapTooltip.end())
+	if (it == m_umapTooltip.end())
 	{
-		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> mapInner;
-		mapInner.insert({ nSubitem, { strTipText, strTipCaption } });
-		m_unmapTooltip.insert({ nItem, mapInner });
+		//Initializing inner map.
+		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner = {
+			{ nSubitem, { strTooltip, strCaption } } };
+		m_umapTooltip.insert({ nItem, umapInner });
 	}
 	else
-	{	//If there is Item's tooltip but no Subitem's tooltip
+	{
+		auto itInner = it->second.find(nSubitem);
+
+		//If there is Item's tooltip but no Subitem's tooltip
 		//inserting new Subitem into inner map.
-		if (m_unmapTooltip.at(nItem).find(nSubitem) == m_unmapTooltip.at(nItem).end())
-		{
-			std::unordered_map<int, std::tuple< std::wstring, std::wstring>> &mapInner=m_unmapTooltip.at(nItem);
-			mapInner.insert({ nSubitem, { strTipText, strTipCaption } });
-			m_unmapTooltip.at(nItem) = mapInner;
-		}
+		if (itInner == it->second.end())
+			it->second.insert({ nSubitem, { strTooltip, strCaption } });
 		else //If there is already such an Item-Subitem's tooltip, just change it.
-		{
-			std::unordered_map<int, std::tuple< std::wstring, std::wstring>> &mapInner = m_unmapTooltip.at(nItem);
-			mapInner.at(nSubitem) = { strTipText, strTipCaption };
-			m_unmapTooltip.at(nItem) = mapInner;
-		}
+			itInner->second = { strTooltip, strCaption };
 	}
 
 	m_fToolTip = true;
@@ -240,21 +221,26 @@ void CPepperList::SetItemTooltip(int nItem, int nSubitem, const std::wstring& st
 
 bool CPepperList::HasToolTip(int nItem, int nSubitem, std::wstring& strTipText, std::wstring& strTipCaption)
 {
-	if (m_unmapTooltip.find(nItem) != m_unmapTooltip.end())
-		if (m_unmapTooltip.at(nItem).find(nSubitem) != m_unmapTooltip.at(nItem).end())
+	auto it = m_umapTooltip.find(nItem);
+	if (it != m_umapTooltip.end())
+	{
+		auto itInner = it->second.find(nSubitem);
+		if (itInner != it->second.end())
 		{
-			strTipText = std::get<0>(m_unmapTooltip.at(nItem).at(nSubitem));
-			strTipCaption = std::get<1>(m_unmapTooltip.at(nItem).at(nSubitem));
+			strTipText = std::get<0>(itInner->second);
+			strTipCaption = std::get<1>(itInner->second);
 			return true;
 		}
-
+	}
 	return false;
 }
 
 bool CPepperList::HasToolTip(int nItem, int nSubItem)
 {
-	if (m_unmapTooltip.find(nItem) != m_unmapTooltip.end())
-		if (m_unmapTooltip.at(nItem).find(nSubItem) != m_unmapTooltip.at(nItem).end())
+	auto it = m_umapTooltip.find(nItem);
+
+	if (it != m_umapTooltip.end())
+		if (it->second.find(nSubItem) != it->second.end())
 			return true;
 
 	return false;
@@ -332,7 +318,7 @@ void CPepperList::OnMouseMove(UINT nFlags, CPoint point)
 void CPepperList::OnTimer(UINT_PTR nIDEvent)
 {
 	//Checking if mouse left list's subitem rect,
-	//if so — hiding tooltip and killing timer
+	//if so — hiding tooltip and killing timer.
 
 	LVHITTESTINFO hitInfo { };
 	CPoint point;
@@ -341,11 +327,11 @@ void CPepperList::OnTimer(UINT_PTR nIDEvent)
 	hitInfo.pt = point;
 	ListView_SubItemHitTest(m_hWnd, &hitInfo);
 
-	//If cursor is still hovers subitem then do nothing
+	//If cursor is still hovers subitem then do nothing.
 	if (m_stCurrentSubItem.iItem == hitInfo.iItem && m_stCurrentSubItem.iSubItem == hitInfo.iSubItem)
 		return;
 	else
-	{	//If it left
+	{	//If it left.
 		m_fToolTipShow = false;
 		::SendMessage(m_hwndToolTip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 		KillTimer(TIMER_TOOLTIP);

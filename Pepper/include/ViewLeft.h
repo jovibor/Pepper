@@ -4,20 +4,19 @@
 
 class CViewLeft : public CView
 {
-public:
+protected:
 	DECLARE_DYNCREATE(CViewLeft)
+	CViewLeft() {} // protected constructor used by dynamic creation
+	virtual ~CViewLeft() {}
 	void OnInitialUpdate() override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
-	void OnDraw(CDC* /*pDC*/) override;
+	void OnDraw(CDC*) override;
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-protected:
-	CViewLeft() {};           // protected constructor used by dynamic creation
-	virtual ~CViewLeft() {};
 	DECLARE_MESSAGE_MAP()
 private:
 	Ilibpe * m_pLibpe { };
 	CPepperDoc* m_pMainDoc { };
-	CPepperTreeCtrl m_TreeMain;
+	CPepperTreeCtrl m_stTreeMain;
 	CImageList m_ImgListRootTree;
 };
 

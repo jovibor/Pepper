@@ -157,81 +157,81 @@ void CHexEditView::OnDraw(CDC* pDC)
 	//Drawing through CMemDC, to avoid
 	//any sort of flickering.
 	CMemDC memDC(*pDC, this);
-	CRect clip;
-	memDC.GetDC().GetClipBox(&clip);
-	memDC.GetDC().FillSolidRect(clip, GetSysColor(COLOR_WINDOW));
+	CDC& rDC = memDC.GetDC();
 
-	memDC.GetDC().SelectObject(&m_penLines);
-	memDC.GetDC().SelectObject(m_pFontHexView);
+	CRect clip;
+	rDC.GetClipBox(&clip);
+	rDC.FillSolidRect(clip, GetSysColor(COLOR_WINDOW));
+
+	rDC.SelectObject(&m_penLines);
+	rDC.SelectObject(m_pFontHexView);
 
 	//Need to properly Draw content.
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
 
-	//Find the nStartLine and nLineEnd posion, draw the visible portion.
+	//Find the nLineStart and nLineEnd posion, draw the visible portion.
 	const UINT nLineStart = m_stScrollInfo.nPos / m_sizeLetter.cy;
-	UINT nLineEnd = nLineStart + (m_rcClient.Height() - m_nTopHeaderWidth - m_nBottomRectWidth) / m_sizeLetter.cy;
-	if (m_dwRawDataCount == 0)
-		nLineEnd = 0;
-	else if (nLineEnd > (m_dwRawDataCount / 16 + 1))
-		nLineEnd = m_dwRawDataCount / 16 + 1;
+	UINT nLineEnd = m_dwRawDataCount ? (nLineStart + (m_rcClient.Height() - m_nHeaderRectWidth - m_nBottomRectWidth) / m_sizeLetter.cy) : 0;
+	if (nLineEnd > (m_dwRawDataCount / 16))
+		nLineEnd = m_dwRawDataCount % 16 ? m_dwRawDataCount / 16 + 1 : m_dwRawDataCount / 16;
 
 	//Horizontal lines coords depending on scroll position.
 	m_nFirstHorizLine = m_stScrollInfo.nPos;
-	m_nSecondHorizLine = m_nTopHeaderWidth - 1 + m_stScrollInfo.nPos;
+	m_nSecondHorizLine = m_nHeaderRectWidth - 1 + m_stScrollInfo.nPos;
 	m_nThirdHorizLine = m_rcClient.Height() + m_stScrollInfo.nPos - m_nBottomRectWidth;
 	m_nFourthHorizLine = m_rcClient.Height() + m_stScrollInfo.nPos - 3;
 
 	//First horizontal line.
-	memDC.GetDC().MoveTo(0, m_nFirstHorizLine);
-	memDC.GetDC().LineTo(m_nFourthVertLine, m_nFirstHorizLine);
+	rDC.MoveTo(0, m_nFirstHorizLine);
+	rDC.LineTo(m_nFourthVertLine, m_nFirstHorizLine);
 
 	//Second horizontal line.
-	memDC.GetDC().MoveTo(0, m_nSecondHorizLine);
-	memDC.GetDC().LineTo(m_nFourthVertLine, m_nSecondHorizLine);
+	rDC.MoveTo(0, m_nSecondHorizLine);
+	rDC.LineTo(m_nFourthVertLine, m_nSecondHorizLine);
 
 	//Third horizontal line.
-	memDC.GetDC().MoveTo(0, m_nThirdHorizLine);
-	memDC.GetDC().LineTo(m_nFourthVertLine, m_nThirdHorizLine);
+	rDC.MoveTo(0, m_nThirdHorizLine);
+	rDC.LineTo(m_nFourthVertLine, m_nThirdHorizLine);
 
 	//Fourth horizontal line.
-	memDC.GetDC().MoveTo(0, m_nFourthHorizLine);
-	memDC.GetDC().LineTo(m_nFourthVertLine, m_nFourthHorizLine);
+	rDC.MoveTo(0, m_nFourthHorizLine);
+	rDC.LineTo(m_nFourthVertLine, m_nFourthHorizLine);
 
 	//"Offset" text.
-	memDC.GetDC().SetTextColor(m_clrTextOffset);
+	rDC.SetTextColor(m_clrTextOffset);
 	RECT rect;
 	rect.left = m_nFirstVertLine; rect.top = m_nFirstHorizLine;
 	rect.right = m_nSecondVertLine; rect.bottom = m_nSecondHorizLine;
-	DrawTextW(memDC.GetDC().m_hDC, L"Offset", 6, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-	//"ASCII" text.
-	rect.left = m_nThirdVertLine; rect.top = m_nFirstHorizLine;
-	rect.right = m_nFourthVertLine; rect.bottom = m_nSecondHorizLine;
-	DrawTextW(memDC.GetDC().m_hDC, L"ASCII", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	DrawTextW(rDC.m_hDC, L"Offset", 6, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	for (unsigned i = 0; i < 16; i++)
-		if (i <= 7) //Top offset text (0 1 2 3 4 5 6 7)
-			ExtTextOutW(memDC.GetDC().m_hDC, m_nIndentFirstHexChunk + m_sizeLetter.cx + (m_nIndentBetweenHexChunks*i),
+		if (i <= 7) //Top offset numbers (0 1 2 3 4 5 6 7)
+			ExtTextOutW(rDC.m_hDC, m_nIndentFirstHexChunk + m_sizeLetter.cx + (m_nIndentBetweenHexChunks*i),
 				m_stScrollInfo.nPos + (m_sizeLetter.cy / 6), NULL, nullptr, &m_strHexMap[i], 1, nullptr);
-		else //Top Offset text, part after 7 (8 9 A B C D E F)
-			ExtTextOutW(memDC.GetDC().m_hDC, m_nIndentFirstHexChunk + m_sizeLetter.cx + (m_nIndentBetweenHexChunks*i) + m_nIndentBetween78,
+		else //Top offset numbers, part after 7 (8 9 A B C D E F)
+			ExtTextOutW(rDC.m_hDC, m_nIndentFirstHexChunk + m_sizeLetter.cx + (m_nIndentBetweenHexChunks*i) + m_nIndentBetween78,
 				m_stScrollInfo.nPos + (m_sizeLetter.cy / 6), NULL, nullptr, &m_strHexMap[i], 1, nullptr);
+
+	//"Ascii" text.
+	rect.left = m_nThirdVertLine; rect.top = m_nFirstHorizLine;
+	rect.right = m_nFourthVertLine; rect.bottom = m_nSecondHorizLine;
+	DrawTextW(rDC.m_hDC, L"Ascii", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//First Vertical line.
-	memDC.GetDC().MoveTo(m_nFirstVertLine, m_stScrollInfo.nPos);
-	memDC.GetDC().LineTo(m_nFirstVertLine, m_nFourthHorizLine);
+	rDC.MoveTo(m_nFirstVertLine, m_stScrollInfo.nPos);
+	rDC.LineTo(m_nFirstVertLine, m_nFourthHorizLine);
 
 	//Second Vertical line.
-	memDC.GetDC().MoveTo(m_nSecondVertLine, m_stScrollInfo.nPos);
-	memDC.GetDC().LineTo(m_nSecondVertLine, m_nThirdHorizLine);
+	rDC.MoveTo(m_nSecondVertLine, m_stScrollInfo.nPos);
+	rDC.LineTo(m_nSecondVertLine, m_nThirdHorizLine);
 
 	//Third Vertical line.
-	memDC.GetDC().MoveTo(m_nThirdVertLine, m_stScrollInfo.nPos);
-	memDC.GetDC().LineTo(m_nThirdVertLine, m_nThirdHorizLine);
+	rDC.MoveTo(m_nThirdVertLine, m_stScrollInfo.nPos);
+	rDC.LineTo(m_nThirdVertLine, m_nThirdHorizLine);
 
 	//Fourth Vertical line.
-	memDC.GetDC().MoveTo(m_nFourthVertLine, m_stScrollInfo.nPos);
-	memDC.GetDC().LineTo(m_nFourthVertLine, m_nFourthHorizLine);
+	rDC.MoveTo(m_nFourthVertLine, m_stScrollInfo.nPos);
+	rDC.LineTo(m_nFourthVertLine, m_nFourthHorizLine);
 
 	int nLine { };
 
@@ -243,11 +243,11 @@ void CHexEditView::OnDraw(CDC* pDC)
 	for (unsigned iterLines = nLineStart; iterLines < nLineEnd; iterLines++)
 	{
 		swprintf_s(m_strOffset, 9, L"%08X", iterLines * 16);
-		memDC.GetDC().SetTextColor(m_clrTextOffset);
+		rDC.SetTextColor(m_clrTextOffset);
 
 		//Left column offset Print (00000001...000000A1...)
-		ExtTextOutW(memDC.GetDC().m_hDC, m_sizeLetter.cx, m_nTopHeaderWidth + (m_sizeLetter.cy * nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
-		memDC.GetDC().SetTextColor(m_clrTextHex);
+		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_nHeaderRectWidth + (m_sizeLetter.cy * nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
+		rDC.SetTextColor(m_clrTextHex);
 
 		int nIndentHexX = 0;
 		int nIndentAsciiX = 0;
@@ -260,16 +260,16 @@ void CHexEditView::OnDraw(CDC* pDC)
 				nIndent78 = m_nIndentBetween78;
 
 			const UINT nFirstHexPosToPrintX = m_nIndentFirstHexChunk + nIndentHexX + nIndent78;
-			const UINT nFirstHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy * nLine + m_stScrollInfo.nPos;
+			const UINT nFirstHexPosToPrintY = m_nHeaderRectWidth + m_sizeLetter.cy * nLine + m_stScrollInfo.nPos;
 			//	nSecondHexPosToPrintX = m_nSecondHex + nIndentHexX + nIndent78;
-			//	nSecondHexPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
+			//	nSecondHexPosToPrintY = m_nHeaderRectWidth + m_sizeLetter.cy*nLine + m_stScrollInfo.nPos;
 			const UINT nAsciiPosToPrintX = m_nIndentAscii + nIndentAsciiX;
-			const UINT nAsciiPosToPrintY = m_nTopHeaderWidth + m_sizeLetter.cy * nLine + m_stScrollInfo.nPos;
+			const UINT nAsciiPosToPrintY = m_nHeaderRectWidth + m_sizeLetter.cy * nLine + m_stScrollInfo.nPos;
 
 			//Index of next char (in m_pRawData) to draw.
 			const size_t nIndexDataToPrint = iterLines * 16 + iterChunks;
 
-			//Rect of the Space between HEX chunks, for proper selection drawing.
+			//Rect of the space between HEX chunks, for proper selection drawing.
 			m_rcSpaceBetweenHex.left = nFirstHexPosToPrintX + m_sizeLetter.cx * 2;
 			m_rcSpaceBetweenHex.top = nFirstHexPosToPrintY;
 			if (iterChunks == 7)
@@ -287,21 +287,21 @@ void CHexEditView::OnDraw(CDC* pDC)
 				//Selection draw with different BK color.
 				if (m_fSelection && nIndexDataToPrint >= min(m_dwSelectionStart, m_dwSelectionEnd) && nIndexDataToPrint <= max(m_dwSelectionStart, m_dwSelectionEnd))
 				{
-					memDC.GetDC().SetBkColor(m_clrTextBkSelection);
+					rDC.SetBkColor(m_clrTextBkSelection);
 
 					//To prevent change bk color after last selected HEX chunk.
 					if (nIndexDataToPrint != max(m_dwSelectionStart, m_dwSelectionEnd))
-						FillRect(memDC.GetDC().m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkSelection.m_hObject);
+						FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkSelection.m_hObject);
 					else
-						FillRect(memDC.GetDC().m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkDefault.m_hObject);
+						FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkDefault.m_hObject);
 				}
 				else {
-					memDC.GetDC().SetBkColor(m_clrTextBkDefault);
-					FillRect(memDC.GetDC().m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkDefault.m_hObject);
+					rDC.SetBkColor(m_clrTextBkDefault);
+					FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkDefault.m_hObject);
 				}
 
 				//HEX chunk draw.
-				ExtTextOutW(memDC.GetDC().m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, &strHexToPrint[0], 2, nullptr);
+				ExtTextOutW(rDC.m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, &strHexToPrint[0], 2, nullptr);
 
 				chAsciiToPrint = m_pRawData[nIndexDataToPrint];
 				//For non printable ASCII, just print a dot.
@@ -309,13 +309,13 @@ void CHexEditView::OnDraw(CDC* pDC)
 					chAsciiToPrint = '.';
 
 				//ASCII draw.
-				ExtTextOutA(memDC.GetDC().m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
+				ExtTextOutA(rDC.m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
 			}
 			else
 			{	//Fill remaining chunks with blank spaces.
-				memDC.GetDC().SetBkColor(m_clrTextBkDefault);
-				ExtTextOutW(memDC.GetDC().m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
-				ExtTextOutA(memDC.GetDC().m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
+				rDC.SetBkColor(m_clrTextBkDefault);
+				ExtTextOutW(rDC.m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
+				ExtTextOutA(rDC.m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
 			}
 			//Increasing indents for next print, for both - Hex and ASCII
 			nIndentHexX += m_nIndentBetweenHexChunks;
@@ -336,7 +336,7 @@ int CHexEditView::HitTest(LPPOINT pPoint)
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
 
 	//Checkig if cursor is within HEX chunks area.
-	if ((pPoint->x >= m_nIndentFirstHexChunk) && (pPoint->x < m_nThirdVertLine) && (pPoint->y >= m_nTopHeaderWidth))
+	if ((pPoint->x >= m_nIndentFirstHexChunk) && (pPoint->x < m_nThirdVertLine) && (pPoint->y >= m_nHeaderRectWidth))
 	{
 		int tmp78;
 		if (pPoint->x > m_nIndentFirstHexChunk + (m_nIndentBetweenHexChunks * 8))
@@ -345,12 +345,12 @@ int CHexEditView::HitTest(LPPOINT pPoint)
 			tmp78 = 0;
 
 		nHexChunk = ((pPoint->x - m_nIndentFirstHexChunk - tmp78) / (m_sizeLetter.cx * 3)) +
-			((pPoint->y - m_nTopHeaderWidth) / m_sizeLetter.cy) * 16 + ((m_stScrollInfo.nPos / m_sizeLetter.cy) * 16);
+			((pPoint->y - m_nHeaderRectWidth) / m_sizeLetter.cy) * 16 + ((m_stScrollInfo.nPos / m_sizeLetter.cy) * 16);
 	}
-	else if ((pPoint->x >= m_nIndentAscii) && (pPoint->x < m_nIndentAscii + m_nIndentBetweenAscii * 16) && (pPoint->y >= m_nTopHeaderWidth))
+	else if ((pPoint->x >= m_nIndentAscii) && (pPoint->x < m_nIndentAscii + m_nIndentBetweenAscii * 16) && (pPoint->y >= m_nHeaderRectWidth))
 	{
 		nHexChunk = ((pPoint->x - m_nIndentAscii) / (m_nIndentBetweenAscii)) +
-			((pPoint->y - m_nTopHeaderWidth) / m_sizeLetter.cy) * 16 + ((m_stScrollInfo.nPos / m_sizeLetter.cy) * 16);
+			((pPoint->y - m_nHeaderRectWidth) / m_sizeLetter.cy) * 16 + ((m_stScrollInfo.nPos / m_sizeLetter.cy) * 16);
 	}
 	else
 		nHexChunk = -1;
@@ -362,30 +362,29 @@ int CHexEditView::HitTest(LPPOINT pPoint)
 	return nHexChunk;
 }
 
-BOOL CHexEditView::SetData(const std::vector<std::byte> *vecData)
+BOOL CHexEditView::SetData(const std::vector<std::byte> *pVecData)
 {
-	if (!vecData)
+	if (!pVecData)
+	{
+		m_dwRawDataCount = 0;
+		m_pRawData = nullptr;
 		return FALSE;
+	}
 
-	m_pRawData = (const unsigned char*)vecData->data();
-	m_dwRawDataCount = vecData->size();
+	m_pRawData = (const unsigned char*)pVecData->data();
+	m_dwRawDataCount = pVecData->size();
 	Recalc();
 
 	return TRUE;
 }
 
-BOOL CHexEditView::SetData(const std::string_view strData, UINT nCount)
+BOOL CHexEditView::SetData(const std::string& strData)
 {
 	m_pRawData = (const unsigned char*)strData.data();
-
-	if (nCount > 0)
-		m_dwRawDataCount = nCount;
-	else
-		m_dwRawDataCount = strData.length();
-
+	m_dwRawDataCount = strData.length();
 	Recalc();
 
-	return 0;
+	return TRUE;
 }
 
 CFont* CHexEditView::SetFont(CFont *pFont)
@@ -479,11 +478,12 @@ void CHexEditView::Recalc()
 	m_nIndentFirstHexChunk = m_nSecondVertLine + m_sizeLetter.cx;
 	//	m_nSecondHex = m_nIndentFirstHexChunk + m_sizeLetter.cx;
 
-	m_nTopHeaderWidth = int(m_sizeLetter.cy*1.5);
+	m_nHeaderRectWidth = int(m_sizeLetter.cy*1.5);
 
-	//Scroll sizes according to current font size.
-	SetScrollSizes(MM_TEXT,
-		CSize(m_nFourthVertLine + 1, m_nTopHeaderWidth + m_nBottomRectWidth + (m_sizeLetter.cy * ((m_dwRawDataCount / 16) + 2))));
+	//Scroll sizes according to current font size 
+	//and whether m_dwRawDataCount/16 has a remainder (mod) or we have fullfilled row.
+	SetScrollSizes(MM_TEXT, CSize(m_nFourthVertLine + 1,
+		m_nHeaderRectWidth + m_nBottomRectWidth + (m_sizeLetter.cy * (m_dwRawDataCount % 16 ? m_dwRawDataCount / 16 + 2 : m_dwRawDataCount / 16 + 1))));
 
 	if (m_fSecondLaunch) //First launch? Do we need to ajust scroll bars?
 	{

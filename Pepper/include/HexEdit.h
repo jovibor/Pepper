@@ -3,18 +3,18 @@
 
 class CHexEdit : public CWnd
 {
-	DECLARE_DYNAMIC(CHexEdit)
-public:
+public:	
 	CHexEdit() {}
 	virtual ~CHexEdit() {}
 	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CFont* pFont = nullptr/*default*/);
 	CHexEditView* GetActiveView() const { return m_pHexEditView; };
-	BOOL SetData(const std::vector<std::byte> *vecData) const;
-	BOOL SetData(std::string_view strData, UINT nCount = 0) const;
+	BOOL SetData(const std::vector<std::byte> *pVecData) const;
+	BOOL SetData(const std::string& strData) const;
 	CFont* SetFont(CFont* pFont) const;
 	void SetFontSize(UINT nSize) const;
 	void SetFontColor(COLORREF clrHex, COLORREF clrOffset) const;
 private:
+	DECLARE_DYNAMIC(CHexEdit)
 	CHexEditView* m_pHexEditView { };
 	CFont* m_pFontHexEditView { };
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

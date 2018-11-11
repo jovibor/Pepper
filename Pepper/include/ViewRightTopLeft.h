@@ -1,22 +1,21 @@
 #pragma once
 #include "Hexedit.h"
+#include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "PepperTreeCtrl.h"
 #include "PepperList.h"
+#include "PepperTreeCtrl.h"
 
-class CViewRightTop : public CScrollView
-{
-public:
-	void OnDraw(CDC* pDC) override; // overridden to draw this view
+class CViewRightTopLeft : public CScrollView
+{	
+protected:	
+	DECLARE_DYNCREATE(CViewRightTopLeft)
+	CViewRightTopLeft() {} // protected constructor used by dynamic creation
+	virtual ~CViewRightTopLeft() {}	
 	void OnInitialUpdate() override;
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	void OnUpdate(CView*, LPARAM, CObject*) override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
-	DECLARE_DYNCREATE(CViewRightTop)
-protected:
-	CViewRightTop() {}; // protected constructor used by dynamic creation
-	virtual ~CViewRightTop() {};
-	void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/) override;
+	void OnDraw(CDC* pDC) override; // overridden to draw this view
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnListSectionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListRelocGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
@@ -32,7 +31,7 @@ private:
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CPepperList m_listDOSHeader;
-	CPepperList m_listDOSRich;
+	CPepperList m_listRichHdr;
 	CPepperList m_listNTHeader;
 	CPepperList m_listFileHeader;
 	CPepperList m_listOptHeader;
@@ -51,8 +50,8 @@ private:
 	CPepperList m_listCOMDir;
 	CPepperTreeCtrl m_treeResTop;
 	HTREEITEM m_hTreeResDir { };
-	bool m_fFileSummaryShow = false;
-	LONG m_dwPeStart { };
+	bool m_fFileSummaryShow { true };
+	ULONG m_dwPeStart { };
 	DWORD m_dwFileSummary { };
 	PCLIBPE_SECHEADERS_VEC m_pSecHeaders { };
 	PCLIBPE_IMPORT_VEC m_pImportTable { };
@@ -60,25 +59,24 @@ private:
 	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
 	CWnd* m_pActiveList { };
 	std::vector<std::tuple<long, long, long>> m_vecResId { }; //Resource id for treeCtrl
-	CHexEdit m_hexRes;
 
-	int listCreateDOSHeader();
-	int listCreateDOSRich();
-	int listCreateNTHeader();
-	int listCreateFileHeader();
-	int listCreateOptHeader();
-	int listCreateDataDirs();
-	int listCreateSecHdrs();
-	int listCreateExportDir();
-	int listCreateImportDir();
-	int treeCreateResDir();
-	int listCreateExceptionDir();
-	int listCreateSecurityDir();
-	int listCreateRelocDir();
-	int listCreateDebugDir();
-	int listCreateTLSDir();
-	int listCreateLoadConfigDir();
-	int listCreateBoundImportDir();
-	int listCreateDelayImportDir();
-	int listCreateCOMDir();
+	int CreateListDOSHeader();
+	int CreateListRichHdr();
+	int CreateListNTHeader();
+	int CreateListFileHeader();
+	int CreateListOptHeader();
+	int CreateListDataDirs();
+	int CreateListSecHdrs();
+	int CreateListExportDir();
+	int CreateListImportDir();
+	int CreateTreeResDir();
+	int CreateListExceptionDir();
+	int CreateListSecurityDir();
+	int CreateListRelocDir();
+	int CreateListDebugDir();
+	int CreateListTLSDir();
+	int CreateListLoadConfigDir();
+	int CreateListBoundImportDir();
+	int CreateListDelayImportDir();
+	int CreateListCOMDir();
 };

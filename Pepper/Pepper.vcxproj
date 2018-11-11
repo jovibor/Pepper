@@ -223,14 +223,17 @@
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="HexEdit.cpp" />
     <ClCompile Include="HexEditView.cpp" />
+    <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Pepper.cpp" />
     <ClCompile Include="PepperDoc.cpp" />
     <ClCompile Include="PepperList.cpp" />
     <ClCompile Include="PepperListHeader.cpp" />
-    <ClCompile Include="ViewRightBottom.cpp" />
-    <ClCompile Include="ViewRightTop.cpp" />
+    <ClCompile Include="ViewRightBottomLeft.cpp" />
+    <ClCompile Include="ViewRightTopRight.cpp" />
+    <ClCompile Include="ViewRightBottomRight.cpp" />
+    <ClCompile Include="ViewRightTopLeft.cpp" />
     <ClCompile Include="PepperTreeCtrl.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -256,6 +259,7 @@
     <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\Hexedit.h" />
     <ClInclude Include="include\HexEditView.h" />
+    <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />
     <ClInclude Include="include\MainFrm.h" />
     <ClInclude Include="include\Pepper.h" />
@@ -263,10 +267,12 @@
     <ClInclude Include="include\PepperList.h" />
     <ClInclude Include="include\PepperListHeader.h" />
     <ClInclude Include="include\resource.h" />
-    <ClInclude Include="include\ViewRightBottom.h" />
-    <ClInclude Include="include\ViewRightTop.h" />
+    <ClInclude Include="include\ViewRightBottomLeft.h" />
+    <ClInclude Include="include\ViewRightBottomRight.h" />
+    <ClInclude Include="include\ViewRightTopLeft.h" />
     <ClInclude Include="include\PepperTreeCtrl.h" />
     <ClInclude Include="include\stdafx.h" />
+    <ClInclude Include="include\ViewRightTopRight.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
