@@ -15,10 +15,12 @@ namespace libpe {
 	typedef const DWORD* PCDWORD;
 	typedef const IMAGE_DOS_HEADER *PCLIBPE_DOSHEADER;
 
+	//Rich.
 	//Vector of undocumented DOUBLE DWORDs of "Rich" structure.
 	typedef std::vector<std::tuple<WORD, WORD, DWORD>> LIBPE_RICHHEADER_VEC;
 	typedef const LIBPE_RICHHEADER_VEC *PCLIBPE_RICHHEADER_VEC;
 
+	//NT header.
 	//Only one IMAGE_OPTIONAL_HEADER structure of tuple will be filled, 
 	//x86 or x64 — depending on file type. Second will be zeroed.
 	typedef std::tuple<IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64> LIBPE_NTHEADER_TUP;
@@ -26,29 +28,32 @@ namespace libpe {
 
 	typedef const IMAGE_FILE_HEADER *PCLIBPE_FILEHEADER;
 
+	//Optional header.
 	//Only one structure of tuple will be filled depending on file type
 	//x86 or x64. Second will be zeroed.
 	typedef std::tuple<IMAGE_OPTIONAL_HEADER32, IMAGE_OPTIONAL_HEADER64> LIBPE_OPTHEADER_TUP;
 	typedef const LIBPE_OPTHEADER_TUP *PCLIBPE_OPTHEADER_TUP;
 
+	//Data directories.
 	//Vector of IMAGE_DATA_DIRECTORY and section name this dir resides in.
 	typedef std::vector<std::tuple<IMAGE_DATA_DIRECTORY, std::string>> LIBPE_DATADIRS_VEC;
 	typedef const LIBPE_DATADIRS_VEC *PCLIBPE_DATADIRS_VEC;
 
-	//Section header and section real name, if presented.
-	//For more info check:
+	//Sections headers.
+	//Section header and section real name, if presented. For more info check:
 	//docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_image_section_header#members
 	//«An 8-byte, null-padded UTF-8 string. For longer names, this member contains a forward slash (/) 
 	//followed by an ASCII representation of a decimal number that is an offset into the string table.»
 	typedef std::vector<std::tuple<IMAGE_SECTION_HEADER, std::string>> LIBPE_SECHEADERS_VEC;
 	typedef const LIBPE_SECHEADERS_VEC *PCLIBPE_SECHEADERS_VEC;
 
+	//Export table.
 	//Tuple of: IMAGE_EXPORT_DIRECTORY, Actual export module name
 	//and vector of exported funcs: RVA, ordinal, func name, func forwarder name.
 	typedef std::tuple<IMAGE_EXPORT_DIRECTORY, std::string, std::vector<std::tuple<DWORD, DWORD, std::string, std::string>>> LIBPE_EXPORT_TUP;
 	typedef const LIBPE_EXPORT_TUP *PCLIBPE_EXPORT_TUP;
 
-	//Vector of import modules:
+	//Import table:
 	//IMAGE_IMPORT_DESCRIPTOR, import module name, vector of:
 	//Ordinal/Hint (depending on import type), func name, import thunk RVA.
 	typedef std::vector<std::tuple<IMAGE_IMPORT_DESCRIPTOR, std::string, std::vector<std::tuple<LONGLONG, std::string, LONGLONG>>>> LIBPE_IMPORT_VEC;
@@ -101,42 +106,49 @@ namespace libpe {
 	typedef std::tuple<IMAGE_RESOURCE_DIRECTORY, LIBPE_RESOURCE_ROOT_VEC> LIBPE_RESOURCE_ROOT_TUP;
 	typedef const LIBPE_RESOURCE_ROOT_TUP *PCLIBPE_RESOURCE_ROOT_TUP;
 	/***************************************************************************************
+	****************************************************************************************
 	***************************************************************************************/
-
-	//Vector of Exception table.
+	
+	//Exception table.
 	typedef std::vector<_IMAGE_RUNTIME_FUNCTION_ENTRY> LIBPE_EXCEPTION_VEC;
 	typedef const LIBPE_EXCEPTION_VEC *PCLIBPE_EXCEPTION_VEC;
 
-	//Vector of security table:
-	//WIN_CERTIFICATE and vector of actual data in form of std::bytes.
+	//Security table.
+	//Vector of WIN_CERTIFICATE and vector of actual data in form of std::bytes.
 	typedef std::vector<std::tuple<WIN_CERTIFICATE, std::vector<std::byte>>> LIBPE_SECURITY_VEC;
 	typedef const LIBPE_SECURITY_VEC *PCLIBPE_SECURITY_VEC;
 
-	//Vector of relocations:
-	//IMAGE_BASE_RELOCATION, vector of: Reloc type and Offset
+	//Relocations.
+	//Vector IMAGE_BASE_RELOCATION and vector of <Relocations type and Offset>
 	typedef std::vector<std::tuple<IMAGE_BASE_RELOCATION, std::vector<std::tuple<WORD, WORD>>>> LIBPE_RELOCATION_VEC;
 	typedef const LIBPE_RELOCATION_VEC *PCLIBPE_RELOCATION_VEC;
-
+	
+	//Debug table.
 	//Vector of Debug entries.
 	typedef std::vector<IMAGE_DEBUG_DIRECTORY> LIBPE_DEBUG_VEC;
 	typedef const LIBPE_DEBUG_VEC *PCLIBPE_DEBUG_VEC;
 
-	//TLS tuple. Only one structure is filled depending on file type - x86 or x64, second is zeroed.
+	//TLS table.
+	//Only one structure is filled depending on file type - x86 or x64, second is zeroed.
 	//vector of std::byte — TLS Raw data, vector of TLS Callbacks. 
-	typedef std::tuple<IMAGE_TLS_DIRECTORY32, IMAGE_TLS_DIRECTORY64, std::vector<std::byte>/*Raw Data*/, std::vector<DWORD>> LIBPE_TLS_TUP;
+	typedef std::tuple<IMAGE_TLS_DIRECTORY32, IMAGE_TLS_DIRECTORY64, std::vector<std::byte>/*Raw Data*/,
+		std::vector<DWORD>/*Callbacks*/> LIBPE_TLS_TUP;
 	typedef const LIBPE_TLS_TUP *PCLIBPE_TLS_TUP;
 
+	//LoadConfigTable.
 	//Filled depending on file type - x86 or x64, second is zeroed.
 	typedef std::tuple<IMAGE_LOAD_CONFIG_DIRECTORY32, IMAGE_LOAD_CONFIG_DIRECTORY64> LIBPE_LOADCONFIGTABLE_TUP;
 	typedef const LIBPE_LOADCONFIGTABLE_TUP *PCLIBPE_LOADCONFIGTABLE_TUP;
 
+	//Bound import table.
 	//Vector of: IMAGE_BOUND_IMPORT_DESCRIPTOR, import module name, 
 	//vector of: IMAGE_BOUND_FORWARDER_REF, forwarder module name.
 	typedef std::vector<std::tuple<IMAGE_BOUND_IMPORT_DESCRIPTOR, std::string,
 		std::vector<std::tuple<IMAGE_BOUND_FORWARDER_REF, std::string>>>> LIBPE_BOUNDIMPORT_VEC;
 	typedef const LIBPE_BOUNDIMPORT_VEC *PCLIBPE_BOUNDIMPORT_VEC;
 
-	//Delay import vector: IMAGE_DELAYLOAD_DESCRIPTOR, module name, vector of:
+	//Delay import table.
+	//Vector of IMAGE_DELAYLOAD_DESCRIPTOR, module name, vector of:
 	//Hint/Ordinal, Func name, ThunkName RVA, ThunkIAT RVA, ThunkBoundIAT RVA, ThunkUnloadedInfoIAT RVA.
 	typedef std::vector<std::tuple<IMAGE_DELAYLOAD_DESCRIPTOR, std::string,
 		std::vector<std::tuple<LONGLONG, std::string, LONGLONG, LONGLONG, LONGLONG, LONGLONG>>>> LIBPE_DELAYIMPORT_VEC;
