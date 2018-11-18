@@ -32,7 +32,7 @@ void CViewRightBottomLeft::OnInitialUpdate()
 	m_stHexEdit.ShowWindow(SW_HIDE);
 
 	CreateListExportFuncs();
-	CreateTreeResDir();
+	CreateTreeResources();
 }
 
 void CViewRightBottomLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
@@ -47,26 +47,26 @@ void CViewRightBottomLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /
 	GetClientRect(&rect);
 
 	switch (LOWORD(lHint))
-	{	
+	{
 	case IDC_LIST_EXPORT:
 		m_listExportFuncs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listExportFuncs;
 		break;
-	case IDC_LIST_IMPORT_FUNCS:
-		CreateListImportFuncs(HIWORD(lHint));
+	case IDC_LIST_IMPORT_ENTRY:
+		CreateListImportEntry(HIWORD(lHint));
 		m_pActiveList = &m_listImportFuncs;
 		break;
 	case IDC_TREE_RESOURCE:
-	case IDC_HEX_RESOURCES_RAW:
+	case IDC_HEX_RIGHT_TOP_RIGHT:
 		m_treeResBottom.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_treeResBottom;
 		break;
-	case IDC_LIST_SECURITY_SERTIFICATE_ID:
-		CreateHexSecuritySertId(HIWORD(lHint));
+	case IDC_LIST_SECURITY_ENTRY:
+		CreateHexSecurityEntry(HIWORD(lHint));
 		m_pActiveList = &m_stHexEdit;
 		break;
-	case IDC_LIST_RELOCATIONS_TOPCHANGEDMSG:
-		CreateListRelocs(HIWORD(lHint));
+	case IDC_LIST_RELOCATIONS_ENTRY:
+		CreateListRelocsEntry(HIWORD(lHint));
 		m_pActiveList = &m_listRelocsDesc;
 		break;
 	case IDC_LIST_TLS:
@@ -74,8 +74,12 @@ void CViewRightBottomLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /
 		m_pActiveList = &m_stHexEdit;
 		break;
 	case IDC_LIST_DELAYIMPORT_FUNCS:
-		CreateListDelayImportFuncs(HIWORD(lHint));
+		CreateListDelayImportEntry(HIWORD(lHint));
 		m_pActiveList = &m_listDelayImportFuncs;
+		break;
+	case IDC_LIST_DEBUG_ENTRY:
+		CreateHexDebugEntry(HIWORD(lHint));
+		m_pActiveList = &m_stHexEdit;
 		break;
 	}
 }
@@ -146,7 +150,7 @@ BOOL CViewRightBottomLeft::OnEraseBkgnd(CDC* pDC)
 	return CScrollView::OnEraseBkgnd(pDC);
 }
 
-int CViewRightBottomLeft::CreateHexSecuritySertId(unsigned nSertId)
+int CViewRightBottomLeft::CreateHexSecurityEntry(unsigned nSertId)
 {
 	if (m_pLibpe->GetSecurityTable(&m_vecSec) != S_OK)
 		return -1;
@@ -162,19 +166,21 @@ int CViewRightBottomLeft::CreateHexSecuritySertId(unsigned nSertId)
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateListImportFuncs(UINT dllId)
+int CViewRightBottomLeft::CreateListImportEntry(DWORD dwEntry)
 {
 	PCLIBPE_IMPORT_VEC m_pImportTable { };
 
 	if (m_pLibpe->GetImportTable(&m_pImportTable) != S_OK)
 		return -1;
 
-	if (dllId > m_pImportTable->size())
+	if (dwEntry > m_pImportTable->size())
 		return -1;
 
 	m_listImportFuncs.DestroyWindow();
-	m_listImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_FUNCS);
+	m_listImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 
 	m_listImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 175);
@@ -185,7 +191,7 @@ int CViewRightBottomLeft::CreateListImportFuncs(UINT dllId)
 	TCHAR str[MAX_PATH] { };
 
 	m_listImportFuncs.SetRedraw(FALSE);
-	for (auto& i : std::get<2>(m_pImportTable->at(dllId)))
+	for (auto& i : std::get<2>(m_pImportTable->at(dwEntry)))
 	{
 		swprintf_s(str, 256, L"%S", std::get<1>(i).c_str());
 		m_listImportFuncs.InsertItem(listindex, str);
@@ -208,19 +214,21 @@ int CViewRightBottomLeft::CreateListImportFuncs(UINT dllId)
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateListDelayImportFuncs(UINT dllId)
+int CViewRightBottomLeft::CreateListDelayImportEntry(DWORD dwEntry)
 {
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
 	if (m_pLibpe->GetDelayImportTable(&pDelayImport) != S_OK)
 		return -1;
 
-	if (dllId > pDelayImport->size())
+	if (dwEntry > pDelayImport->size())
 		return -1;
 
 	m_listDelayImportFuncs.DestroyWindow();
-	m_listDelayImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS);
+	m_listDelayImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 
 	m_listDelayImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
@@ -234,7 +242,7 @@ int CViewRightBottomLeft::CreateListDelayImportFuncs(UINT dllId)
 	TCHAR str[MAX_PATH] { };
 
 	m_listDelayImportFuncs.SetRedraw(FALSE);
-	for (auto&i : std::get<2>(pDelayImport->at(dllId)))
+	for (auto&i : std::get<2>(pDelayImport->at(dwEntry)))
 	{
 		swprintf_s(str, 256, L"%S", std::get<1>(i).c_str());
 		m_listDelayImportFuncs.InsertItem(listindex, str);
@@ -279,8 +287,10 @@ int CViewRightBottomLeft::CreateListExportFuncs()
 	if (m_pLibpe->GetExportTable(&pExportTable) != S_OK)
 		return -1;
 
-	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS);
+	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listExportFuncs.ShowWindow(SW_HIDE);
 	m_listExportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportFuncs.InsertColumn(0, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
@@ -310,7 +320,7 @@ int CViewRightBottomLeft::CreateListExportFuncs()
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateListRelocs(UINT uBlockID)
+int CViewRightBottomLeft::CreateListRelocsEntry(DWORD dwEntry)
 {
 	PCLIBPE_RELOCATION_VEC pRelocTable { };
 
@@ -318,15 +328,17 @@ int CViewRightBottomLeft::CreateListRelocs(UINT uBlockID)
 		return -1;
 	if (pRelocTable->empty())
 		return -1;
-	if (pRelocTable->size() < uBlockID)
+	if (pRelocTable->size() < dwEntry)
 		return -1;
-	if (std::get<1>(pRelocTable->at(uBlockID)).empty())
+	if (std::get<1>(pRelocTable->at(dwEntry)).empty())
 		return -1;
 
 	m_listRelocsDesc.DestroyWindow();
 
-	m_listRelocsDesc.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_TYPE);
+	m_listRelocsDesc.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listRelocsDesc.ShowWindow(SW_HIDE);
 	m_listRelocsDesc.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocsDesc.InsertColumn(0, L"Reloc type", LVCFMT_CENTER, 250);
@@ -350,7 +362,7 @@ int CViewRightBottomLeft::CreateListRelocs(UINT uBlockID)
 	WCHAR str[MAX_PATH] { };
 
 	m_listRelocsDesc.SetRedraw(FALSE);
-	for (auto& i : std::get<1>(pRelocTable->at(uBlockID)))
+	for (auto& i : std::get<1>(pRelocTable->at(dwEntry)))
 	{
 		if (std::get<0>(i) <= sizeof(relocTypes) / sizeof(char*))
 			swprintf_s(str, MAX_PATH, L"%S", relocTypes[std::get<0>(i)]);
@@ -372,7 +384,22 @@ int CViewRightBottomLeft::CreateListRelocs(UINT uBlockID)
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateTreeResDir()
+int CViewRightBottomLeft::CreateHexDebugEntry(DWORD dwEntry)
+{
+	PCLIBPE_DEBUG_VEC pDebugDir;
+	if (m_pLibpe->GetDebugTable(&pDebugDir) != S_OK)
+		return -1;
+
+	m_stHexEdit.SetData(&std::get<1>(pDebugDir->at(dwEntry)));
+
+	CRect rect;
+	GetClientRect(&rect);
+	m_stHexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+	return 0;
+}
+
+int CViewRightBottomLeft::CreateTreeResources()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
@@ -443,11 +470,11 @@ int CViewRightBottomLeft::CreateTreeResDir()
 
 int CViewRightBottomLeft::CreateHexTLS()
 {
-	PCLIBPE_TLS_TUP pTLSDir { };
+	PCLIBPE_TLS_TUP pTLSDir;
 	if (m_pLibpe->GetTLSTable(&pTLSDir) != S_OK)
 		return -1;
-	
-	m_stHexEdit.SetData(&std::get<2>(*pTLSDir));
+
+	m_stHexEdit.SetData(&std::get<1>(*pTLSDir));
 
 	CRect rect;
 	GetClientRect(&rect);

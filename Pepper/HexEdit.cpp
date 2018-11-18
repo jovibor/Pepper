@@ -24,7 +24,7 @@ int CHexEdit::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CRuntimeClass* pNewViewClass = RUNTIME_CLASS(CHexEditView);
 	CCreateContext context;
 	context.m_pNewViewClass = pNewViewClass;
-	
+
 	m_pHexEditView = (CHexEditView*)pNewViewClass->CreateObject();
 	CRect rect;
 	GetClientRect(rect);
@@ -57,9 +57,9 @@ BOOL CHexEdit::SetData(const std::string& strData) const
 	return GetActiveView()->SetData(strData);
 }
 
-CFont* CHexEdit::SetFont(CFont* pFont) const
+int CHexEdit::SetFont(CFont* pFontNew) const
 {
-	return GetActiveView()->SetFont(pFont);
+	return GetActiveView()->SetFont(pFontNew);
 }
 
 void CHexEdit::SetFontSize(UINT nSize) const
@@ -67,7 +67,9 @@ void CHexEdit::SetFontSize(UINT nSize) const
 	return GetActiveView()->SetFontSize(nSize);
 }
 
-void CHexEdit::SetFontColor(COLORREF clrHex, COLORREF clrOffset) const
+void CHexEdit::SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
+	COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected) const
 {
-	GetActiveView()->SetFontColor(clrHex, clrOffset);
+	GetActiveView()->SetFontColor(clrTextHex, clrTextOffset, clrTextSelected,
+		clrBk, clrBkSelected);
 }

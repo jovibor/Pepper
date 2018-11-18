@@ -16,6 +16,7 @@ CSplitterEx::~CSplitterEx()
 
 BOOL CSplitterEx::CreateStatic(CWnd * pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
 {
+	//If already created.
 	if ((!m_vecRows.empty() && !m_vecCols.empty()) || (!nRows | !nCols))
 		return FALSE;
 

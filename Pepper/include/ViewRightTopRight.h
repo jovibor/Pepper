@@ -7,8 +7,8 @@ class CViewRightTopRight : public CScrollView
 {
 	DECLARE_DYNCREATE(CViewRightTopRight)
 protected:
-	CViewRightTopRight();
-	virtual ~CViewRightTopRight();
+	CViewRightTopRight() {}
+	virtual ~CViewRightTopRight() {}
 	virtual void OnDraw(CDC* pDC);
 	virtual void OnInitialUpdate();
 	DECLARE_MESSAGE_MAP()

@@ -59,39 +59,42 @@ const std::map<WORD, std::wstring> g_mapResType {
 { 24, L"MANIFEST" }
 };
 
-constexpr auto IDC_LIST_SECURITY_SERTIFICATE_ID = 0x0001;
-constexpr auto IDC_LIST_ARCHITECTURE = 0x0002;
-constexpr auto IDC_LIST_BOUNDIMPORT = 0x0003;
-constexpr auto IDC_LIST_COMDESCRIPTOR = 0x0004;
-constexpr auto IDC_LIST_DATADIRECTORIES = 0x0005;
-constexpr auto IDC_LIST_DEBUG = 0x0006;
-constexpr auto IDC_LIST_DELAYIMPORT = 0x0007;
-constexpr auto IDC_LIST_DELAYIMPORT_FUNCS = 0x0008;
-constexpr auto IDC_LIST_DOSHEADER = 0x0009;
-constexpr auto IDC_LIST_RICHHEADER = 0x000A;
-constexpr auto IDC_LIST_EXCEPTION = 0x000B;
-constexpr auto IDC_LIST_EXPORT = 0x000C;
-constexpr auto IDC_LIST_EXPORT_FUNCS = 0x000D;
-constexpr auto IDC_LIST_FILEHEADER = 0x000E;
-constexpr auto IDC_PE_FILE_SUMMARY = 0x000F;
-constexpr auto IDC_LIST_GLOBALPTR = 0x0010;
-constexpr auto IDC_LIST_IAT = 0x0011;
-constexpr auto IDC_LIST_IMPORT = 0x0012;
-constexpr auto IDC_LIST_IMPORT_FUNCS = 0x0013;
-constexpr auto IDC_LIST_LOADCONFIG = 0x0014;
-constexpr auto IDC_LIST_NTHEADER = 0x0015;
-constexpr auto IDC_LIST_OPTIONALHEADER = 0x0016;
-constexpr auto IDC_LIST_RELOCATIONS = 0x0017;
-constexpr auto IDC_LIST_RELOCATIONS_TOPCHANGEDMSG = 0x0018;
-constexpr auto IDC_LIST_RELOCATIONS_TYPE = 0x0019;
-constexpr auto IDC_TREE_RESOURCE = 0x001A;
-constexpr auto IDC_LIST_SECHEADERS = 0x001B;
-constexpr auto IDC_LIST_SECURITY = 0x001C;
-constexpr auto IDC_LIST_TLS = 0x001D;
-constexpr auto IDC_TREE_LEFT_MAIN = 0x001E;
-constexpr auto IDC_TREE_RESOURCE_TOP = 0x001F;
-constexpr auto IDC_TREE_RESOURCE_BOTTOM = 0x0020;
-constexpr auto IDC_TAB_RESOURCES = 0x0021;
-constexpr auto IDC_LIST_TLS_CALLBACKS = 0x0022;
-constexpr auto IDC_HEX_RIGHT_BOTTOM_LEFT = 0x0023;
-constexpr auto IDC_HEX_RESOURCES_RAW = 0x0024;
+//These are identificators of all the controls: list, hex, tree.
+constexpr auto IDC_LIST_DOSHEADER = 0x0001;
+constexpr auto IDC_LIST_RICHHEADER = 0x0002;
+constexpr auto IDC_LIST_NTHEADER = 0x0003;
+constexpr auto IDC_LIST_FILEHEADER = 0x0004;
+constexpr auto IDC_LIST_OPTIONALHEADER = 0x0005;
+constexpr auto IDC_LIST_DATADIRECTORIES = 0x0006;
+constexpr auto IDC_LIST_SECHEADERS = 0x0007;
+constexpr auto IDC_LIST_EXPORT = 0x0008;
+constexpr auto IDC_LIST_EXPORT_FUNCS = 0x0009;
+constexpr auto IDC_LIST_IMPORT = 0x000A;
+constexpr auto IDC_LIST_IMPORT_ENTRY = 0x000B;
+constexpr auto IDC_LIST_EXCEPTION = 0x000C;
+constexpr auto IDC_LIST_SECURITY = 0x000D;
+constexpr auto IDC_LIST_SECURITY_ENTRY = 0x000E;
+constexpr auto IDC_LIST_RELOCATIONS = 0x000F;
+constexpr auto IDC_LIST_RELOCATIONS_ENTRY = 0x0010;
+constexpr auto IDC_LIST_DEBUG = 0x0011;
+constexpr auto IDC_LIST_DEBUG_ENTRY = 0x0012;
+constexpr auto IDC_LIST_ARCHITECTURE = 0x0013;
+constexpr auto IDC_LIST_GLOBALPTR = 0x0014;
+constexpr auto IDC_LIST_TLS = 0x0015;
+constexpr auto IDC_LIST_TLS_CALLBACKS = 0x0016;
+constexpr auto IDC_LIST_LOADCONFIG = 0x0017;
+constexpr auto IDC_LIST_BOUNDIMPORT = 0x0018;
+constexpr auto IDC_LIST_IAT = 0x0019;
+constexpr auto IDC_LIST_DELAYIMPORT = 0x001A;
+constexpr auto IDC_LIST_DELAYIMPORT_FUNCS = 0x001B;
+constexpr auto IDC_LIST_COMDESCRIPTOR = 0x001C;
+
+constexpr auto IDC_TREE_LEFT_MAIN = 0x0100;
+constexpr auto IDC_TREE_RESOURCE = 0x0101;
+constexpr auto IDC_TREE_RESOURCE_TOP = 0x0102;
+constexpr auto IDC_TREE_RESOURCE_BOTTOM = 0x0103;
+
+constexpr auto IDC_HEX_RIGHT_BOTTOM_LEFT = 0x0200;
+constexpr auto IDC_HEX_RIGHT_TOP_RIGHT = 0x0201;
+
+constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;

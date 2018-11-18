@@ -16,11 +16,6 @@ BEGIN_MESSAGE_MAP(CHexEditView, CScrollView)
 	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
-CHexEditView::~CHexEditView()
-{
-	delete m_pFontDefaultHexView;
-}
-
 BOOL CHexEditView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCreateContext* pContext, CFont* pFont)
 {
 	SetFont(pFont);
@@ -161,10 +156,10 @@ void CHexEditView::OnDraw(CDC* pDC)
 
 	CRect clip;
 	rDC.GetClipBox(&clip);
-	rDC.FillSolidRect(clip, GetSysColor(COLOR_WINDOW));
+	rDC.FillSolidRect(clip, m_clrTextBk);
 
 	rDC.SelectObject(&m_penLines);
-	rDC.SelectObject(m_pFontHexView);
+	rDC.SelectObject(&m_fontHexView);
 
 	//Need to properly Draw content.
 	GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_POS);
@@ -246,7 +241,8 @@ void CHexEditView::OnDraw(CDC* pDC)
 		rDC.SetTextColor(m_clrTextOffset);
 
 		//Left column offset Print (00000001...000000A1...)
-		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_nHeaderRectWidth + (m_sizeLetter.cy * nLine + m_stScrollInfo.nPos), NULL, nullptr, m_strOffset, 8, nullptr);
+		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_nHeaderRectWidth + (m_sizeLetter.cy * nLine + m_stScrollInfo.nPos),
+			NULL, nullptr, m_strOffset, 8, nullptr);
 		rDC.SetTextColor(m_clrTextHex);
 
 		int nIndentHexX = 0;
@@ -287,7 +283,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 				//Selection draw with different BK color.
 				if (m_fSelection && nIndexDataToPrint >= min(m_dwSelectionStart, m_dwSelectionEnd) && nIndexDataToPrint <= max(m_dwSelectionStart, m_dwSelectionEnd))
 				{
-					rDC.SetBkColor(m_clrTextBkSelection);
+					rDC.SetBkColor(m_clrTextBkSelected);
 
 					//To prevent change bk color after last selected HEX chunk.
 					if (nIndexDataToPrint != max(m_dwSelectionStart, m_dwSelectionEnd))
@@ -296,7 +292,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 						FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkDefault.m_hObject);
 				}
 				else {
-					rDC.SetBkColor(m_clrTextBkDefault);
+					rDC.SetBkColor(m_clrTextBk);
 					FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkDefault.m_hObject);
 				}
 
@@ -313,7 +309,7 @@ void CHexEditView::OnDraw(CDC* pDC)
 			}
 			else
 			{	//Fill remaining chunks with blank spaces.
-				rDC.SetBkColor(m_clrTextBkDefault);
+				rDC.SetBkColor(m_clrTextBk);
 				ExtTextOutW(rDC.m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
 				ExtTextOutA(rDC.m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
 			}
@@ -387,68 +383,68 @@ BOOL CHexEditView::SetData(const std::string& strData)
 	return TRUE;
 }
 
-CFont* CHexEditView::SetFont(CFont *pFont)
+int CHexEditView::SetFont(CFont *pFontNew)
 {
-	CFont* pOldFont = m_pFontHexView;
-
-	//If pFont is nullptr then assigning default font.
-	if (!pFont)
+	//If pFontNew is nullptr then assigning default font.
+	if (!pFontNew)
 	{
-		if (!m_pFontDefaultHexView)
+		LOGFONT lf { };
+		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+		lf.lfHeight = 18;
+		m_fontHexView.DeleteObject();
+		if (!m_fontHexView.CreateFontIndirectW(&lf))
 		{
-			m_pFontDefaultHexView = new CFont();
-			LOGFONT lf { };
-			StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
-			lf.lfHeight = 18;
-			if (!m_pFontDefaultHexView->CreateFontIndirectW(&lf))
-			{
-				StringCchCopyW(lf.lfFaceName, 16, L"Times New Roman");
-				m_pFontDefaultHexView->CreateFontIndirectW(&lf);
-			}
+			StringCchCopyW(lf.lfFaceName, 16, L"Times New Roman");
+			m_fontHexView.CreateFontIndirectW(&lf);
 		}
-		m_pFontHexView = m_pFontDefaultHexView;
 	}
 	else
-		m_pFontHexView = pFont;
-
+	{
+		LOGFONT lf { };
+		pFontNew->GetLogFont(&lf);
+		m_fontHexView.DeleteObject();
+		m_fontHexView.CreateFontIndirectW(&lf);
+	}
 	Recalc();
 
-	return pOldFont;
+	return 0;
 }
 
 void CHexEditView::SetFontSize(UINT nSize)
 {
-	//Prevent font size being too small or too big.
-	if (nSize < 7 || nSize > 80 || !m_pFontHexView)
+	//Prevent font size from being too small or too big.
+	if (nSize < 7 || nSize > 80)
 		return;
 
 	LOGFONT lf { };
-	m_pFontHexView->GetLogFont(&lf);
+	m_fontHexView.GetLogFont(&lf);
 	lf.lfHeight = nSize;
 
-	m_pFontHexView->DeleteObject();
-	m_pFontHexView->CreateFontIndirectW(&lf);
+	m_fontHexView.DeleteObject();
+	m_fontHexView.CreateFontIndirectW(&lf);
 
 	Recalc();
 }
 
-void CHexEditView::SetFontColor(COLORREF clrHex, COLORREF clrOffset)
+void CHexEditView::SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
+	COLORREF clrTextSelected, COLORREF clrTextBk, COLORREF clrTextBkSelected)
 {
-	m_clrTextHex = clrHex;
+	m_clrTextHex = clrTextHex;
+	m_clrTextOffset = clrTextOffset;
+	m_clrTextSelected = clrTextSelected;
+	m_clrTextBk = clrTextBk;
+	m_clrTextBkSelected;
 
-	if (clrOffset)/*if zero use default*/
-		m_clrTextOffset = clrOffset;
+	Invalidate();
+	UpdateWindow();
 }
 
-UINT CHexEditView::GetFontSize() const
+UINT CHexEditView::GetFontSize()
 {
-	if (!m_pFontHexView)
-		return 0;
+	LOGFONT lf;
+	m_fontHexView.GetLogFont(&lf);
 
-	LOGFONT logFont { };
-	m_pFontHexView->GetLogFont(&logFont);
-
-	return logFont.lfHeight;
+	return lf.lfHeight;
 }
 
 void CHexEditView::Recalc()
@@ -461,9 +457,8 @@ void CHexEditView::Recalc()
 	}
 
 	CDC* pDC = GetDC();
-	CFont* oldFont = pDC->SelectObject(m_pFontHexView);
+	pDC->SelectObject(&m_fontHexView);
 	GetTextExtentPoint32W(pDC->m_hDC, L"0", 1, &m_sizeLetter);
-	pDC->SelectObject(oldFont);
 	ReleaseDC(pDC);
 
 	m_nFirstVertLine = 0;
@@ -485,7 +480,9 @@ void CHexEditView::Recalc()
 	SetScrollSizes(MM_TEXT, CSize(m_nFourthVertLine + 1,
 		m_nHeaderRectWidth + m_nBottomRectWidth + (m_sizeLetter.cy * (m_dwRawDataCount % 16 ? m_dwRawDataCount / 16 + 2 : m_dwRawDataCount / 16 + 1))));
 
-	if (m_fSecondLaunch) //First launch? Do we need to ajust scroll bars?
+	//This flag shows that Recalc() was invoked at least second time,
+	//and ScrollSizes have already been set, so we can adjust them.
+	if (m_fSecondLaunch)
 	{
 		GetScrollInfo(SB_VERT, &m_stScrollInfo, SIF_ALL);
 		m_stScrollInfo.nPos = m_sizeLetter.cy * nStartLine;

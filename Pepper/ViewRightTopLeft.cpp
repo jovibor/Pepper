@@ -59,24 +59,24 @@ void CViewRightTopLeft::OnInitialUpdate()
 	m_pLibpe->GetRelocationTable(&m_pRelocTable);
 
 	CreateListDOSHeader();
-	CreateListRichHdr();
+	CreateListRichHeader();
 	CreateListNTHeader();
 	CreateListFileHeader();
 	CreateListOptHeader();
-	CreateListDataDirs();
-	CreateListSecHdrs();
-	CreateListExportDir();
-	CreateListImportDir();
-	CreateTreeResDir();
-	CreateListExceptionDir();
-	CreateListSecurityDir();
-	CreateListRelocDir();
-	CreateListDebugDir();
-	CreateListTLSDir();
-	CreateListLoadConfigDir();
-	CreateListBoundImportDir();
-	CreateListDelayImportDir();
-	CreateListCOMDir();
+	CreateListDataDirectories();
+	CreateListSecHeaders();
+	CreateListExport();
+	CreateListImport();
+	CreateTreeResources();
+	CreateListException();
+	CreateListSecurity();
+	CreateListRelocation();
+	CreateListDebug();
+	CreateListTLS();
+	CreateListLoadConfigTable();
+	CreateListBoundImport();
+	CreateListDelayImport();
+	CreateListCOM();
 }
 
 void CViewRightTopLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
@@ -97,7 +97,7 @@ void CViewRightTopLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pH
 
 	switch (lHint)
 	{
-	case IDC_PE_FILE_SUMMARY:
+	case IDC_SHOW_FILE_SUMMARY:
 		m_fFileSummaryShow = true;
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
@@ -170,7 +170,7 @@ void CViewRightTopLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pH
 	case IDC_LIST_DEBUG:
 		m_listDebugDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDebugDir;
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
+		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_TLS:
 		m_listTLSDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -395,21 +395,22 @@ BOOL CViewRightTopLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	{
 	case IDC_LIST_IMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_FUNCS, pNMI->iItem));
-		return TRUE;
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_ENTRY, pNMI->iItem));
+		break;
 	case IDC_LIST_SECURITY:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECURITY_SERTIFICATE_ID, pNMI->iItem));
-		return TRUE;
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECURITY_ENTRY, pNMI->iItem));
+		break;
 	case IDC_LIST_RELOCATIONS:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_RELOCATIONS_TOPCHANGEDMSG, pNMI->iItem));
-		return TRUE;
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_RELOCATIONS_ENTRY, pNMI->iItem));
+		break;
 	case IDC_LIST_DELAYIMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DELAYIMPORT_FUNCS, pNMI->iItem));
-		return TRUE;
+		break;
 	case IDC_TREE_RESOURCE_TOP:
+	{
 		const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
 		if (pTree->hdr.code == TVN_SELCHANGED && pTree->itemNew.hItem != m_hTreeResDir)
 		{
@@ -440,15 +441,21 @@ BOOL CViewRightTopLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 						{
 							auto& data = std::get<3>(lvl3vec.at(idlvl3));
 
-							if (!data.empty()) 
+							if (!data.empty())
 								//Send data vector pointer to CViewRightTopRight
 								//to display raw data.
-								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RESOURCES_RAW, 0),(CObject*)&data);
+								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TOP_RIGHT, 0), (CObject*)&data);
 						}
 					}
 				}
 			}
 		}
+	}
+	break;
+	case IDC_LIST_DEBUG:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DEBUG_ENTRY, pNMI->iItem));
+		break;
 	}
 	return TRUE;
 }
@@ -459,8 +466,10 @@ int CViewRightTopLeft::CreateListDOSHeader()
 	if (m_pLibpe->GetMSDOSHeader(&pDosHeader) != S_OK)
 		return -1;
 
-	m_listDOSHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_DOSHEADER);
+	m_listDOSHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_DOSHEADER, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listDOSHeader.ShowWindow(SW_HIDE);
 	m_listDOSHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDOSHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
@@ -725,14 +734,16 @@ int CViewRightTopLeft::CreateListDOSHeader()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListRichHdr()
+int CViewRightTopLeft::CreateListRichHeader()
 {
 	PCLIBPE_RICHHEADER_VEC pRichHeader { };
 	if (m_pLibpe->GetRichHeader(&pRichHeader) != S_OK)
 		return -1;
 
-	m_listRichHdr.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_RICHHEADER);
+	m_listRichHdr.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_RICHHEADER, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listRichHdr.ShowWindow(SW_HIDE);
 	m_listRichHdr.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRichHdr.InsertColumn(0, L"\u2116", LVCFMT_CENTER, 35);
@@ -762,12 +773,14 @@ int CViewRightTopLeft::CreateListRichHdr()
 
 int CViewRightTopLeft::CreateListNTHeader()
 {
-	PCLIBPE_NTHEADER_TUP pNTHeader { };
-	if (m_pLibpe->GetNTHeader(&pNTHeader) != S_OK)
+	PCLIBPE_NTHEADER_VAR pVarNTHdr { };
+	if (m_pLibpe->GetNTHeader(&pVarNTHdr) != S_OK)
 		return -1;
 
-	m_listNTHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_NTHEADER);
+	m_listNTHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_NTHEADER, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listNTHeader.ShowWindow(SW_HIDE);
 	m_listNTHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listNTHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 100);
@@ -780,7 +793,7 @@ int CViewRightTopLeft::CreateListNTHeader()
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
 	{
-		const IMAGE_NT_HEADERS32* pNTHeader32 = &std::get<0>(*pNTHeader);
+		const IMAGE_NT_HEADERS32* pNTHeader32 = &std::get<0>(*pVarNTHdr);
 
 		listindex = m_listNTHeader.InsertItem(listindex, L"Signature");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, Signature) + m_dwPeStart);
@@ -795,7 +808,7 @@ int CViewRightTopLeft::CreateListNTHeader()
 	}
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 	{
-		const IMAGE_NT_HEADERS64* pNTHeader64 = &std::get<1>(*pNTHeader);
+		const IMAGE_NT_HEADERS64* pNTHeader64 = &std::get<1>(*pVarNTHdr);
 
 		listindex = m_listNTHeader.InsertItem(listindex, L"Signature");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS64, Signature) + m_dwPeStart);
@@ -818,8 +831,10 @@ int CViewRightTopLeft::CreateListFileHeader()
 	if (m_pLibpe->GetFileHeader(&pFileHeader) != S_OK)
 		return -1;
 
-	m_listFileHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_FILEHEADER);
+	m_listFileHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_FILEHEADER, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 
 	m_listFileHeader.ShowWindow(SW_HIDE);
 	m_listFileHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
@@ -961,12 +976,14 @@ int CViewRightTopLeft::CreateListFileHeader()
 
 int CViewRightTopLeft::CreateListOptHeader()
 {
-	PCLIBPE_OPTHEADER_TUP pOptHeader { };
-	if (m_pLibpe->GetOptionalHeader(&pOptHeader) != S_OK)
+	PCLIBPE_OPTHEADER_VAR pOptionalHdr { };
+	if (m_pLibpe->GetOptionalHeader(&pOptionalHdr) != S_OK)
 		return -1;
 
-	m_listOptHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_OPTIONALHEADER);
+	m_listOptHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_OPTIONALHEADER, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listOptHeader.ShowWindow(SW_HIDE);
 	m_listOptHeader.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
@@ -1017,7 +1034,7 @@ int CViewRightTopLeft::CreateListOptHeader()
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
 	{
-		const IMAGE_OPTIONAL_HEADER32* pOptHeader32 = &std::get<0>(*pOptHeader);
+		const IMAGE_OPTIONAL_HEADER32* pOptHeader32 = &std::get<0>(*pOptionalHdr);
 
 		listindex = m_listOptHeader.InsertItem(listindex, L"Magic");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, OptionalHeader.Magic) + m_dwPeStart);
@@ -1279,7 +1296,7 @@ int CViewRightTopLeft::CreateListOptHeader()
 	}
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 	{
-		const IMAGE_OPTIONAL_HEADER64* pOptHeader64 = &std::get<1>(*pOptHeader);
+		const IMAGE_OPTIONAL_HEADER64* pOptHeader64 = &std::get<1>(*pOptionalHdr);
 
 		listindex = m_listOptHeader.InsertItem(listindex, L"Magic");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS64, OptionalHeader.Magic) + m_dwPeStart);
@@ -1535,14 +1552,16 @@ int CViewRightTopLeft::CreateListOptHeader()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListDataDirs()
+int CViewRightTopLeft::CreateListDataDirectories()
 {
 	PCLIBPE_DATADIRS_VEC pLibPeDataDirs { };
 	if (m_pLibpe->GetDataDirectories(&pLibPeDataDirs) != S_OK)
 		return -1;
 
-	m_listDataDirs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_DATADIRECTORIES);
+	m_listDataDirs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_DATADIRECTORIES, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listDataDirs.ShowWindow(SW_HIDE);
 	m_listDataDirs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDataDirs.InsertColumn(0, L"Name", LVCFMT_CENTER, 200);
@@ -1759,13 +1778,15 @@ int CViewRightTopLeft::CreateListDataDirs()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListSecHdrs()
+int CViewRightTopLeft::CreateListSecHeaders()
 {
 	if (!m_pSecHeaders)
 		return -1;
 
-	m_listSecHeaders.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_SECHEADERS);
+	m_listSecHeaders.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_SECHEADERS, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listSecHeaders.ShowWindow(SW_HIDE);
 	m_listSecHeaders.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listSecHeaders.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
@@ -1829,10 +1850,10 @@ int CViewRightTopLeft::CreateListSecHdrs()
 	UINT listindex = 0;
 	std::wstring strTipText { };
 
-	for (auto &i : *m_pSecHeaders)
+	for (auto& iterSecHdrs : *m_pSecHeaders)
 	{
 		for (auto& flags : mapSecFlags)
-			if (flags.first & std::get<0>(i).Characteristics)
+			if (flags.first & std::get<0>(iterSecHdrs).Characteristics)
 				strTipText += flags.second + L"\n";
 
 		if (!strTipText.empty())
@@ -1847,7 +1868,7 @@ int CViewRightTopLeft::CreateListSecHdrs()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListExportDir()
+int CViewRightTopLeft::CreateListExport()
 {
 	PCLIBPE_EXPORT_TUP pExportTable { };
 	if (m_pLibpe->GetExportTable(&pExportTable) != S_OK)
@@ -1857,8 +1878,10 @@ int CViewRightTopLeft::CreateListExportDir()
 	int listindex = 0;
 	const IMAGE_EXPORT_DIRECTORY* pExportDir = &std::get<0>(*pExportTable);
 
-	m_listExportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT);
+	m_listExportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listExportDir.ShowWindow(SW_HIDE);
 	m_listExportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 250);
@@ -1878,8 +1901,8 @@ int CViewRightTopLeft::CreateListExportDir()
 	m_listExportDir.SetItemText(listindex, 2, str);
 	if (pExportDir->TimeDateStamp)
 	{
-		__time64_t _time = pExportDir->TimeDateStamp;
-		_wctime64_s(str, MAX_PATH, &_time);
+		__time64_t time = pExportDir->TimeDateStamp;
+		_wctime64_s(str, MAX_PATH, &time);
 		m_listExportDir.SetItemTooltip(listindex, 2, str, L"Time / Date:");
 	}
 
@@ -1940,13 +1963,15 @@ int CViewRightTopLeft::CreateListExportDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListImportDir()
+int CViewRightTopLeft::CreateListImport()
 {
 	if (!m_pImportTable)
 		return -1;
 
-	m_listImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT);
+	m_listImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listImportDir.ShowWindow(SW_HIDE);
 	m_listImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 330);
@@ -1957,10 +1982,23 @@ int CViewRightTopLeft::CreateListImportDir()
 	m_listImportDir.InsertColumn(5, L"FirstThunk (IAT)", LVCFMT_LEFT, 135);
 	m_listImportDir.SetItemCountEx(m_pImportTable->size(), LVSICF_NOSCROLL);
 
+	WCHAR str[MAX_PATH] { };
+	int listindex = 0;
+
+	for (auto& i : *m_pImportTable)
+		if (std::get<0>(i).TimeDateStamp)
+		{
+			__time64_t time = std::get<0>(i).TimeDateStamp;
+			_wctime64_s(str, MAX_PATH, &time);
+			m_listImportDir.SetItemTooltip(listindex, 3, str, L"Time / Date:");
+
+			listindex++;
+		}
+	
 	return 0;
 }
 
-int CViewRightTopLeft::CreateTreeResDir()
+int CViewRightTopLeft::CreateTreeResources()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
@@ -2048,13 +2086,15 @@ int CViewRightTopLeft::CreateTreeResDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListExceptionDir()
+int CViewRightTopLeft::CreateListException()
 {
 	if (!m_pExceptionDir)
 		return -1;
 
-	m_listExceptionDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_EXCEPTION);
+	m_listExceptionDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_EXCEPTION, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listExceptionDir.ShowWindow(SW_HIDE);
 	m_listExceptionDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExceptionDir.InsertColumn(0, L"BeginAddress", LVCFMT_CENTER, 100);
@@ -2065,14 +2105,16 @@ int CViewRightTopLeft::CreateListExceptionDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListSecurityDir()
+int CViewRightTopLeft::CreateListSecurity()
 {
 	PCLIBPE_SECURITY_VEC pSecurityDir { };
 	if (m_pLibpe->GetSecurityTable(&pSecurityDir) != S_OK)
 		return -1;
 
-	m_listSecurityDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_SECURITY);
+	m_listSecurityDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_SECURITY, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listSecurityDir.ShowWindow(SW_HIDE);
 	m_listSecurityDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listSecurityDir.InsertColumn(0, L"dwLength", LVCFMT_CENTER, 100);
@@ -2097,13 +2139,15 @@ int CViewRightTopLeft::CreateListSecurityDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListRelocDir()
+int CViewRightTopLeft::CreateListRelocation()
 {
 	if (!m_pRelocTable)
 		return -1;
 
-	m_listRelocDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS);
+	m_listRelocDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listRelocDir.ShowWindow(SW_HIDE);
 	m_listRelocDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocDir.InsertColumn(0, L"Virtual Address", LVCFMT_CENTER, 115);
@@ -2114,15 +2158,17 @@ int CViewRightTopLeft::CreateListRelocDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListDebugDir()
+int CViewRightTopLeft::CreateListDebug()
 {
 	PCLIBPE_DEBUG_VEC pDebugDir { };
 
 	if (m_pLibpe->GetDebugTable(&pDebugDir) != S_OK)
 		return -1;
 
-	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_DEBUG);
+	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_DEBUG, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listDebugDir.ShowWindow(SW_HIDE);
 	m_listDebugDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDebugDir.InsertColumn(0, L"Characteristics", LVCFMT_CENTER, 115);
@@ -2159,30 +2205,31 @@ int CViewRightTopLeft::CreateListDebugDir()
 
 	for (auto& i : *pDebugDir)
 	{
-		swprintf_s(str, 9, L"%08X", i.Characteristics);
+		const IMAGE_DEBUG_DIRECTORY* pDebug = &std::get<0>(i);
+		swprintf_s(str, 9, L"%08X", std::get<0>(i).Characteristics);
 		m_listDebugDir.InsertItem(listindex, str);
-		swprintf_s(str, MAX_PATH, L"%08X", i.TimeDateStamp);
+		swprintf_s(str, MAX_PATH, L"%08X", pDebug->TimeDateStamp);
 		m_listDebugDir.SetItemText(listindex, 1, str);
-		if (i.TimeDateStamp)
+		if (pDebug->TimeDateStamp)
 		{
-			__time64_t _time = i.TimeDateStamp;
+			__time64_t _time = pDebug->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
 			m_listDebugDir.SetItemTooltip(listindex, 1, str, L"Time / Date:");
 		}
-		swprintf_s(str, 5, L"%04u", i.MajorVersion);
+		swprintf_s(str, 5, L"%04u", pDebug->MajorVersion);
 		m_listDebugDir.SetItemText(listindex, 2, str);
-		swprintf_s(str, 5, L"%04u", i.MinorVersion);
+		swprintf_s(str, 5, L"%04u", pDebug->MinorVersion);
 		m_listDebugDir.SetItemText(listindex, 3, str);
-		swprintf_s(str, 9, L"%08X", i.Type);
+		swprintf_s(str, 9, L"%08X", pDebug->Type);
 		m_listDebugDir.SetItemText(listindex, 4, str);
 		for (auto&j : mapDebugType)
-			if (j.first == i.Type)
+			if (j.first == pDebug->Type)
 				m_listDebugDir.SetItemTooltip(listindex, 4, j.second);
-		swprintf_s(str, 9, L"%08X", i.SizeOfData);
+		swprintf_s(str, 9, L"%08X", pDebug->SizeOfData);
 		m_listDebugDir.SetItemText(listindex, 5, str);
-		swprintf_s(str, 9, L"%08X", i.AddressOfRawData);
+		swprintf_s(str, 9, L"%08X", pDebug->AddressOfRawData);
 		m_listDebugDir.SetItemText(listindex, 6, str);
-		swprintf_s(str, 9, L"%08X", i.PointerToRawData);
+		swprintf_s(str, 9, L"%08X", pDebug->PointerToRawData);
 		m_listDebugDir.SetItemText(listindex, 7, str);
 
 		listindex++;
@@ -2191,14 +2238,16 @@ int CViewRightTopLeft::CreateListDebugDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListTLSDir()
+int CViewRightTopLeft::CreateListTLS()
 {
 	PCLIBPE_TLS_TUP pTLSDir { };
 	if (m_pLibpe->GetTLSTable(&pTLSDir) != S_OK)
 		return -1;
 
-	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_TLS);
+	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_TLS, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listTLSDir.ShowWindow(SW_HIDE);
 	m_listTLSDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listTLSDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 250);
@@ -2228,7 +2277,7 @@ int CViewRightTopLeft::CreateListTLSDir()
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
 	{
-		const IMAGE_TLS_DIRECTORY32*  pTLSDir32 = &std::get<0>(*pTLSDir);
+		const IMAGE_TLS_DIRECTORY32*  pTLSDir32 = &std::get<IMAGE_TLS_DIRECTORY32>(std::get<0>(*pTLSDir));
 
 		listindex = m_listTLSDir.InsertItem(listindex, L"StartAddressOfRawData");
 		swprintf_s(str, 3, L"%u", sizeof(pTLSDir32->StartAddressOfRawData));
@@ -2272,7 +2321,7 @@ int CViewRightTopLeft::CreateListTLSDir()
 	}
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 	{
-		const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &std::get<1>(*pTLSDir);
+		const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &std::get<IMAGE_TLS_DIRECTORY64>(std::get<0>(*pTLSDir));
 
 		listindex = m_listTLSDir.InsertItem(listindex, L"StartAddressOfRawData");
 		swprintf_s(str, 3, L"%u", sizeof(pTLSDir64->StartAddressOfRawData));
@@ -2318,18 +2367,20 @@ int CViewRightTopLeft::CreateListTLSDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListLoadConfigDir()
+int CViewRightTopLeft::CreateListLoadConfigTable()
 {
-	PCLIBPE_LOADCONFIGTABLE_TUP pLoadConfigTable { };
-	if (m_pLibpe->GetLoadConfigTable(&pLoadConfigTable) != S_OK)
+	PCLIBPE_LOADCONFIGTABLE_VAR pLCD { };
+	if (m_pLibpe->GetLoadConfigTable(&pLCD) != S_OK)
 		return -1;
 
 	PCLIBPE_DATADIRS_VEC pDirs { };
 	if (m_pLibpe->GetDataDirectories(&pDirs) != S_OK)
 		return -1;
 
-	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_LOADCONFIG);
+	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_LOADCONFIG, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listLoadConfigDir.ShowWindow(SW_HIDE);
 	m_listLoadConfigDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listLoadConfigDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 330);
@@ -2361,7 +2412,7 @@ int CViewRightTopLeft::CreateListLoadConfigDir()
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
 	{
-		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLoadConfDir32 = &std::get<0>(*pLoadConfigTable);
+		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLoadConfDir32 = &std::get<0>(*pLCD);
 
 		listindex = m_listLoadConfigDir.InsertItem(listindex, L"Size");
 		swprintf_s(str, 3, L"%u", sizeof(pLoadConfDir32->Size));
@@ -2641,7 +2692,7 @@ int CViewRightTopLeft::CreateListLoadConfigDir()
 	}
 	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
 	{
-		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLoadConfDir64 = &std::get<1>(*pLoadConfigTable);
+		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLoadConfDir64 = &std::get<1>(*pLCD);
 
 		dwTotalSize += sizeof(pLoadConfDir64->Size);
 		if (dwTotalSize > dwLCTSize)
@@ -3055,15 +3106,17 @@ int CViewRightTopLeft::CreateListLoadConfigDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListBoundImportDir()
+int CViewRightTopLeft::CreateListBoundImport()
 {
 	PCLIBPE_BOUNDIMPORT_VEC pBoundImport { };
 
 	if (m_pLibpe->GetBoundImportTable(&pBoundImport) != S_OK)
 		return -1;
 
-	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT);
+	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listBoundImportDir.ShowWindow(SW_HIDE);
 	m_listBoundImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listBoundImportDir.InsertColumn(0, L"Module Name", LVCFMT_CENTER, 290);
@@ -3098,25 +3151,27 @@ int CViewRightTopLeft::CreateListBoundImportDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListDelayImportDir()
+int CViewRightTopLeft::CreateListDelayImport()
 {
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
 	if (m_pLibpe->GetDelayImportTable(&pDelayImport) != S_OK)
 		return -1;
 
-	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT);
+	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listDelayImportDir.ShowWindow(SW_HIDE);
 	m_listDelayImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
-	m_listDelayImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 290);
+	m_listDelayImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
 	m_listDelayImportDir.InsertColumn(1, L"Attributes", LVCFMT_LEFT, 100);
 	m_listDelayImportDir.InsertColumn(2, L"DllNameRVA", LVCFMT_LEFT, 105);
 	m_listDelayImportDir.InsertColumn(3, L"ModuleHandleRVA", LVCFMT_LEFT, 140);
 	m_listDelayImportDir.InsertColumn(4, L"ImportAddressTableRVA", LVCFMT_LEFT, 160);
 	m_listDelayImportDir.InsertColumn(5, L"ImportNameTableRVA", LVCFMT_LEFT, 150);
-	m_listDelayImportDir.InsertColumn(6, L"BoundImportAddressTableRVA", LVCFMT_LEFT, 150);
-	m_listDelayImportDir.InsertColumn(7, L"UnloadInformationTableRVA", LVCFMT_LEFT, 150);
+	m_listDelayImportDir.InsertColumn(6, L"BoundImportAddressTableRVA", LVCFMT_LEFT, 200);
+	m_listDelayImportDir.InsertColumn(7, L"UnloadInformationTableRVA", LVCFMT_LEFT, 190);
 	m_listDelayImportDir.InsertColumn(8, L"TimeDateStamp", LVCFMT_LEFT, 115);
 
 	int listindex = 0;
@@ -3143,6 +3198,12 @@ int CViewRightTopLeft::CreateListDelayImportDir()
 		m_listDelayImportDir.SetItemText(listindex, 7, str);
 		swprintf_s(str, 9, L"%08X", pDelayImpDir->TimeDateStamp);
 		m_listDelayImportDir.SetItemText(listindex, 8, str);
+		if (pDelayImpDir->TimeDateStamp)
+		{
+			__time64_t time = pDelayImpDir->TimeDateStamp;
+			_wctime64_s(str, MAX_PATH, &time);
+			m_listDelayImportDir.SetItemTooltip(listindex, 8, str, L"Time / Date:");
+		}
 
 		listindex++;
 	}
@@ -3150,15 +3211,17 @@ int CViewRightTopLeft::CreateListDelayImportDir()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListCOMDir()
+int CViewRightTopLeft::CreateListCOM()
 {
 	PCLIBPE_COMDESCRIPTOR pCOMDesc { };
 
 	if (m_pLibpe->GetCOMDescriptorTable(&pCOMDesc) != S_OK)
 		return -1;
 
-	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT);
+	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
+		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
+		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
+		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
 	m_listCOMDir.ShowWindow(SW_HIDE);
 	m_listCOMDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listCOMDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 300);

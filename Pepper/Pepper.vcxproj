@@ -151,6 +151,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -228,8 +229,8 @@
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Pepper.cpp" />
     <ClCompile Include="PepperDoc.cpp" />
-    <ClCompile Include="PepperList.cpp" />
-    <ClCompile Include="PepperListHeader.cpp" />
+    <ClCompile Include="ListEx.cpp" />
+    <ClCompile Include="ListHeaderEx.cpp" />
     <ClCompile Include="ViewRightBottomLeft.cpp" />
     <ClCompile Include="ViewRightTopRight.cpp" />
     <ClCompile Include="ViewRightBottomRight.cpp" />
@@ -264,8 +265,8 @@
     <ClInclude Include="include\MainFrm.h" />
     <ClInclude Include="include\Pepper.h" />
     <ClInclude Include="include\PepperDoc.h" />
-    <ClInclude Include="include\PepperList.h" />
-    <ClInclude Include="include\PepperListHeader.h" />
+    <ClInclude Include="include\ListEx.h" />
+    <ClInclude Include="include\ListHeaderEx.h" />
     <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\ViewRightBottomLeft.h" />
     <ClInclude Include="include\ViewRightBottomRight.h" />

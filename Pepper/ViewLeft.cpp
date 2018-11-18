@@ -40,7 +40,7 @@ void CViewLeft::OnInitialUpdate()
 
 	const HTREEITEM hTreeRoot = m_stTreeMain.InsertItem(L"FILE SUMMARY");
 	m_stTreeMain.SetItemState(hTreeRoot, TVIS_BOLD, TVIS_BOLD);
-	m_stTreeMain.SetItemData(hTreeRoot, IDC_PE_FILE_SUMMARY);
+	m_stTreeMain.SetItemData(hTreeRoot, IDC_SHOW_FILE_SUMMARY);
 
 	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_DOS_HEADER_FLAG))
 	{

@@ -6,13 +6,18 @@
 * Additional info can be found at https://github.com/jovibor/libpe	 *
 *********************************************************************/
 #pragma once
+static_assert(_MSC_VER >= 1914, "MSVS 15.7 (C++17) or higher needed.");
 
-namespace libpe {
-	static_assert(_MSC_VER >= 1914, "MSVS 15.7 (C++17) or higher needed.");
-
+#include <vector>
+#include <variant>
 #include <ImageHlp.h>
 
+namespace libpe
+{
+	//Constant DWORD*.
 	typedef const DWORD* PCDWORD;
+
+	//Dos header.
 	typedef const IMAGE_DOS_HEADER *PCLIBPE_DOSHEADER;
 
 	//Rich.
@@ -21,18 +26,16 @@ namespace libpe {
 	typedef const LIBPE_RICHHEADER_VEC *PCLIBPE_RICHHEADER_VEC;
 
 	//NT header.
-	//Only one IMAGE_OPTIONAL_HEADER structure of tuple will be filled, 
-	//x86 or x64 — depending on file type. Second will be zeroed.
-	typedef std::tuple<IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64> LIBPE_NTHEADER_TUP;
-	typedef const LIBPE_NTHEADER_TUP *PCLIBPE_NTHEADER_TUP;
+	//Depends on PE type — x86 or x64.
+	typedef std::variant<IMAGE_NT_HEADERS32, IMAGE_NT_HEADERS64> LIBPE_NTHEADER_VAR;
+	typedef const LIBPE_NTHEADER_VAR *PCLIBPE_NTHEADER_VAR;
 
+	//File header.
 	typedef const IMAGE_FILE_HEADER *PCLIBPE_FILEHEADER;
 
-	//Optional header.
-	//Only one structure of tuple will be filled depending on file type
-	//x86 or x64. Second will be zeroed.
-	typedef std::tuple<IMAGE_OPTIONAL_HEADER32, IMAGE_OPTIONAL_HEADER64> LIBPE_OPTHEADER_TUP;
-	typedef const LIBPE_OPTHEADER_TUP *PCLIBPE_OPTHEADER_TUP;
+	//Optional header. Depends on file type — x86 or x64.
+	typedef std::variant<IMAGE_OPTIONAL_HEADER32, IMAGE_OPTIONAL_HEADER64> LIBPE_OPTHEADER_VAR;
+	typedef const LIBPE_OPTHEADER_VAR *PCLIBPE_OPTHEADER_VAR;
 
 	//Data directories.
 	//Vector of IMAGE_DATA_DIRECTORY and section name this dir resides in.
@@ -108,37 +111,36 @@ namespace libpe {
 	/***************************************************************************************
 	****************************************************************************************
 	***************************************************************************************/
-	
+
 	//Exception table.
 	typedef std::vector<_IMAGE_RUNTIME_FUNCTION_ENTRY> LIBPE_EXCEPTION_VEC;
 	typedef const LIBPE_EXCEPTION_VEC *PCLIBPE_EXCEPTION_VEC;
 
 	//Security table.
-	//Vector of WIN_CERTIFICATE and vector of actual data in form of std::bytes.
+	//Vector of WIN_CERTIFICATE and vector of actual data in form of std::byte.
 	typedef std::vector<std::tuple<WIN_CERTIFICATE, std::vector<std::byte>>> LIBPE_SECURITY_VEC;
 	typedef const LIBPE_SECURITY_VEC *PCLIBPE_SECURITY_VEC;
 
-	//Relocations.
-	//Vector IMAGE_BASE_RELOCATION and vector of <Relocations type and Offset>
+	//Relocation table.
+	//Vector IMAGE_BASE_RELOCATION, and vector of <Relocations type and Offset>
 	typedef std::vector<std::tuple<IMAGE_BASE_RELOCATION, std::vector<std::tuple<WORD, WORD>>>> LIBPE_RELOCATION_VEC;
 	typedef const LIBPE_RELOCATION_VEC *PCLIBPE_RELOCATION_VEC;
-	
+
 	//Debug table.
-	//Vector of Debug entries.
-	typedef std::vector<IMAGE_DEBUG_DIRECTORY> LIBPE_DEBUG_VEC;
+	//Vector of debug entries: IMAGE_DEBUG_DIRECTORY, vector of raw data.
+	typedef std::vector<std::tuple<IMAGE_DEBUG_DIRECTORY, std::vector<std::byte>>> LIBPE_DEBUG_VEC;
 	typedef const LIBPE_DEBUG_VEC *PCLIBPE_DEBUG_VEC;
 
 	//TLS table.
-	//Only one structure is filled depending on file type - x86 or x64, second is zeroed.
-	//vector of std::byte — TLS Raw data, vector of TLS Callbacks. 
-	typedef std::tuple<IMAGE_TLS_DIRECTORY32, IMAGE_TLS_DIRECTORY64, std::vector<std::byte>/*Raw Data*/,
+	//Variant of TLS header type, depends on file type — x86 or x64.
+	//Vector of std::byte — TLS Raw data, vector<std::byte> — TLS Callbacks. 
+	typedef std::tuple<std::variant<IMAGE_TLS_DIRECTORY32, IMAGE_TLS_DIRECTORY64>, std::vector<std::byte>/*Raw Data*/,
 		std::vector<DWORD>/*Callbacks*/> LIBPE_TLS_TUP;
 	typedef const LIBPE_TLS_TUP *PCLIBPE_TLS_TUP;
 
-	//LoadConfigTable.
-	//Filled depending on file type - x86 or x64, second is zeroed.
-	typedef std::tuple<IMAGE_LOAD_CONFIG_DIRECTORY32, IMAGE_LOAD_CONFIG_DIRECTORY64> LIBPE_LOADCONFIGTABLE_TUP;
-	typedef const LIBPE_LOADCONFIGTABLE_TUP *PCLIBPE_LOADCONFIGTABLE_TUP;
+	//LoadConfigTable. Depends on file type — x86 or x64.
+	typedef std::variant<IMAGE_LOAD_CONFIG_DIRECTORY32, IMAGE_LOAD_CONFIG_DIRECTORY64> LIBPE_LOADCONFIGTABLE_VAR;
+	typedef const LIBPE_LOADCONFIGTABLE_VAR *PCLIBPE_LOADCONFIGTABLE_VAR;
 
 	//Bound import table.
 	//Vector of: IMAGE_BOUND_IMPORT_DESCRIPTOR, import module name, 
@@ -165,9 +167,9 @@ namespace libpe {
 		virtual HRESULT GetFileSummary(PCDWORD*) = 0;
 		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER*) = 0;
 		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC*) = 0;
-		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER_TUP*) = 0;
+		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER_VAR*) = 0;
 		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER*) = 0;
-		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_TUP*) = 0;
+		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR*) = 0;
 		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC*) = 0;
 		virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC*) = 0;
 		virtual HRESULT GetExportTable(PCLIBPE_EXPORT_TUP*) = 0;
@@ -178,7 +180,7 @@ namespace libpe {
 		virtual HRESULT GetRelocationTable(PCLIBPE_RELOCATION_VEC*) = 0;
 		virtual HRESULT GetDebugTable(PCLIBPE_DEBUG_VEC*) = 0;
 		virtual HRESULT GetTLSTable(PCLIBPE_TLS_TUP*) = 0;
-		virtual HRESULT GetLoadConfigTable(PCLIBPE_LOADCONFIGTABLE_TUP*) = 0;
+		virtual HRESULT GetLoadConfigTable(PCLIBPE_LOADCONFIGTABLE_VAR*) = 0;
 		virtual HRESULT GetBoundImportTable(PCLIBPE_BOUNDIMPORT_VEC*) = 0;
 		virtual HRESULT GetDelayImportTable(PCLIBPE_DELAYIMPORT_VEC*) = 0;
 		virtual HRESULT GetCOMDescriptorTable(PCLIBPE_COMDESCRIPTOR*) = 0;

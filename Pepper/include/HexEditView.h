@@ -6,14 +6,15 @@ public:
 	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, CFont* pFont);
 	BOOL SetData(const std::vector<std::byte> *vecData);
 	BOOL SetData(const std::string& strData);
-	CFont* SetFont(CFont* pFont);
+	int SetFont(CFont* pFontNew);
 	void SetFontSize(UINT nSize);
-	void SetFontColor(COLORREF clrHex, COLORREF clrOffset = 0);
-	UINT GetFontSize() const;
+	void SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset, 
+		COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected);
+	UINT GetFontSize();
 protected:
 	DECLARE_DYNCREATE(CHexEditView)
-	CHexEditView() {} // protected constructor used by dynamic creation
-	virtual ~CHexEditView();
+	CHexEditView() {}
+	virtual ~CHexEditView() {}
 	void OnInitialUpdate() override;     // first time after construct
 	void OnDraw(CDC* pDC) override;      // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -34,13 +35,13 @@ private:
 	CRect m_rcClient;
 	UINT m_dwRawDataCount { };
 	SIZE m_sizeLetter { }; //Current font's letter size (width, height).
-	CFont* m_pFontHexView { };
-	CFont* m_pFontDefaultHexView { };
+	CFont m_fontHexView;
 	CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
+	COLORREF m_clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };
 	COLORREF m_clrTextOffset { RGB(0, 0, 180) };
-	COLORREF m_clrTextHex { RGB(0, 0, 0) };
-	COLORREF m_clrTextBkSelection { RGB(200, 200, 255) };
-	COLORREF m_clrTextBkDefault { RGB(255, 255, 255) };
+	COLORREF m_clrTextSelected { RGB(0, 0, 180) };
+	COLORREF m_clrTextBk { GetSysColor(COLOR_WINDOW) };
+	COLORREF m_clrTextBkSelected { RGB(200, 200, 255) };
 	int m_nIndentAscii { }; //Offset of Ascii text begining.
 	int m_nIndentFirstHexChunk { }; //First HEX chunk indentation.
 	int m_nIndentBetweenHexChunks { }; //Indent between begining of two HEX chunks.
@@ -54,11 +55,11 @@ private:
 	WCHAR m_strOffset[9] { };
 	const wchar_t* const m_strHexMap = L"0123456789ABCDEF";
 	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
-	bool m_fSecondLaunch = false;
-	bool m_fLMousePressed = false;
-	bool m_fSelection = false;
+	bool m_fSecondLaunch { false };
+	bool m_fLMousePressed { false };
+	bool m_fSelection { false };
 	DWORD m_dwSelectionStart { }, m_dwSelectionEnd { };
 	CRect m_rcSpaceBetweenHex { }; //Space between hex chunks, needs for selection draw.
-	CBrush m_brTextBkSelection { m_clrTextBkSelection };
-	CBrush m_brTextBkDefault { m_clrTextBkDefault };
+	CBrush m_brTextBkSelection { m_clrTextBkSelected };
+	CBrush m_brTextBkDefault { m_clrTextBk };
 };

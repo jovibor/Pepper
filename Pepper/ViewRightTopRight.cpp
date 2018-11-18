@@ -3,14 +3,6 @@
 
 IMPLEMENT_DYNCREATE(CViewRightTopRight, CScrollView)
 
-CViewRightTopRight::CViewRightTopRight()
-{
-}
-
-CViewRightTopRight::~CViewRightTopRight()
-{
-}
-
 BEGIN_MESSAGE_MAP(CViewRightTopRight, CScrollView)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
@@ -26,7 +18,7 @@ void CViewRightTopRight::OnInitialUpdate()
 		return;
 
 	//Hex control for Resources raw.
-	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RESOURCES_RAW);
+	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_TOP_RIGHT);
 	m_stHexEdit.ShowWindow(SW_HIDE);
 }
 
@@ -50,7 +42,7 @@ void CViewRightTopRight::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHi
 		m_pActiveList = &m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 2, 0);
 		break;
-	case IDC_HEX_RESOURCES_RAW:
+	case IDC_HEX_RIGHT_TOP_RIGHT:
 		m_stHexEdit.SetData((std::vector<std::byte>*)pHint);
 		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_stHexEdit;
