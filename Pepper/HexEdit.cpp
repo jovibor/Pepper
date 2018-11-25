@@ -57,6 +57,11 @@ BOOL CHexEdit::SetData(const std::string& strData) const
 	return GetActiveView()->SetData(strData);
 }
 
+BOOL CHexEdit::SetData(const PBYTE pData, DWORD_PTR dwCount) const
+{
+	return GetActiveView()->SetData(pData, dwCount);
+}
+
 int CHexEdit::SetFont(CFont* pFontNew) const
 {
 	return GetActiveView()->SetFont(pFontNew);

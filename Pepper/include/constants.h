@@ -1,7 +1,7 @@
 #include "libpe.h"
 using namespace libpe;
 
-const std::map<DWORD, std::wstring> g_mapLibpeErrors = {
+const std::map<DWORD, std::wstring> g_mapLibpeErrors {
 	{ CALL_LOADPE_FIRST, L"CALL_LOADPE_FIRST" },
 { FILE_OPEN_FAILED, L"FILE_OPEN_FAILED" },
 { FILE_SIZE_TOO_SMALL, L"FILE_SIZE_TOO_SMALL" },
@@ -59,7 +59,9 @@ const std::map<WORD, std::wstring> g_mapResType {
 { 24, L"MANIFEST" }
 };
 
-//These are identificators of all the controls: list, hex, tree.
+/*****************************************************************
+* These are identificators of all the controls: list, hex, tree. *
+*****************************************************************/
 constexpr auto IDC_LIST_DOSHEADER = 0x0001;
 constexpr auto IDC_LIST_RICHHEADER = 0x0002;
 constexpr auto IDC_LIST_NTHEADER = 0x0003;
@@ -98,3 +100,6 @@ constexpr auto IDC_HEX_RIGHT_BOTTOM_LEFT = 0x0200;
 constexpr auto IDC_HEX_RIGHT_TOP_RIGHT = 0x0201;
 
 constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;
+/********************************************************
+* End of IDC.											*
+********************************************************/

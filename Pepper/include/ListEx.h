@@ -25,6 +25,7 @@ public:
 	);
 	CListHeaderEx& GetHeaderCtrl() override { return m_stListHeader; }
 	int SetFont(CFont* pFontNew);
+	//To remove tooltip from specific subitem just set it again with empty (L"") string.
 	void SetItemTooltip(int nItem, int nSubitem, const std::wstring& strTooltip, const std::wstring& strCaption = { });
 	void SetHeaderHeight(DWORD dwHeight);
 	void SetHeaderColor(COLORREF clrHdrBk, COLORREF clrHdrText);
@@ -70,3 +71,5 @@ private:
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 };
+
+constexpr auto ID_TIMER_TOOLTIP = 0x01;

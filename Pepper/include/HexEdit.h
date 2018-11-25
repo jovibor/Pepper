@@ -10,6 +10,7 @@ public:
 	CHexEditView* GetActiveView() const { return m_pHexEditView; };
 	BOOL SetData(const std::vector<std::byte> *pVecData) const;
 	BOOL SetData(const std::string& strData) const;
+	BOOL SetData(const PBYTE pData, DWORD_PTR dwCount) const;
 	int SetFont(CFont* pFontNew) const;
 	void SetFontSize(UINT nSize) const;
 	void SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,

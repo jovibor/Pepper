@@ -6,9 +6,10 @@ public:
 	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, CFont* pFont);
 	BOOL SetData(const std::vector<std::byte> *vecData);
 	BOOL SetData(const std::string& strData);
+	BOOL SetData(const PBYTE pData, DWORD_PTR dwCount);
 	int SetFont(CFont* pFontNew);
 	void SetFontSize(UINT nSize);
-	void SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset, 
+	void SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
 		COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected);
 	UINT GetFontSize();
 protected:
@@ -24,16 +25,19 @@ protected:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	int HitTest(LPPOINT); // Is any hex chunk withing given LPPOINT? 
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	void OnMenuRange(UINT nID);
+	int HitTest(LPPOINT); // Is any hex chunk withing given LPPOINT?
+	int CopyToClipboard(UINT nType);
 	void Recalc();
 	DECLARE_MESSAGE_MAP()
 private:
 	const BYTE* m_pRawData { };
 	CRect m_rcClient;
-	UINT m_dwRawDataCount { };
+	DWORD_PTR m_dwRawDataCount { };
 	SIZE m_sizeLetter { }; //Current font's letter size (width, height).
 	CFont m_fontHexView;
 	CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
@@ -57,9 +61,21 @@ private:
 	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
 	bool m_fSecondLaunch { false };
 	bool m_fLMousePressed { false };
-	bool m_fSelection { false };
+	bool m_fSelected { false };
 	DWORD m_dwSelectionStart { }, m_dwSelectionEnd { };
 	CRect m_rcSpaceBetweenHex { }; //Space between hex chunks, needs for selection draw.
 	CBrush m_brTextBkSelection { m_clrTextBkSelected };
-	CBrush m_brTextBkDefault { m_clrTextBk };
+	CBrush m_brTextBk { m_clrTextBk };
+	CMenu m_menuPopup;
 };
+/****************************
+* Internal identificators	*
+****************************/
+
+constexpr auto IDC_MENU_POPUP_COPY_AS_HEX = 0x01;
+constexpr auto IDC_MENU_POPUP_COPY_AS_HEX_FORMATTED = 0x02;
+constexpr auto IDC_MENU_POPUP_COPY_AS_ASCII = 0x03;
+
+constexpr auto CLIPBOARD_COPY_AS_HEX = 0x01;
+constexpr auto CLIPBOARD_COPY_AS_HEX_FORMATTED = 0x02;
+constexpr auto CLIPBOARD_COPY_AS_ASCII = 0x03;

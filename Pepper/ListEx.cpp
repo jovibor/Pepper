@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "ListEx.h"
 
-constexpr auto TIMER_TOOLTIP = 0x01;
-
 IMPLEMENT_DYNAMIC(CListEx, CMFCListCtrl)
 
 BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
@@ -106,7 +104,7 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint point)
 			::SendMessage(m_hwndTooltip, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 
 			//Timer to check whether mouse left subitem rect.
-			SetTimer(TIMER_TOOLTIP, 200, 0);
+			SetTimer(ID_TIMER_TOOLTIP, 200, 0);
 		}
 		else
 		{
@@ -172,7 +170,7 @@ void CListEx::OnTimer(UINT_PTR nIDEvent)
 	{	//If it left.
 		m_fTooltipShown = false;
 		::SendMessage(m_hwndTooltip, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
-		KillTimer(TIMER_TOOLTIP);
+		KillTimer(ID_TIMER_TOOLTIP);
 		m_stCurrentSubitem.iItem = hitInfo.iItem;
 		m_stCurrentSubitem.iSubItem = hitInfo.iSubItem;
 	}
@@ -206,6 +204,7 @@ void CListEx::OnPaint()
 	GetClientRect(&rcClient);
 	GetHeaderCtrl().GetClientRect(rcHdr);
 	rcClient.top += rcHdr.Height();
+	
 	CMemDC memDC(dc, rcClient);
 	CDC& rDC = memDC.GetDC();
 
@@ -340,9 +339,9 @@ void CListEx::SetItemTooltip(int nItem, int nSubitem, const std::wstring& strToo
 	if (it == m_umapTooltip.end())
 	{
 		//Initializing inner map.
-		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner = {
+		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner {
 			{ nSubitem, { strTooltip, strCaption } } };
-		m_umapTooltip.insert({ nItem, umapInner });
+		m_umapTooltip.insert({ nItem, std::move(umapInner) });
 	}
 	else
 	{
@@ -397,9 +396,11 @@ bool CListEx::HasTooltip(int nItem, int nSubitem, std::wstring** ppStrTipText, s
 	if (it != m_umapTooltip.end())
 	{
 		auto itInner = it->second.find(nSubitem);
-		if (itInner != it->second.end())
+
+		//If subitem id found and its text is not empty.
+		if (itInner != it->second.end() && !std::get<0>(itInner->second).empty())
 		{
-			//If pointers are nullptr we just return true.
+			//If pointer for text is nullptr we just return true.
 			if (ppStrTipText)
 			{
 				*ppStrTipText = &std::get<0>(itInner->second);
