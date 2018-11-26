@@ -1,6 +1,33 @@
+/******************************************************************************
+* Copyright (C) 2018, Jovibor: https://github.com/jovibor/	                  *
+* This is an extended and quite featured version of CMFCListCtrl class.		  *
+* The main difference is in Create() method, which takes one additional arg:  *
+* pointer to LISTEXINFO structure, which fields are described below.          *
+* Also, this class has set of additional methods, such as: SetFont(),		  *
+* SetItemTooltip(), SetTooltipColor(), SetHeaderColor(), SetHeaderHeight(),   *
+* SetHeaderFont(). It's implemented as «ownerdraw» list.					  *
+******************************************************************************/
 #pragma once
 #include "ListHeaderEx.h"
 #include <unordered_map>
+
+typedef struct LISTEXINFO {
+	COLORREF clrListText { GetSysColor(COLOR_WINDOWTEXT) }; //List text color.
+	COLORREF clrListBk { GetSysColor(COLOR_WINDOW) }; //List Bk color.
+	COLORREF clrListGrid { RGB(220, 220, 220) }; //List grid color.
+	DWORD dwListGridWidth { 1 }; //Width of the list's grid.
+	COLORREF clrListTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) }; //Selected item text color.
+	COLORREF clrListBkSelected { GetSysColor(COLOR_HIGHLIGHT) }; //Selected item bk color.
+	COLORREF clrListTooltipText { GetSysColor(COLOR_INFOTEXT) }; //Tooltip window text color.
+	COLORREF clrListTooltipBk { GetSysColor(COLOR_INFOBK) }; //Tooltip window bk color.
+	COLORREF clrListSubitemWithTooltipText = { GetSysColor(COLOR_WINDOWTEXT) }; //Text color of item that has tooltip.
+	COLORREF clrListSubitemWithTooltipBk = { RGB(170, 170, 230) }; //Bk color of item that has tooltip.
+	CFont* pListFont { nullptr }; //List font, nullptr=default.
+	COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) }; //List header text color.
+	COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) }; //List header bk color.
+	DWORD dwHeaderHeight { 19 }; //List header height.
+	CFont* pHeaderFont { nullptr }; //List header font, nullptr=default.
+} *PLISTEXINFO;
 
 class CListEx : public CMFCListCtrl
 {
@@ -8,35 +35,21 @@ public:
 	DECLARE_DYNAMIC(CListEx)
 	CListEx();
 	virtual ~CListEx() { }
-	BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID,
-		COLORREF clrText = GetSysColor(COLOR_WINDOWTEXT) /*Text color.*/,
-		COLORREF clrBk = GetSysColor(COLOR_WINDOW) /*Bk color.*/,
-		COLORREF clrSelectedText = GetSysColor(COLOR_HIGHLIGHTTEXT) /*Selected item text color.*/,
-		COLORREF clrSelectedBk = GetSysColor(COLOR_HIGHLIGHT) /*Selected item bk color.*/,
-		COLORREF clrTooltipText = GetSysColor(COLOR_INFOTEXT) /*Tooltip window text color.*/,
-		COLORREF clrTooltipBk = GetSysColor(COLOR_INFOBK) /*Tooltip window bk color.*/,
-		COLORREF clrSubitemWithTooltipText = GetSysColor(COLOR_WINDOWTEXT) /*Text color of item that has tooltip.*/,
-		COLORREF clrSubitemWithTooltipBk = RGB(170, 170, 230) /*Bk color of item that has tooltip.*/,
-		CFont* pFontList = nullptr /*List font — nullptr=default.*/,
-		COLORREF clrHdrText = GetSysColor(COLOR_WINDOWTEXT) /*List header text color.*/,
-		COLORREF clrHdrBk = GetSysColor(COLOR_WINDOW) /*List header bk color.*/,
-		DWORD dwHdrHeight = 19 /*List header height.*/,
-		CFont* pFontHdr = nullptr /*List header font, nullptr=default.*/
-	);
+	BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pInfo = nullptr);
 	CListHeaderEx& GetHeaderCtrl() override { return m_stListHeader; }
 	int SetFont(CFont* pFontNew);
 	//To remove tooltip from specific subitem just set it again with empty (L"") string.
 	void SetItemTooltip(int nItem, int nSubitem, const std::wstring& strTooltip, const std::wstring& strCaption = { });
+	void SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk, COLORREF clrTextItemTt = GetSysColor(COLOR_WINDOWTEXT),
+		COLORREF clrBkItemTt = RGB(170, 170, 230));
+	void SetHeaderColor(COLORREF clrHdrText, COLORREF clrHdrBk);
 	void SetHeaderHeight(DWORD dwHeight);
-	void SetHeaderColor(COLORREF clrHdrBk, COLORREF clrHdrText);
 	int SetHeaderFont(CFont* pFontNew);
-	void SetTooltipColor(COLORREF clrTooltipBk /*tooltip window bk color*/, COLORREF clrTooltipText /*tooltip text color*/,
-		COLORREF clrSubtemWithTooltip = RGB(170, 170, 230)/*color of item that has tooltip*/);
 	DECLARE_MESSAGE_MAP()
 private:
 	CListHeaderEx m_stListHeader;
 	CFont m_fontList;
-	CPen m_penForRect { PS_SOLID, 1, RGB(220, 220, 220) };
+	CPen m_penGrid;
 	//Container for List item's tooltips.
 	std::unordered_map<int, std::unordered_map<int, std::tuple< std::wstring/*tip text*/, std::wstring/*caption text*/>>> m_umapTooltip { };
 	//Flag that indicates that there is at least one tooltip in list.
@@ -45,14 +58,19 @@ private:
 	HWND m_hwndTooltip { };
 	TOOLINFO m_stToolInfo { };
 	LVHITTESTINFO m_stCurrentSubitem { };
-	COLORREF m_clrText { };
-	COLORREF m_clrBk { };
-	COLORREF m_clrTextSelected { };
-	COLORREF m_clrSelectedBk { };
-	COLORREF m_clrSubitemWithTooltipText { };
-	COLORREF m_clrSubitemWithTooltipBk { };
-	COLORREF m_clrTooltipBk { };
-	COLORREF m_clrTooltipText { };
+	COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
+	COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) };
+	COLORREF m_clrGrid { RGB(220, 220, 220) };
+	DWORD m_dwGridWidth { 1 };
+	COLORREF m_clrTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) };
+	COLORREF m_clrBkSelected { GetSysColor(COLOR_HIGHLIGHT) };
+	COLORREF m_clrTooltipText { GetSysColor(COLOR_INFOTEXT) };
+	COLORREF m_clrTooltipBk { GetSysColor(COLOR_INFOBK) };
+	COLORREF m_clrTextItemTt { GetSysColor(COLOR_WINDOWTEXT) };
+	COLORREF m_clrBkItemTt { RGB(170, 170, 230) };
+	COLORREF m_clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) };
+	COLORREF m_clrHeaderBk { GetSysColor(COLOR_WINDOW) };
+	DWORD m_dwHeaderHeight { 19 };
 	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
 
 	void InitHeader() override;

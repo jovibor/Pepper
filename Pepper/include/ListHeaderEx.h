@@ -4,7 +4,7 @@ class CListHeaderEx : public CMFCHeaderCtrl
 {
 public:
 	void SetHeight(DWORD dwHeight);
-	void SetHdrColor(COLORREF clrBk, COLORREF clrText);
+	void SetColor(COLORREF clrText, COLORREF clrBk);
 	int SetFont(CFont* pFontNew);
 protected:
 	DECLARE_DYNAMIC(CListHeaderEx)
@@ -16,7 +16,6 @@ protected:
 private:
 	CFont m_fontHdr;
 	COLORREF m_clrHdr { GetSysColor(COLOR_WINDOW) };
-	//COLORREF m_clrHdr { RGB(0, 132, 132) };
 	COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
 	//For drawing.
 	HDITEMW m_hdItem { };

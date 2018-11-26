@@ -30,6 +30,7 @@ private:
 	Ilibpe * m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
+	LISTEXINFO m_stListInfo;
 	CListEx m_listDOSHeader;
 	CListEx m_listRichHdr;
 	CListEx m_listNTHeader;

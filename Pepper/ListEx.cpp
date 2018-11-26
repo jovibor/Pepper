@@ -37,41 +37,53 @@ CListEx::CListEx()
 
 	m_stToolInfo.cbSize = TTTOOLINFOW_V1_SIZE;
 	m_stToolInfo.uFlags = TTF_TRACK;
-	m_stToolInfo.uId = 1;
+	m_stToolInfo.uId = 0x1;
 
 	::SendMessage(m_hwndTooltip, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 	::SendMessage(m_hwndTooltip, TTM_SETMAXTIPWIDTH, 0, (LPARAM)400); //to allow use of newline \n.
 }
 
-BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID,
-	COLORREF clrText, COLORREF clrBk, COLORREF clrSelectedText, COLORREF clrSelectedBk,
-	COLORREF clrTooltipText, COLORREF clrTooltipBk, COLORREF clrSubitemWithTooltipText, COLORREF clrSubitemWithTooltipBk,
-	CFont* pFontList, COLORREF clrHdrText, COLORREF clrHdrBk, DWORD dwHdrHeight, CFont* pFontHdr)
+BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pInfo)
 {
 	CMFCListCtrl::Create(dwStyle | LVS_OWNERDRAWFIXED, rect, pParentWnd, nID);
 
-	m_clrText = clrText;
-	m_clrBk = clrBk;
-	m_clrTextSelected = clrSelectedText;
-	m_clrSelectedBk = clrSelectedBk;
-	m_clrTooltipText = clrTooltipText;
-	::SendMessage(m_hwndTooltip, TTM_SETTIPTEXTCOLOR, (WPARAM)m_clrTooltipText, 0);
-	m_clrTooltipBk = clrTooltipBk;
-	::SendMessage(m_hwndTooltip, TTM_SETTIPBKCOLOR, (WPARAM)m_clrTooltipBk, 0);
-	m_clrSubitemWithTooltipText = clrSubitemWithTooltipText;
-	m_clrSubitemWithTooltipBk = clrSubitemWithTooltipBk;
-	if (pFontList)
+	if (pInfo)
 	{
-		m_fontList.DeleteObject();
-		LOGFONT lf;
-		pFontList->GetLogFont(&lf);
-		m_fontList.CreateFontIndirectW(&lf);
+		m_clrText = pInfo->clrListText;
+		m_clrBk = pInfo->clrListBk;
+		m_clrTextSelected = pInfo->clrListTextSelected;
+		m_clrBkSelected = pInfo->clrListBkSelected;
+		m_clrTooltipText = pInfo->clrListTooltipText;
+		::SendMessage(m_hwndTooltip, TTM_SETTIPTEXTCOLOR, (WPARAM)m_clrTooltipText, 0);
+		m_clrTooltipBk = pInfo->clrListTooltipBk;
+		::SendMessage(m_hwndTooltip, TTM_SETTIPBKCOLOR, (WPARAM)m_clrTooltipBk, 0);
+		m_clrTextItemTt = pInfo->clrListSubitemWithTooltipText;
+		m_clrBkItemTt = pInfo->clrListSubitemWithTooltipBk;
+		m_clrGrid = pInfo->clrListGrid;
+		m_dwGridWidth = pInfo->dwListGridWidth;
+		if (pInfo->pListFont)
+		{
+			m_fontList.DeleteObject();
+			LOGFONT lf;
+			pInfo->pListFont->GetLogFont(&lf);
+			m_fontList.CreateFontIndirectW(&lf);
+		}
+		m_clrHeaderText = pInfo->clrHeaderText;
+		m_clrHeaderBk = pInfo->clrHeaderBk;
+		m_dwHeaderHeight = pInfo->dwHeaderHeight;
+		GetHeaderCtrl().SetFont(pInfo->pHeaderFont);
 	}
-	GetHeaderCtrl().SetHdrColor(clrHdrBk, clrHdrText);
-	GetHeaderCtrl().SetHeight(dwHdrHeight);
-	GetHeaderCtrl().SetFont(pFontHdr);
+
+	m_penGrid.CreatePen(PS_SOLID, m_dwGridWidth, m_clrGrid);
+	GetHeaderCtrl().SetColor(m_clrHeaderText, m_clrHeaderBk);
+	GetHeaderCtrl().SetHeight(m_dwHeaderHeight);
 
 	return TRUE;
+}
+
+void CListEx::InitHeader()
+{
+	m_stListHeader.SubclassDlgItem(0, this);
 }
 
 void CListEx::OnMouseMove(UINT nFlags, CPoint point)
@@ -194,78 +206,45 @@ BOOL CListEx::OnEraseBkgnd(CDC* pDC)
 	return FALSE;
 }
 
-void CListEx::OnPaint()
-{
-	CPaintDC dc(this);
-
-	//To avoid flickering.
-	//Drawing to CMemDC, excluding CListHeader area (rect).
-	CRect rcClient, rcHdr;
-	GetClientRect(&rcClient);
-	GetHeaderCtrl().GetClientRect(rcHdr);
-	rcClient.top += rcHdr.Height();
-	
-	CMemDC memDC(dc, rcClient);
-	CDC& rDC = memDC.GetDC();
-
-	CRect clip;
-	rDC.GetClipBox(&clip);
-	rDC.FillSolidRect(clip, m_clrBk);
-
-	DefWindowProc(WM_PAINT, (WPARAM)rDC.m_hDC, (LPARAM)0);
-}
-
-void CListEx::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	//	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
-	*pResult = 0;
-}
-
-void CListEx::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
-{
-	CMFCListCtrl::OnVScroll(nSBCode, nPos, pScrollBar);
-}
-
-void CListEx::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
-{
-	GetHeaderCtrl().Invalidate();
-	GetHeaderCtrl().UpdateWindow();
-
-	CMFCListCtrl::OnHScroll(nSBCode, nPos, pScrollBar);
-}
-
 void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 {
 	if (pDIS->itemID == -1)
 		return;
 
 	CDC* pDC = CDC::FromHandle(pDIS->hDC);
-	pDC->SelectObject(&m_penForRect);
+	pDC->SelectObject(&m_penGrid);
 	pDC->SelectObject(&m_fontList);
-	CRect rect;
+	COLORREF clrText, clrBk;
 
+	if (HasTooltip(pDIS->itemID, 0))
+	{
+		clrText = m_clrTextItemTt;
+		clrBk = m_clrBkItemTt;
+	}
+	else
+	{
+		clrText = m_clrText;
+		clrBk = m_clrBk;
+	}
+
+	CRect rect;
 	switch (pDIS->itemAction)
 	{
 	case ODA_SELECT:
 	case ODA_DRAWENTIRE:
-		if (HasTooltip(pDIS->itemID, 0))
-			pDC->FillSolidRect(&rect, m_clrSubitemWithTooltipBk);
-		else
-			pDC->FillSolidRect(&pDIS->rcItem, m_clrBk);
-
 		GetItemRect(pDIS->itemID, &rect, LVIR_LABEL);
 
 		if (pDIS->itemState & ODS_SELECTED)
 		{
 			pDIS->rcItem.left = rect.left;
-			pDC->SetTextColor(m_clrTextSelected);
-			pDC->FillSolidRect(&pDIS->rcItem, m_clrSelectedBk);
+			clrText = m_clrTextSelected;
+			clrBk = m_clrBkSelected;
 		}
-		else
-			pDC->SetTextColor(m_clrText);
+		pDC->SetTextColor(clrText);
+		pDC->FillSolidRect(&pDIS->rcItem, clrBk);
 
 		rect.left += 3;
-		pDC->DrawText(GetItemText(pDIS->itemID, 0), &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+		pDC->DrawTextW(GetItemText(pDIS->itemID, 0), &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 		rect.left -= 3;
 
 		//Drawing Item's rect lines. 
@@ -279,14 +258,29 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 		pDC->LineTo(rect.right, rect.bottom);
 
 		for (int i = 1; i < GetHeaderCtrl().GetItemCount(); i++)
-		{
+		{	
 			GetSubItemRect(pDIS->itemID, i, LVIR_BOUNDS, rect);
-
+			
+			//Here comes Subitems draw routine.
+			//Assigning colors depending on whether subitem has tooltip,
+			//and whether it's selected or not.
 			if (HasTooltip(pDIS->itemID, i))
 			{
-				pDC->SetTextColor(m_clrSubitemWithTooltipText);
-				pDC->FillSolidRect(&rect, m_clrSubitemWithTooltipBk);
+				clrText = m_clrTextItemTt;
+				clrBk = m_clrBkItemTt;
 			}
+			else
+			{
+				clrText = m_clrText;
+				clrBk = m_clrBk;
+			}
+			if (pDIS->itemState & ODS_SELECTED)
+			{
+				clrText = m_clrTextSelected;
+				clrBk = m_clrBkSelected;
+			}
+			pDC->SetTextColor(clrText);
+			pDC->FillSolidRect(&rect, clrBk);
 
 			CString textItem = GetItemText(pDIS->itemID, i);
 			rect.left += 3; //Drawing text +-3 px from rect bounds
@@ -311,9 +305,43 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	}
 }
 
-void CListEx::InitHeader()
+void CListEx::OnPaint()
 {
-	m_stListHeader.SubclassDlgItem(0, this);
+	CPaintDC dc(this);
+
+	//To avoid flickering.
+	//Drawing to CMemDC, excluding list header area (rect).
+	CRect rcClient, rcHdr;
+	GetClientRect(&rcClient);
+	GetHeaderCtrl().GetClientRect(rcHdr);
+	rcClient.top += rcHdr.Height();
+
+	CMemDC memDC(dc, rcClient);
+	CDC& rDC = memDC.GetDC();
+
+	CRect clip;
+	rDC.GetClipBox(&clip);
+	rDC.FillSolidRect(clip, m_clrBk);
+
+	DefWindowProc(WM_PAINT, (WPARAM)rDC.m_hDC, (LPARAM)0);
+}
+
+void CListEx::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	//	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	*pResult = 0;
+}
+
+void CListEx::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	CMFCListCtrl::OnVScroll(nSBCode, nPos, pScrollBar);
+}
+
+void CListEx::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	GetHeaderCtrl().Invalidate();
+
+	CMFCListCtrl::OnHScroll(nSBCode, nPos, pScrollBar);
 }
 
 int CListEx::SetFont(CFont* pFontNew)
@@ -358,26 +386,32 @@ void CListEx::SetItemTooltip(int nItem, int nSubitem, const std::wstring& strToo
 	m_fTooltipExist = true;
 }
 
-void CListEx::SetTooltipColor(COLORREF clrTooltipBk, COLORREF clrTooltipText, COLORREF clrSubitemWithTooltip)
+void CListEx::SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk, COLORREF clrTextItemTt, COLORREF clrBkItemTt)
 {
-	m_clrSubitemWithTooltipBk = clrSubitemWithTooltip;
-	m_clrTooltipBk = clrTooltipBk;
 	m_clrTooltipText = clrTooltipText;
-	::SendMessage(m_hwndTooltip, TTM_SETTIPBKCOLOR, (WPARAM)m_clrTooltipBk, 0);
+	m_clrTooltipBk = clrTooltipBk;
+	m_clrTextItemTt = clrTextItemTt;
+	m_clrBkItemTt = clrBkItemTt;
 	::SendMessage(m_hwndTooltip, TTM_SETTIPTEXTCOLOR, (WPARAM)m_clrTooltipText, 0);
+	::SendMessage(m_hwndTooltip, TTM_SETTIPBKCOLOR, (WPARAM)m_clrTooltipBk, 0);
 
 	Invalidate();
 	UpdateWindow();
 }
 
-void CListEx::SetHeaderColor(COLORREF clrHdrBk, COLORREF clrHdrText)
+void CListEx::SetHeaderColor(COLORREF clrHdrText, COLORREF clrHdrBk)
 {
-	GetHeaderCtrl().SetHdrColor(clrHdrBk, clrHdrText);
+	m_clrHeaderText = clrHdrText;
+	m_clrHeaderBk = clrHdrBk;
+
+	GetHeaderCtrl().SetColor(m_clrHeaderText, m_clrHeaderBk);
 }
 
 void CListEx::SetHeaderHeight(DWORD dwHeight)
 {
-	GetHeaderCtrl().SetHeight(dwHeight);
+	m_dwHeaderHeight = dwHeight;
+
+	GetHeaderCtrl().SetHeight(m_dwHeaderHeight);
 	Update(0);
 	GetHeaderCtrl().Invalidate();
 	GetHeaderCtrl().UpdateWindow();

@@ -19,6 +19,7 @@ private:
 	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
+	LISTEXINFO m_stListInfo;
 	CListEx m_stListTLSCallbacks;
 	int CreateListTLSCallbacks();
 };

@@ -31,6 +31,12 @@ void CViewRightBottomLeft::OnInitialUpdate()
 	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_BOTTOM_LEFT);
 	m_stHexEdit.ShowWindow(SW_HIDE);
 
+	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
+	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
+	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
+	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
+	m_stListInfo.dwHeaderHeight = 35;
+
 	CreateListExportFuncs();
 	CreateTreeResources();
 }
@@ -177,10 +183,7 @@ int CViewRightBottomLeft::CreateListImportEntry(DWORD dwEntry)
 		return -1;
 
 	m_listImportFuncs.DestroyWindow();
-	m_listImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
-		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
-		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
+	m_listImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
 
 	m_listImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 175);
@@ -225,10 +228,7 @@ int CViewRightBottomLeft::CreateListDelayImportEntry(DWORD dwEntry)
 		return -1;
 
 	m_listDelayImportFuncs.DestroyWindow();
-	m_listDelayImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
-		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
-		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
+	m_listDelayImportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS, &m_stListInfo);
 
 	m_listDelayImportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportFuncs.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
@@ -287,10 +287,7 @@ int CViewRightBottomLeft::CreateListExportFuncs()
 	if (m_pLibpe->GetExportTable(&pExportTable) != S_OK)
 		return -1;
 
-	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
-		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
-		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
+	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, &m_stListInfo);
 	m_listExportFuncs.ShowWindow(SW_HIDE);
 	m_listExportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportFuncs.InsertColumn(0, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
@@ -335,10 +332,7 @@ int CViewRightBottomLeft::CreateListRelocsEntry(DWORD dwEntry)
 
 	m_listRelocsDesc.DestroyWindow();
 
-	m_listRelocsDesc.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,
-		CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOW),
-		GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT), RGB(255, 255, 255), RGB(0, 132, 132), GetSysColor(COLOR_WINDOWTEXT), RGB(170, 170, 230),
-		nullptr, RGB(255, 255, 255), RGB(0, 132, 132), 35);
+	m_listRelocsDesc.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, &m_stListInfo);
 	m_listRelocsDesc.ShowWindow(SW_HIDE);
 	m_listRelocsDesc.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocsDesc.InsertColumn(0, L"Reloc type", LVCFMT_CENTER, 250);
