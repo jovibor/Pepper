@@ -14,7 +14,7 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	DECLARE_MESSAGE_MAP()
 private:
-	Ilibpe * m_pLibpe { };
+	libpe_ptr m_pLibpe { };
 	CPepperDoc* m_pMainDoc { };
 	CPepperTreeCtrl m_stTreeMain;
 	CImageList m_ImgListRootTree;

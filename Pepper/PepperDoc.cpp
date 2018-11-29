@@ -8,9 +8,9 @@ END_MESSAGE_MAP()
 
 BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-	if (Getlibpe(&m_pLibpe) != S_OK)
+	if (Getlibpe(m_pLibpe) != S_OK)
 	{
-		MessageBoxW(nullptr, L"Getlibpe() failed", L"Error", MB_ICONERROR);
+		MessageBoxW(nullptr, L"Getlibpe() failed.", L"Error.", MB_ICONERROR);
 		return FALSE;
 	}
 
@@ -18,13 +18,13 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	if ((hr = m_pLibpe->LoadPe(lpszPathName)) != S_OK)
 	{
 		WCHAR str[MAX_PATH] { };
-		std::wstring strError { };
 		const auto it = g_mapLibpeErrors.find(hr);
 		if (it != g_mapLibpeErrors.end())
-			strError = it->second;
+			swprintf_s(str, L"File load failed with libpe error code: 0x0%X\n%s", hr, it->second.data());
+		else
+			swprintf_s(str, L"File load failed with libpe error code: 0x0%X", hr);
 
-		swprintf_s(str, L"File load failed with libpe error code: 0x0%X\n%s", hr, strError.c_str());
-		MessageBoxW(nullptr, str, L"File Load Failed.", MB_ICONERROR);
+		MessageBoxW(nullptr, str, L"File load failed.", MB_ICONERROR);
 
 		return FALSE;
 	}
@@ -32,12 +32,4 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	UpdateAllViews(nullptr);
 
 	return TRUE;
-}
-
-void CPepperDoc::OnCloseDocument()
-{
-	if (m_pLibpe)
-		m_pLibpe->Release();
-
-	CDocument::OnCloseDocument();
 }

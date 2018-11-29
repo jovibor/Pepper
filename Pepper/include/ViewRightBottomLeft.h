@@ -21,7 +21,7 @@ protected:
 private:
 	PCLIBPE_SECURITY_VEC m_vecSec { };
 	CHexEdit m_stHexEdit;
-	Ilibpe* m_pLibpe { };
+	libpe_ptr m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	LISTEXINFO m_stListInfo;

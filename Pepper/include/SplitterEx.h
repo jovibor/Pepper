@@ -4,8 +4,8 @@ class CSplitterEx : public CSplitterWndEx
 {
 public:
 	DECLARE_DYNAMIC(CSplitterEx)
-	CSplitterEx();
-	virtual ~CSplitterEx();
+	CSplitterEx() {}
+	virtual ~CSplitterEx() {}
 	BOOL CreateStatic(CWnd* pParent, int nRows, int nCols, DWORD dwStyle = WS_CHILD | WS_VISIBLE, UINT nID = AFX_IDW_PANE_FIRST) override;
 	int HideRow(int nRow);
 	int HideCol(int nCol);

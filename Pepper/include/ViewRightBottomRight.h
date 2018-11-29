@@ -16,12 +16,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CWnd* m_pActiveList { };
-	Ilibpe* m_pLibpe { };
+	libpe_ptr m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	LISTEXINFO m_stListInfo;
 	CListEx m_stListTLSCallbacks;
 	int CreateListTLSCallbacks();
 };
-
-

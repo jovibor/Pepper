@@ -12,6 +12,5 @@
 #include <tuple>
 #include <map>
 
-#include "libpe.h"
 #include "strsafe.h"
 #include "constants.h"

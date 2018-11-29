@@ -1,7 +1,7 @@
 #pragma once
-#include "Hexedit.h"
 #include "ChildFrm.h"
 #include "PepperDoc.h"
+#include "Hexedit.h"
 #include "ListEx.h"
 #include "PepperTreeCtrl.h"
 
@@ -22,12 +22,12 @@ protected:
 	afx_msg void OnListExceptionGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	DECLARE_MESSAGE_MAP()
 private:
+	libpe_ptr m_pLibpe { };
 	std::wstring m_strVersion { };
 	SIZE m_sizeTextToDraw { };
 	CFont m_fontSummary;
 	std::wstring m_strFileName { };
 	std::wstring m_strFileType { };
-	Ilibpe * m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	LISTEXINFO m_stListInfo;

@@ -13,7 +13,7 @@ protected:
 	virtual void OnInitialUpdate();
 	DECLARE_MESSAGE_MAP()
 private:
-	Ilibpe* m_pLibpe { };
+	libpe_ptr m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CWnd* m_pActiveList { };

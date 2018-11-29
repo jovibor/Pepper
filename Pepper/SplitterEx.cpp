@@ -6,14 +6,6 @@ IMPLEMENT_DYNAMIC(CSplitterEx, CSplitterWndEx)
 BEGIN_MESSAGE_MAP(CSplitterEx, CSplitterWndEx)
 END_MESSAGE_MAP()
 
-CSplitterEx::CSplitterEx()
-{
-}
-
-CSplitterEx::~CSplitterEx()
-{
-}
-
 BOOL CSplitterEx::CreateStatic(CWnd * pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
 {
 	//If already created.
