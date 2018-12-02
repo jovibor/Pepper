@@ -97,6 +97,6 @@ void CChildFrame::OnSize(UINT nType, int cx, int cy)
 
 		m_cx = cx; m_cy = cy;
 	}
-	
+
 	CMDIChildWndEx::OnSize(nType, cx, cy);
 }

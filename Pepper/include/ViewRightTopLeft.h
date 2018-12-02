@@ -9,12 +9,12 @@ class CViewRightTopLeft : public CScrollView
 {	
 protected:	
 	DECLARE_DYNCREATE(CViewRightTopLeft)
-	CViewRightTopLeft() {} // protected constructor used by dynamic creation
+	CViewRightTopLeft() {}
 	virtual ~CViewRightTopLeft() {}	
 	void OnInitialUpdate() override;
 	void OnUpdate(CView*, LPARAM, CObject*) override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
-	void OnDraw(CDC* pDC) override; // overridden to draw this view
+	void OnDraw(CDC* pDC) override; // overridden to draw this view.
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnListSectionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);

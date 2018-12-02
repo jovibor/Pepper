@@ -67,8 +67,8 @@ void CViewRightBottomRight::OnSize(UINT nType, int cx, int cy)
 
 int CViewRightBottomRight::CreateListTLSCallbacks()
 {
-	PCLIBPE_TLS_TUP pTLSDir { };
-	if (m_pLibpe->GetTLSTable(&pTLSDir) != S_OK)
+	PCLIBPE_TLS_TUP pTLS { };
+	if (m_pLibpe->GetTLSTable(pTLS) != S_OK)
 		return -1;
 
 	m_stListTLSCallbacks.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_TLS_CALLBACKS, &m_stListInfo);
@@ -76,12 +76,11 @@ int CViewRightBottomRight::CreateListTLSCallbacks()
 	m_stListTLSCallbacks.InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
 
 	int listindex { };
-	TCHAR str[9] { };
+	WCHAR str[9] { };
 
-	auto vecCallbacks = std::get<2>(*pTLSDir);
-	for (auto& i : vecCallbacks)
+	for (auto& iterCallbacks : std::get<2>(*pTLS))
 	{
-		swprintf_s(str, 9, L"%08X", i);
+		swprintf_s(str, 9, L"%08X", iterCallbacks);
 		m_stListTLSCallbacks.InsertItem(listindex, str);
 		listindex++;
 	}

@@ -26,9 +26,9 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	LISTEXINFO m_stListInfo;
 	CListEx m_listExportFuncs;
-	CListEx m_listImportFuncs;
-	CListEx m_listDelayImportFuncs;
-	CListEx m_listRelocsDesc;
+	CListEx m_listImportEntry;
+	CListEx m_listDelayImportEntry;
+	CListEx m_listRelocsEntry;
 	CPepperTreeCtrl m_treeResBottom;
 	DWORD m_dwFileSummary { };
 	CImageList m_imglTreeRes;

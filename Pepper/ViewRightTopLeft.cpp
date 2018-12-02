@@ -37,14 +37,14 @@ void CViewRightTopLeft::OnInitialUpdate()
 	m_strFileName.insert(0, L"File name: ");
 
 	const DWORD* m_pFileSummary { };
-	if (m_pLibpe->GetFileSummary(&m_pFileSummary) != S_OK)
+	if (m_pLibpe->GetFileSummary(m_pFileSummary) != S_OK)
 		return;
 
 	m_dwFileSummary = *m_pFileSummary;
 
-	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
+	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 		m_strFileType = L"File type: PE32 (x86)";
-	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
+	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 		m_strFileType = L"File type: PE32+ (x64)";
 	else
 		m_strFileType = L"File type: unknown";
@@ -53,10 +53,10 @@ void CViewRightTopLeft::OnInitialUpdate()
 	swprintf_s(strVersion, MAX_PATH, L"%S, version: %u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION);
 	m_strVersion = strVersion;
 
-	m_pLibpe->GetSectionsHeaders(&m_pSecHeaders);
-	m_pLibpe->GetImportTable(&m_pImportTable);
-	m_pLibpe->GetExceptionTable(&m_pExceptionDir);
-	m_pLibpe->GetRelocationTable(&m_pRelocTable);
+	m_pLibpe->GetSectionsHeaders(m_pSecHeaders);
+	m_pLibpe->GetImportTable(m_pImportTable);
+	m_pLibpe->GetExceptionTable(m_pExceptionDir);
+	m_pLibpe->GetRelocationTable(m_pRelocTable);
 
 	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
 	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
@@ -422,7 +422,7 @@ BOOL CViewRightTopLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		{
 			PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
-			if (m_pLibpe->GetResourceTable(&pTupResRoot) != S_OK)
+			if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
 				return -1;
 
 			const DWORD_PTR dwResId = m_treeResTop.GetItemData(pTree->itemNew.hItem);
@@ -469,7 +469,7 @@ BOOL CViewRightTopLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 int CViewRightTopLeft::CreateListDOSHeader()
 {
 	PCLIBPE_DOSHEADER pDosHeader { };
-	if (m_pLibpe->GetMSDOSHeader(&pDosHeader) != S_OK)
+	if (m_pLibpe->GetMSDOSHeader(pDosHeader) != S_OK)
 		return -1;
 
 	m_listDOSHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DOSHEADER, &m_stListInfo);
@@ -740,7 +740,7 @@ int CViewRightTopLeft::CreateListDOSHeader()
 int CViewRightTopLeft::CreateListRichHeader()
 {
 	PCLIBPE_RICHHEADER_VEC pRichHeader { };
-	if (m_pLibpe->GetRichHeader(&pRichHeader) != S_OK)
+	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK)
 		return -1;
 
 	m_listRichHdr.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_RICHHEADER, &m_stListInfo);
@@ -774,7 +774,7 @@ int CViewRightTopLeft::CreateListRichHeader()
 int CViewRightTopLeft::CreateListNTHeader()
 {
 	PCLIBPE_NTHEADER_VAR pVarNTHdr { };
-	if (m_pLibpe->GetNTHeader(&pVarNTHdr) != S_OK)
+	if (m_pLibpe->GetNTHeader(pVarNTHdr) != S_OK)
 		return -1;
 
 	m_listNTHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_NTHEADER, &m_stListInfo);
@@ -788,7 +788,7 @@ int CViewRightTopLeft::CreateListNTHeader()
 	WCHAR str[9] { };
 	UINT listindex = 0;
 
-	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
+	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_NT_HEADERS32* pNTHeader32 = &std::get<0>(*pVarNTHdr);
 
@@ -803,7 +803,7 @@ int CViewRightTopLeft::CreateListNTHeader()
 		swprintf_s(&str[6], 3, L"%02X", (BYTE)(pNTHeader32->Signature >> 24));
 		m_listNTHeader.SetItemText(listindex, 3, str);
 	}
-	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
+	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_NT_HEADERS64* pNTHeader64 = &std::get<1>(*pVarNTHdr);
 
@@ -825,7 +825,7 @@ int CViewRightTopLeft::CreateListNTHeader()
 int CViewRightTopLeft::CreateListFileHeader()
 {
 	PCLIBPE_FILEHEADER pFileHeader { };
-	if (m_pLibpe->GetFileHeader(&pFileHeader) != S_OK)
+	if (m_pLibpe->GetFileHeader(pFileHeader) != S_OK)
 		return -1;
 
 	m_listFileHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_FILEHEADER, &m_stListInfo);
@@ -971,7 +971,7 @@ int CViewRightTopLeft::CreateListFileHeader()
 int CViewRightTopLeft::CreateListOptHeader()
 {
 	PCLIBPE_OPTHEADER_VAR pOptionalHdr { };
-	if (m_pLibpe->GetOptionalHeader(&pOptionalHdr) != S_OK)
+	if (m_pLibpe->GetOptionalHeader(pOptionalHdr) != S_OK)
 		return -1;
 
 	m_listOptHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_OPTIONALHEADER, &m_stListInfo);
@@ -1023,7 +1023,7 @@ int CViewRightTopLeft::CreateListOptHeader()
 	std::wstring strTmp { };
 	int listindex = 0;
 
-	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
+	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_OPTIONAL_HEADER32* pOptHeader32 = &std::get<0>(*pOptionalHdr);
 
@@ -1285,7 +1285,7 @@ int CViewRightTopLeft::CreateListOptHeader()
 		swprintf_s(str, 9, L"%08X", pOptHeader32->NumberOfRvaAndSizes);
 		m_listOptHeader.SetItemText(listindex, 3, str);
 	}
-	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
+	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_OPTIONAL_HEADER64* pOptHeader64 = &std::get<1>(*pOptionalHdr);
 
@@ -1546,7 +1546,7 @@ int CViewRightTopLeft::CreateListOptHeader()
 int CViewRightTopLeft::CreateListDataDirectories()
 {
 	PCLIBPE_DATADIRS_VEC pLibPeDataDirs { };
-	if (m_pLibpe->GetDataDirectories(&pLibPeDataDirs) != S_OK)
+	if (m_pLibpe->GetDataDirectories(pLibPeDataDirs) != S_OK)
 		return -1;
 
 	m_listDataDirs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DATADIRECTORIES, &m_stListInfo);
@@ -1562,9 +1562,9 @@ int CViewRightTopLeft::CreateListDataDirectories()
 	UINT listindex = 0;
 	DWORD dwDataDirsOffset { };
 
-	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
+	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 		dwDataDirsOffset = m_dwPeStart + offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT]);
-	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
+	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 		dwDataDirsOffset = m_dwPeStart + offsetof(IMAGE_NT_HEADERS64, OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT]);
 
 	const IMAGE_DATA_DIRECTORY* pDataDirs = &std::get<0>(pLibPeDataDirs->at(IMAGE_DIRECTORY_ENTRY_EXPORT));
@@ -1856,7 +1856,7 @@ int CViewRightTopLeft::CreateListSecHeaders()
 int CViewRightTopLeft::CreateListExport()
 {
 	PCLIBPE_EXPORT_TUP pExportTable { };
-	if (m_pLibpe->GetExportTable(&pExportTable) != S_OK)
+	if (m_pLibpe->GetExportTable(pExportTable) != S_OK)
 		return -1;
 
 	WCHAR str[MAX_PATH] { };
@@ -1981,7 +1981,7 @@ int CViewRightTopLeft::CreateTreeResources()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
-	if (m_pLibpe->GetResourceTable(&pTupResRoot) != S_OK)
+	if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
 		return -1;
 
 	m_treeResTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
@@ -2016,7 +2016,7 @@ int CViewRightTopLeft::CreateTreeResources()
 		}
 		else
 		{
-			//DATA
+			break;//DATA
 		}
 
 		const PCLIBPE_RESOURCE_LVL2_TUP pTupResLvL2 = &std::get<4>(iterRoot);
@@ -2037,7 +2037,7 @@ int CViewRightTopLeft::CreateTreeResources()
 			}
 			else
 			{
-				//DATA
+				break;//DATA
 			}
 
 			const PCLIBPE_RESOURCE_LVL3_TUP pTupResLvL3 = &std::get<4>(iterLvL2);
@@ -2084,7 +2084,7 @@ int CViewRightTopLeft::CreateListException()
 int CViewRightTopLeft::CreateListSecurity()
 {
 	PCLIBPE_SECURITY_VEC pSecurityDir { };
-	if (m_pLibpe->GetSecurityTable(&pSecurityDir) != S_OK)
+	if (m_pLibpe->GetSecurityTable(pSecurityDir) != S_OK)
 		return -1;
 
 	m_listSecurityDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_SECURITY, &m_stListInfo);
@@ -2132,7 +2132,7 @@ int CViewRightTopLeft::CreateListDebug()
 {
 	PCLIBPE_DEBUG_VEC pDebugDir { };
 
-	if (m_pLibpe->GetDebugTable(&pDebugDir) != S_OK)
+	if (m_pLibpe->GetDebugTable(pDebugDir) != S_OK)
 		return -1;
 
 	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DEBUG, &m_stListInfo);
@@ -2208,7 +2208,7 @@ int CViewRightTopLeft::CreateListDebug()
 int CViewRightTopLeft::CreateListTLS()
 {
 	PCLIBPE_TLS_TUP pTLSDir { };
-	if (m_pLibpe->GetTLSTable(&pTLSDir) != S_OK)
+	if (m_pLibpe->GetTLSTable(pTLSDir) != S_OK)
 		return -1;
 
 	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_TLS, &m_stListInfo);
@@ -2239,7 +2239,7 @@ int CViewRightTopLeft::CreateListTLS()
 	int listindex = 0;
 	TCHAR str[MAX_PATH] { };
 
-	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
+	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_TLS_DIRECTORY32*  pTLSDir32 = &std::get<IMAGE_TLS_DIRECTORY32>(std::get<0>(*pTLSDir));
 
@@ -2283,7 +2283,7 @@ int CViewRightTopLeft::CreateListTLS()
 		if (iterCharact != mapCharact.end())
 			m_listTLSDir.SetItemTooltip(listindex, 2, iterCharact->second, L"Characteristics:");
 	}
-	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
+	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &std::get<IMAGE_TLS_DIRECTORY64>(std::get<0>(*pTLSDir));
 
@@ -2334,11 +2334,11 @@ int CViewRightTopLeft::CreateListTLS()
 int CViewRightTopLeft::CreateListLoadConfigTable()
 {
 	PCLIBPE_LOADCONFIGTABLE_VAR pLCD { };
-	if (m_pLibpe->GetLoadConfigTable(&pLCD) != S_OK)
+	if (m_pLibpe->GetLoadConfigTable(pLCD) != S_OK)
 		return -1;
 
-	PCLIBPE_DATADIRS_VEC pDirs { };
-	if (m_pLibpe->GetDataDirectories(&pDirs) != S_OK)
+	PCLIBPE_DATADIRS_VEC pDataDirs { };
+	if (m_pLibpe->GetDataDirectories(pDataDirs) != S_OK)
 		return -1;
 
 	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_LOADCONFIG, &m_stListInfo);
@@ -2368,10 +2368,10 @@ int CViewRightTopLeft::CreateListLoadConfigTable()
 	int listindex = 0;
 	TCHAR str[MAX_PATH] { };
 	std::wstring _tooltip { };
-	DWORD dwLCTSize = std::get<0>(pDirs->at(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG)).Size;
+	DWORD dwLCTSize = std::get<0>(pDataDirs->at(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG)).Size;
 	DWORD dwTotalSize { };
 
-	if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE32_FLAG))
+	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLoadConfDir32 = &std::get<0>(*pLCD);
 
@@ -2651,7 +2651,7 @@ int CViewRightTopLeft::CreateListLoadConfigTable()
 		swprintf_s(str, 9, L"%08X", pLoadConfDir32->EnclaveConfigurationPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, str);
 	}
-	else if (IMAGE_HAS_FLAG(m_dwFileSummary, IMAGE_PE64_FLAG))
+	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLoadConfDir64 = &std::get<1>(*pLCD);
 
@@ -3071,7 +3071,7 @@ int CViewRightTopLeft::CreateListBoundImport()
 {
 	PCLIBPE_BOUNDIMPORT_VEC pBoundImport { };
 
-	if (m_pLibpe->GetBoundImportTable(&pBoundImport) != S_OK)
+	if (m_pLibpe->GetBoundImportTable(pBoundImport) != S_OK)
 		return -1;
 
 	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
@@ -3113,7 +3113,7 @@ int CViewRightTopLeft::CreateListDelayImport()
 {
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
-	if (m_pLibpe->GetDelayImportTable(&pDelayImport) != S_OK)
+	if (m_pLibpe->GetDelayImportTable(pDelayImport) != S_OK)
 		return -1;
 
 	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
@@ -3170,7 +3170,7 @@ int CViewRightTopLeft::CreateListCOM()
 {
 	PCLIBPE_COMDESCRIPTOR pCOMDesc { };
 
-	if (m_pLibpe->GetCOMDescriptorTable(&pCOMDesc) != S_OK)
+	if (m_pLibpe->GetCOMDescriptorTable(pCOMDesc) != S_OK)
 		return -1;
 
 	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);

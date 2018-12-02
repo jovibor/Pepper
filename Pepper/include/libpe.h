@@ -166,26 +166,26 @@ namespace libpe
 	{
 	public:
 		virtual HRESULT LoadPe(LPCWSTR) = 0;
-		virtual HRESULT GetFileSummary(PCDWORD*) = 0;
-		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER*) = 0;
-		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC*) = 0;
-		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER_VAR*) = 0;
-		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER*) = 0;
-		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR*) = 0;
-		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC*) = 0;
-		virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC*) = 0;
-		virtual HRESULT GetExportTable(PCLIBPE_EXPORT_TUP*) = 0;
-		virtual HRESULT GetImportTable(PCLIBPE_IMPORT_VEC*) = 0;
-		virtual HRESULT GetResourceTable(PCLIBPE_RESOURCE_ROOT_TUP*) = 0;
-		virtual HRESULT GetExceptionTable(PCLIBPE_EXCEPTION_VEC*) = 0;
-		virtual HRESULT GetSecurityTable(PCLIBPE_SECURITY_VEC*) = 0;
-		virtual HRESULT GetRelocationTable(PCLIBPE_RELOCATION_VEC*) = 0;
-		virtual HRESULT GetDebugTable(PCLIBPE_DEBUG_VEC*) = 0;
-		virtual HRESULT GetTLSTable(PCLIBPE_TLS_TUP*) = 0;
-		virtual HRESULT GetLoadConfigTable(PCLIBPE_LOADCONFIGTABLE_VAR*) = 0;
-		virtual HRESULT GetBoundImportTable(PCLIBPE_BOUNDIMPORT_VEC*) = 0;
-		virtual HRESULT GetDelayImportTable(PCLIBPE_DELAYIMPORT_VEC*) = 0;
-		virtual HRESULT GetCOMDescriptorTable(PCLIBPE_COMDESCRIPTOR*) = 0;
+		virtual HRESULT GetFileSummary(PCDWORD&) = 0;
+		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&) = 0;
+		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&) = 0;
+		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER_VAR&) = 0;
+		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER&) = 0;
+		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR&) = 0;
+		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC&) = 0;
+		virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC&) = 0;
+		virtual HRESULT GetExportTable(PCLIBPE_EXPORT_TUP&) = 0;
+		virtual HRESULT GetImportTable(PCLIBPE_IMPORT_VEC&) = 0;
+		virtual HRESULT GetResourceTable(PCLIBPE_RESOURCE_ROOT_TUP&) = 0;
+		virtual HRESULT GetExceptionTable(PCLIBPE_EXCEPTION_VEC&) = 0;
+		virtual HRESULT GetSecurityTable(PCLIBPE_SECURITY_VEC&) = 0;
+		virtual HRESULT GetRelocationTable(PCLIBPE_RELOCATION_VEC&) = 0;
+		virtual HRESULT GetDebugTable(PCLIBPE_DEBUG_VEC&) = 0;
+		virtual HRESULT GetTLSTable(PCLIBPE_TLS_TUP&) = 0;
+		virtual HRESULT GetLoadConfigTable(PCLIBPE_LOADCONFIGTABLE_VAR&) = 0;
+		virtual HRESULT GetBoundImportTable(PCLIBPE_BOUNDIMPORT_VEC&) = 0;
+		virtual HRESULT GetDelayImportTable(PCLIBPE_DELAYIMPORT_VEC&) = 0;
+		virtual HRESULT GetCOMDescriptorTable(PCLIBPE_COMDESCRIPTOR&) = 0;
 	};
 	using libpe_ptr = std::shared_ptr<Ilibpe>;
 
@@ -227,31 +227,31 @@ namespace libpe
 	* Flags according to loaded PE file properties.		 *
 	*****************************************************/
 	//Tiny function shows whether given DWORD has given flag.
-	constexpr bool IMAGE_HAS_FLAG(DWORD dwFileInfo, DWORD  dwFlag) { return dwFileInfo & dwFlag; };
-	constexpr auto IMAGE_PE32_FLAG = 0x00000001;
-	constexpr auto IMAGE_PE64_FLAG = 0x00000002;
-	constexpr auto IMAGE_DOS_HEADER_FLAG = 0x00000004;
-	constexpr auto IMAGE_RICH_HEADER_FLAG = 0x00000008;
-	constexpr auto IMAGE_NT_HEADER_FLAG = 0x00000010;
-	constexpr auto IMAGE_FILE_HEADER_FLAG = 0x00000020;
-	constexpr auto IMAGE_OPTIONAL_HEADER_FLAG = 0x00000040;
-	constexpr auto IMAGE_DATA_DIRECTORIES_FLAG = 0x00000080;
-	constexpr auto IMAGE_SECTION_HEADERS_FLAG = 0x00000100;
-	constexpr auto IMAGE_EXPORT_DIRECTORY_FLAG = 0x00000200;
-	constexpr auto IMAGE_IMPORT_DIRECTORY_FLAG = 0x00000400;
-	constexpr auto IMAGE_RESOURCE_DIRECTORY_FLAG = 0x00000800;
-	constexpr auto IMAGE_EXCEPTION_DIRECTORY_FLAG = 0x00001000;
-	constexpr auto IMAGE_SECURITY_DIRECTORY_FLAG = 0x00002000;
-	constexpr auto IMAGE_BASERELOC_DIRECTORY_FLAG = 0x00004000;
-	constexpr auto IMAGE_DEBUG_DIRECTORY_FLAG = 0x00008000;
-	constexpr auto IMAGE_ARCHITECTURE_DIRECTORY_FLAG = 0x00010000;
-	constexpr auto IMAGE_GLOBALPTR_DIRECTORY_FLAG = 0x00020000;
-	constexpr auto IMAGE_TLS_DIRECTORY_FLAG = 0x00040000;
-	constexpr auto IMAGE_LOADCONFIG_DIRECTORY_FLAG = 0x00080000;
-	constexpr auto IMAGE_BOUNDIMPORT_DIRECTORY_FLAG = 0x00100000;
-	constexpr auto IMAGE_IAT_DIRECTORY_FLAG = 0x00200000;
-	constexpr auto IMAGE_DELAYIMPORT_DIRECTORY_FLAG = 0x00400000;
-	constexpr auto IMAGE_COMDESCRIPTOR_DIRECTORY_FLAG = 0x00800000;
+	constexpr bool ImageHasFlag(DWORD dwFileInfo, DWORD dwFlag) { return dwFileInfo & dwFlag; };
+	constexpr DWORD IMAGE_FLAG_PE32 = 0x00000001;
+	constexpr DWORD IMAGE_FLAG_PE64 = 0x00000002;
+	constexpr DWORD IMAGE_FLAG_DOSHEADER = 0x00000004;
+	constexpr DWORD IMAGE_FLAG_RICHHEADER = 0x00000008;
+	constexpr DWORD IMAGE_FLAG_NTHEADER = 0x00000010;
+	constexpr DWORD IMAGE_FLAG_FILEHEADER = 0x00000020;
+	constexpr DWORD IMAGE_FLAG_OPTHEADER = 0x00000040;
+	constexpr DWORD IMAGE_FLAG_DATADIRECTORIES = 0x00000080;
+	constexpr DWORD IMAGE_FLAG_SECTIONS = 0x00000100;
+	constexpr DWORD IMAGE_FLAG_EXPORT = 0x00000200;
+	constexpr DWORD IMAGE_FLAG_IMPORT = 0x00000400;
+	constexpr DWORD IMAGE_FLAG_RESOURCE = 0x00000800;
+	constexpr DWORD IMAGE_FLAG_EXCEPTION = 0x00001000;
+	constexpr DWORD IMAGE_FLAG_SECURITY = 0x00002000;
+	constexpr DWORD IMAGE_FLAG_BASERELOC = 0x00004000;
+	constexpr DWORD IMAGE_FLAG_DEBUG = 0x00008000;
+	constexpr DWORD IMAGE_FLAG_ARCHITECTURE = 0x00010000;
+	constexpr DWORD IMAGE_FLAG_GLOBALPTR = 0x00020000;
+	constexpr DWORD IMAGE_FLAG_TLS = 0x00040000;
+	constexpr DWORD IMAGE_FLAG_LOADCONFIG = 0x00080000;
+	constexpr DWORD IMAGE_FLAG_BOUNDIMPORT = 0x00100000;
+	constexpr DWORD IMAGE_FLAG_IAT = 0x00200000;
+	constexpr DWORD IMAGE_FLAG_DELAYIMPORT = 0x00400000;
+	constexpr DWORD IMAGE_FLAG_COMDESCRIPTOR = 0x00800000;
 }
 
 #if defined(ILIBPE_EXPORT)
