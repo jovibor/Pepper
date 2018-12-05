@@ -188,7 +188,8 @@ void CPepperApp::OnFileOpen()
 	stOFN.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
 		OFN_EXPLORER | OFN_ENABLESIZING | OFN_DONTADDTORECENT;
 
-	GetOpenFileName(&stOFN);
+	if (!GetOpenFileNameW(&stOFN))
+		return;
 
 	//Checking for multi file selection:
 	//If strFilePath at offset [stOFN.nFileOffset - 1] equals '\0'

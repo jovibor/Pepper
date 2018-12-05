@@ -2013,50 +2013,68 @@ int CViewRightTopLeft::CreateTreeResources()
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
 			m_treeResTop.SetItemData(treeRoot, m_vecResId.size() - 1);
 			ilvl2 = 0;
+
+			const PCLIBPE_RESOURCE_LVL2_TUP pTupResLvL2 = &std::get<4>(iterRoot);
+			for (auto& iterLvL2 : std::get<1>(*pTupResLvL2))
+			{
+				pResDirEntry = &std::get<0>(iterLvL2);
+				if (pResDirEntry->DataIsDirectory)
+				{
+					if (pResDirEntry->NameIsString)
+						swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvl2, std::get<1>(iterLvL2).c_str());
+					else
+						swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", ilvl2, pResDirEntry->Id);
+
+					treeLvL2 = m_treeResTop.InsertItem(str, treeRoot);
+					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
+					m_treeResTop.SetItemData(treeLvL2, m_vecResId.size() - 1);
+					ilvl3 = 0;
+
+					const PCLIBPE_RESOURCE_LVL3_TUP pTupResLvL3 = &std::get<4>(iterLvL2);
+					for (auto& iterLvL3 : std::get<1>(*pTupResLvL3))
+					{
+						pResDirEntry = &std::get<0>(iterLvL3);
+
+						if (pResDirEntry->NameIsString)
+							swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvl3, std::get<1>(iterLvL3).c_str());
+						else
+							swprintf(str, MAX_PATH, L"Entry: %i, lang: %u", ilvl3, pResDirEntry->Id);
+
+						const HTREEITEM treeLvL3 = m_treeResTop.InsertItem(str, treeLvL2);
+						m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
+						m_treeResTop.SetItemData(treeLvL3, m_vecResId.size() - 1);
+
+						ilvl3++;
+					}
+				}
+				else
+				{	//DATA lvl2
+					pResDirEntry = &std::get<0>(iterLvL2);
+
+					if (pResDirEntry->NameIsString)
+						swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvl2, std::get<1>(iterLvL2).c_str());
+					else
+						swprintf(str, MAX_PATH, L"Entry: %i, lang: %u", ilvl2, pResDirEntry->Id);
+
+					treeLvL2 = m_treeResTop.InsertItem(str, treeRoot);
+					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
+					m_treeResTop.SetItemData(treeLvL2, m_vecResId.size() - 1);
+				}
+				ilvl2++;
+			}
 		}
 		else
-		{
-			break;//DATA
-		}
+		{	//DATA lvlroot
+			pResDirEntry = &std::get<0>(iterRoot);
 
-		const PCLIBPE_RESOURCE_LVL2_TUP pTupResLvL2 = &std::get<4>(iterRoot);
-		for (auto& iterLvL2 : std::get<1>(*pTupResLvL2))
-		{
-			pResDirEntry = &std::get<0>(iterLvL2);
-			if (pResDirEntry->DataIsDirectory)
-			{
-				if (pResDirEntry->NameIsString)
-					swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvl2, std::get<1>(iterLvL2).c_str());
-				else
-					swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", ilvl2, pResDirEntry->Id);
-
-				treeLvL2 = m_treeResTop.InsertItem(str, treeRoot);
-				m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
-				m_treeResTop.SetItemData(treeLvL2, m_vecResId.size() - 1);
-				ilvl3 = 0;
-			}
+			if (pResDirEntry->NameIsString)
+				swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvlRoot, std::get<1>(iterRoot).c_str());
 			else
-			{
-				break;//DATA
-			}
+				swprintf(str, MAX_PATH, L"Entry: %i, lang: %u", ilvlRoot, pResDirEntry->Id);
 
-			const PCLIBPE_RESOURCE_LVL3_TUP pTupResLvL3 = &std::get<4>(iterLvL2);
-			for (auto& iterLvL3 : std::get<1>(*pTupResLvL3))
-			{
-				pResDirEntry = &std::get<0>(iterLvL3);
-
-				if (pResDirEntry->NameIsString)
-					swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvl3, std::get<1>(iterLvL3).c_str());
-				else
-					swprintf(str, MAX_PATH, L"Entry: %i, lang: %u", ilvl3, pResDirEntry->Id);
-
-				const HTREEITEM treeLvL3 = m_treeResTop.InsertItem(str, treeLvL2);
-				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
-				m_treeResTop.SetItemData(treeLvL3, m_vecResId.size() - 1);
-
-				ilvl3++;
-			}
-			ilvl2++;
+			treeRoot = m_treeResTop.InsertItem(str, m_hTreeResDir);
+			m_vecResId.emplace_back(ilvlRoot, -1, -1);
+			m_treeResTop.SetItemData(treeRoot, m_vecResId.size() - 1);
 		}
 		ilvlRoot++;
 	}
@@ -2341,7 +2359,7 @@ int CViewRightTopLeft::CreateListLoadConfigTable()
 	if (m_pLibpe->GetDataDirectories(pDataDirs) != S_OK)
 		return -1;
 
-	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_LOADCONFIG, &m_stListInfo);
+	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_LOADCONFIG, &m_stListInfo);
 	m_listLoadConfigDir.ShowWindow(SW_HIDE);
 	m_listLoadConfigDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listLoadConfigDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 330);
@@ -3074,7 +3092,7 @@ int CViewRightTopLeft::CreateListBoundImport()
 	if (m_pLibpe->GetBoundImportTable(pBoundImport) != S_OK)
 		return -1;
 
-	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
+	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
 	m_listBoundImportDir.ShowWindow(SW_HIDE);
 	m_listBoundImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listBoundImportDir.InsertColumn(0, L"Module Name", LVCFMT_CENTER, 290);
@@ -3116,7 +3134,7 @@ int CViewRightTopLeft::CreateListDelayImport()
 	if (m_pLibpe->GetDelayImportTable(pDelayImport) != S_OK)
 		return -1;
 
-	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
+	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
 	m_listDelayImportDir.ShowWindow(SW_HIDE);
 	m_listDelayImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
@@ -3173,7 +3191,7 @@ int CViewRightTopLeft::CreateListCOM()
 	if (m_pLibpe->GetCOMDescriptorTable(pCOMDesc) != S_OK)
 		return -1;
 
-	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT,		CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
+	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
 	m_listCOMDir.ShowWindow(SW_HIDE);
 	m_listCOMDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listCOMDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 300);

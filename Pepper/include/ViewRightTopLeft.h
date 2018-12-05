@@ -1,7 +1,7 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "Hexedit.h"
+#include "HexCtrl.h"
 #include "ListEx.h"
 #include "PepperTreeCtrl.h"
 
@@ -59,7 +59,10 @@ private:
 	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
 	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
 	CWnd* m_pActiveList { };
-	std::vector<std::tuple<long, long, long>> m_vecResId { }; //Resource id for treeCtrl
+	//Resource id for given treeCtrl node.
+	//Used in treeCtrl.SetItemData(...), so that we associate tree item
+	//with corresponding Resource index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).
+	std::vector<std::tuple<long, long, long>> m_vecResId { };
 
 	int CreateListDOSHeader();
 	int CreateListRichHeader();

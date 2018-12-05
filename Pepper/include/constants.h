@@ -1,8 +1,9 @@
+#pragma once
 #include "libpe.h"
 using namespace libpe;
 
 //Errors, that might come from libpe.
-const std::map<DWORD, std::wstring> g_mapLibpeErrors {
+inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {
 	{ E_CALL_LOADPE_FIRST, L"E_CALL_LOADPE_FIRST" },
 { E_FILE_OPEN_FAILED, L"E_FILE_OPEN_FAILED" },
 { E_FILE_SIZE_TOO_SMALL, L"E_FILE_SIZE_TOO_SMALL" },
@@ -34,7 +35,7 @@ const std::map<DWORD, std::wstring> g_mapLibpeErrors {
 { E_IMAGE_HAS_NO_COMDESCRIPTOR, L"E_IMAGE_HAS_NO_COMDESCRIPTOR" }
 };
 
-const std::map<WORD, std::wstring> g_mapResType {
+inline const std::map<WORD, std::wstring> g_mapResType {
 	{ 1, L"CURSOR" },
 { 2, L"BITMAP" },
 { 3, L"ICON" },

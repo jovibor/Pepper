@@ -37,13 +37,13 @@ void CViewRightTopRight::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHi
 	switch (LOWORD(lHint))
 	{
 	case IDC_TREE_RESOURCE:
-		m_stHexEdit.SetData(0);
+		m_stHexEdit.ClearData();
 		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 2, 0);
 		break;
 	case IDC_HEX_RIGHT_TOP_RIGHT:
-		m_stHexEdit.SetData((std::vector<std::byte>*)pHint);
+		m_stHexEdit.SetData(*(std::vector<std::byte>*)pHint);
 		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 2, 0);

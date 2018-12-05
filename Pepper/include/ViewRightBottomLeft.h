@@ -1,7 +1,7 @@
 #pragma once
 #include "PepperDoc.h"
 #include "ChildFrm.h"
-#include "Hexedit.h"
+#include "HexCtrl.h"
 #include "ListEx.h"
 #include "PepperTreeCtrl.h"
 
@@ -20,7 +20,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	PCLIBPE_SECURITY_VEC m_vecSec { };
-	CHexEdit m_stHexEdit;
+	CHexCtrl m_stHexEdit;
+	CHexCtrl m_hex;
 	libpe_ptr m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };

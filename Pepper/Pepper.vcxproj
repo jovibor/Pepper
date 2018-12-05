@@ -223,8 +223,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
-    <ClCompile Include="HexEdit.cpp" />
-    <ClCompile Include="HexEditView.cpp" />
+    <ClCompile Include="HexCtrl.cpp" />
+    <ClCompile Include="HexView.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
@@ -259,8 +259,8 @@
   <ItemGroup>
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />
-    <ClInclude Include="include\Hexedit.h" />
-    <ClInclude Include="include\HexEditView.h" />
+    <ClInclude Include="include\HexCtrl.h" />
+    <ClInclude Include="include\HexView.h" />
     <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />
     <ClInclude Include="include\MainFrm.h" />

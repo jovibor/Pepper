@@ -30,7 +30,7 @@ void CViewRightBottomLeft::OnInitialUpdate()
 	//Hex control for SecurityDir and TLSdir.
 	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_BOTTOM_LEFT);
 	m_stHexEdit.ShowWindow(SW_HIDE);
-
+	
 	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
 	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
@@ -163,12 +163,11 @@ int CViewRightBottomLeft::CreateHexSecurityEntry(unsigned nSertId)
 	if (nSertId > m_vecSec->size())
 		return -1;
 
-	m_stHexEdit.SetData(&std::get<1>(m_vecSec->at(nSertId)));
+	m_stHexEdit.SetData(std::get<1>(m_vecSec->at(nSertId)));
 
 	CRect rect;
 	GetClientRect(&rect);
 	m_stHexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
 	return 0;
 }
 
@@ -382,7 +381,7 @@ int CViewRightBottomLeft::CreateHexDebugEntry(DWORD dwEntry)
 	if (m_pLibpe->GetDebugTable(pDebug) != S_OK)
 		return -1;
 
-	m_stHexEdit.SetData(&std::get<1>(pDebug->at(dwEntry)));
+	m_stHexEdit.SetData(std::get<1>(pDebug->at(dwEntry)));
 
 	CRect rect;
 	GetClientRect(&rect);
@@ -466,7 +465,7 @@ int CViewRightBottomLeft::CreateHexTLS()
 	if (m_pLibpe->GetTLSTable(pTLS) != S_OK)
 		return -1;
 
-	m_stHexEdit.SetData(&std::get<1>(*pTLS));
+	m_stHexEdit.SetData(std::get<1>(*pTLS));
 
 	CRect rect;
 	GetClientRect(&rect);
