@@ -8,9 +8,11 @@
 * SetHeaderFont(). It's implemented as «ownerdraw» list.					  *
 ******************************************************************************/
 #pragma once
-#include "ListHeaderEx.h"
 #include <unordered_map>
 
+/********************************************
+* Helper struct for CListEx class.			*
+********************************************/
 typedef struct LISTEXINFO {
 	COLORREF clrListText { GetSysColor(COLOR_WINDOWTEXT) }; //List text color.
 	COLORREF clrListBk { GetSysColor(COLOR_WINDOW) }; //List Bk color.
@@ -29,14 +31,40 @@ typedef struct LISTEXINFO {
 	CFont* pHeaderFont { nullptr }; //List header font, nullptr=default.
 } *PLISTEXINFO;
 
+/********************************************
+* CListEx definition.						*
+********************************************/
 class CListEx : public CMFCListCtrl
 {
-public:
+private:
+	/********************************************
+	* CListExHeader class definition.			*
+	********************************************/
+	class CListExHeader : public CMFCHeaderCtrl
+	{
+	public:
+		void SetHeight(DWORD dwHeight);
+		void SetColor(COLORREF clrText, COLORREF clrBk);
+		int SetFont(CFont* pFontNew);
+		CListExHeader();
+		virtual ~CListExHeader() {}
+	protected:
+		afx_msg void OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted) override;
+		afx_msg LRESULT OnLayout(WPARAM wParam, LPARAM lParam);
+		DECLARE_MESSAGE_MAP()
+	private:
+		CFont m_fontHdr;
+		COLORREF m_clrHdr { GetSysColor(COLOR_WINDOW) };
+		COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
+		HDITEMW m_hdItem { }; //For drawing.
+		WCHAR m_strHeaderText[MAX_PATH] { };
+		DWORD m_dwHeaderHeight { 19 }; //Standard (default) height.
+	};
 	DECLARE_DYNAMIC(CListEx)
 	CListEx();
 	virtual ~CListEx() { }
 	BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pInfo = nullptr);
-	CListHeaderEx& GetHeaderCtrl() override { return m_stListHeader; }
+	CListExHeader& GetHeaderCtrl() override { return m_stListHeader; }
 	int SetFont(CFont* pFontNew);
 	//To remove tooltip from specific subitem just set it again with empty (L"") string.
 	void SetItemTooltip(int nItem, int nSubitem, const std::wstring& strTooltip, const std::wstring& strCaption = { });
@@ -47,7 +75,7 @@ public:
 	int SetHeaderFont(CFont* pFontNew);
 	DECLARE_MESSAGE_MAP()
 private:
-	CListHeaderEx m_stListHeader;
+	CListExHeader m_stListHeader;
 	CFont m_fontList;
 	CPen m_penGrid;
 	//Container for List item's tooltips.

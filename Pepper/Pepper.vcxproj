@@ -224,14 +224,12 @@
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="HexCtrl.cpp" />
-    <ClCompile Include="HexView.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Pepper.cpp" />
     <ClCompile Include="PepperDoc.cpp" />
     <ClCompile Include="ListEx.cpp" />
-    <ClCompile Include="ListHeaderEx.cpp" />
     <ClCompile Include="ViewRightBottomLeft.cpp" />
     <ClCompile Include="ViewRightTopRight.cpp" />
     <ClCompile Include="ViewRightBottomRight.cpp" />
@@ -260,14 +258,12 @@
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\HexCtrl.h" />
-    <ClInclude Include="include\HexView.h" />
     <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />
     <ClInclude Include="include\MainFrm.h" />
     <ClInclude Include="include\Pepper.h" />
     <ClInclude Include="include\PepperDoc.h" />
     <ClInclude Include="include\ListEx.h" />
-    <ClInclude Include="include\ListHeaderEx.h" />
     <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\ViewRightBottomLeft.h" />
     <ClInclude Include="include\ViewRightBottomRight.h" />

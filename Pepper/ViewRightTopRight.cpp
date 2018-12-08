@@ -50,6 +50,7 @@ void CViewRightTopRight::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHi
 		break;
 	default:
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width(), 0);
+		m_pChildFrame->m_stSplitterRightTop.HideCol(1);
 	}
 
 	m_pChildFrame->m_stSplitterRightTop.RecalcLayout();

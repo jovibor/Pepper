@@ -149,8 +149,8 @@ void CViewRightTopLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pH
 		break;
 	case IDC_LIST_IAT:
 	case IDC_LIST_IMPORT:
-		m_listImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_listImportDir;
+		m_listImport.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pActiveList = &m_listImport;
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_TREE_RESOURCE:
@@ -1950,29 +1950,31 @@ int CViewRightTopLeft::CreateListImport()
 	if (!m_pImportTable)
 		return -1;
 
-	m_listImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT, &m_stListInfo);
-	m_listImportDir.ShowWindow(SW_HIDE);
-	m_listImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
-	m_listImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 330);
-	m_listImportDir.InsertColumn(1, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_LEFT, 170);
-	m_listImportDir.InsertColumn(2, L"TimeDateStamp", LVCFMT_LEFT, 115);
-	m_listImportDir.InsertColumn(3, L"ForwarderChain", LVCFMT_LEFT, 110);
-	m_listImportDir.InsertColumn(4, L"Name RVA", LVCFMT_LEFT, 90);
-	m_listImportDir.InsertColumn(5, L"FirstThunk (IAT)", LVCFMT_LEFT, 135);
-	m_listImportDir.SetItemCountEx(m_pImportTable->size(), LVSICF_NOSCROLL);
+	m_listImport.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT, &m_stListInfo);
+	m_listImport.ShowWindow(SW_HIDE);
+	m_listImport.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+	m_listImport.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 330);
+	m_listImport.InsertColumn(1, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_LEFT, 170);
+	m_listImport.InsertColumn(2, L"TimeDateStamp", LVCFMT_LEFT, 115);
+	m_listImport.InsertColumn(3, L"ForwarderChain", LVCFMT_LEFT, 110);
+	m_listImport.InsertColumn(4, L"Name RVA", LVCFMT_LEFT, 90);
+	m_listImport.InsertColumn(5, L"FirstThunk (IAT)", LVCFMT_LEFT, 135);
+	m_listImport.SetItemCountEx(m_pImportTable->size(), LVSICF_NOSCROLL);
 
 	WCHAR str[MAX_PATH] { };
 	int listindex = 0;
 
 	for (auto& i : *m_pImportTable)
-		if (std::get<0>(i).TimeDateStamp)
+	{
+		const IMAGE_IMPORT_DESCRIPTOR* pImportDesc = &std::get<0>(i);
+		if (pImportDesc->TimeDateStamp)
 		{
-			__time64_t time = std::get<0>(i).TimeDateStamp;
+			__time64_t time = pImportDesc->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &time);
-			m_listImportDir.SetItemTooltip(listindex, 3, str, L"Time / Date:");
-
-			listindex++;
+			m_listImport.SetItemTooltip(listindex, 2, str, L"Time / Date:");
 		}
+		listindex++;
+	}
 
 	return 0;
 }

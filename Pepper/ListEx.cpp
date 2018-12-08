@@ -1,6 +1,100 @@
 #include "stdafx.h"
 #include "ListEx.h"
 
+/****************************************************
+* CListExHeader class implementation.				*
+****************************************************/
+BEGIN_MESSAGE_MAP(CListEx::CListExHeader, CMFCHeaderCtrl)
+	ON_MESSAGE(HDM_LAYOUT, &CListEx::CListExHeader::OnLayout)
+	ON_WM_HSCROLL()
+END_MESSAGE_MAP()
+
+CListEx::CListExHeader::CListExHeader()
+{
+	LOGFONT lf { };
+	lf.lfHeight = 17;
+	lf.lfWeight = FW_BOLD;
+	StringCchCopyW(lf.lfFaceName, 16, L"Times New Roman");
+	m_fontHdr.CreateFontIndirectW(&lf);
+
+	m_hdItem.mask = HDI_TEXT;
+	m_hdItem.cchTextMax = MAX_PATH;
+	m_hdItem.pszText = m_strHeaderText;
+}
+
+void CListEx::CListExHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted)
+{
+	CMemDC memDC(*pDC, rect);
+	CDC& rDC = memDC.GetDC();
+
+	rDC.FillSolidRect(&rect, m_clrHdr);
+	rDC.SetTextColor(m_clrText);
+	rDC.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
+	rDC.SelectObject(&m_fontHdr);
+
+	//Set item's text buffer first char to zero,
+	//then getting item's text and Draw it.
+	m_strHeaderText[0] = L'\0';
+	GetItem(iItem, &m_hdItem);
+
+	if (StrStrW(m_strHeaderText, L"\n"))
+	{	//If it's multiline text, first — calculate rect for the text,
+		//with CALC_RECT flag (not drawing anything),
+		//and then calculate rect for final vertical text alignment.
+		CRect rcText;
+		rDC.DrawTextW(m_strHeaderText, &rcText, DT_CENTER | DT_CALCRECT);
+		rect.top = rect.bottom / 2 - rcText.bottom / 2;
+		rDC.DrawTextW(m_strHeaderText, &rect, DT_CENTER);
+	}
+	else
+		rDC.DrawTextW(m_strHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
+}
+
+LRESULT CListEx::CListExHeader::OnLayout(WPARAM wParam, LPARAM lParam)
+{
+	CMFCHeaderCtrl::DefWindowProcW(HDM_LAYOUT, 0, lParam);
+
+	LPHDLAYOUT pHL = reinterpret_cast<LPHDLAYOUT>(lParam);
+
+	//New header height.
+	pHL->pwpos->cy = m_dwHeaderHeight;
+	//Decreasing list's height by the new header's height.
+	pHL->prc->top = m_dwHeaderHeight;
+
+	return 0;
+}
+
+void CListEx::CListExHeader::SetHeight(DWORD dwHeight)
+{
+	m_dwHeaderHeight = dwHeight;
+}
+
+void CListEx::CListExHeader::SetColor(COLORREF clrText, COLORREF clrBk)
+{
+	m_clrText = clrText;
+	m_clrHdr = clrBk;
+
+	Invalidate();
+	UpdateWindow();
+}
+
+int CListEx::CListExHeader::SetFont(CFont* pFontNew)
+{
+	if (!pFontNew)
+		return -1;
+
+	LOGFONT lf;
+	pFontNew->GetLogFont(&lf);
+	m_fontHdr.DeleteObject();
+	m_fontHdr.CreateFontIndirectW(&lf);
+
+	return 0;
+}
+
+
+/****************************************************
+* CListEx class implementation.						*
+****************************************************/
 IMPLEMENT_DYNAMIC(CListEx, CMFCListCtrl)
 
 BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
@@ -258,9 +352,9 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 		pDC->LineTo(rect.right, rect.bottom);
 
 		for (int i = 1; i < GetHeaderCtrl().GetItemCount(); i++)
-		{	
+		{
 			GetSubItemRect(pDIS->itemID, i, LVIR_BOUNDS, rect);
-			
+
 			//Here comes Subitems draw routine.
 			//Assigning colors depending on whether subitem has tooltip,
 			//and whether it's selected or not.

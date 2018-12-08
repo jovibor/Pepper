@@ -39,7 +39,7 @@ private:
 	CListEx m_listDataDirs;
 	CListEx m_listSecHeaders;
 	CListEx m_listExportDir;
-	CListEx m_listImportDir;
+	CListEx m_listImport;
 	CListEx m_listExceptionDir;
 	CListEx m_listSecurityDir;
 	CListEx m_listRelocDir;
