@@ -44,9 +44,11 @@ void CViewRightBottomRight::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHin
 	case IDC_LIST_TLS:
 		m_stListTLSCallbacks.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_stListTLSCallbacks;
+		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width() / 2, 0);
 		break;
 	default:
+		m_pChildFrame->m_stSplitterRightBottom.HideCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width(), 0);
 	}
 

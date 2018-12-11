@@ -1,3 +1,7 @@
+/********************************************************************************
+* Copyright (C) 2018, Jovibor: https://github.com/jovibor/						*
+* Extended CSplitterWnd class implementation.									*
+********************************************************************************/
 #include "stdafx.h"
 #include "SplitterEx.h"
 
@@ -9,7 +13,7 @@ END_MESSAGE_MAP()
 BOOL CSplitterEx::CreateStatic(CWnd * pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
 {
 	//If already created.
-	if ((!m_vecRows.empty() && !m_vecCols.empty()) || (!nRows | !nCols))
+	if ((!m_vecRows.empty() && !m_vecCols.empty()) || !(nRows | nCols) || (nRows | nCols) > 16)
 		return FALSE;
 
 	for (int i = 0; i < nRows; i++)
@@ -20,24 +24,124 @@ BOOL CSplitterEx::CreateStatic(CWnd * pParent, int nRows, int nCols, DWORD dwSty
 	return CSplitterWndEx::CreateStatic(pParent, nRows, nCols, dwStyle, nID);
 }
 
-int CSplitterEx::HideRow(int nRow)
+BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE sizeInit, CCreateContext * pContext)
 {
-	return 0;
+	if (row >= m_vecRows.size() || col >= m_vecCols.size())
+		return FALSE;
+
+	BOOL ret = CSplitterWnd::CreateView(row, col, pViewClass, sizeInit, pContext);
+
+	CWnd* pPane = GetPane(row, col);
+	m_vecPanes.emplace_back(row, col, pPane);
+
+	return ret;
 }
 
-int CSplitterEx::HideCol(int nCol)
+bool CSplitterEx::AddNested(int row, int col, CWnd* pNested)
 {
-	return 0;
+	for (auto& i : m_vecPanes)
+		if (std::get<0>(i) == row && std::get<1>(i) == col)
+		{
+			i = { row, col, pNested };
+			return true;
+		}
+
+	m_vecPanes.emplace_back(row, col, pNested);
+
+	return true;
 }
 
-int CSplitterEx::ShowRow(int nRow)
+bool CSplitterEx::HideRow(UINT nRow)
 {
-	return 0;
+	if (nRow < m_vecRows.size() && std::get<1>(m_vecRows.at(nRow)) == true)
+	{
+		m_vecRows.at(nRow) = { nRow, false };
+		m_nRows--;
+		RecalcPanes();
+
+		return true;
+	}
+
+	return false;
 }
 
-int CSplitterEx::ShowCol(int nCol)
+bool CSplitterEx::ShowRow(UINT nRow)
 {
-	return 0;
+	if (nRow < m_vecRows.size() && std::get<1>(m_vecRows.at(nRow)) == false)
+	{
+		m_vecRows.at(nRow) = { nRow, true };
+		m_nRows++;
+		RecalcPanes();
+
+		return true;
+	}
+
+	return false;
+}
+
+bool CSplitterEx::HideCol(UINT nCol)
+{
+	if (nCol < m_vecCols.size() && std::get<1>(m_vecCols.at(nCol)) == true)
+	{
+		m_vecCols.at(nCol) = { nCol, false };
+		m_nCols--;
+		RecalcPanes();
+
+		return true;
+	}
+
+	return false;
+}
+
+bool CSplitterEx::ShowCol(UINT nCol)
+{
+	if (nCol < m_vecCols.size() && std::get<1>(m_vecCols.at(nCol)) == false)
+	{
+		m_vecCols.at(nCol) = { nCol, true };
+		m_nCols++;
+		RecalcPanes();
+
+		return true;
+	}
+
+	return false;
+}
+
+void CSplitterEx::RecalcPanes()
+{
+	//Populating temp vectors with visible cols/rows first,
+	//then adding invisible cols/rows at the end.
+	std::vector<int> vecColsVisible { }, vecRowsVisible { };
+	for (auto& i : m_vecCols)
+		if (std::get<1>(i) == true)
+			vecColsVisible.emplace_back(std::get<0>(i));
+	for (auto& i : m_vecCols)
+		if (std::get<1>(i) == false)
+			vecColsVisible.emplace_back(std::get<0>(i));
+
+	for (auto& i : m_vecRows)
+		if (std::get<1>(i) == true)
+			vecRowsVisible.emplace_back(std::get<0>(i));
+	for (auto& i : m_vecRows)
+		if (std::get<1>(i) == false)
+			vecRowsVisible.emplace_back(std::get<0>(i));
+
+	//Recalculating DlgCtrlId based on visible/hidden status.
+	for (unsigned iterRow = 0; iterRow < m_vecRows.size(); iterRow++)
+		for (unsigned iterCol = 0; iterCol < m_vecCols.size(); iterCol++)
+			for (auto& i : m_vecPanes)
+				if (std::get<0>(i) == vecRowsVisible.at(iterRow) && std::get<1>(i) == vecColsVisible.at(iterCol))
+				{
+					CWnd *pPane = std::get<2>(i);
+					pPane->SetDlgCtrlID(AFX_IDW_PANE_FIRST + iterRow * 16 + iterCol);
+
+					if (std::get<1>(m_vecCols.at(iterCol)) == false || std::get<1>(m_vecRows.at(iterRow)) == false)
+						pPane->ShowWindow(SW_HIDE);
+					else
+						pPane->ShowWindow(SW_SHOW);
+				}
+
+	RecalcLayout();
 }
 
 void CSplitterEx::OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect)

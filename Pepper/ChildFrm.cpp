@@ -33,10 +33,17 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	m_stSplitterRightTop.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(0, 0));
 	m_stSplitterRightTop.CreateView(0, 0, RUNTIME_CLASS(CViewRightTopLeft), CSize(rect.Width(), rect.Height()), pContext);
 	m_stSplitterRightTop.CreateView(0, 1, RUNTIME_CLASS(CViewRightTopRight), CSize(0, rect.Height()), pContext);
+	m_stSplitterRightTop.HideCol(1);
+	m_stSplitterRight.AddNested(0, 0, &m_stSplitterRightTop);
 
 	m_stSplitterRightBottom.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(1, 0));
 	m_stSplitterRightBottom.CreateView(0, 0, RUNTIME_CLASS(CViewRightBottomLeft), CSize(rect.Width(), rect.Height()), pContext);
 	m_stSplitterRightBottom.CreateView(0, 1, RUNTIME_CLASS(CViewRightBottomRight), CSize(0, rect.Height() / 2), pContext);
+//	m_stSplitterRightBottom.CreateView(0, 2, RUNTIME_CLASS(CViewRightBottomRight), CSize(0, rect.Height() / 2), pContext);
+//	m_stSplitterRightBottom.CreateView(0, 3, RUNTIME_CLASS(CViewRightTopLeft), CSize(0, rect.Height() / 2), pContext);
+	 
+	m_stSplitterRightBottom.HideCol(1);
+	m_stSplitterRight.AddNested(1, 0, &m_stSplitterRightBottom);
 
 	m_fSpliterCreated = true;
 

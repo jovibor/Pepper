@@ -105,102 +105,123 @@ void CViewRightTopLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pH
 	{
 	case IDC_SHOW_FILE_SUMMARY:
 		m_fFileSummaryShow = true;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_DOSHEADER:
 		m_listDOSHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDOSHeader;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_RICHHEADER:
 		m_listRichHdr.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listRichHdr;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_NTHEADER:
 		m_listNTHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listNTHeader;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_FILEHEADER:
 		m_listFileHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listFileHeader;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_OPTIONALHEADER:
 		m_listOptHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listOptHeader;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_DATADIRECTORIES:
 		m_listDataDirs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDataDirs;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_SECHEADERS:
 		m_listSecHeaders.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listSecHeaders;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_EXPORT:
 		m_listExportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listExportDir;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_IAT:
 	case IDC_LIST_IMPORT:
 		m_listImport.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listImport;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_TREE_RESOURCE:
 		m_treeResTop.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_treeResTop;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_EXCEPTION:
 		m_listExceptionDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listExceptionDir;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_SECURITY:
 		m_listSecurityDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listSecurityDir;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_RELOCATIONS:
 		m_listRelocDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listRelocDir;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_DEBUG:
 		m_listDebugDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDebugDir;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_TLS:
 		m_listTLSDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listTLSDir;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_LOADCONFIG:
 		m_listLoadConfigDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listLoadConfigDir;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
+//		m_pChildFrame->m_stSplitterRightBottom.ShowWindow(SW_HIDE);
 		break;
 	case IDC_LIST_BOUNDIMPORT:
 		m_listBoundImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height() / 2, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listBoundImportDir;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_DELAYIMPORT:
 		m_listDelayImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listDelayImportDir;
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_COMDESCRIPTOR:
 		m_listCOMDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveList = &m_listCOMDir;
+		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	}
