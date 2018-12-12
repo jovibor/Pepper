@@ -153,6 +153,7 @@
       <EnablePREfast>false</EnablePREfast>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <ConformanceMode>true</ConformanceMode>
+      <XMLDocumentationFileName />
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -3,5 +3,5 @@
 #define COPYRIGHT_NAME  		"(C) Jovibor 2018"
 #define MAJOR_VERSION			0
 #define MINOR_VERSION			5
-#define MAINTENANCE_VERSION		2
+#define MAINTENANCE_VERSION		7
 #define REVISION_VERSION		0

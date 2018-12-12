@@ -6,11 +6,19 @@
 * Additional info can be found at https://github.com/jovibor/libpe	 *
 *********************************************************************/
 #pragma once
-static_assert(_MSC_VER >= 1914, "MSVS 15.7 (C++17) or higher needed.");
 #include <vector>
 #include <memory>
 #include <variant>
 #include <ImageHlp.h>
+
+#ifndef __cpp_lib_byte
+#define __cpp17_conformant 0
+#elif __cpp_lib_byte < 201603
+#define __cpp17_conformant 0
+#else
+#define __cpp17_conformant 1
+#endif
+static_assert(__cpp17_conformant, "C++17 conformant compiler is required (MSVS 15.7 with /std:c++17 or higher).");
 
 namespace libpe
 {

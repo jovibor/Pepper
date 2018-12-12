@@ -32,7 +32,7 @@ typedef struct LISTEXINFO {
 } *PLISTEXINFO;
 
 /********************************************
-* CListEx definition.						*
+* CListEx class definition.					*
 ********************************************/
 class CListEx : public CMFCListCtrl
 {
