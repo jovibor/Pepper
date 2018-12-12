@@ -13,7 +13,7 @@ protected:
 	BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 	CSplitterEx m_stSplitterMain, m_stSplitterRight, m_stSplitterRightTop, m_stSplitterRightBottom;
 	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
-	bool m_fSpliterCreated { false };
+	bool m_fSplitterCreated { false };
 	UINT m_cx { }, m_cy { };
 	DECLARE_MESSAGE_MAP()
 };

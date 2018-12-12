@@ -3,12 +3,12 @@
 #include "PepperDoc.h"
 #include "HexCtrl.h"
 
-class CViewRightTopRight : public CScrollView
+class CViewRightTR : public CScrollView
 {
-	DECLARE_DYNCREATE(CViewRightTopRight)
+	DECLARE_DYNCREATE(CViewRightTR)
 protected:
-	CViewRightTopRight() {}
-	virtual ~CViewRightTopRight() {}
+	CViewRightTR() {}
+	virtual ~CViewRightTR() {}
 	virtual void OnDraw(CDC* pDC);
 	virtual void OnInitialUpdate();
 	DECLARE_MESSAGE_MAP()

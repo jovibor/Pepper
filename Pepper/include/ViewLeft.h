@@ -1,5 +1,5 @@
 #pragma once
-#include "PepperTreeCtrl.h"
+#include "TreeEx.h"
 #include "PepperDoc.h"
 
 class CViewLeft : public CView
@@ -16,7 +16,7 @@ protected:
 private:
 	libpe_ptr m_pLibpe { };
 	CPepperDoc* m_pMainDoc { };
-	CPepperTreeCtrl m_stTreeMain;
+	CTreeEx m_stTreeMain;
 	CImageList m_ImgListRootTree;
 };
 

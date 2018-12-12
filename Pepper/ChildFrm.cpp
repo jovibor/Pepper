@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "ChildFrm.h"
 #include "ViewLeft.h"
-#include "ViewRightTopLeft.h"
-#include "ViewRightBottomLeft.h"
-#include "ViewRightTopRight.h"
-#include "ViewRightBottomRight.h"
+#include "ViewRightTL.h"
+#include "ViewRightBL.h"
+#include "ViewRightTR.h"
+#include "ViewRightBR.h"
 
 IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWndEx)
 
@@ -31,21 +31,19 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	m_stSplitterRight.CreateStatic(&m_stSplitterMain, 2, 1, WS_CHILD | WS_VISIBLE, m_stSplitterMain.IdFromRowCol(0, 1));
 
 	m_stSplitterRightTop.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(0, 0));
-	m_stSplitterRightTop.CreateView(0, 0, RUNTIME_CLASS(CViewRightTopLeft), CSize(rect.Width(), rect.Height()), pContext);
-	m_stSplitterRightTop.CreateView(0, 1, RUNTIME_CLASS(CViewRightTopRight), CSize(0, rect.Height()), pContext);
+	m_stSplitterRightTop.CreateView(0, 0, RUNTIME_CLASS(CViewRightTL), CSize(rect.Width(), rect.Height()), pContext);
+	m_stSplitterRightTop.CreateView(0, 1, RUNTIME_CLASS(CViewRightTR), CSize(0, rect.Height()), pContext);
 	m_stSplitterRightTop.HideCol(1);
 	m_stSplitterRight.AddNested(0, 0, &m_stSplitterRightTop);
 
 	m_stSplitterRightBottom.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(1, 0));
-	m_stSplitterRightBottom.CreateView(0, 0, RUNTIME_CLASS(CViewRightBottomLeft), CSize(rect.Width(), rect.Height()), pContext);
-	m_stSplitterRightBottom.CreateView(0, 1, RUNTIME_CLASS(CViewRightBottomRight), CSize(0, rect.Height() / 2), pContext);
-//	m_stSplitterRightBottom.CreateView(0, 2, RUNTIME_CLASS(CViewRightBottomRight), CSize(0, rect.Height() / 2), pContext);
-//	m_stSplitterRightBottom.CreateView(0, 3, RUNTIME_CLASS(CViewRightTopLeft), CSize(0, rect.Height() / 2), pContext);
+	m_stSplitterRightBottom.CreateView(0, 0, RUNTIME_CLASS(CViewRightBL), CSize(rect.Width(), rect.Height()), pContext);
+	m_stSplitterRightBottom.CreateView(0, 1, RUNTIME_CLASS(CViewRightBR), CSize(0, rect.Height() / 2), pContext);
 	 
 	m_stSplitterRightBottom.HideCol(1);
 	m_stSplitterRight.AddNested(1, 0, &m_stSplitterRightBottom);
 
-	m_fSpliterCreated = true;
+	m_fSplitterCreated = true;
 
 	return TRUE;
 }
@@ -57,7 +55,7 @@ BOOL CChildFrame::OnEraseBkgnd(CDC* pDC)
 
 void CChildFrame::OnSize(UINT nType, int cx, int cy)
 {
-	if (m_fSpliterCreated && nType != SIZE_MINIMIZED && cx > 0 && cy > 0)
+	if (m_fSplitterCreated && nType != SIZE_MINIMIZED && cx > 0 && cy > 0)
 	{
 		if (m_cx > 0 && m_cy > 0)
 		{

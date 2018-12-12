@@ -8,6 +8,7 @@
 * 4. Set window position, if needed, with hexCtrl.SetWindowPos(...).		*
 *****************************************************************************/
 #pragma once
+#include <vector>
 
 class CHexCtrl : public CWnd
 {

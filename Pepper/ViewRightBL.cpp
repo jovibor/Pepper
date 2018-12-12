@@ -1,16 +1,16 @@
 #include "stdafx.h"
-#include "ViewRightBottomLeft.h"
+#include "ViewRightBL.h"
 #include "resource.h"
 
-IMPLEMENT_DYNCREATE(CViewRightBottomLeft, CView)
+IMPLEMENT_DYNCREATE(CViewRightBL, CView)
 
-BEGIN_MESSAGE_MAP(CViewRightBottomLeft, CView)
+BEGIN_MESSAGE_MAP(CViewRightBL, CView)
 	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
-void CViewRightBottomLeft::OnInitialUpdate()
+void CViewRightBL::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
 
@@ -41,7 +41,7 @@ void CViewRightBottomLeft::OnInitialUpdate()
 	CreateTreeResources();
 }
 
-void CViewRightBottomLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
+void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
 {
 	if (!m_pChildFrame)
 		return;
@@ -90,14 +90,14 @@ void CViewRightBottomLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /
 	}
 }
 
-HBRUSH CViewRightBottomLeft::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+HBRUSH CViewRightBL::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = CScrollView::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	return hbr;
 }
 
-void CViewRightBottomLeft::OnSize(UINT nType, int cx, int cy)
+void CViewRightBL::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 
@@ -105,11 +105,11 @@ void CViewRightBottomLeft::OnSize(UINT nType, int cx, int cy)
 		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBottomLeft::OnDraw(CDC* pDC)
+void CViewRightBL::OnDraw(CDC* pDC)
 {
 }
 
-BOOL CViewRightBottomLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
 	const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
 	if (pTree->hdr.idFrom == IDC_TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
@@ -151,12 +151,12 @@ BOOL CViewRightBottomLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResu
 	return CScrollView::OnNotify(wParam, lParam, pResult);
 }
 
-BOOL CViewRightBottomLeft::OnEraseBkgnd(CDC* pDC)
+BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 {
 	return CScrollView::OnEraseBkgnd(pDC);
 }
 
-int CViewRightBottomLeft::CreateHexSecurityEntry(unsigned nSertId)
+int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 {
 	if (m_pLibpe->GetSecurityTable(m_vecSec) != S_OK)
 		return -1;
@@ -171,7 +171,7 @@ int CViewRightBottomLeft::CreateHexSecurityEntry(unsigned nSertId)
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateListImportEntry(DWORD dwEntry)
+int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 {
 	PCLIBPE_IMPORT_VEC m_pImportTable { };
 
@@ -216,7 +216,7 @@ int CViewRightBottomLeft::CreateListImportEntry(DWORD dwEntry)
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateListDelayImportEntry(DWORD dwEntry)
+int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 {
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
@@ -279,7 +279,7 @@ int CViewRightBottomLeft::CreateListDelayImportEntry(DWORD dwEntry)
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateListExportFuncs()
+int CViewRightBL::CreateListExportFuncs()
 {
 	PCLIBPE_EXPORT_TUP pExportTable { };
 
@@ -316,7 +316,7 @@ int CViewRightBottomLeft::CreateListExportFuncs()
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateListRelocsEntry(DWORD dwEntry)
+int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 {
 	PCLIBPE_RELOCATION_VEC pRelocTable { };
 
@@ -375,7 +375,7 @@ int CViewRightBottomLeft::CreateListRelocsEntry(DWORD dwEntry)
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateHexDebugEntry(DWORD dwEntry)
+int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 {
 	PCLIBPE_DEBUG_VEC pDebug;
 	if (m_pLibpe->GetDebugTable(pDebug) != S_OK)
@@ -390,7 +390,7 @@ int CViewRightBottomLeft::CreateHexDebugEntry(DWORD dwEntry)
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateTreeResources()
+int CViewRightBL::CreateTreeResources()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
@@ -459,7 +459,7 @@ int CViewRightBottomLeft::CreateTreeResources()
 	return 0;
 }
 
-int CViewRightBottomLeft::CreateHexTLS()
+int CViewRightBL::CreateHexTLS()
 {
 	PCLIBPE_TLS_TUP pTLS;
 	if (m_pLibpe->GetTLSTable(pTLS) != S_OK)

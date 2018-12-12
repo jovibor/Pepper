@@ -1,19 +1,19 @@
 #include "stdafx.h"
-#include "ViewRightTopLeft.h"
+#include "ViewRightTL.h"
 #include "version.h"
 
-IMPLEMENT_DYNCREATE(CViewRightTopLeft, CView)
+IMPLEMENT_DYNCREATE(CViewRightTL, CView)
 
-BEGIN_MESSAGE_MAP(CViewRightTopLeft, CView)
+BEGIN_MESSAGE_MAP(CViewRightTL, CView)
 	ON_WM_SIZE()
 	ON_WM_MOUSEWHEEL()
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_SECHEADERS, &CViewRightTopLeft::OnListSectionsGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_IMPORT, &CViewRightTopLeft::OnListImportGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_RELOCATIONS, &CViewRightTopLeft::OnListRelocGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_EXCEPTION, &CViewRightTopLeft::OnListExceptionGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_SECHEADERS, &CViewRightTL::OnListSectionsGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_IMPORT, &CViewRightTL::OnListImportGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_RELOCATIONS, &CViewRightTL::OnListRelocGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_EXCEPTION, &CViewRightTL::OnListExceptionGetDispInfo)
 END_MESSAGE_MAP()
 
-void CViewRightTopLeft::OnInitialUpdate()
+void CViewRightTL::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
 
@@ -85,7 +85,7 @@ void CViewRightTopLeft::OnInitialUpdate()
 	CreateListCOM();
 }
 
-void CViewRightTopLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
+void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
 {
 	//Check m_pChildFrame to prevent some UB.
 	//OnUpdate can be invoked before OnInitialUpdate, weird MFC.
@@ -204,7 +204,6 @@ void CViewRightTopLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pH
 		m_pActiveList = &m_listLoadConfigDir;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
-//		m_pChildFrame->m_stSplitterRightBottom.ShowWindow(SW_HIDE);
 		break;
 	case IDC_LIST_BOUNDIMPORT:
 		m_listBoundImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height() / 2, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -228,7 +227,7 @@ void CViewRightTopLeft::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pH
 	m_pChildFrame->m_stSplitterRight.RecalcLayout();
 }
 
-void CViewRightTopLeft::OnDraw(CDC* pDC)
+void CViewRightTL::OnDraw(CDC* pDC)
 {
 	//Printing app name/version info and
 	//currently oppened file's type and name.
@@ -253,7 +252,7 @@ void CViewRightTopLeft::OnDraw(CDC* pDC)
 	}
 }
 
-void CViewRightTopLeft::OnSize(UINT nType, int cx, int cy)
+void CViewRightTL::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 
@@ -261,7 +260,7 @@ void CViewRightTopLeft::OnSize(UINT nType, int cx, int cy)
 		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightTopLeft::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 {
 	NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
 
@@ -314,7 +313,7 @@ void CViewRightTopLeft::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pRes
 	*pResult = 0;
 }
 
-void CViewRightTopLeft::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 {
 	NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
 
@@ -353,7 +352,7 @@ void CViewRightTopLeft::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResul
 	*pResult = 0;
 }
 
-void CViewRightTopLeft::OnListRelocGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListRelocGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 {
 	NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
 
@@ -382,7 +381,7 @@ void CViewRightTopLeft::OnListRelocGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult
 	*pResult = 0;
 }
 
-void CViewRightTopLeft::OnListExceptionGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListExceptionGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 {
 	NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
 
@@ -410,7 +409,7 @@ void CViewRightTopLeft::OnListExceptionGetDispInfo(NMHDR * pNMHDR, LRESULT * pRe
 	*pResult = 0;
 }
 
-BOOL CViewRightTopLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
 	CScrollView::OnNotify(wParam, lParam, pResult);
 
@@ -469,7 +468,7 @@ BOOL CViewRightTopLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 							auto& data = std::get<3>(lvl3vec.at(idlvl3));
 
 							if (!data.empty())
-								//Send data vector pointer to CViewRightTopRight
+								//Send data vector pointer to CViewRightTR
 								//to display raw data.
 								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TOP_RIGHT, 0), (CObject*)&data);
 						}
@@ -487,7 +486,7 @@ BOOL CViewRightTopLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	return TRUE;
 }
 
-int CViewRightTopLeft::CreateListDOSHeader()
+int CViewRightTL::CreateListDOSHeader()
 {
 	PCLIBPE_DOSHEADER pDosHeader { };
 	if (m_pLibpe->GetMSDOSHeader(pDosHeader) != S_OK)
@@ -758,7 +757,7 @@ int CViewRightTopLeft::CreateListDOSHeader()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListRichHeader()
+int CViewRightTL::CreateListRichHeader()
 {
 	PCLIBPE_RICHHEADER_VEC pRichHeader { };
 	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK)
@@ -792,7 +791,7 @@ int CViewRightTopLeft::CreateListRichHeader()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListNTHeader()
+int CViewRightTL::CreateListNTHeader()
 {
 	PCLIBPE_NTHEADER_VAR pVarNTHdr { };
 	if (m_pLibpe->GetNTHeader(pVarNTHdr) != S_OK)
@@ -843,7 +842,7 @@ int CViewRightTopLeft::CreateListNTHeader()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListFileHeader()
+int CViewRightTL::CreateListFileHeader()
 {
 	PCLIBPE_FILEHEADER pFileHeader { };
 	if (m_pLibpe->GetFileHeader(pFileHeader) != S_OK)
@@ -989,7 +988,7 @@ int CViewRightTopLeft::CreateListFileHeader()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListOptHeader()
+int CViewRightTL::CreateListOptHeader()
 {
 	PCLIBPE_OPTHEADER_VAR pOptionalHdr { };
 	if (m_pLibpe->GetOptionalHeader(pOptionalHdr) != S_OK)
@@ -1564,7 +1563,7 @@ int CViewRightTopLeft::CreateListOptHeader()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListDataDirectories()
+int CViewRightTL::CreateListDataDirectories()
 {
 	PCLIBPE_DATADIRS_VEC pLibPeDataDirs { };
 	if (m_pLibpe->GetDataDirectories(pLibPeDataDirs) != S_OK)
@@ -1787,7 +1786,7 @@ int CViewRightTopLeft::CreateListDataDirectories()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListSecHeaders()
+int CViewRightTL::CreateListSecHeaders()
 {
 	if (!m_pSecHeaders)
 		return -1;
@@ -1874,7 +1873,7 @@ int CViewRightTopLeft::CreateListSecHeaders()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListExport()
+int CViewRightTL::CreateListExport()
 {
 	PCLIBPE_EXPORT_TUP pExportTable { };
 	if (m_pLibpe->GetExportTable(pExportTable) != S_OK)
@@ -1966,7 +1965,7 @@ int CViewRightTopLeft::CreateListExport()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListImport()
+int CViewRightTL::CreateListImport()
 {
 	if (!m_pImportTable)
 		return -1;
@@ -2000,7 +1999,7 @@ int CViewRightTopLeft::CreateListImport()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateTreeResources()
+int CViewRightTL::CreateTreeResources()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
@@ -2106,7 +2105,7 @@ int CViewRightTopLeft::CreateTreeResources()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListException()
+int CViewRightTL::CreateListException()
 {
 	if (!m_pExceptionDir)
 		return -1;
@@ -2122,7 +2121,7 @@ int CViewRightTopLeft::CreateListException()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListSecurity()
+int CViewRightTL::CreateListSecurity()
 {
 	PCLIBPE_SECURITY_VEC pSecurityDir { };
 	if (m_pLibpe->GetSecurityTable(pSecurityDir) != S_OK)
@@ -2153,7 +2152,7 @@ int CViewRightTopLeft::CreateListSecurity()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListRelocation()
+int CViewRightTL::CreateListRelocation()
 {
 	if (!m_pRelocTable)
 		return -1;
@@ -2169,7 +2168,7 @@ int CViewRightTopLeft::CreateListRelocation()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListDebug()
+int CViewRightTL::CreateListDebug()
 {
 	PCLIBPE_DEBUG_VEC pDebugDir { };
 
@@ -2246,7 +2245,7 @@ int CViewRightTopLeft::CreateListDebug()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListTLS()
+int CViewRightTL::CreateListTLS()
 {
 	PCLIBPE_TLS_TUP pTLSDir { };
 	if (m_pLibpe->GetTLSTable(pTLSDir) != S_OK)
@@ -2372,7 +2371,7 @@ int CViewRightTopLeft::CreateListTLS()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListLoadConfigTable()
+int CViewRightTL::CreateListLoadConfigTable()
 {
 	PCLIBPE_LOADCONFIGTABLE_VAR pLCD { };
 	if (m_pLibpe->GetLoadConfigTable(pLCD) != S_OK)
@@ -3108,7 +3107,7 @@ int CViewRightTopLeft::CreateListLoadConfigTable()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListBoundImport()
+int CViewRightTL::CreateListBoundImport()
 {
 	PCLIBPE_BOUNDIMPORT_VEC pBoundImport { };
 
@@ -3150,7 +3149,7 @@ int CViewRightTopLeft::CreateListBoundImport()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListDelayImport()
+int CViewRightTL::CreateListDelayImport()
 {
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
@@ -3207,7 +3206,7 @@ int CViewRightTopLeft::CreateListDelayImport()
 	return 0;
 }
 
-int CViewRightTopLeft::CreateListCOM()
+int CViewRightTL::CreateListCOM()
 {
 	PCLIBPE_COMDESCRIPTOR pCOMDesc { };
 

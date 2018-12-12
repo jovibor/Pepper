@@ -3,14 +3,14 @@
 #include "ChildFrm.h"
 #include "HexCtrl.h"
 #include "ListEx.h"
-#include "PepperTreeCtrl.h"
+#include "TreeEx.h"
 
-class CViewRightBottomLeft : public CScrollView
+class CViewRightBL : public CScrollView
 {
 protected:
-	DECLARE_DYNCREATE(CViewRightBottomLeft)
-	CViewRightBottomLeft() {}
-	virtual ~CViewRightBottomLeft() {}
+	DECLARE_DYNCREATE(CViewRightBL)
+	CViewRightBL() {}
+	virtual ~CViewRightBL() {}
 	void OnInitialUpdate() override;
 	void OnUpdate(CView*, LPARAM, CObject*) override;
 	void OnDraw(CDC* pDC) override; // overridden to draw this view
@@ -30,7 +30,7 @@ private:
 	CListEx m_listImportEntry;
 	CListEx m_listDelayImportEntry;
 	CListEx m_listRelocsEntry;
-	CPepperTreeCtrl m_treeResBottom;
+	CTreeEx m_treeResBottom;
 	DWORD m_dwFileSummary { };
 	CImageList m_imglTreeRes;
 	CWnd* m_pActiveList { };

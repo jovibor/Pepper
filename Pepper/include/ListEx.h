@@ -10,9 +10,9 @@
 #pragma once
 #include <unordered_map>
 
-/********************************************
-* Helper struct for CListEx class.			*
-********************************************/
+/************************************************
+* Helper struct for CListEx class.				*
+************************************************/
 typedef struct LISTEXINFO {
 	COLORREF clrListText { GetSysColor(COLOR_WINDOWTEXT) }; //List text color.
 	COLORREF clrListBk { GetSysColor(COLOR_WINDOW) }; //List Bk color.

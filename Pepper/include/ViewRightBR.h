@@ -3,12 +3,12 @@
 #include "ChildFrm.h"
 #include "ListEx.h"
 
-class CViewRightBottomRight : public CScrollView
+class CViewRightBR : public CScrollView
 {
-	DECLARE_DYNCREATE(CViewRightBottomRight)
+	DECLARE_DYNCREATE(CViewRightBR)
 protected:
-	CViewRightBottomRight() {}
-	virtual ~CViewRightBottomRight() {}
+	CViewRightBR() {}
+	virtual ~CViewRightBR() {}
 	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
 	virtual void OnInitialUpdate();     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);

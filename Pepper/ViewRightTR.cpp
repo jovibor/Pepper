@@ -1,13 +1,13 @@
 #include "stdafx.h"
-#include "ViewRightTopRight.h"
+#include "ViewRightTR.h"
 
-IMPLEMENT_DYNCREATE(CViewRightTopRight, CScrollView)
+IMPLEMENT_DYNCREATE(CViewRightTR, CScrollView)
 
-BEGIN_MESSAGE_MAP(CViewRightTopRight, CScrollView)
+BEGIN_MESSAGE_MAP(CViewRightTR, CScrollView)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-void CViewRightTopRight::OnInitialUpdate()
+void CViewRightTR::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
 
@@ -22,7 +22,7 @@ void CViewRightTopRight::OnInitialUpdate()
 	m_stHexEdit.ShowWindow(SW_HIDE);
 }
 
-void CViewRightTopRight::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
+void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 {
 	if (!m_pChildFrame)
 		return;
@@ -57,11 +57,11 @@ void CViewRightTopRight::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHi
 	m_pChildFrame->m_stSplitterRightTop.RecalcLayout();
 }
 
-void CViewRightTopRight::OnDraw(CDC* pDC)
+void CViewRightTR::OnDraw(CDC* pDC)
 {
 }
 
-void CViewRightTopRight::OnSize(UINT nType, int cx, int cy)
+void CViewRightTR::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 

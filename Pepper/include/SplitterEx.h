@@ -9,12 +9,14 @@
 * without generic views, i.e. splitters that is used as host for other, nested	*
 * splitters. Below is an example:												*																		
 * CSplitterEx mainSpl, leftSpl, rightSpl;										*
-* mainSpl.CreateStatic(this, 1, 2);												*
+* mainSpl.CreateStatic(this, 2, 1);												*
 * leftSpl.CreateStatic(&mainSpl, 1, 2, dwStyle, mainSpl.IdFromRowCol(0, 0));	*
-* rightSpl.CreateStatic(&mainSpl, 1, 2, dwStyle, mainSpl.IdFromRowCol(0, 1));	*
-* mainSpl.AddNested(0, 0, &leftSpl); mainSpl.AddNested(0, 1, &rightSpl);		*
+* rightSpl.CreateStatic(&mainSpl, 1, 2, dwStyle, mainSpl.IdFromRowCol(1, 0));	*
+* mainSpl.AddNested(0, 0, &leftSpl); mainSpl.AddNested(1, 0, &rightSpl);		*
 ********************************************************************************/
 #pragma once
+#include <vector>
+#include <tuple>
 
 class CSplitterEx : public CSplitterWndEx
 {
@@ -26,16 +28,16 @@ public:
 	BOOL CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE sizeInit, CCreateContext* pContext);
 	bool AddNested(int row, int col, CWnd* pNested);
 	bool HideRow(UINT nRow);
-	bool HideCol(UINT nCol);
 	bool ShowRow(UINT nRow);
+	bool HideCol(UINT nCol);
 	bool ShowCol(UINT nCol);
 	virtual void OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect);
 	DECLARE_MESSAGE_MAP()
-private:
+protected:
 	void RecalcPanes();
-	//Vector of tuple of row/col: is visible?
-	std::vector<std::tuple<int, bool>> m_vecRows { };
-	std::vector<std::tuple<int, bool>> m_vecCols { };
+	//Vector of row/col is visible?
+	std::vector<bool> m_vecRows { };
+	std::vector<bool> m_vecCols { };
 	//row, column ,pPane.
 	std::vector<std::tuple<int, int, CWnd*>> m_vecPanes { };
 };

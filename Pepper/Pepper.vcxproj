@@ -230,11 +230,11 @@
     <ClCompile Include="Pepper.cpp" />
     <ClCompile Include="PepperDoc.cpp" />
     <ClCompile Include="ListEx.cpp" />
-    <ClCompile Include="ViewRightBottomLeft.cpp" />
-    <ClCompile Include="ViewRightTopRight.cpp" />
-    <ClCompile Include="ViewRightBottomRight.cpp" />
-    <ClCompile Include="ViewRightTopLeft.cpp" />
-    <ClCompile Include="PepperTreeCtrl.cpp" />
+    <ClCompile Include="ViewRightBL.cpp" />
+    <ClCompile Include="ViewRightTR.cpp" />
+    <ClCompile Include="ViewRightBR.cpp" />
+    <ClCompile Include="ViewRightTL.cpp" />
+    <ClCompile Include="TreeEx.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -265,12 +265,12 @@
     <ClInclude Include="include\PepperDoc.h" />
     <ClInclude Include="include\ListEx.h" />
     <ClInclude Include="include\resource.h" />
-    <ClInclude Include="include\ViewRightBottomLeft.h" />
-    <ClInclude Include="include\ViewRightBottomRight.h" />
-    <ClInclude Include="include\ViewRightTopLeft.h" />
-    <ClInclude Include="include\PepperTreeCtrl.h" />
+    <ClInclude Include="include\ViewRightBL.h" />
+    <ClInclude Include="include\ViewRightBR.h" />
+    <ClInclude Include="include\ViewRightTL.h" />
+    <ClInclude Include="include\TreeEx.h" />
     <ClInclude Include="include\stdafx.h" />
-    <ClInclude Include="include\ViewRightTopRight.h" />
+    <ClInclude Include="include\ViewRightTR.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -3,14 +3,14 @@
 #include "PepperDoc.h"
 #include "HexCtrl.h"
 #include "ListEx.h"
-#include "PepperTreeCtrl.h"
+#include "TreeEx.h"
 
-class CViewRightTopLeft : public CScrollView
+class CViewRightTL : public CScrollView
 {	
 protected:	
-	DECLARE_DYNCREATE(CViewRightTopLeft)
-	CViewRightTopLeft() {}
-	virtual ~CViewRightTopLeft() {}	
+	DECLARE_DYNCREATE(CViewRightTL)
+	CViewRightTL() {}
+	virtual ~CViewRightTL() {}	
 	void OnInitialUpdate() override;
 	void OnUpdate(CView*, LPARAM, CObject*) override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
@@ -49,7 +49,7 @@ private:
 	CListEx m_listDelayImportDir;
 	CListEx m_listTLSDir;
 	CListEx m_listCOMDir;
-	CPepperTreeCtrl m_treeResTop;
+	CTreeEx m_treeResTop;
 	HTREEITEM m_hTreeResDir { };
 	bool m_fFileSummaryShow { true };
 	ULONG m_dwPeStart { };

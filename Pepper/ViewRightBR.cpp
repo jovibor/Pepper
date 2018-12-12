@@ -1,13 +1,13 @@
 #include "stdafx.h"
-#include "ViewRightBottomRight.h"
+#include "ViewRightBR.h"
 
-IMPLEMENT_DYNCREATE(CViewRightBottomRight, CScrollView)
+IMPLEMENT_DYNCREATE(CViewRightBR, CScrollView)
 
-BEGIN_MESSAGE_MAP(CViewRightBottomRight, CScrollView)
+BEGIN_MESSAGE_MAP(CViewRightBR, CScrollView)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-void CViewRightBottomRight::OnInitialUpdate()
+void CViewRightBR::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
 
@@ -27,7 +27,7 @@ void CViewRightBottomRight::OnInitialUpdate()
 	CreateListTLSCallbacks();
 }
 
-void CViewRightBottomRight::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	if (!m_pChildFrame)
 		return;
@@ -55,11 +55,11 @@ void CViewRightBottomRight::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHin
 	m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
 }
 
-void CViewRightBottomRight::OnDraw(CDC* pDC)
+void CViewRightBR::OnDraw(CDC* pDC)
 {
 }
 
-void CViewRightBottomRight::OnSize(UINT nType, int cx, int cy)
+void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 
@@ -67,7 +67,7 @@ void CViewRightBottomRight::OnSize(UINT nType, int cx, int cy)
 		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-int CViewRightBottomRight::CreateListTLSCallbacks()
+int CViewRightBR::CreateListTLSCallbacks()
 {
 	PCLIBPE_TLS_TUP pTLS { };
 	if (m_pLibpe->GetTLSTable(pTLS) != S_OK)
