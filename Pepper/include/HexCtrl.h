@@ -33,7 +33,7 @@ private:
 		void SetData(const std::string& strData);
 		void SetData(const PBYTE pData, DWORD_PTR dwCount);
 		void ClearData();
-		int SetFont(CFont* pFontNew);
+		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT nSize);
 		void SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
 			COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected);
@@ -104,7 +104,7 @@ public:
 	void SetData(const std::string& strData) const;
 	void SetData(const PBYTE pData, DWORD_PTR dwCount) const;
 	void ClearData();
-	int SetFont(CFont* pFontNew) const;
+	void SetFont(const LOGFONT* pLogFontNew) const;
 	void SetFontSize(UINT nSize) const;
 	void SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
 		COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected) const;

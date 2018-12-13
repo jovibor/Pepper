@@ -26,7 +26,7 @@ BOOL CSplitterEx::CreateStatic(CWnd * pParent, int nRows, int nCols, DWORD dwSty
 
 BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE sizeInit, CCreateContext * pContext)
 {
-	if (row >= m_vecRows.size() || col >= m_vecCols.size())
+	if (row >= (int)m_vecRows.size() || col >= (int)m_vecCols.size())
 		return FALSE;
 
 	BOOL ret = CSplitterWnd::CreateView(row, col, pViewClass, sizeInit, pContext);
@@ -39,6 +39,9 @@ BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE 
 
 bool CSplitterEx::AddNested(int row, int col, CWnd* pNested)
 {
+	if (row >= m_vecRows.size() || col >= m_vecCols.size())
+		return false;
+
 	for (auto& i : m_vecPanes)
 		if (std::get<0>(i) == row && std::get<1>(i) == col)
 		{
@@ -53,58 +56,50 @@ bool CSplitterEx::AddNested(int row, int col, CWnd* pNested)
 
 bool CSplitterEx::HideRow(UINT nRow)
 {
-	if (nRow < m_vecRows.size() && m_vecRows.at(nRow))
-	{
-		m_vecRows.at(nRow) = false;
-		m_nRows--;
-		RecalcPanes();
+	if (nRow >= m_vecRows.size() || !m_vecRows.at(nRow))
+		return false;
 
-		return true;
-	}
+	m_vecRows.at(nRow) = false;
+	m_nRows--;
+	RecalcPanes();
 
-	return false;
+	return true;
 }
 
 bool CSplitterEx::ShowRow(UINT nRow)
 {
-	if (nRow < m_vecRows.size() && !m_vecRows.at(nRow))
-	{
-		m_vecRows.at(nRow) = true;
-		m_nRows++;
-		RecalcPanes();
+	if (nRow >= m_vecRows.size() || m_vecRows.at(nRow))
+		return false;
 
-		return true;
-	}
+	m_vecRows.at(nRow) = true;
+	m_nRows++;
+	RecalcPanes();
 
-	return false;
+	return true;
 }
 
 bool CSplitterEx::HideCol(UINT nCol)
 {
-	if (nCol < m_vecCols.size() && m_vecCols.at(nCol))
-	{
-		m_vecCols.at(nCol) = false;
-		m_nCols--;
-		RecalcPanes();
+	if (nCol >= m_vecCols.size() || !m_vecCols.at(nCol))
+		return false;
 
-		return true;
-	}
+	m_vecCols.at(nCol) = false;
+	m_nCols--;
+	RecalcPanes();
 
-	return false;
+	return true;
 }
 
 bool CSplitterEx::ShowCol(UINT nCol)
 {
-	if (nCol < m_vecCols.size() && !m_vecCols.at(nCol))
-	{
-		m_vecCols.at(nCol) = true;
-		m_nCols++;
-		RecalcPanes();
+	if (nCol >= m_vecCols.size() || m_vecCols.at(nCol))
+		return false;
 
-		return true;
-	}
+	m_vecCols.at(nCol) = true;
+	m_nCols++;
+	RecalcPanes();
 
-	return false;
+	return true;
 }
 
 void CSplitterEx::RecalcPanes()

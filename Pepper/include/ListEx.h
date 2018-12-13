@@ -20,15 +20,15 @@ typedef struct LISTEXINFO {
 	DWORD dwListGridWidth { 1 }; //Width of the list's grid.
 	COLORREF clrListTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) }; //Selected item text color.
 	COLORREF clrListBkSelected { GetSysColor(COLOR_HIGHLIGHT) }; //Selected item bk color.
-	COLORREF clrListTooltipText { GetSysColor(COLOR_INFOTEXT) }; //Tooltip window text color.
-	COLORREF clrListTooltipBk { GetSysColor(COLOR_INFOBK) }; //Tooltip window bk color.
-	COLORREF clrListSubitemWithTooltipText = { GetSysColor(COLOR_WINDOWTEXT) }; //Text color of item that has tooltip.
-	COLORREF clrListSubitemWithTooltipBk = { RGB(170, 170, 230) }; //Bk color of item that has tooltip.
-	CFont* pListFont { nullptr }; //List font, nullptr=default.
+	COLORREF clrListTextTooltip { GetSysColor(COLOR_INFOTEXT) }; //Tooltip window text color.
+	COLORREF clrListBkTooltip { GetSysColor(COLOR_INFOBK) }; //Tooltip window bk color.
+	COLORREF clrListTextCellTt { GetSysColor(COLOR_WINDOWTEXT) }; //Text color of cell that has tooltip.
+	COLORREF clrListBkCellTt { RGB(170, 170, 230) }; //Bk color of cell that has tooltip.
+	const LOGFONT* pListLogFont { nullptr }; //List font, nullptr=default.
 	COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) }; //List header text color.
 	COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) }; //List header bk color.
 	DWORD dwHeaderHeight { 19 }; //List header height.
-	CFont* pHeaderFont { nullptr }; //List header font, nullptr=default.
+	const LOGFONT* pHeaderLogFont { nullptr }; //List header font, nullptr=default.
 } *PLISTEXINFO;
 
 /********************************************
@@ -45,34 +45,39 @@ private:
 	public:
 		void SetHeight(DWORD dwHeight);
 		void SetColor(COLORREF clrText, COLORREF clrBk);
-		int SetFont(CFont* pFontNew);
+		void SetFont(const LOGFONT* pFontNew);
 		CListExHeader();
 		virtual ~CListExHeader() {}
 	protected:
 		afx_msg void OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted) override;
 		afx_msg LRESULT OnLayout(WPARAM wParam, LPARAM lParam);
 		DECLARE_MESSAGE_MAP()
-	private:
+
 		CFont m_fontHdr;
-		COLORREF m_clrHdr { GetSysColor(COLOR_WINDOW) };
 		COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
+		COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) };
 		HDITEMW m_hdItem { }; //For drawing.
 		WCHAR m_strHeaderText[MAX_PATH] { };
 		DWORD m_dwHeaderHeight { 19 }; //Standard (default) height.
 	};
+	/********************************************
+	* End of CListExHeader class definition.	*
+	********************************************/
+	
 	DECLARE_DYNAMIC(CListEx)
-	CListEx();
-	virtual ~CListEx() { }
+	CListEx() {}
+	virtual ~CListEx() {}
 	BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pInfo = nullptr);
 	CListExHeader& GetHeaderCtrl() override { return m_stListHeader; }
-	int SetFont(CFont* pFontNew);
+	void SetFont(const LOGFONT* pLogFontNew);
 	//To remove tooltip from specific subitem just set it again with empty (L"") string.
 	void SetItemTooltip(int nItem, int nSubitem, const std::wstring& strTooltip, const std::wstring& strCaption = { });
-	void SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk, COLORREF clrTextItemTt = GetSysColor(COLOR_WINDOWTEXT),
-		COLORREF clrBkItemTt = RGB(170, 170, 230));
+	void SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk, 
+		COLORREF clrTextCellTt = GetSysColor(COLOR_WINDOWTEXT), //Text color of cell that has tooltip.
+		COLORREF clrBkCellTt = RGB(170, 170, 230)); //Bk color of cell that has tooltip.
 	void SetHeaderColor(COLORREF clrHdrText, COLORREF clrHdrBk);
 	void SetHeaderHeight(DWORD dwHeight);
-	int SetHeaderFont(CFont* pFontNew);
+	void SetHeaderFont(const LOGFONT* pLogFontNew);
 	DECLARE_MESSAGE_MAP()
 private:
 	CListExHeader m_stListHeader;
@@ -92,13 +97,10 @@ private:
 	DWORD m_dwGridWidth { 1 };
 	COLORREF m_clrTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) };
 	COLORREF m_clrBkSelected { GetSysColor(COLOR_HIGHLIGHT) };
-	COLORREF m_clrTooltipText { GetSysColor(COLOR_INFOTEXT) };
-	COLORREF m_clrTooltipBk { GetSysColor(COLOR_INFOBK) };
-	COLORREF m_clrTextItemTt { GetSysColor(COLOR_WINDOWTEXT) };
-	COLORREF m_clrBkItemTt { RGB(170, 170, 230) };
-	COLORREF m_clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) };
-	COLORREF m_clrHeaderBk { GetSysColor(COLOR_WINDOW) };
-	DWORD m_dwHeaderHeight { 19 };
+	COLORREF m_clrTextTooltip { GetSysColor(COLOR_INFOTEXT) };
+	COLORREF m_clrBkTooltip { GetSysColor(COLOR_INFOBK) };
+	COLORREF m_clrTextSubitemTt { GetSysColor(COLOR_WINDOWTEXT) };
+	COLORREF m_clrBkSubitemTt { RGB(170, 170, 230) };
 	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
 
 	void InitHeader() override;
@@ -116,6 +118,7 @@ private:
 	afx_msg void OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMIS);
 };
 
 constexpr auto ID_TIMER_TOOLTIP = 0x01;

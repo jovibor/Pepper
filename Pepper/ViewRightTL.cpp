@@ -58,11 +58,19 @@ void CViewRightTL::OnInitialUpdate()
 	m_pLibpe->GetExceptionTable(m_pExceptionDir);
 	m_pLibpe->GetRelocationTable(m_pRelocTable);
 
-	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
-	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
+	m_stListInfo.clrListTextTooltip = RGB(255, 255, 255);
+	m_stListInfo.clrListBkTooltip = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
 	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
 	m_stListInfo.dwHeaderHeight = 39;
+
+	m_lf.lfHeight = 16;
+	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
+	m_stListInfo.pListLogFont = &m_lf;
+	m_hdrlf.lfHeight = 17;
+	m_hdrlf.lfWeight = FW_BOLD;
+	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
+	m_stListInfo.pHeaderLogFont = &m_hdrlf;
 
 	CreateListDOSHeader();
 	CreateListRichHeader();
@@ -416,7 +424,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	const LPNMITEMACTIVATE pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 	if (pNMI->iItem == -1)
 		return TRUE;
-
+	
 	switch (pNMI->hdr.idFrom)
 	{
 	case IDC_LIST_IMPORT:
@@ -492,7 +500,7 @@ int CViewRightTL::CreateListDOSHeader()
 	if (m_pLibpe->GetMSDOSHeader(pDosHeader) != S_OK)
 		return -1;
 
-	m_listDOSHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DOSHEADER, &m_stListInfo);
+	m_listDOSHeader.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DOSHEADER, &m_stListInfo);
 	m_listDOSHeader.ShowWindow(SW_HIDE);
 	m_listDOSHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDOSHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
@@ -763,7 +771,7 @@ int CViewRightTL::CreateListRichHeader()
 	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK)
 		return -1;
 
-	m_listRichHdr.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_RICHHEADER, &m_stListInfo);
+	m_listRichHdr.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_RICHHEADER, &m_stListInfo);
 	m_listRichHdr.ShowWindow(SW_HIDE);
 	m_listRichHdr.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRichHdr.InsertColumn(0, L"\u2116", LVCFMT_CENTER, 35);
@@ -797,7 +805,7 @@ int CViewRightTL::CreateListNTHeader()
 	if (m_pLibpe->GetNTHeader(pVarNTHdr) != S_OK)
 		return -1;
 
-	m_listNTHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_NTHEADER, &m_stListInfo);
+	m_listNTHeader.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_NTHEADER, &m_stListInfo);
 	m_listNTHeader.ShowWindow(SW_HIDE);
 	m_listNTHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listNTHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 100);
@@ -848,7 +856,7 @@ int CViewRightTL::CreateListFileHeader()
 	if (m_pLibpe->GetFileHeader(pFileHeader) != S_OK)
 		return -1;
 
-	m_listFileHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_FILEHEADER, &m_stListInfo);
+	m_listFileHeader.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_FILEHEADER, &m_stListInfo);
 
 	m_listFileHeader.ShowWindow(SW_HIDE);
 	m_listFileHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
@@ -994,7 +1002,7 @@ int CViewRightTL::CreateListOptHeader()
 	if (m_pLibpe->GetOptionalHeader(pOptionalHdr) != S_OK)
 		return -1;
 
-	m_listOptHeader.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_OPTIONALHEADER, &m_stListInfo);
+	m_listOptHeader.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_OPTIONALHEADER, &m_stListInfo);
 	m_listOptHeader.ShowWindow(SW_HIDE);
 	m_listOptHeader.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
@@ -1569,7 +1577,7 @@ int CViewRightTL::CreateListDataDirectories()
 	if (m_pLibpe->GetDataDirectories(pLibPeDataDirs) != S_OK)
 		return -1;
 
-	m_listDataDirs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DATADIRECTORIES, &m_stListInfo);
+	m_listDataDirs.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DATADIRECTORIES, &m_stListInfo);
 	m_listDataDirs.ShowWindow(SW_HIDE);
 	m_listDataDirs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDataDirs.InsertColumn(0, L"Name", LVCFMT_CENTER, 200);
@@ -1598,7 +1606,6 @@ int CViewRightTL::CreateListDataDirectories()
 	m_listDataDirs.SetItemText(listindex, 3, str);
 	swprintf_s(str, 9, L"%.8S", std::get<1>(pLibPeDataDirs->at(IMAGE_DIRECTORY_ENTRY_EXPORT)).c_str());
 	m_listDataDirs.SetItemText(listindex, 4, str);
-
 	pDataDirs = &std::get<0>(pLibPeDataDirs->at(IMAGE_DIRECTORY_ENTRY_IMPORT));
 
 	dwDataDirsOffset += sizeof(IMAGE_DATA_DIRECTORY);
@@ -1791,7 +1798,7 @@ int CViewRightTL::CreateListSecHeaders()
 	if (!m_pSecHeaders)
 		return -1;
 
-	m_listSecHeaders.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_SECHEADERS, &m_stListInfo);
+	m_listSecHeaders.Create(WS_CHILD | WS_VISIBLE | LVS_OWNERDATA, CRect(0, 0, 0, 0), this, IDC_LIST_SECHEADERS, &m_stListInfo);
 	m_listSecHeaders.ShowWindow(SW_HIDE);
 	m_listSecHeaders.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listSecHeaders.InsertColumn(0, L"Name", LVCFMT_CENTER, 150);
@@ -1883,7 +1890,7 @@ int CViewRightTL::CreateListExport()
 	int listindex = 0;
 	const IMAGE_EXPORT_DIRECTORY* pExportDir = &std::get<0>(*pExportTable);
 
-	m_listExportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT, &m_stListInfo);
+	m_listExportDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT, &m_stListInfo);
 	m_listExportDir.ShowWindow(SW_HIDE);
 	m_listExportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 250);
@@ -1970,7 +1977,7 @@ int CViewRightTL::CreateListImport()
 	if (!m_pImportTable)
 		return -1;
 
-	m_listImport.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT, &m_stListInfo);
+	m_listImport.Create(WS_CHILD | WS_VISIBLE | LVS_OWNERDATA, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT, &m_stListInfo);
 	m_listImport.ShowWindow(SW_HIDE);
 	m_listImport.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImport.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 330);
@@ -2110,7 +2117,7 @@ int CViewRightTL::CreateListException()
 	if (!m_pExceptionDir)
 		return -1;
 
-	m_listExceptionDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_EXCEPTION, &m_stListInfo);
+	m_listExceptionDir.Create(WS_CHILD | WS_VISIBLE | LVS_OWNERDATA, CRect(0, 0, 0, 0), this, IDC_LIST_EXCEPTION, &m_stListInfo);
 	m_listExceptionDir.ShowWindow(SW_HIDE);
 	m_listExceptionDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExceptionDir.InsertColumn(0, L"BeginAddress", LVCFMT_CENTER, 100);
@@ -2127,7 +2134,7 @@ int CViewRightTL::CreateListSecurity()
 	if (m_pLibpe->GetSecurityTable(pSecurityDir) != S_OK)
 		return -1;
 
-	m_listSecurityDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_SECURITY, &m_stListInfo);
+	m_listSecurityDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_SECURITY, &m_stListInfo);
 	m_listSecurityDir.ShowWindow(SW_HIDE);
 	m_listSecurityDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listSecurityDir.InsertColumn(0, L"dwLength", LVCFMT_CENTER, 100);
@@ -2157,7 +2164,7 @@ int CViewRightTL::CreateListRelocation()
 	if (!m_pRelocTable)
 		return -1;
 
-	m_listRelocDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_OWNERDATA | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS, &m_stListInfo);
+	m_listRelocDir.Create(WS_CHILD | WS_VISIBLE | LVS_OWNERDATA, CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS, &m_stListInfo);
 	m_listRelocDir.ShowWindow(SW_HIDE);
 	m_listRelocDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocDir.InsertColumn(0, L"Virtual Address", LVCFMT_CENTER, 115);
@@ -2175,7 +2182,7 @@ int CViewRightTL::CreateListDebug()
 	if (m_pLibpe->GetDebugTable(pDebugDir) != S_OK)
 		return -1;
 
-	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DEBUG, &m_stListInfo);
+	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DEBUG, &m_stListInfo);
 	m_listDebugDir.ShowWindow(SW_HIDE);
 	m_listDebugDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDebugDir.InsertColumn(0, L"Characteristics", LVCFMT_CENTER, 115);
@@ -2251,7 +2258,7 @@ int CViewRightTL::CreateListTLS()
 	if (m_pLibpe->GetTLSTable(pTLSDir) != S_OK)
 		return -1;
 
-	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_TLS, &m_stListInfo);
+	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_TLS, &m_stListInfo);
 	m_listTLSDir.ShowWindow(SW_HIDE);
 	m_listTLSDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listTLSDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 250);
@@ -2381,7 +2388,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 	if (m_pLibpe->GetDataDirectories(pDataDirs) != S_OK)
 		return -1;
 
-	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_LOADCONFIG, &m_stListInfo);
+	m_listLoadConfigDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_LOADCONFIG, &m_stListInfo);
 	m_listLoadConfigDir.ShowWindow(SW_HIDE);
 	m_listLoadConfigDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listLoadConfigDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 330);
@@ -3114,7 +3121,7 @@ int CViewRightTL::CreateListBoundImport()
 	if (m_pLibpe->GetBoundImportTable(pBoundImport) != S_OK)
 		return -1;
 
-	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
+	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
 	m_listBoundImportDir.ShowWindow(SW_HIDE);
 	m_listBoundImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listBoundImportDir.InsertColumn(0, L"Module Name", LVCFMT_CENTER, 290);
@@ -3156,7 +3163,7 @@ int CViewRightTL::CreateListDelayImport()
 	if (m_pLibpe->GetDelayImportTable(pDelayImport) != S_OK)
 		return -1;
 
-	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
+	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
 	m_listDelayImportDir.ShowWindow(SW_HIDE);
 	m_listDelayImportDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportDir.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
@@ -3213,7 +3220,7 @@ int CViewRightTL::CreateListCOM()
 	if (m_pLibpe->GetCOMDescriptorTable(pCOMDesc) != S_OK)
 		return -1;
 
-	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
+	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
 	m_listCOMDir.ShowWindow(SW_HIDE);
 	m_listCOMDir.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listCOMDir.InsertColumn(0, L"Name", LVCFMT_CENTER, 300);

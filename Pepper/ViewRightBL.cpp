@@ -30,13 +30,21 @@ void CViewRightBL::OnInitialUpdate()
 	//Hex control for SecurityDir and TLSdir.
 	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_BOTTOM_LEFT);
 	m_stHexEdit.ShowWindow(SW_HIDE);
-	
-	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
-	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
+
+	m_stListInfo.clrListTextTooltip = RGB(255, 255, 255);
+	m_stListInfo.clrListBkTooltip = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
 	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
 	m_stListInfo.dwHeaderHeight = 35;
 
+	m_lf.lfHeight = 16;
+	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
+	m_stListInfo.pListLogFont = &m_lf;
+	m_hdrlf.lfHeight = 17;
+	m_hdrlf.lfWeight = FW_BOLD;
+	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
+	m_stListInfo.pHeaderLogFont = &m_hdrlf;
+	
 	CreateListExportFuncs();
 	CreateTreeResources();
 }
@@ -182,7 +190,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 		return -1;
 
 	m_listImportEntry.DestroyWindow();
-	m_listImportEntry.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
+	m_listImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
 
 	m_listImportEntry.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportEntry.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 175);
@@ -227,7 +235,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 		return -1;
 
 	m_listDelayImportEntry.DestroyWindow();
-	m_listDelayImportEntry.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS, &m_stListInfo);
+	m_listDelayImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS, &m_stListInfo);
 
 	m_listDelayImportEntry.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportEntry.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
@@ -286,7 +294,7 @@ int CViewRightBL::CreateListExportFuncs()
 	if (m_pLibpe->GetExportTable(pExportTable) != S_OK)
 		return -1;
 
-	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, &m_stListInfo);
+	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, &m_stListInfo);
 	m_listExportFuncs.ShowWindow(SW_HIDE);
 	m_listExportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportFuncs.InsertColumn(0, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
@@ -327,7 +335,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 
 	m_listRelocsEntry.DestroyWindow();
 
-	m_listRelocsEntry.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, &m_stListInfo);
+	m_listRelocsEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, &m_stListInfo);
 	m_listRelocsEntry.ShowWindow(SW_HIDE);
 	m_listRelocsEntry.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocsEntry.InsertColumn(0, L"Reloc type", LVCFMT_CENTER, 250);

@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include "libpe.h"
 using namespace libpe;
 

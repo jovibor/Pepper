@@ -35,6 +35,7 @@ private:
 	CImageList m_imglTreeRes;
 	CWnd* m_pActiveList { };
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
+	LOGFONT m_lf { }, m_hdrlf { };
 
 	int CreateListImportEntry(DWORD dwEntry);
 	int CreateListDelayImportEntry(DWORD dwEntry);

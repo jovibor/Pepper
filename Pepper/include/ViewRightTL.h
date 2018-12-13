@@ -6,11 +6,11 @@
 #include "TreeEx.h"
 
 class CViewRightTL : public CScrollView
-{	
-protected:	
+{
+protected:
 	DECLARE_DYNCREATE(CViewRightTL)
 	CViewRightTL() {}
-	virtual ~CViewRightTL() {}	
+	virtual ~CViewRightTL() {}
 	void OnInitialUpdate() override;
 	void OnUpdate(CView*, LPARAM, CObject*) override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
@@ -63,6 +63,7 @@ private:
 	//Used in treeCtrl.SetItemData(...), so that we associate tree item
 	//with corresponding Resource index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
+	LOGFONT m_lf { }, m_hdrlf { };
 
 	int CreateListDOSHeader();
 	int CreateListRichHeader();

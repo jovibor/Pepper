@@ -31,7 +31,6 @@ public:
 	bool ShowRow(UINT nRow);
 	bool HideCol(UINT nCol);
 	bool ShowCol(UINT nCol);
-	virtual void OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect);
 	DECLARE_MESSAGE_MAP()
 protected:
 	void RecalcPanes();
@@ -40,4 +39,6 @@ protected:
 	std::vector<bool> m_vecCols { };
 	//row, column ,pPane.
 	std::vector<std::tuple<int, int, CWnd*>> m_vecPanes { };
+private:
+	virtual void OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect);
 };

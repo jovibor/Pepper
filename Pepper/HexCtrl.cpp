@@ -9,13 +9,14 @@
 *****************************************************************************/
 #include "stdafx.h"
 #include "HexCtrl.h"
+#include "strsafe.h"
 
 /************************************************************************
 * CHexView implementation.												*
 ************************************************************************/
 
 /********************************************************************
-* Below is the custom implementation of MFC IMPLEMENT_DYNCREATE()	* 
+* Below is the custom implementation of MFC IMPLEMENT_DYNCREATE()	*
 * macro, which doesn't work with nested classes by default.			*
 ********************************************************************/
 CObject* PASCAL CHexCtrl::CHexView::CreateObject()
@@ -28,7 +29,7 @@ CRuntimeClass* PASCAL CHexCtrl::CHexView::_GetBaseClass()
 	return RUNTIME_CLASS(CScrollView);
 }
 
-AFX_COMDAT const CRuntimeClass CHexCtrl::CHexView::classCHexView = {
+AFX_COMDAT const CRuntimeClass CHexCtrl::CHexView::classCHexView {
 	"CHexView", sizeof(class CHexCtrl::CHexView), 0xFFFF, CHexCtrl::CHexView::CreateObject,
 	&CHexCtrl::CHexView::_GetBaseClass, NULL, NULL };
 
@@ -61,14 +62,116 @@ END_MESSAGE_MAP()
 
 BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCreateContext* pContext, CFont* pFont)
 {
-	SetFont(pFont);
+	LOGFONT lf { };
+	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+	lf.lfHeight = 18;
+	if (!m_fontHexView.CreateFontIndirectW(&lf))
+	{
+		NONCLIENTMETRICSW ncm;
+		ncm.cbSize = sizeof(NONCLIENTMETRICS);
+		SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+		m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
+	}
 
 	m_menuPopup.CreatePopupMenu();
 	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_HEX, L"Copy as Hex...");
 	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_HEX_FORMATTED, L"Copy as Formatted Hex...		Ctrl+C");
 	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_ASCII, L"Copy as Ascii...");
 
+	Recalc();
+
 	return CScrollView::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID, pContext);
+}
+
+void CHexCtrl::CHexView::SetData(const std::vector<std::byte>& vecData)
+{
+	m_pRawData = (const unsigned char*)vecData.data();
+	m_dwRawDataCount = vecData.size();
+	m_fSelected = false;
+	m_stScrollInfo.nPos = 0;
+	SetScrollInfo(SB_VERT, &m_stScrollInfo);
+	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
+	Recalc();
+}
+
+void CHexCtrl::CHexView::SetData(const std::string& strData)
+{
+	m_pRawData = (const unsigned char*)strData.data();
+	m_dwRawDataCount = strData.length();
+	m_fSelected = false;
+	m_stScrollInfo.nPos = 0;
+	SetScrollInfo(SB_VERT, &m_stScrollInfo);
+	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
+	Recalc();
+}
+
+void CHexCtrl::CHexView::SetData(const PBYTE pData, DWORD_PTR dwCount)
+{
+	m_pRawData = pData;
+	m_dwRawDataCount = dwCount;
+	m_fSelected = false;
+	m_stScrollInfo.nPos = 0;
+	SetScrollInfo(SB_VERT, &m_stScrollInfo);
+	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
+	Recalc();
+}
+
+void CHexCtrl::CHexView::ClearData()
+{
+	m_dwRawDataCount = 0;
+	m_pRawData = nullptr;
+	m_fSelected = false;
+	m_stScrollInfo.nPos = 0;
+	SetScrollInfo(SB_VERT, &m_stScrollInfo);
+	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
+}
+
+void CHexCtrl::CHexView::SetFont(const LOGFONT* pLogFontNew)
+{
+	if (!pLogFontNew)
+		return;
+
+	m_fontHexView.DeleteObject();
+	m_fontHexView.CreateFontIndirectW(pLogFontNew);
+
+	Recalc();
+}
+
+void CHexCtrl::CHexView::SetFontSize(UINT nSize)
+{
+	//Prevent font size from being too small or too big.
+	if (nSize < 7 || nSize > 75)
+		return;
+
+	LOGFONT lf;
+	m_fontHexView.GetLogFont(&lf);
+	lf.lfHeight = nSize;
+
+	m_fontHexView.DeleteObject();
+	m_fontHexView.CreateFontIndirectW(&lf);
+
+	Recalc();
+}
+
+void CHexCtrl::CHexView::SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
+	COLORREF clrTextSelected, COLORREF clrTextBk, COLORREF clrTextBkSelected)
+{
+	m_clrTextHex = clrTextHex;
+	m_clrTextOffset = clrTextOffset;
+	m_clrTextSelected = clrTextSelected;
+	m_clrTextBk = clrTextBk;
+	m_clrTextBkSelected;
+
+	Invalidate();
+	UpdateWindow();
+}
+
+UINT CHexCtrl::CHexView::GetFontSize()
+{
+	LOGFONT lf;
+	m_fontHexView.GetLogFont(&lf);
+
+	return lf.lfHeight;
 }
 
 void CHexCtrl::CHexView::OnInitialUpdate()
@@ -577,113 +680,6 @@ int CHexCtrl::CHexView::CopyToClipboard(UINT nType)
 	return 1;
 }
 
-void CHexCtrl::CHexView::SetData(const std::vector<std::byte>& vecData)
-{
-	m_pRawData = (const unsigned char*)vecData.data();
-	m_dwRawDataCount = vecData.size();
-	m_fSelected = false;
-	m_stScrollInfo.nPos = 0;
-	SetScrollInfo(SB_VERT, &m_stScrollInfo);
-	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
-	Recalc();
-}
-
-void CHexCtrl::CHexView::SetData(const std::string& strData)
-{
-	m_pRawData = (const unsigned char*)strData.data();
-	m_dwRawDataCount = strData.length();
-	m_fSelected = false;
-	m_stScrollInfo.nPos = 0;
-	SetScrollInfo(SB_VERT, &m_stScrollInfo);
-	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
-	Recalc();
-}
-
-void CHexCtrl::CHexView::SetData(const PBYTE pData, DWORD_PTR dwCount)
-{
-	m_pRawData = pData;
-	m_dwRawDataCount = dwCount;
-	m_fSelected = false;
-	m_stScrollInfo.nPos = 0;
-	SetScrollInfo(SB_VERT, &m_stScrollInfo);
-	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
-	Recalc();
-}
-
-void CHexCtrl::CHexView::ClearData()
-{
-	m_pRawData = nullptr;
-	m_dwRawDataCount = 0;
-	m_fSelected = false;
-	m_stScrollInfo.nPos = 0;
-	SetScrollInfo(SB_VERT, &m_stScrollInfo);
-	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
-}
-
-int CHexCtrl::CHexView::SetFont(CFont *pFontNew)
-{
-	//If pFontNew is nullptr then assigning default font.
-	if (!pFontNew)
-	{
-		LOGFONT lf { };
-		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
-		lf.lfHeight = 18;
-		m_fontHexView.DeleteObject();
-		if (!m_fontHexView.CreateFontIndirectW(&lf))
-		{
-			StringCchCopyW(lf.lfFaceName, 16, L"Times New Roman");
-			m_fontHexView.CreateFontIndirectW(&lf);
-		}
-	}
-	else
-	{
-		LOGFONT lf { };
-		pFontNew->GetLogFont(&lf);
-		m_fontHexView.DeleteObject();
-		m_fontHexView.CreateFontIndirectW(&lf);
-	}
-	Recalc();
-
-	return 0;
-}
-
-void CHexCtrl::CHexView::SetFontSize(UINT nSize)
-{
-	//Prevent font size from being too small or too big.
-	if (nSize < 7 || nSize > 75)
-		return;
-
-	LOGFONT lf;
-	m_fontHexView.GetLogFont(&lf);
-	lf.lfHeight = nSize;
-
-	m_fontHexView.DeleteObject();
-	m_fontHexView.CreateFontIndirectW(&lf);
-
-	Recalc();
-}
-
-void CHexCtrl::CHexView::SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
-	COLORREF clrTextSelected, COLORREF clrTextBk, COLORREF clrTextBkSelected)
-{
-	m_clrTextHex = clrTextHex;
-	m_clrTextOffset = clrTextOffset;
-	m_clrTextSelected = clrTextSelected;
-	m_clrTextBk = clrTextBk;
-	m_clrTextBkSelected;
-
-	Invalidate();
-	UpdateWindow();
-}
-
-UINT CHexCtrl::CHexView::GetFontSize()
-{
-	LOGFONT lf;
-	m_fontHexView.GetLogFont(&lf);
-
-	return lf.lfHeight;
-}
-
 void CHexCtrl::CHexView::Recalc()
 {
 	GetClientRect(&m_rcClient);
@@ -808,10 +804,10 @@ void CHexCtrl::ClearData()
 		GetActiveView()->ClearData();
 }
 
-int CHexCtrl::SetFont(CFont* pFontNew) const
+void CHexCtrl::SetFont(const LOGFONT* pLogFontNew) const
 {
 	if (GetActiveView())
-		return GetActiveView()->SetFont(pFontNew);
+		return GetActiveView()->SetFont(pLogFontNew);
 }
 
 void CHexCtrl::SetFontSize(UINT nSize) const

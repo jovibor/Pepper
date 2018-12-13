@@ -22,4 +22,5 @@ private:
 	LISTEXINFO m_stListInfo;
 	CListEx m_stListTLSCallbacks;
 	int CreateListTLSCallbacks();
+	LOGFONT m_lf { }, m_hdrlf { };
 };

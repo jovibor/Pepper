@@ -18,11 +18,19 @@ void CViewRightBR::OnInitialUpdate()
 	if (!m_pLibpe)
 		return;
 
-	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
-	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
+	m_stListInfo.clrListTextTooltip = RGB(255, 255, 255);
+	m_stListInfo.clrListBkTooltip = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
 	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
 	m_stListInfo.dwHeaderHeight = 35;
+
+	m_lf.lfHeight = 16;
+	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
+	m_stListInfo.pListLogFont = &m_lf;
+	m_hdrlf.lfHeight = 17;
+	m_hdrlf.lfWeight = FW_BOLD;
+	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
+	m_stListInfo.pHeaderLogFont = &m_hdrlf;
 
 	CreateListTLSCallbacks();
 }
@@ -73,7 +81,7 @@ int CViewRightBR::CreateListTLSCallbacks()
 	if (m_pLibpe->GetTLSTable(pTLS) != S_OK)
 		return -1;
 
-	m_stListTLSCallbacks.Create(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | LVS_REPORT, CRect(0, 0, 0, 0), this, IDC_LIST_TLS_CALLBACKS, &m_stListInfo);
+	m_stListTLSCallbacks.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_TLS_CALLBACKS, &m_stListInfo);
 	m_stListTLSCallbacks.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_stListTLSCallbacks.InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
 
