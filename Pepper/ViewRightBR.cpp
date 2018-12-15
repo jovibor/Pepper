@@ -39,6 +39,10 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	if (!m_pChildFrame)
 		return;
+	if (LOWORD(lHint) == IDC_HEX_RIGHT_TOP_RIGHT)
+		return;
+
+	m_fDrawRes = false;
 
 	if (m_pActiveList)
 		m_pActiveList->ShowWindow(SW_HIDE);
@@ -55,6 +59,15 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width() / 2, 0);
 		break;
+	case IDC_TREE_RESOURCE:
+		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
+		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width() / 2, 0);
+		break;
+	case IDC_SHOW_RESOURCE:
+		ShowResource((std::vector<std::byte>*)pHint, HIWORD(lHint));
+		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
+		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width() / 2, 0);
+		break;
 	default:
 		m_pChildFrame->m_stSplitterRightBottom.HideCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width(), 0);
@@ -63,8 +76,133 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
 }
 
+int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
+{
+	HICON hIcon;
+	ICONINFO iconInfo;
+	m_imgRes.DeleteImageList();
+
+	switch (uResType)
+	{
+	case 1: //CURSOR
+	{
+		hIcon = CreateIconFromResourceEx((PBYTE)pData->data(), pData->size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+		if (!hIcon)
+			return -1;
+		if (!GetIconInfo(hIcon, &iconInfo))
+			return -1;
+		if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
+			return -1;
+
+		m_imgRes.Create(m_stBmp.bmWidth, m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
+		m_imgRes.SetBkColor(RGB(255, 255, 255));
+		if (m_imgRes.Add(hIcon) == -1)
+			return -1;
+
+		SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmHeight));
+
+		m_fDrawRes = true;
+		DeleteObject(iconInfo.hbmColor);
+		DeleteObject(iconInfo.hbmMask);
+		DestroyIcon(hIcon);
+		break;
+	}
+	case 2: //BITMAP
+	{
+		BITMAPINFO* pDIBInfo = (BITMAPINFO*)pData->data();
+		int iColors = pDIBInfo->bmiHeader.biClrUsed ? pDIBInfo->bmiHeader.biClrUsed : 1 << pDIBInfo->bmiHeader.biBitCount;
+		LPVOID  pDIBBits;
+
+		if (pDIBInfo->bmiHeader.biBitCount > 8)
+			pDIBBits = (LPVOID)((PDWORD)(pDIBInfo->bmiColors + pDIBInfo->bmiHeader.biClrUsed) +
+			((pDIBInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
+		else
+			pDIBBits = (LPVOID)(pDIBInfo->bmiColors + iColors);
+
+		HDC hDC = ::GetDC(m_hWnd);
+		HBITMAP hBitmap = CreateDIBitmap(hDC, &pDIBInfo->bmiHeader, CBM_INIT, pDIBBits, pDIBInfo, DIB_RGB_COLORS);
+		if (!hBitmap)
+			return -1;
+		if (!GetObjectW(hBitmap, sizeof(BITMAP), &m_stBmp))
+			return -1;
+
+		CBitmap bmp;
+		if (!bmp.Attach(hBitmap))
+			return -1;
+		m_imgRes.Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
+		if (m_imgRes.Add(&bmp, nullptr) == -1)
+			return -1;
+		m_fDrawRes = true;
+
+		SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmHeight));
+
+		bmp.DeleteObject();
+		::ReleaseDC(m_hWnd, hDC);
+		break;
+	}
+	case 3: //ICON
+	{
+		hIcon = CreateIconFromResourceEx((PBYTE)pData->data(), pData->size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+		if (!hIcon)
+			return -1;
+		if (!GetIconInfo(hIcon, &iconInfo))
+			return -1;
+		if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
+			return -1;
+		m_imgRes.Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
+		m_imgRes.SetBkColor(RGB(255, 255, 255));
+		if (m_imgRes.Add(hIcon) == -1)
+			return -1;
+
+		SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmHeight));
+
+		m_fDrawRes = true;
+		DeleteObject(iconInfo.hbmColor);
+		DeleteObject(iconInfo.hbmMask);
+		DestroyIcon(hIcon);
+		break;
+	}
+	case 4: //MENU
+		break;
+	case 5: //DIALOG
+		break;
+	case 12: //GROUP_CURSOR
+		break;
+	case 14: //GROUP_ICON
+		break;
+	}
+	Invalidate();
+	UpdateWindow();
+
+	return 1;
+}
+
 void CViewRightBR::OnDraw(CDC* pDC)
 {
+	if (!m_fDrawRes)
+		return;
+
+	CRect rect;	
+	CPoint ptDrawAt;
+	int x, y;
+
+	pDC->GetClipBox(&rect);
+	pDC->FillSolidRect(rect, RGB(230, 230, 230));
+	GetClientRect(&rect);
+	CSize size = GetTotalSize();
+	//Draw at center independing of scrolls.
+	if (size.cx > rect.Width())
+		x = size.cx / 2 - (m_stBmp.bmWidth / 2);
+	else
+		x = rect.Width() / 2 - (m_stBmp.bmWidth / 2);
+	if (size.cy > rect.Height())
+		y = size.cy / 2 - (m_stBmp.bmHeight / 2);
+	else
+		y = rect.Height() / 2 - (m_stBmp.bmHeight / 2);
+
+	ptDrawAt.SetPoint(x, y);
+
+	m_imgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
 }
 
 void CViewRightBR::OnSize(UINT nType, int cx, int cy)

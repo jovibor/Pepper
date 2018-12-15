@@ -101,6 +101,7 @@ constexpr auto IDC_HEX_RIGHT_BOTTOM_LEFT = 0x0200;
 constexpr auto IDC_HEX_RIGHT_TOP_RIGHT = 0x0201;
 
 constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;
+constexpr auto IDC_SHOW_RESOURCE = 0x0301;
 /********************************************************
 * End of IDC.											*
 ********************************************************/

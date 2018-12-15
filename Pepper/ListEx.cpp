@@ -146,7 +146,8 @@ BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID
 	if (pInfo)
 	{
 		m_clrText = pInfo->clrListText;
-		m_clrBk = pInfo->clrListBk;
+		m_clrBkRow1 = pInfo->clrListBkRow1;
+		m_clrBkRow2 = pInfo->clrListBkRow2;
 		m_clrTextSelected = pInfo->clrListTextSelected;
 		m_clrBkSelected = pInfo->clrListBkSelected;
 		m_clrTextTooltip = pInfo->clrListTextTooltip;
@@ -282,6 +283,7 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	pDC->SelectObject(&m_penGrid);
 	pDC->SelectObject(&m_fontList);
 	COLORREF clrText, clrBk;
+	COLORREF clrBkCurrRow = pDIS->itemID % 2 ? m_clrBkRow2 : m_clrBkRow1;
 
 	if (HasTooltip(pDIS->itemID, 0))
 	{
@@ -291,7 +293,7 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	else
 	{
 		clrText = m_clrText;
-		clrBk = m_clrBk;
+		clrBk = clrBkCurrRow;
 	}
 
 	CRect rect;
@@ -339,7 +341,7 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 			else
 			{
 				clrText = m_clrText;
-				clrBk = m_clrBk;
+				clrBk = clrBkCurrRow;
 			}
 			if (pDIS->itemState & ODS_SELECTED)
 			{
@@ -364,9 +366,7 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 			pDC->MoveTo(rect.right, rect.top);
 			pDC->LineTo(rect.right, rect.bottom);
 		}
-
 		break;
-
 	case ODA_FOCUS:
 		break;
 	}
@@ -510,7 +510,7 @@ void CListEx::OnPaint()
 
 	CRect clip;
 	rDC.GetClipBox(&clip);
-	rDC.FillSolidRect(clip, m_clrBk);
+	rDC.FillSolidRect(clip, m_clrBackground);
 
 	DefWindowProc(WM_PAINT, (WPARAM)rDC.m_hDC, (LPARAM)0);
 }

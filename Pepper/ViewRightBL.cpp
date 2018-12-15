@@ -44,7 +44,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
 	m_stListInfo.pHeaderLogFont = &m_hdrlf;
-	
+
 	CreateListExportFuncs();
 	CreateTreeResources();
 }
@@ -52,6 +52,8 @@ void CViewRightBL::OnInitialUpdate()
 void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
 {
 	if (!m_pChildFrame)
+		return;
+	if (LOWORD(lHint) == IDC_HEX_RIGHT_TOP_RIGHT)
 		return;
 
 	if (m_pActiveList)
@@ -98,13 +100,6 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	}
 }
 
-HBRUSH CViewRightBL::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
-	HBRUSH hbr = CScrollView::OnCtlColor(pDC, pWnd, nCtlColor);
-
-	return hbr;
-}
-
 void CViewRightBL::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
@@ -132,28 +127,32 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		const long idlvl2 = std::get<1>(m_vecResId.at(dwResId));
 		const long idlvl3 = std::get<2>(m_vecResId.at(dwResId));
 
-		auto rootvec = std::get<1>(*pTupResRoot);
+		auto& rootvec = std::get<1>(*pTupResRoot);
 		if (idlvl2 >= 0)
 		{
-			auto lvl2tup = std::get<4>(rootvec.at(idlvlRoot));
-			auto lvl2vec = std::get<1>(lvl2tup);
+			auto& lvl2tup = std::get<4>(rootvec.at(idlvlRoot));
+			auto& lvl2vec = std::get<1>(lvl2tup);
 
 			if (!lvl2vec.empty())
 			{
 				if (idlvl3 >= 0)
 				{
-					auto lvl3tup = std::get<4>(lvl2vec.at(idlvl2));
-					auto lvl3vec = std::get<1>(lvl3tup);
+					auto& lvl3tup = std::get<4>(lvl2vec.at(idlvl2));
+					auto& lvl3vec = std::get<1>(lvl3tup);
 
 					if (!lvl3vec.empty())
 					{
-						auto data = std::get<3>(lvl3vec.at(idlvl3));
+						auto& data = std::get<3>(lvl3vec.at(idlvl3));
 
-						if (!data.empty()) { }
+						if (!data.empty()) //Resource data and resource type to show in CViewRightBR.
+							m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE, std::get<0>(rootvec.at(idlvlRoot)).Id), (CObject*)&data);
 					}
 				}
 			}
 		}
+		else
+			//Update by default, with no data — to clear view.
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE, 0));
 	}
 
 	return CScrollView::OnNotify(wParam, lParam, pResult);

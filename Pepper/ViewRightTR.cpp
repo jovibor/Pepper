@@ -26,6 +26,8 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 {
 	if (!m_pChildFrame)
 		return;
+	if (LOWORD(lHint) == IDC_SHOW_RESOURCE)
+		return;
 
 	if (m_pActiveList)
 		m_pActiveList->ShowWindow(SW_HIDE);

@@ -13,6 +13,7 @@ protected:
 	virtual void OnInitialUpdate();     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
+	int ShowResource(std::vector<std::byte>* pData, UINT uResType);
 	DECLARE_MESSAGE_MAP()
 private:
 	CWnd* m_pActiveList { };
@@ -23,4 +24,8 @@ private:
 	CListEx m_stListTLSCallbacks;
 	int CreateListTLSCallbacks();
 	LOGFONT m_lf { }, m_hdrlf { };
+	CImageList m_imgRes;
+	bool m_fDrawRes { false };
+	BITMAP m_stBmp;
+	HICON micon;
 };

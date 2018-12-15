@@ -15,20 +15,21 @@
 ************************************************/
 typedef struct LISTEXINFO {
 	COLORREF clrListText { GetSysColor(COLOR_WINDOWTEXT) }; //List text color.
-	COLORREF clrListBk { GetSysColor(COLOR_WINDOW) }; //List Bk color.
+	COLORREF clrListBkRow1 { GetSysColor(COLOR_WINDOW) }; //List Bk color of the odd rows.
+	COLORREF clrListBkRow2 { GetSysColor(COLOR_WINDOW) }; //List Bk color of the even rows.
 	COLORREF clrListGrid { RGB(220, 220, 220) }; //List grid color.
-	DWORD dwListGridWidth { 1 }; //Width of the list's grid.
+	DWORD dwListGridWidth { 1 }; //Width of the list grid.
 	COLORREF clrListTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) }; //Selected item text color.
 	COLORREF clrListBkSelected { GetSysColor(COLOR_HIGHLIGHT) }; //Selected item bk color.
 	COLORREF clrListTextTooltip { GetSysColor(COLOR_INFOTEXT) }; //Tooltip window text color.
 	COLORREF clrListBkTooltip { GetSysColor(COLOR_INFOBK) }; //Tooltip window bk color.
-	COLORREF clrListTextCellTt { GetSysColor(COLOR_WINDOWTEXT) }; //Text color of cell that has tooltip.
-	COLORREF clrListBkCellTt { RGB(170, 170, 230) }; //Bk color of cell that has tooltip.
-	const LOGFONT* pListLogFont { nullptr }; //List font, nullptr=default.
+	COLORREF clrListTextCellTt { GetSysColor(COLOR_WINDOWTEXT) }; //Text color of a cell that has tooltip.
+	COLORREF clrListBkCellTt { RGB(170, 170, 230) }; //Bk color of a cell that has tooltip.
+	const LOGFONT* pListLogFont { nullptr }; //List font (nullptr=default).
 	COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) }; //List header text color.
 	COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) }; //List header bk color.
 	DWORD dwHeaderHeight { 19 }; //List header height.
-	const LOGFONT* pHeaderLogFont { nullptr }; //List header font, nullptr=default.
+	const LOGFONT* pHeaderLogFont { nullptr }; //List header font (nullptr=default).
 } *PLISTEXINFO;
 
 /********************************************
@@ -63,7 +64,7 @@ private:
 	/********************************************
 	* End of CListExHeader class definition.	*
 	********************************************/
-	
+
 	DECLARE_DYNAMIC(CListEx)
 	CListEx() {}
 	virtual ~CListEx() {}
@@ -72,9 +73,9 @@ private:
 	void SetFont(const LOGFONT* pLogFontNew);
 	//To remove tooltip from specific subitem just set it again with empty (L"") string.
 	void SetItemTooltip(int nItem, int nSubitem, const std::wstring& strTooltip, const std::wstring& strCaption = { });
-	void SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk, 
-		COLORREF clrTextCellTt = GetSysColor(COLOR_WINDOWTEXT), //Text color of cell that has tooltip.
-		COLORREF clrBkCellTt = RGB(170, 170, 230)); //Bk color of cell that has tooltip.
+	void SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk,
+		COLORREF clrTextCellTt = GetSysColor(COLOR_WINDOWTEXT), //Text color of a cell that has tooltip.
+		COLORREF clrBkCellTt = RGB(170, 170, 230)); //Bk color of a cell that has tooltip.
 	void SetHeaderColor(COLORREF clrHdrText, COLORREF clrHdrBk);
 	void SetHeaderHeight(DWORD dwHeight);
 	void SetHeaderFont(const LOGFONT* pLogFontNew);
@@ -91,8 +92,10 @@ private:
 	HWND m_hwndTooltip { };
 	TOOLINFO m_stToolInfo { };
 	LVHITTESTINFO m_stCurrentSubitem { };
+	COLORREF m_clrBackground { GetSysColor(COLOR_WINDOW) };
 	COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
-	COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) };
+	COLORREF m_clrBkRow1 { GetSysColor(COLOR_WINDOW) };
+	COLORREF m_clrBkRow2 { GetSysColor(COLOR_WINDOW) };
 	COLORREF m_clrGrid { RGB(220, 220, 220) };
 	DWORD m_dwGridWidth { 1 };
 	COLORREF m_clrTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) };

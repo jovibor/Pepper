@@ -99,7 +99,9 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	//OnUpdate can be invoked before OnInitialUpdate, weird MFC.
 	if (!m_pChildFrame)
 		return;
-
+	if (LOWORD(lHint) == IDC_SHOW_RESOURCE)
+		return;
+	
 	if (m_pActiveList)
 		m_pActiveList->ShowWindow(SW_HIDE);
 
@@ -109,7 +111,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	::GetClientRect(AfxGetMainWnd()->m_hWnd, &rectClient);
 	GetClientRect(&rect);
 
-	switch (lHint)
+	switch (LOWORD(lHint))
 	{
 	case IDC_SHOW_FILE_SUMMARY:
 		m_fFileSummaryShow = true;

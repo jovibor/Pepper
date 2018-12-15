@@ -15,7 +15,6 @@ protected:
 	void OnUpdate(CView*, LPARAM, CObject*) override;
 	void OnDraw(CDC* pDC) override; // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	DECLARE_MESSAGE_MAP()
 private:
@@ -47,5 +46,3 @@ private:
 	int CreateHexSecurityEntry(unsigned nSertId);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };
-
-
