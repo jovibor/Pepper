@@ -27,5 +27,8 @@ private:
 	CImageList m_imgRes;
 	bool m_fDrawRes { false };
 	BITMAP m_stBmp;
-	HICON micon;
+	COLORREF m_clrBk { RGB(230, 230, 230) };
+	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
+	HWND m_hwndRes { };
+	int m_iResTypeToDraw { };
 };

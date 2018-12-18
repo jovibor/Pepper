@@ -124,8 +124,8 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "About Pepper"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
-    LTEXT           "<SET_IN_CAboutDlg::InitDialog>",IDC_STATIC_VERSION,41,26,114,8,SS_NOPREFIX
+    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
+    LTEXT           "<set_in_CAboutDlg::InitDialog>",IDC_STATIC_VERSION,41,26,114,8,SS_NOPREFIX
     DEFPUSHBUTTON   "OK",IDOK,146,54,50,14,WS_GROUP
     LTEXT           "https://github.com/jovibor/Pepper",IDC_STATIC_HTTP_GITHUB,41,36,116,8
     LTEXT           "Pepper - PE (x86) and PE+ (x64) files viewer.",IDC_STATIC,41,16,147,8
@@ -149,6 +149,18 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ABOUTBOX AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
