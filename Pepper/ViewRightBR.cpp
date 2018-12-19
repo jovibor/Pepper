@@ -78,12 +78,20 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 {
+	LPGRPICONDIR pGRPIDir;
 	HICON hIcon;
 	ICONINFO iconInfo;
 	if (m_hwndRes)
 		::DestroyWindow(m_hwndRes);
-	m_imgRes.DeleteImageList();
+	m_stImgRes.DeleteImageList();
 	m_iResTypeToDraw = -1;
+	m_iImgResWidth = 0;
+	m_iImgResHeight = 0;
+	m_vecImgRes.clear();
+
+	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
+	if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
+		return -1;
 
 	switch (uResType)
 	{
@@ -97,9 +105,9 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 		if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
 			return -1;
 
-		m_imgRes.Create(m_stBmp.bmWidth, m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
-		m_imgRes.SetBkColor(m_clrBkImgList);
-		if (m_imgRes.Add(hIcon) == -1)
+		m_stImgRes.Create(m_stBmp.bmWidth, m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
+		m_stImgRes.SetBkColor(m_clrBkImgList);
+		if (m_stImgRes.Add(hIcon) == -1)
 			return -1;
 
 		SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmWidth));
@@ -133,8 +141,8 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 		CBitmap bmp;
 		if (!bmp.Attach(hBitmap))
 			return -1;
-		m_imgRes.Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
-		if (m_imgRes.Add(&bmp, nullptr) == -1)
+		m_stImgRes.Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
+		if (m_stImgRes.Add(&bmp, nullptr) == -1)
 			return -1;
 
 		m_iResTypeToDraw = 2;
@@ -153,9 +161,9 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 			return -1;
 		if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
 			return -1;
-		m_imgRes.Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
-		m_imgRes.SetBkColor(m_clrBkImgList);
-		if (m_imgRes.Add(hIcon) == -1)
+		m_stImgRes.Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
+		m_stImgRes.SetBkColor(m_clrBkImgList);
+		if (m_stImgRes.Add(hIcon) == -1)
 			return -1;
 
 		SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmHeight));
@@ -185,44 +193,69 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 	case 6: //RT_STRING
 		break;
 	case 12: //RT_GROUP_CURSOR
-		break;
-	case 14: //RT_GROUP_ICON
-	{/*
-		PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
-		if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
-			return -1;
+	{
+		pGRPIDir = (LPGRPICONDIR)pData->data();
 
-	#pragma pack( push )
-	#pragma pack( 2 )
-		typedef struct
-		{
-			BYTE   bWidth;               // Width, in pixels, of the image
-			BYTE   bHeight;              // Height, in pixels, of the image
-			BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
-			BYTE   bReserved;            // Reserved
-			WORD   wPlanes;              // Color Planes
-			WORD   wBitCount;            // Bits per pixel
-			DWORD   dwBytesInRes;         // how many bytes in this resource?
-			WORD   nID;                  // the ID
-		} GRPICONDIRENTRY, *LPGRPICONDIRENTRY;
-
-		typedef struct
-		{
-			WORD            idReserved;   // Reserved (must be 0)
-			WORD            idType;       // Resource type (1 for icons)
-			WORD            idCount;      // How many images?
-			GRPICONDIRENTRY   idEntries[1]; // The entries for each image
-		} GRPICONDIR, *LPGRPICONDIR;
-	#pragma pack( pop )
-
-		LPGRPICONDIR pGRPIDir = (LPGRPICONDIR)pData->data();
-		m_iImgResWidth = 0;
-		m_iImgResHeight = 0;
 		for (int i = 0; i < pGRPIDir->idCount; i++)
 		{
-			m_iImgResWidth = max(pGRPIDir->idEntries[i].bWidth, m_iImgResWidth);
-			m_iImgResHeight = max(pGRPIDir->idEntries[i].bHeight, m_iImgResHeight);
+			auto& rootvec = std::get<1>(*pTupResRoot);
+			for (auto& iterRoot : rootvec)
+			{
+				if (std::get<0>(iterRoot).Id == 1) //RT_CURSOR
+				{
+					auto& lvl2tup = std::get<4>(iterRoot);
+					auto& lvl2vec = std::get<1>(lvl2tup);
+
+					for (auto& iterlvl2 : lvl2vec)
+					{
+						if (std::get<0>(iterlvl2).Id == pGRPIDir->idEntries[i].nID)
+						{
+							auto& lvl3tup = std::get<4>(iterlvl2);
+							auto& lvl3vec = std::get<1>(lvl3tup);
+
+							if (!lvl3vec.empty())
+							{
+								auto& data = std::get<3>(lvl3vec.at(0));
+								if (!data.empty())
+								{
+									hIcon = CreateIconFromResourceEx((PBYTE)data.data(), data.size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+									if (!hIcon)
+										return -1;
+									if (!GetIconInfo(hIcon, &iconInfo))
+										return -1;
+									if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
+										return -1;
+
+									m_vecImgRes.push_back(std::make_unique<CImageList>());
+									auto& vecBack = m_vecImgRes.back();
+									vecBack->Create(m_stBmp.bmWidth, m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
+									vecBack->SetBkColor(m_clrBkImgList);
+									m_iImgResWidth += m_stBmp.bmWidth;
+									m_iImgResHeight = max(m_stBmp.bmHeight, m_iImgResHeight);
+
+									if (vecBack->Add(hIcon) == -1)
+										return -1;
+
+									DeleteObject(iconInfo.hbmColor);
+									DeleteObject(iconInfo.hbmMask);
+									DestroyIcon(hIcon);
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
 		}
+		SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
+
+		m_iResTypeToDraw = 12;
+		m_fDrawRes = true;
+		break;
+	}
+	case 14: //RT_GROUP_ICON
+	{
+		pGRPIDir = (LPGRPICONDIR)pData->data();
 
 		for (int i = 0; i < pGRPIDir->idCount; i++)
 		{
@@ -254,14 +287,16 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 									if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
 										return -1;
 
+									m_vecImgRes.push_back(std::make_unique<CImageList>());
+									auto& vecBack = m_vecImgRes.back();
+									vecBack->Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
+									vecBack->SetBkColor(m_clrBkImgList);
 									m_iImgResWidth += m_stBmp.bmWidth;
-									m_imgRes.Create(m_iImgResWidth, m_iImgResHeight, ILC_COLORDDB, pGRPIDir->idCount, pGRPIDir->idCount);
-									m_imgRes.SetBkColor(RGB(255, 255, 255));
+									m_iImgResHeight = max(m_stBmp.bmHeight, m_iImgResHeight);
 
-									if (m_imgRes.Add(hIcon) == -1)
+									if (vecBack->Add(hIcon) == -1)
 										return -1;
 
-									m_fDrawRes = true;
 									DeleteObject(iconInfo.hbmColor);
 									DeleteObject(iconInfo.hbmMask);
 									DestroyIcon(hIcon);
@@ -274,7 +309,11 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 			}
 		}
 		SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
-*/	}
+
+		m_iResTypeToDraw = 14;
+		m_fDrawRes = true;
+		break;
+	}
 	case 16: //RT_VERSION
 		break;
 	}
@@ -291,7 +330,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 
 	CRect rect;
 	GetClientRect(&rect);
-	CSize size = GetTotalSize();
+	CSize sizeScroll = GetTotalSize();
 	CPoint ptDrawAt;
 	int x, y;
 
@@ -304,20 +343,42 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case 2: //RT_BITMAP
 	case 3: //RT_ICON
 		//Draw at center independing of scrolls.
-		if (size.cx > rect.Width())
-			x = size.cx / 2 - (m_stBmp.bmWidth / 2);
+		if (sizeScroll.cx > rect.Width())
+			x = sizeScroll.cx / 2 - (m_stBmp.bmWidth / 2);
 		else
 			x = rect.Width() / 2 - (m_stBmp.bmWidth / 2);
-		if (size.cy > rect.Height())
-			y = size.cy / 2 - (m_stBmp.bmHeight / 2);
+		if (sizeScroll.cy > rect.Height())
+			y = sizeScroll.cy / 2 - (m_stBmp.bmHeight / 2);
 		else
 			y = rect.Height() / 2 - (m_stBmp.bmHeight / 2);
 
 		ptDrawAt.SetPoint(x, y);
-		m_imgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
+		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
 
 		break;
 	case 5: //RT_DIALOG
+		break;
+	case 12: //RT_GROUP_CURSOR
+	case 14: //RT_GROUP_ICON
+		if (sizeScroll.cx > rect.Width())
+			x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
+		else
+			x = rect.Width() / 2 - (m_iImgResWidth / 2);
+
+		for (int i = 0; i < (int)m_vecImgRes.size(); i++)
+		{
+			IMAGEINFO imginfo;
+			m_vecImgRes.at(i)->GetImageInfo(0, &imginfo);
+			int iImgHeight = imginfo.rcImage.bottom - imginfo.rcImage.top;
+			if (sizeScroll.cy > rect.Height())
+				y = sizeScroll.cy / 2 - (iImgHeight / 2);
+			else
+				y = rect.Height() / 2 - (iImgHeight / 2);
+
+			ptDrawAt.SetPoint(x, y);
+			m_vecImgRes.at(i)->Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
+			x += imginfo.rcImage.right - imginfo.rcImage.left;
+		}
 		break;
 	}
 }
