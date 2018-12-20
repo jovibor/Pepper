@@ -39,7 +39,7 @@ BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE 
 
 bool CSplitterEx::AddNested(int row, int col, CWnd* pNested)
 {
-	if (row >= m_vecRows.size() || col >= m_vecCols.size())
+	if (row >= (int)m_vecRows.size() || col >= (int)m_vecCols.size())
 		return false;
 
 	for (auto& i : m_vecPanes)

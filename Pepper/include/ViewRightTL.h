@@ -58,7 +58,7 @@ private:
 	PCLIBPE_IMPORT_VEC m_pImportTable { };
 	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
 	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
-	CWnd* m_pActiveList { };
+	CWnd* m_pActiveWnd { };
 	//Resource id for given treeCtrl node.
 	//Used in treeCtrl.SetItemData(...), so that we associate tree item
 	//with corresponding Resource index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).

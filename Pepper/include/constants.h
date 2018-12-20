@@ -37,28 +37,31 @@ inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {
 };
 
 inline const std::map<WORD, std::wstring> g_mapResType {
-	{ 1, L"CURSOR" },
-{ 2, L"BITMAP" },
-{ 3, L"ICON" },
-{ 4, L"MENU" },
-{ 5, L"DIALOG" },
-{ 6, L"STRING" },
-{ 7, L"FONTDIR" },
-{ 8, L"FONT" },
-{ 9, L"ACCELERATOR" },
-{ 10, L"RCDATA" },
-{ 11, L"MESSAGETABLE" },
-{ 12, L"GROUP_CURSOR" },
-{ 14, L"GROUP_ICON" },
-{ 16, L"VERSION" },
-{ 17, L"DLGINCLUDE" },
-{ 19, L"PLUGPLAY" },
-{ 20, L"VXD" },
-{ 21, L"ANICURSOR" },
-{ 22, L"ANIICON" },
-{ 23, L"HTML" },
-{ 24, L"MANIFEST" }
-};
+	{ 1, L"RT_CURSOR" },
+{ 2, L"RT_BITMAP" },
+{ 3, L"RT_ICON" },
+{ 4, L"RT_MENU" },
+{ 5, L"RT_DIALOG" },
+{ 6, L"RT_STRING" },
+{ 7, L"RT_FONTDIR" },
+{ 8, L"RT_FONT" },
+{ 9, L"RT_ACCELERATOR" },
+{ 10, L"RT_RCDATA" },
+{ 11, L"RT_MESSAGETABLE" },
+{ 12, L"RT_GROUP_CURSOR" },
+{ 14, L"RT_GROUP_ICON" },
+{ 16, L"RT_VERSION" },
+{ 17, L"RT_DLGINCLUDE" },
+{ 19, L"RT_PLUGPLAY" },
+{ 20, L"RT_VXD" },
+{ 21, L"RT_ANICURSOR" },
+{ 22, L"RT_ANIICON" },
+{ 23, L"RT_HTML" },
+{ 24, L"RT_MANIFEST" },
+{ 28, L"RT_RIBBON_XML" },
+{ 240, L"RT_DLGINIT" },
+{ 241, L"RT_TOOLBAR" }
+}; 
 
 /*****************************************************************
 * These are identificators of all the controls: list, hex, tree. *

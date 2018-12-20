@@ -16,8 +16,9 @@ private:
 	libpe_ptr m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
-	CWnd* m_pActiveList { };
+	CWnd* m_pActiveWnd { };
 	CHexCtrl m_stHexEdit;
+	bool m_fJustOneTime { true };
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 };

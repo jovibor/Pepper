@@ -17,7 +17,7 @@ protected:
 	int ShowResource(std::vector<std::byte>* pData, UINT uResType);
 	DECLARE_MESSAGE_MAP()
 private:
-	CWnd* m_pActiveList { };
+	CWnd* m_pActiveWnd { };
 	libpe_ptr m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
@@ -29,13 +29,16 @@ private:
 	COLORREF m_clrBk { RGB(230, 230, 230) };
 	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
 	//HWND for RT_DIALOG.
-	HWND m_hwndRes { };
+	HWND m_hwndResTemplatedDlg { };
 	BITMAP m_stBmp { };
 	int m_iResTypeToDraw { };
 	//Width and height of whole image to draw.
 	int m_iImgResWidth { }, m_iImgResHeight { };
 	//Vector for RT_GROUP_ICON/CURSOR.
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { };
+	std::wstring m_strResStrings;
+	CEdit m_stEditResStrings;
+	bool m_fJustOneTime { true };
 private:
 	int CreateListTLSCallbacks();
 };
@@ -44,7 +47,7 @@ private:
 * Struct for RT_GROUP_ICON/CURSOR.								*
 ****************************************************************/
 #pragma pack( push, 2 )
-typedef struct
+struct GRPICONDIRENTRY
 {
 	BYTE   bWidth;               // Width, in pixels, of the image
 	BYTE   bHeight;              // Height, in pixels, of the image
@@ -54,12 +57,13 @@ typedef struct
 	WORD   wBitCount;            // Bits per pixel
 	DWORD  dwBytesInRes;         // how many bytes in this resource?
 	WORD   nID;                  // the ID
-} GRPICONDIRENTRY, *LPGRPICONDIRENTRY;
-typedef struct
+};
+struct GRPICONDIR
 {
 	WORD			  idReserved;   // Reserved (must be 0)
 	WORD			  idType;	    // Resource type (1 for icons)
 	WORD			  idCount;	    // How many images?
 	GRPICONDIRENTRY   idEntries[1]; // The entries for each image
-} GRPICONDIR, *LPGRPICONDIR;
+};
+using LPGRPICONDIR = const GRPICONDIR*;
 #pragma pack( pop )

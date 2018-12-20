@@ -56,8 +56,8 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	if (LOWORD(lHint) == IDC_HEX_RIGHT_TOP_RIGHT)
 		return;
 
-	if (m_pActiveList)
-		m_pActiveList->ShowWindow(SW_HIDE);
+	if (m_pActiveWnd)
+		m_pActiveWnd->ShowWindow(SW_HIDE);
 
 	CRect rect;
 	GetClientRect(&rect);
@@ -66,36 +66,36 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	{
 	case IDC_LIST_EXPORT:
 		m_listExportFuncs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_listExportFuncs;
+		m_pActiveWnd = &m_listExportFuncs;
 		break;
 	case IDC_LIST_IMPORT_ENTRY:
 		CreateListImportEntry(HIWORD(lHint));
-		m_pActiveList = &m_listImportEntry;
+		m_pActiveWnd = &m_listImportEntry;
 		break;
 	case IDC_TREE_RESOURCE:
 	case IDC_HEX_RIGHT_TOP_RIGHT:
 		m_treeResBottom.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_treeResBottom;
+		m_pActiveWnd = &m_treeResBottom;
 		break;
 	case IDC_LIST_SECURITY_ENTRY:
 		CreateHexSecurityEntry(HIWORD(lHint));
-		m_pActiveList = &m_stHexEdit;
+		m_pActiveWnd = &m_stHexEdit;
 		break;
 	case IDC_LIST_RELOCATIONS_ENTRY:
 		CreateListRelocsEntry(HIWORD(lHint));
-		m_pActiveList = &m_listRelocsEntry;
+		m_pActiveWnd = &m_listRelocsEntry;
 		break;
 	case IDC_LIST_TLS:
 		CreateHexTLS();
-		m_pActiveList = &m_stHexEdit;
+		m_pActiveWnd = &m_stHexEdit;
 		break;
 	case IDC_LIST_DELAYIMPORT_FUNCS:
 		CreateListDelayImportEntry(HIWORD(lHint));
-		m_pActiveList = &m_listDelayImportEntry;
+		m_pActiveWnd = &m_listDelayImportEntry;
 		break;
 	case IDC_LIST_DEBUG_ENTRY:
 		CreateHexDebugEntry(HIWORD(lHint));
-		m_pActiveList = &m_stHexEdit;
+		m_pActiveWnd = &m_stHexEdit;
 		break;
 	}
 }
@@ -104,8 +104,8 @@ void CViewRightBL::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 
-	if (m_pActiveList)
-		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	if (m_pActiveWnd)
+		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 void CViewRightBL::OnDraw(CDC* pDC)

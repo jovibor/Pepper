@@ -31,15 +31,15 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	m_stSplitterRight.CreateStatic(&m_stSplitterMain, 2, 1, WS_CHILD | WS_VISIBLE, m_stSplitterMain.IdFromRowCol(0, 1));
 
 	m_stSplitterRightTop.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(0, 0));
-	m_stSplitterRightTop.CreateView(0, 0, RUNTIME_CLASS(CViewRightTL), CSize(rect.Width(), rect.Height()), pContext);
-	m_stSplitterRightTop.CreateView(0, 1, RUNTIME_CLASS(CViewRightTR), CSize(0, rect.Height()), pContext);
+	m_stSplitterRightTop.CreateView(0, 0, RUNTIME_CLASS(CViewRightTL), CSize((rect.Width() - rect.Width() / 5) / 2, rect.Height()), pContext);
+	m_stSplitterRightTop.CreateView(0, 1, RUNTIME_CLASS(CViewRightTR), CSize((rect.Width() - rect.Width() / 5) / 2, rect.Height()), pContext);
 	m_stSplitterRightTop.HideCol(1);
 	m_stSplitterRight.AddNested(0, 0, &m_stSplitterRightTop);
 
 	m_stSplitterRightBottom.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(1, 0));
 	m_stSplitterRightBottom.CreateView(0, 0, RUNTIME_CLASS(CViewRightBL), CSize(rect.Width(), rect.Height()), pContext);
 	m_stSplitterRightBottom.CreateView(0, 1, RUNTIME_CLASS(CViewRightBR), CSize(0, rect.Height() / 2), pContext);
-	 
+
 	m_stSplitterRightBottom.HideCol(1);
 	m_stSplitterRight.AddNested(1, 0, &m_stSplitterRightBottom);
 
@@ -89,16 +89,20 @@ void CChildFrame::OnSize(UINT nType, int cx, int cy)
 			m_stSplitterRightBottom.SetColumnInfo(1, int(cx / ratio + 0.5), min);
 		}
 		else
-		{	//If it's the «first» WM_SIZE after CView fully created
-			//then set splitter to default state.
+		{
 			CRect rect;
 			GetClientRect(&rect);
+
+			//If it's the «first» WM_SIZE after CView fully created
+			//then set splitter to default state.
 			m_stSplitterMain.SetColumnInfo(0, rect.Width() / 5, 0);
 			m_stSplitterRight.SetRowInfo(0, rect.Height() / 2, 0);
 			m_stSplitterRight.SetRowInfo(1, rect.Height() / 2, 0);
+			m_stSplitterRightTop.SetColumnInfo(0, 50, 0);
 		}
 		m_stSplitterMain.RecalcLayout();
 		m_stSplitterRight.RecalcLayout();
+		m_stSplitterRightTop.RecalcLayout();
 
 		m_cx = cx; m_cy = cy;
 	}

@@ -28,7 +28,7 @@ private:
 	class CHexView : public CScrollView
 	{
 	public:
-		BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, CFont* pFont);
+		BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont);
 		void SetData(const std::vector<std::byte>& vecData);
 		void SetData(const std::string& strData);
 		void SetData(const PBYTE pData, DWORD_PTR dwCount);
@@ -56,7 +56,7 @@ private:
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 		virtual BOOL PreTranslateMessage(MSG* pMsg);
 		void OnMenuRange(UINT nID);
-		int HitTest(LPPOINT); // Is any hex chunk withing given LPPOINT?
+		int HitTest(LPPOINT); //Is any hex chunk withing given LPPOINT?
 		int CopyToClipboard(UINT nType);
 		void Recalc();
 		DECLARE_MESSAGE_MAP()
@@ -80,7 +80,8 @@ private:
 		int m_iHeightHeaderRect { }; //Height of the header where offset (0 1 2... D E F) resides.
 		int m_iFirstVertLine { }, m_iSecondVertLine { }, m_iThirdVertLine { }, m_iFourthVertLine { }; //Vertical line indent.
 		int m_iFirstHorizLine { }, m_iSecondHorizLine { }, m_iThirdHorizLine { }, m_iFourthHorizLine { }; //Horizontal line indent.
-		int m_iHeightBottomRect { 25 };
+		int m_iBottomLineIndent { 1 }; //Bottom line indent from window's bottom.
+		int m_iHeightBottomRect { m_iBottomLineIndent + 22 }; //Height of the not visible rect from window's bottom to m_iThirdHorizLine.
 		WCHAR m_strOffset[9] { };
 		const wchar_t* const m_strHexMap = L"0123456789ABCDEF";
 		SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
@@ -89,16 +90,16 @@ private:
 		bool m_fLMousePressed { false };
 		bool m_fSelected { false };
 		DWORD m_dwSelectionStart { }, m_dwSelectionEnd { };
-		CRect m_rcSpaceBetweenHex { }; //Space between hex chunks, needs for selection draw.
+		CRect m_rcSpaceBetweenHex { }; //Space between hex chunks, needed for selection draw.
 		CBrush m_brTextBk { m_clrTextBk };
 		CBrush m_brTextBkSelection { m_clrTextBkSelected };
-		CMenu m_menuPopup;
 		int m_iHeightWorkArea { }; //Needed for mouse selection point.y calculation.
+		CMenu m_menuPopup;
 	};
 public:
 	CHexCtrl() {}
 	virtual ~CHexCtrl() {}
-	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CFont* pFont = nullptr/*default*/);
+	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, LOGFONT* pLogFont = nullptr/*default*/);
 	CHexView* GetActiveView() const { return m_pHexView; };
 	void SetData(const std::vector<std::byte>& vecData) const;
 	void SetData(const std::string& strData) const;
@@ -111,7 +112,7 @@ public:
 private:
 	DECLARE_DYNAMIC(CHexCtrl)
 	CHexView* m_pHexView { };
-	CFont* m_pFontHexView { };
+	LOGFONT* m_pLogFontHexView { };
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);

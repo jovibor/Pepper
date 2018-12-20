@@ -60,17 +60,28 @@ BEGIN_MESSAGE_MAP(CHexCtrl::CHexView, CScrollView)
 	ON_COMMAND_RANGE(IDC_MENU_POPUP_COPY_AS_HEX, IDC_MENU_POPUP_COPY_AS_ASCII, &CHexCtrl::CHexView::OnMenuRange)
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCreateContext* pContext, CFont* pFont)
+BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont)
 {
-	LOGFONT lf { };
-	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
-	lf.lfHeight = 18;
-	if (!m_fontHexView.CreateFontIndirectW(&lf))
+	BOOL ret = CScrollView::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID, pContext);
+
+	NONCLIENTMETRICSW ncm;
+	ncm.cbSize = sizeof(NONCLIENTMETRICS);
+	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+
+	//In case of inability to create font from LOGFONT*
+	//creating default windows font.
+	if (pLogFont)
 	{
-		NONCLIENTMETRICSW ncm;
-		ncm.cbSize = sizeof(NONCLIENTMETRICS);
-		SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-		m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
+		if (!m_fontHexView.CreateFontIndirectW(pLogFont))
+			m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
+	}
+	else
+	{
+		LOGFONT lf { };
+		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+		lf.lfHeight = 18;
+		if (!m_fontHexView.CreateFontIndirectW(&lf))
+			m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
 	}
 
 	m_menuPopup.CreatePopupMenu();
@@ -80,7 +91,7 @@ BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCr
 
 	Recalc();
 
-	return CScrollView::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID, pContext);
+	return ret;
 }
 
 void CHexCtrl::CHexView::SetData(const std::vector<std::byte>& vecData)
@@ -390,7 +401,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 	m_iFirstHorizLine = nScrollVert;
 	m_iSecondHorizLine = m_iHeightHeaderRect - 1 + nScrollVert;
 	m_iThirdHorizLine = m_rcClient.Height() + nScrollVert - m_iHeightBottomRect;
-	m_iFourthHorizLine = m_rcClient.Height() + nScrollVert - 3;
+	m_iFourthHorizLine = m_rcClient.Height() + nScrollVert - m_iBottomLineIndent;
 
 	//First horizontal line.
 	rDC.MoveTo(0, m_iFirstHorizLine);
@@ -426,7 +437,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 	//"Ascii" text.
 	rect.left = m_iThirdVertLine; rect.top = m_iFirstHorizLine;
 	rect.right = m_iFourthVertLine; rect.bottom = m_iSecondHorizLine;
-	DrawTextW(rDC.m_hDC, L"Ascii", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	DrawTextW(rDC.m_hDC, L"ASCII", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//First Vertical line.
 	rDC.MoveTo(m_iFirstVertLine, nScrollVert);
@@ -742,9 +753,9 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::Create(CWnd * pParent, const RECT & rect, UINT nID, CFont* pFont)
+BOOL CHexCtrl::Create(CWnd * pParent, const RECT & rect, UINT nID, LOGFONT* pLogFont)
 {
-	m_pFontHexView = pFont;
+	m_pLogFontHexView = pLogFont;
 
 	return CWnd::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID);
 }
@@ -762,8 +773,9 @@ int CHexCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	CRect rect;
 	GetClientRect(rect);
-	m_pHexView->Create(this, rect, 0x01, &context, m_pFontHexView);
+	m_pHexView->Create(this, rect, 0x01, &context, m_pLogFontHexView);
 	m_pHexView->ShowWindow(SW_SHOW);
+
 	return 0;
 }
 

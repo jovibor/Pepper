@@ -28,9 +28,17 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		return;
 	if (LOWORD(lHint) == IDC_SHOW_RESOURCE)
 		return;
-
-	if (m_pActiveList)
-		m_pActiveList->ShowWindow(SW_HIDE);
+	if (m_fJustOneTime)
+	{
+		CRect rcParent;
+		GetParent()->GetWindowRect(&rcParent);
+		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 2, 0);
+		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(1, rcParent.Width() / 2, 0);
+		m_pChildFrame->m_stSplitterRightTop.RecalcLayout();
+		m_fJustOneTime = false;
+	}
+	if (m_pActiveWnd)
+		m_pActiveWnd->ShowWindow(SW_HIDE);
 
 	CRect rcClient, rcParent;
 	GetClientRect(&rcClient);
@@ -41,21 +49,19 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	case IDC_TREE_RESOURCE:
 		m_stHexEdit.ClearData();
 		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_stHexEdit;
+		m_pActiveWnd = &m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 2, 0);
 		break;
 	case IDC_HEX_RIGHT_TOP_RIGHT:
 		m_stHexEdit.SetData(*(std::vector<std::byte>*)pHint);
 		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_stHexEdit;
+		m_pActiveWnd = &m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 2, 0);
 		break;
 	default:
 		m_pChildFrame->m_stSplitterRightTop.HideCol(1);
-		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width(), 0);
 	}
+
 	m_pChildFrame->m_stSplitterRightTop.RecalcLayout();
 }
 
@@ -67,6 +73,6 @@ void CViewRightTR::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 
-	if (m_pActiveList)
-		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	if (m_pActiveWnd)
+		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }

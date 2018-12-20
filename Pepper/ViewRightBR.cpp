@@ -18,6 +18,9 @@ void CViewRightBR::OnInitialUpdate()
 	if (!m_pLibpe)
 		return;
 
+	m_stEditResStrings.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL |
+		ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL, CRect(0, 0, 0, 0), this, 0x01);
+
 	m_stListInfo.clrListTextTooltip = RGB(255, 255, 255);
 	m_stListInfo.clrListBkTooltip = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
@@ -41,11 +44,20 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		return;
 	if (LOWORD(lHint) == IDC_HEX_RIGHT_TOP_RIGHT)
 		return;
+	if (m_fJustOneTime)
+	{
+		CRect rcParent;
+		GetParent()->GetWindowRect(&rcParent);
+		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 2, 0);
+		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(1, rcParent.Width() / 2, 0);
+		m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
+		m_fJustOneTime = false;
+	}
+
+	if (m_pActiveWnd)
+		m_pActiveWnd->ShowWindow(SW_HIDE);
 
 	m_fDrawRes = false;
-
-	if (m_pActiveList)
-		m_pActiveList->ShowWindow(SW_HIDE);
 
 	CRect rect;
 	GetClientRect(&rect);
@@ -55,22 +67,18 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	{
 	case IDC_LIST_TLS:
 		m_stListTLSCallbacks.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveList = &m_stListTLSCallbacks;
+		m_pActiveWnd = &m_stListTLSCallbacks;
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width() / 2, 0);
 		break;
 	case IDC_TREE_RESOURCE:
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width() / 2, 0);
 		break;
 	case IDC_SHOW_RESOURCE:
 		ShowResource((std::vector<std::byte>*)pHint, HIWORD(lHint));
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width() / 2, 0);
 		break;
 	default:
 		m_pChildFrame->m_stSplitterRightBottom.HideCol(1);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rect.Width(), 0);
 	}
 
 	m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
@@ -81,8 +89,12 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 	LPGRPICONDIR pGRPIDir;
 	HICON hIcon;
 	ICONINFO iconInfo;
-	if (m_hwndRes)
-		::DestroyWindow(m_hwndRes);
+	if (m_hwndResTemplatedDlg)
+	{
+		::DestroyWindow(m_hwndResTemplatedDlg);
+		m_hwndResTemplatedDlg = nullptr;
+	}
+	m_stEditResStrings.ShowWindow(SW_HIDE);
 	m_stImgRes.DeleteImageList();
 	m_iResTypeToDraw = -1;
 	m_iImgResWidth = 0;
@@ -179,19 +191,37 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 		break;
 	case 5: //RT_DIALOG
 	{
-		m_hwndRes = CreateDialogIndirectParamW(NULL, (LPCDLGTEMPLATEW)pData->data(), this->m_hWnd, NULL, NULL);
-		if (m_hwndRes)
+		m_hwndResTemplatedDlg = CreateDialogIndirectParamW(nullptr, (LPCDLGTEMPLATEW)pData->data(), m_hWnd, nullptr, NULL);
+		if (m_hwndResTemplatedDlg)
 		{
-			CRect rcClient;
-			::GetWindowRect(m_hWnd, &rcClient);
-			::SetWindowPos(m_hwndRes, m_hWnd, rcClient.left, rcClient.top, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_SHOWWINDOW);
+			CRect rc;
+			GetClientRect(&rc);
+			::SetWindowPos(m_hwndResTemplatedDlg, m_hWnd, rc.left + 10, rc.top + 10, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_SHOWWINDOW);
+			m_iResTypeToDraw = 5;
+			m_fDrawRes = true;
 		}
-		m_iResTypeToDraw = 5;
-		m_fDrawRes = true;
 		break;
 	}
 	case 6: //RT_STRING
+	{
+		m_strResStrings.clear();
+		LPCWSTR pwszResString = reinterpret_cast<LPCWSTR>(pData->data());
+		std::wstring strTmp;
+		for (int i = 0; i < 16; i++)
+		{
+			m_strResStrings += strTmp.assign(pwszResString + 1, (UINT)*pwszResString);
+			if (i != 15)
+				m_strResStrings += L"\r\n";
+			pwszResString += 1 + (UINT)*pwszResString;
+		}
+		CRect rc;
+		GetClientRect(&rc);
+		m_stEditResStrings.SetWindowTextW(m_strResStrings.data());
+		m_stEditResStrings.SetWindowPos(this, rc.left, rc.top, rc.right, rc.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+		m_pActiveWnd = &m_stEditResStrings;
 		break;
+	}
 	case 12: //RT_GROUP_CURSOR
 	{
 		pGRPIDir = (LPGRPICONDIR)pData->data();
@@ -387,8 +417,8 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 
-	if (m_pActiveList)
-		m_pActiveList->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	if (m_pActiveWnd)
+		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 int CViewRightBR::CreateListTLSCallbacks()

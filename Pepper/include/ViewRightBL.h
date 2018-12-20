@@ -32,7 +32,7 @@ private:
 	CTreeEx m_treeResBottom;
 	DWORD m_dwFileSummary { };
 	CImageList m_imglTreeRes;
-	CWnd* m_pActiveList { };
+	CWnd* m_pActiveWnd { };
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };
 
