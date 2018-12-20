@@ -1,12 +1,11 @@
-/****************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/	                *
-* This is a HEX control class for MFC based apps, derived from CWnd.		*
-* The usage is quite simple:												*
-* 1. Construct CHexCtrl object.												*
-* 2. Call Create(...) member function to create an instance.				*
-* 3. Use one of SetData(...) methods to set actual data to display as hex.	*
-* 4. Set window position, if needed, with hexCtrl.SetWindowPos(...).		*
-*****************************************************************************/
+/********************************************************************************
+* Copyright (C) 2018, Jovibor: https://github.com/jovibor/						*
+* This is a HEX control for MFC, implemented as CWnd derived class.				*
+* The usage is quite simple:													*
+* 1. Construct CHexCtrl object.													*
+* 2. Call CHexCtrl::Create member function to create an instance.				*
+* 3. Call one of CHexCtrl::SetData methods to set actual data to display as hex.*
+********************************************************************************/
 #pragma once
 #include <vector>
 
@@ -19,6 +18,9 @@
 #endif
 static_assert(__cpp17_conformant, "C++17 conformant compiler is required (MSVS 15.7 with /std:c++17 or higher).");
 
+/********************************************
+* CHexCtrl class definition.				*
+********************************************/
 class CHexCtrl : public CWnd
 {
 private:
@@ -29,9 +31,7 @@ private:
 	{
 	public:
 		BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont);
-		void SetData(const std::vector<std::byte>& vecData);
-		void SetData(const std::string& strData);
-		void SetData(const PBYTE pData, DWORD_PTR dwCount);
+		void SetData(const unsigned char* pData, DWORD_PTR dwCount);
 		void ClearData();
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT nSize);
@@ -99,7 +99,7 @@ private:
 public:
 	CHexCtrl() {}
 	virtual ~CHexCtrl() {}
-	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, LOGFONT* pLogFont = nullptr/*default*/);
+	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, const LOGFONT* pLogFont = nullptr/*default*/);
 	CHexView* GetActiveView() const { return m_pHexView; };
 	void SetData(const std::vector<std::byte>& vecData) const;
 	void SetData(const std::string& strData) const;
@@ -112,7 +112,7 @@ public:
 private:
 	DECLARE_DYNAMIC(CHexCtrl)
 	CHexView* m_pHexView { };
-	LOGFONT* m_pLogFontHexView { };
+	const LOGFONT* m_pLogFontHexView { };
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);

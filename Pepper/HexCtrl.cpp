@@ -1,12 +1,11 @@
-/****************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/	                *
-* This is a HEX control class for MFC based apps, derived from CWnd.		*
-* The usage is quite simple:												*
-* 1. Construct CHexCtrl object.												*
-* 2. Call Create(...) member function to create an instance.				*
-* 3. Use one of SetData(...) methods to set actual data to display as hex.	*
-* 4. Set window position, if needed, with hexCtrl.SetWindowPos(...).		*
-*****************************************************************************/
+/********************************************************************************
+* Copyright (C) 2018, Jovibor: https://github.com/jovibor/						*
+* This is a HEX control for MFC, implemented as CWnd derived class.				*
+* The usage is quite simple:													*
+* 1. Construct CHexCtrl object.													*
+* 2. Call CHexCtrl::Create member function to create an instance.				*
+* 3. Call one of CHexCtrl::SetData methods to set actual data to display as hex.*
+********************************************************************************/
 #include "stdafx.h"
 #include "HexCtrl.h"
 #include "strsafe.h"
@@ -94,29 +93,7 @@ BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCr
 	return ret;
 }
 
-void CHexCtrl::CHexView::SetData(const std::vector<std::byte>& vecData)
-{
-	m_pRawData = (const unsigned char*)vecData.data();
-	m_dwRawDataCount = vecData.size();
-	m_fSelected = false;
-	m_stScrollInfo.nPos = 0;
-	SetScrollInfo(SB_VERT, &m_stScrollInfo);
-	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
-	Recalc();
-}
-
-void CHexCtrl::CHexView::SetData(const std::string& strData)
-{
-	m_pRawData = (const unsigned char*)strData.data();
-	m_dwRawDataCount = strData.length();
-	m_fSelected = false;
-	m_stScrollInfo.nPos = 0;
-	SetScrollInfo(SB_VERT, &m_stScrollInfo);
-	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
-	Recalc();
-}
-
-void CHexCtrl::CHexView::SetData(const PBYTE pData, DWORD_PTR dwCount)
+void CHexCtrl::CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount)
 {
 	m_pRawData = pData;
 	m_dwRawDataCount = dwCount;
@@ -753,7 +730,7 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::Create(CWnd * pParent, const RECT & rect, UINT nID, LOGFONT* pLogFont)
+BOOL CHexCtrl::Create(CWnd * pParent, const RECT & rect, UINT nID, const LOGFONT* pLogFont)
 {
 	m_pLogFontHexView = pLogFont;
 
@@ -795,13 +772,13 @@ BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
 void CHexCtrl::SetData(const std::vector<std::byte>& vecData) const
 {
 	if (GetActiveView())
-		GetActiveView()->SetData(vecData);
+		GetActiveView()->SetData(reinterpret_cast<const unsigned char*>(vecData.data()), vecData.size());
 }
 
 void CHexCtrl::SetData(const std::string& strData) const
 {
 	if (GetActiveView())
-		GetActiveView()->SetData(strData);
+		GetActiveView()->SetData(reinterpret_cast<const unsigned char*>(strData.data()), strData.size());
 }
 
 void CHexCtrl::SetData(const PBYTE pData, DWORD_PTR dwCount) const

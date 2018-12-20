@@ -46,7 +46,7 @@ $VERSION="$MAJOR.$MINOR.$MAINTENANCE.$REVISION"
 
 #Increasing current version by 1 and writing it back to $versionfile.
 #So $versionfile always contains version number that's gonna be used on next compilation.
-$MAINTENANCE=$MAINTENANCE + 1
-$regexA=[regex]"#define MAINTENANCE_VERSION(.*)"
-$content = [System.IO.File]::ReadAllText($versionfile) -Replace($regexA,"#define MAINTENANCE_VERSION		$MAINTENANCE`r")
-[System.IO.File]::WriteAllText($versionfile, $content)
+##$MAINTENANCE=$MAINTENANCE + 1
+##$regexA=[regex]"#define MAINTENANCE_VERSION(.*)"
+##$content = [System.IO.File]::ReadAllText($versionfile) -Replace($regexA,"#define MAINTENANCE_VERSION		$MAINTENANCE`r")
+##[System.IO.File]::WriteAllText($versionfile, $content)

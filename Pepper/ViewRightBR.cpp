@@ -20,6 +20,18 @@ void CViewRightBR::OnInitialUpdate()
 
 	m_stEditResStrings.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL |
 		ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL, CRect(0, 0, 0, 0), this, 0x01);
+	
+	LOGFONT lf { };
+	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+	lf.lfHeight = 18;
+	if (!m_fontEditRes.CreateFontIndirectW(&lf))
+	{
+		NONCLIENTMETRICSW ncm;
+		ncm.cbSize = sizeof(NONCLIENTMETRICS);
+		SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+		m_fontEditRes.CreateFontIndirectW(&ncm.lfMessageFont);
+	}
+	m_stEditResStrings.SetFont(&m_fontEditRes);
 
 	m_stListInfo.clrListTextTooltip = RGB(255, 255, 255);
 	m_stListInfo.clrListBkTooltip = RGB(0, 132, 132);
@@ -100,6 +112,9 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 	m_iImgResWidth = 0;
 	m_iImgResHeight = 0;
 	m_vecImgRes.clear();
+
+	CRect rcClient;
+	GetClientRect(&rcClient);
 
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 	if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
@@ -214,10 +229,9 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 				m_strResStrings += L"\r\n";
 			pwszResString += 1 + (UINT)*pwszResString;
 		}
-		CRect rc;
-		GetClientRect(&rc);
+
 		m_stEditResStrings.SetWindowTextW(m_strResStrings.data());
-		m_stEditResStrings.SetWindowPos(this, rc.left, rc.top, rc.right, rc.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 		m_pActiveWnd = &m_stEditResStrings;
 		break;
@@ -256,7 +270,7 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 									if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
 										return -1;
 
-									m_vecImgRes.push_back(std::make_unique<CImageList>());
+									m_vecImgRes.emplace_back(std::make_unique<CImageList>());
 									auto& vecBack = m_vecImgRes.back();
 									vecBack->Create(m_stBmp.bmWidth, m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
 									vecBack->SetBkColor(m_clrBkImgList);
@@ -317,7 +331,7 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 									if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
 										return -1;
 
-									m_vecImgRes.push_back(std::make_unique<CImageList>());
+									m_vecImgRes.emplace_back(std::make_unique<CImageList>());
 									auto& vecBack = m_vecImgRes.back();
 									vecBack->Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
 									vecBack->SetBkColor(m_clrBkImgList);
@@ -345,7 +359,40 @@ int CViewRightBR::ShowResource(std::vector<std::byte>* pData, UINT uResType)
 		break;
 	}
 	case 16: //RT_VERSION
-		break;
+	{
+		m_strResVerInfo.clear();
+		LANGANDCODEPAGE* pLangAndCP;
+		UINT dwBytesOut;
+
+		//Read the list of languages and code pages.
+		VerQueryValueW(pData->data(), L"\\VarFileInfo\\Translation", (LPVOID*)&pLangAndCP, &dwBytesOut);
+
+		WCHAR strSubBlock[50];
+		DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
+		//Read the file description for each language and code page.
+		for (unsigned iterCodePage = 0; iterCodePage < dwLangCount; iterCodePage++)
+		{
+			for (unsigned i = 0; i < m_mapVerInfoStrings.size(); i++) //sizeof pstrVerInfoStrings [];
+			{
+				swprintf_s(strSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
+					pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, m_mapVerInfoStrings.at(i).data());
+			
+				m_strResVerInfo += m_mapVerInfoStrings.at(i).data();
+				m_strResVerInfo += L" - ";
+
+				WCHAR* pszBufferOut;
+				if (VerQueryValueW(pData->data(), strSubBlock, (LPVOID*)&pszBufferOut, &dwBytesOut))
+					if (dwBytesOut)
+						m_strResVerInfo += pszBufferOut;
+				m_strResVerInfo += L"\r\n";
+			}
+		}
+		m_stEditResStrings.SetWindowTextW(m_strResVerInfo.data());
+		m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+		m_pActiveWnd = &m_stEditResStrings;
+	}
+	break;
 	}
 	Invalidate();
 	UpdateWindow();

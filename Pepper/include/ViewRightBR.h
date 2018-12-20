@@ -37,8 +37,20 @@ private:
 	//Vector for RT_GROUP_ICON/CURSOR.
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { };
 	std::wstring m_strResStrings;
-	CEdit m_stEditResStrings;
-	bool m_fJustOneTime { true };
+	std::wstring m_strResVerInfo;
+	CEdit m_stEditResStrings; //Edit control for RT_STRING, RT_VERSION
+	CFont m_fontEditRes; //Font for m_stEditResStrings.
+	std::map<int, std::wstring> m_mapVerInfoStrings {
+		{ 0, L"FileDescription" },
+	{ 1, L"FileVersion" },
+	{ 2, L"InternalName" },
+	{ 3, L"CompanyName" },
+	{ 4, L"LegalCopyright" },
+	{ 5, L"OriginalFilename" },
+	{ 6, L"ProductName" },
+	{ 7, L"ProductVersion" }
+	};
+	bool m_fJustOneTime { true }; //To set splitter's size once correctly.
 private:
 	int CreateListTLSCallbacks();
 };
@@ -67,3 +79,8 @@ struct GRPICONDIR
 };
 using LPGRPICONDIR = const GRPICONDIR*;
 #pragma pack( pop )
+
+struct LANGANDCODEPAGE {
+	WORD wLanguage;
+	WORD wCodePage;
+};
