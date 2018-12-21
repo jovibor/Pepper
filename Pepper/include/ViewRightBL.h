@@ -35,6 +35,7 @@ private:
 	CWnd* m_pActiveWnd { };
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };
+	RESHELPER m_stResHelper { };
 
 	int CreateListImportEntry(DWORD dwEntry);
 	int CreateListDelayImportEntry(DWORD dwEntry);

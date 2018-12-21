@@ -1,22 +1,13 @@
-/********************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/						*
-* This is a HEX control for MFC, implemented as CWnd derived class.				*
-* The usage is quite simple:													*
-* 1. Construct CHexCtrl object.													*
-* 2. Call CHexCtrl::Create member function to create an instance.				*
-* 3. Call one of CHexCtrl::SetData methods to set actual data to display as hex.*
-********************************************************************************/
+/************************************************************************************
+* Copyright (C) 2018, Jovibor: https://github.com/jovibor/							*
+* This is a HEX control for MFC, implemented as CWnd derived class.					*
+* The usage is quite simple:														*
+* 1. Construct CHexCtrl object:	(CHexCtrl myHex;).									*
+* 2. Call CHexCtrl::Create member function to create an instance.					*
+* 3. Call CHexCtrl::SetData method to set the data and its size to display as hex.	*
+************************************************************************************/
 #pragma once
 #include <vector>
-
-#ifndef __cpp_lib_byte
-#define __cpp17_conformant 0
-#elif __cpp_lib_byte < 201603
-#define __cpp17_conformant 0
-#else
-#define __cpp17_conformant 1
-#endif
-static_assert(__cpp17_conformant, "C++17 conformant compiler is required (MSVS 15.7 with /std:c++17 or higher).");
 
 /********************************************
 * CHexCtrl class definition.				*
@@ -101,8 +92,6 @@ public:
 	virtual ~CHexCtrl() {}
 	BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, const LOGFONT* pLogFont = nullptr/*default*/);
 	CHexView* GetActiveView() const { return m_pHexView; };
-	void SetData(const std::vector<std::byte>& vecData) const;
-	void SetData(const std::string& strData) const;
 	void SetData(const PBYTE pData, DWORD_PTR dwCount) const;
 	void ClearData();
 	void SetFont(const LOGFONT* pLogFontNew) const;

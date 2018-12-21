@@ -1,11 +1,11 @@
-/********************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/						*
-* This is a HEX control for MFC, implemented as CWnd derived class.				*
-* The usage is quite simple:													*
-* 1. Construct CHexCtrl object.													*
-* 2. Call CHexCtrl::Create member function to create an instance.				*
-* 3. Call one of CHexCtrl::SetData methods to set actual data to display as hex.*
-********************************************************************************/
+/************************************************************************************
+* Copyright (C) 2018, Jovibor: https://github.com/jovibor/							*
+* This is a HEX control for MFC, implemented as CWnd derived class.					*
+* The usage is quite simple:														*
+* 1. Construct CHexCtrl object:	(CHexCtrl myHex;).									*
+* 2. Call CHexCtrl::Create member function to create an instance.					*
+* 3. Call CHexCtrl::SetData method to set the data and its size to display as hex.	*
+************************************************************************************/
 #include "stdafx.h"
 #include "HexCtrl.h"
 #include "strsafe.h"
@@ -414,7 +414,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 	//"Ascii" text.
 	rect.left = m_iThirdVertLine; rect.top = m_iFirstHorizLine;
 	rect.right = m_iFourthVertLine; rect.bottom = m_iSecondHorizLine;
-	DrawTextW(rDC.m_hDC, L"ASCII", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	DrawTextW(rDC.m_hDC, L"Ascii", 5, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//First Vertical line.
 	rDC.MoveTo(m_iFirstVertLine, nScrollVert);
@@ -767,18 +767,6 @@ void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
 {
 	return FALSE;
-}
-
-void CHexCtrl::SetData(const std::vector<std::byte>& vecData) const
-{
-	if (GetActiveView())
-		GetActiveView()->SetData(reinterpret_cast<const unsigned char*>(vecData.data()), vecData.size());
-}
-
-void CHexCtrl::SetData(const std::string& strData) const
-{
-	if (GetActiveView())
-		GetActiveView()->SetData(reinterpret_cast<const unsigned char*>(strData.data()), strData.size());
 }
 
 void CHexCtrl::SetData(const PBYTE pData, DWORD_PTR dwCount) const

@@ -99,7 +99,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	//OnUpdate can be invoked before OnInitialUpdate, weird MFC.
 	if (!m_pChildFrame)
 		return;
-	if (LOWORD(lHint) == IDC_SHOW_RESOURCE)
+	if (LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
 		return;
 	
 	if (m_pActiveWnd)

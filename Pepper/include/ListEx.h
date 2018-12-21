@@ -1,12 +1,13 @@
-/******************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/	                  *
-* This is an extended and quite featured version of CMFCListCtrl class.		  *
-* The main difference is in Create() method, which takes one additional arg:  *
-* pointer to LISTEXINFO structure, which fields are described below.          *
-* Also, this class has set of additional methods, such as: SetFont(),		  *
-* SetItemTooltip(), SetTooltipColor(), SetHeaderColor(), SetHeaderHeight(),   *
-* SetHeaderFont(). It's implemented as «ownerdraw» list.					  *
-******************************************************************************/
+/****************************************************************************
+* Copyright (C) 2018, Jovibor: https://github.com/jovibor/	                *
+* This is an extended and quite featured version of CMFCListCtrl class.		*
+* The main difference is in CListEx::Create method, which takes one			*
+* additional arg: pointer to LISTEXINFO structure, which fields are			*
+* described below.															*
+* Also, this class has set of additional methods: SetFont, SetItemTooltip,	* 
+* SetTooltipColor, SetHeaderColor, SetHeaderHeight,	SetHeaderFont,			*
+* SetHeaderColumnColor.														*
+****************************************************************************/
 #pragma once
 #include <unordered_map>
 
@@ -25,11 +26,11 @@ typedef struct LISTEXINFO {
 	COLORREF clrListBkTooltip { GetSysColor(COLOR_INFOBK) }; //Tooltip window bk color.
 	COLORREF clrListTextCellTt { GetSysColor(COLOR_WINDOWTEXT) }; //Text color of a cell that has tooltip.
 	COLORREF clrListBkCellTt { RGB(170, 170, 230) }; //Bk color of a cell that has tooltip.
-	const LOGFONT* pListLogFont { nullptr }; //List font (nullptr=default).
+	const LOGFONT* pListLogFont { nullptr }; //List font.
 	COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) }; //List header text color.
 	COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) }; //List header bk color.
 	DWORD dwHeaderHeight { 19 }; //List header height.
-	const LOGFONT* pHeaderLogFont { nullptr }; //List header font (nullptr=default).
+	const LOGFONT* pHeaderLogFont { nullptr }; //List header font.
 } *PLISTEXINFO;
 
 /********************************************
@@ -45,8 +46,9 @@ private:
 	{
 	public:
 		void SetHeight(DWORD dwHeight);
-		void SetColor(COLORREF clrText, COLORREF clrBk);
 		void SetFont(const LOGFONT* pFontNew);
+		void SetColor(COLORREF clrText, COLORREF clrBk);
+		void SetColumnColor(DWORD nColumn, COLORREF clr);
 		CListExHeader();
 		virtual ~CListExHeader() {}
 	protected:
@@ -60,6 +62,7 @@ private:
 		HDITEMW m_hdItem { }; //For drawing.
 		WCHAR m_strHeaderText[MAX_PATH] { };
 		DWORD m_dwHeaderHeight { 19 }; //Standard (default) height.
+		std::unordered_map<DWORD, COLORREF> m_mapClrColumn { }; //Color of individual columns.
 	};
 	/********************************************
 	* End of CListExHeader class definition.	*
@@ -79,6 +82,7 @@ private:
 	void SetHeaderColor(COLORREF clrHdrText, COLORREF clrHdrBk);
 	void SetHeaderHeight(DWORD dwHeight);
 	void SetHeaderFont(const LOGFONT* pLogFontNew);
+	void SetHeaderColumnColor(DWORD nColumn, COLORREF clr);
 	DECLARE_MESSAGE_MAP()
 private:
 	CListExHeader m_stListHeader;

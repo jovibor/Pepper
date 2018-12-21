@@ -63,6 +63,15 @@ inline const std::map<WORD, std::wstring> g_mapResType {
 { 241, L"RT_TOOLBAR" }
 }; 
 
+struct RESHELPER
+{	
+	RESHELPER() {}
+	RESHELPER(WORD type, WORD name, std::vector<std::byte>* data) :IdResType(type), IdResName(name),pData(data) {}
+	WORD IdResType;
+	WORD IdResName;
+	std::vector<std::byte>* pData;
+};
+
 /*****************************************************************
 * These are identificators of all the controls: list, hex, tree. *
 *****************************************************************/
@@ -104,7 +113,7 @@ constexpr auto IDC_HEX_RIGHT_BOTTOM_LEFT = 0x0200;
 constexpr auto IDC_HEX_RIGHT_TOP_RIGHT = 0x0201;
 
 constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;
-constexpr auto IDC_SHOW_RESOURCE = 0x0301;
+constexpr auto IDC_SHOW_RESOURCE_RBR = 0x0301;
 /********************************************************
 * End of IDC.											*
 ********************************************************/

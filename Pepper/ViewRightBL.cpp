@@ -145,14 +145,20 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 						auto& data = std::get<3>(lvl3vec.at(idlvl3));
 
 						if (!data.empty()) //Resource data and resource type to show in CViewRightBR.
-							m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE, std::get<0>(rootvec.at(idlvlRoot)).Id), (CObject*)&data);
+						{
+							m_stResHelper.IdResType = std::get<0>(rootvec.at(idlvlRoot)).Id;
+							m_stResHelper.IdResName = std::get<0>(lvl2vec.at(idlvl2)).Id;
+							m_stResHelper.pData = (std::vector<std::byte>*)&data;
+
+							m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), (CObject*)&m_stResHelper);
+						}
 					}
 				}
 			}
 		}
 		else
 			//Update by default, with no data — to clear view.
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE, 0));
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0));
 	}
 
 	return CScrollView::OnNotify(wParam, lParam, pResult);
@@ -170,7 +176,8 @@ int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 	if (nSertId > m_vecSec->size())
 		return -1;
 
-	m_stHexEdit.SetData(std::get<1>(m_vecSec->at(nSertId)));
+	const auto& secEntry = std::get<1>(m_vecSec->at(nSertId));
+	m_stHexEdit.SetData((PBYTE)secEntry.data(), secEntry.size());
 
 	CRect rect;
 	GetClientRect(&rect);
@@ -388,7 +395,8 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	if (m_pLibpe->GetDebugTable(pDebug) != S_OK)
 		return -1;
 
-	m_stHexEdit.SetData(std::get<1>(pDebug->at(dwEntry)));
+	const auto& debugEntry = std::get<1>(pDebug->at(dwEntry));
+	m_stHexEdit.SetData((PBYTE)debugEntry.data(), debugEntry.size());
 
 	CRect rect;
 	GetClientRect(&rect);
@@ -415,9 +423,9 @@ int CViewRightBL::CreateTreeResources()
 	m_treeResBottom.SetImageList(&m_imglTreeRes, TVSIL_NORMAL);
 	long ilvlRoot = 0, ilvl2 = 0, ilvl3 = 0;
 
-	//Creating a treeCtrl and setting, with SetItemData(...),
+	//Creating a treeCtrl and setting, with SetItemData(),
 	//a unique id for each node, that is an index in vector (m_vecResId),
-	//that holds tuple of three IDs of resource — Type, Name, LangID. 
+	//that holds tuple of three IDs of resource — Type, Name, LangID.
 	for (auto& iterRoot : std::get<1>(*pTupResRoot))
 	{
 		const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry = &std::get<0>(iterRoot);
@@ -425,9 +433,9 @@ int CViewRightBL::CreateTreeResources()
 			//Enclose in double quotes.
 			swprintf(str, MAX_PATH, L"\u00AB%s\u00BB", std::get<1>(iterRoot).c_str());
 		else
-		{
+		{	//Setting Treectrl root node name depending on Resource typeID.
 			if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
-				swprintf(str, MAX_PATH, L"%s", g_mapResType.at(pResDirEntry->Id).c_str());
+				swprintf(str, MAX_PATH, L"%s, Id: %u", g_mapResType.at(pResDirEntry->Id).c_str(), pResDirEntry->Id);
 			else
 				swprintf(str, MAX_PATH, L"%u", pResDirEntry->Id);
 		}
@@ -472,7 +480,8 @@ int CViewRightBL::CreateHexTLS()
 	if (m_pLibpe->GetTLSTable(pTLS) != S_OK)
 		return -1;
 
-	m_stHexEdit.SetData(std::get<1>(*pTLS));
+	const auto& tls = std::get<1>(*pTLS);
+	m_stHexEdit.SetData((PBYTE)tls.data(), tls.size());
 
 	CRect rect;
 	GetClientRect(&rect);

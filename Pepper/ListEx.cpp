@@ -31,7 +31,10 @@ void CListEx::CListExHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bI
 	CMemDC memDC(*pDC, rect);
 	CDC& rDC = memDC.GetDC();
 
-	rDC.FillSolidRect(&rect, m_clrBk);
+	if (m_mapClrColumn.find(iItem) != m_mapClrColumn.end())
+		rDC.FillSolidRect(&rect, m_mapClrColumn.at(iItem));
+	else
+		rDC.FillSolidRect(&rect, m_clrBk);
 	rDC.SetTextColor(m_clrText);
 	rDC.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
 	rDC.SelectObject(&m_fontHdr);
@@ -78,6 +81,16 @@ void CListEx::CListExHeader::SetColor(COLORREF clrText, COLORREF clrBk)
 	m_clrText = clrText;
 	m_clrBk = clrBk;
 
+	Invalidate();
+	UpdateWindow();
+}
+
+void CListEx::CListExHeader::SetColumnColor(DWORD nColumn, COLORREF clr)
+{
+	if (nColumn >= (DWORD)GetItemCount())
+		return;
+
+	m_mapClrColumn[nColumn] = clr;
 	Invalidate();
 	UpdateWindow();
 }
@@ -253,6 +266,14 @@ void CListEx::SetHeaderHeight(DWORD dwHeight)
 void CListEx::SetHeaderFont(const LOGFONT* pLogFontNew)
 {
 	GetHeaderCtrl().SetFont(pLogFontNew);
+	Update(0);
+	GetHeaderCtrl().Invalidate();
+	GetHeaderCtrl().UpdateWindow();
+}
+
+void CListEx::SetHeaderColumnColor(DWORD nColumn, COLORREF clr)
+{
+	GetHeaderCtrl().SetColumnColor(nColumn, clr);
 	Update(0);
 	GetHeaderCtrl().Invalidate();
 	GetHeaderCtrl().UpdateWindow();
