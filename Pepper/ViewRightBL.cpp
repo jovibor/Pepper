@@ -143,22 +143,18 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 					if (!lvl3vec.empty())
 					{
 						auto& data = std::get<3>(lvl3vec.at(idlvl3));
-
-						if (!data.empty()) //Resource data and resource type to show in CViewRightBR.
-						{
-							m_stResHelper.IdResType = std::get<0>(rootvec.at(idlvlRoot)).Id;
-							m_stResHelper.IdResName = std::get<0>(lvl2vec.at(idlvl2)).Id;
-							m_stResHelper.pData = (std::vector<std::byte>*)&data;
-
-							m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), (CObject*)&m_stResHelper);
-						}
+						//Resource data and resource type to show in CViewRightBR.
+						m_stResHelper.IdResType = std::get<0>(rootvec.at(idlvlRoot)).Id;
+						m_stResHelper.IdResName = std::get<0>(lvl2vec.at(idlvl2)).Id;
+						m_stResHelper.pData = (std::vector<std::byte>*)&data;
+						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), (CObject*)&m_stResHelper);
 					}
 				}
 			}
 		}
 		else
 			//Update by default, with no data — to clear view.
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0));
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), nullptr);
 	}
 
 	return CScrollView::OnNotify(wParam, lParam, pResult);

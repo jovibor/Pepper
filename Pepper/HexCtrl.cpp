@@ -141,7 +141,7 @@ void CHexCtrl::CHexView::SetFontSize(UINT nSize)
 	Recalc();
 }
 
-void CHexCtrl::CHexView::SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
+void CHexCtrl::CHexView::SetColor(COLORREF clrTextHex, COLORREF clrTextOffset,
 	COLORREF clrTextSelected, COLORREF clrTextBk, COLORREF clrTextBkSelected)
 {
 	m_clrTextHex = clrTextHex;
@@ -793,10 +793,10 @@ void CHexCtrl::SetFontSize(UINT nSize) const
 		return GetActiveView()->SetFontSize(nSize);
 }
 
-void CHexCtrl::SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
+void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextOffset,
 	COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected) const
 {
 	if (GetActiveView())
-		GetActiveView()->SetFontColor(clrTextHex, clrTextOffset, clrTextSelected,
+		GetActiveView()->SetColor(clrTextHex, clrTextOffset, clrTextSelected,
 			clrBk, clrBkSelected);
 }

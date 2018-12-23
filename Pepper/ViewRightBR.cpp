@@ -95,16 +95,11 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
 }
 
-int CViewRightBR::ShowResource(RESHELPER* pRes)
+void CViewRightBR::ShowResource(RESHELPER* pRes)
 {
 	LPGRPICONDIR pGRPIDir;
 	HICON hIcon;
 	ICONINFO iconInfo;
-	if (m_hwndResDlg)
-	{
-		::DestroyWindow(m_hwndResDlg);
-		m_hwndResDlg = nullptr;
-	}
 	m_stEditResStrings.ShowWindow(SW_HIDE);
 	m_stImgRes.DeleteImageList();
 	m_iResTypeToDraw = -1;
@@ -118,34 +113,37 @@ int CViewRightBR::ShowResource(RESHELPER* pRes)
 
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 	if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
-		return -1;
+		return;
 
 	if (pRes)
 	{
+		if (pRes->pData->empty())
+			return ResLoadError();
+
 		switch (pRes->IdResType)
 		{
 		case 1: //RT_CURSOR
 		{
 			hIcon = CreateIconFromResourceEx((PBYTE)pRes->pData->data(), pRes->pData->size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 			if (!hIcon)
-				return -1;
+				return ResLoadError();
 			if (!GetIconInfo(hIcon, &iconInfo))
-				return -1;
+				return ResLoadError();
 			if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
-				return -1;
+				return ResLoadError();
+			DeleteObject(iconInfo.hbmColor);
+			DeleteObject(iconInfo.hbmMask);
 
 			m_stImgRes.Create(m_stBmp.bmWidth, m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
 			m_stImgRes.SetBkColor(m_clrBkImgList);
 			if (m_stImgRes.Add(hIcon) == -1)
-				return -1;
+				return ResLoadError();
 
+			DestroyIcon(hIcon);
 			SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmWidth));
 
 			m_iResTypeToDraw = 1;
 			m_fDrawRes = true;
-			DeleteObject(iconInfo.hbmColor);
-			DeleteObject(iconInfo.hbmMask);
-			DestroyIcon(hIcon);
 			break;
 		}
 		case 2: //RT_BITMAP
@@ -162,94 +160,106 @@ int CViewRightBR::ShowResource(RESHELPER* pRes)
 
 			HDC hDC = ::GetDC(m_hWnd);
 			HBITMAP hBitmap = CreateDIBitmap(hDC, &pDIBInfo->bmiHeader, CBM_INIT, pDIBBits, pDIBInfo, DIB_RGB_COLORS);
+			::ReleaseDC(m_hWnd, hDC);
 			if (!hBitmap)
-				return -1;
+				return ResLoadError();
+
 			if (!GetObjectW(hBitmap, sizeof(BITMAP), &m_stBmp))
-				return -1;
+				return ResLoadError();
 
 			CBitmap bmp;
 			if (!bmp.Attach(hBitmap))
-				return -1;
+				return ResLoadError();
+
 			m_stImgRes.Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
 			if (m_stImgRes.Add(&bmp, nullptr) == -1)
-				return -1;
+				return ResLoadError();
 
 			m_iResTypeToDraw = 2;
 			m_fDrawRes = true;
 			SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmHeight));
 			bmp.DeleteObject();
-			::ReleaseDC(m_hWnd, hDC);
 			break;
 		}
 		case 3: //RT_ICON
 		{
 			hIcon = CreateIconFromResourceEx((PBYTE)pRes->pData->data(), pRes->pData->size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 			if (!hIcon)
-				return -1;
+				return ResLoadError();
+
 			if (!GetIconInfo(hIcon, &iconInfo))
-				return -1;
+				return ResLoadError();
+
 			if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
-				return -1;
+				return ResLoadError();
+
+			DeleteObject(iconInfo.hbmColor);
+			DeleteObject(iconInfo.hbmMask);
+
 			m_stImgRes.Create(m_stBmp.bmWidth, m_stBmp.bmHeight, ILC_COLORDDB, 0, 1);
 			m_stImgRes.SetBkColor(m_clrBkImgList);
 			if (m_stImgRes.Add(hIcon) == -1)
-				return -1;
+				return ResLoadError();
 
+			DestroyIcon(hIcon);
 			SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmHeight));
 
 			m_iResTypeToDraw = 3;
 			m_fDrawRes = true;
-			DeleteObject(iconInfo.hbmColor);
-			DeleteObject(iconInfo.hbmMask);
-			DestroyIcon(hIcon);
 			break;
 		}
 		case 4: //RT_MENU
 			break;
 		case 5: //RT_DIALOG
 		{
-			m_hwndResDlg = CreateDialogIndirectParamW(nullptr, (LPCDLGTEMPLATEW)pRes->pData->data(), m_hWnd, nullptr, NULL);
-
-			if (m_hwndResDlg)
+			HWND hwndResDlg = CreateDialogIndirectParamW(nullptr, (LPCDLGTEMPLATEW)pRes->pData->data(), m_hWnd, nullptr, NULL);
+			if (hwndResDlg)
 			{
-				CRect rc;
-				::GetWindowRect(m_hwndResDlg, &rc);
+				CRect rcDlg;
+				::GetWindowRect(hwndResDlg, &rcDlg);
 				DWORD dwStyle;
 				if (*(((PWORD)pRes->pData->data()) + 1) == 0xFFFF) //DLGTEMPLATEEX
 					dwStyle = ((DLGTEMPLATEEX*)pRes->pData->data())->style;
 				else //DLGTEMPLATE
 					dwStyle = ((DLGTEMPLATE*)pRes->pData->data())->style;
 
-				m_strRes = L"STYLES: ";
 				for (auto& i : m_mapDlgStyles)
 					if (i.first & dwStyle)
-						m_strRes += i.second + L" | ";
-				m_strRes = m_strRes.substr(0, m_strRes.size() - 3);
+						if (!m_strRes.empty())
+							m_strRes += L" | " + i.second;
+						else
+							m_strRes += i.second;
 
-				::ShowWindow(m_hwndResDlg, SW_SHOWNOACTIVATE);
-				HDC hDCDlg = ::GetDC(m_hwndResDlg);
-				HDC hDCMemory = CreateCompatibleDC(hDCDlg);
-				HBITMAP hBitmap = CreateCompatibleBitmap(hDCDlg, rc.Width(), rc.Height());
+				HDC hDC = ::GetDC(m_hWnd);
+				HDC hDCMemory = CreateCompatibleDC(hDC);
+				HBITMAP hBitmap = CreateCompatibleBitmap(hDC, rcDlg.Width(), rcDlg.Height());
 				::SelectObject(hDCMemory, hBitmap);
-				::PrintWindow(m_hwndResDlg, hDCMemory, 0);
-				::ShowWindow(m_hwndResDlg, SW_HIDE);
-				GetTextExtentPoint32W(hDCDlg, m_strRes.data(), m_strRes.size(), &m_sizeLetter);
+				::ShowWindow(hwndResDlg, SW_SHOWNOACTIVATE);
+				::PrintWindow(hwndResDlg, hDCMemory, 0);
+				::DestroyWindow(hwndResDlg);
+				GetTextExtentPoint32W(hDC, L"STYLES: ", 8, &m_sizeStrStyles);
+				GetTextExtentPoint32W(hDC, m_strRes.data(), m_strRes.size(), &m_sizeLetter);
 				DeleteDC(hDCMemory);
-				::ReleaseDC(m_hwndResDlg, hDCDlg);
+				::ReleaseDC(m_hWnd, hDC);
 
 				CBitmap bmp;
 				if (!bmp.Attach(hBitmap))
-					return -1;
-				m_stImgRes.Create(rc.Width(), rc.Height(), ILC_COLORDDB, 0, 1);
+					return ResLoadError();
+
+				m_stImgRes.Create(rcDlg.Width(), rcDlg.Height(), ILC_COLORDDB, 0, 1);
 				if (m_stImgRes.Add(&bmp, nullptr) == -1)
-					return -1;
-				SetScrollSizes(MM_TEXT, CSize(max(m_sizeLetter.cx + m_iResDlgIndentToDrawX, rc.Width()), rc.Height() + m_sizeLetter.cy + m_iResDlgIndentToDrawY));
+					return ResLoadError();
+
+				SetScrollSizes(MM_TEXT, CSize(max(m_sizeStrStyles.cx + m_sizeLetter.cx + m_iResDlgIndentToDrawX, rcDlg.Width()),
+					rcDlg.Height() + m_sizeLetter.cy + m_iResDlgIndentToDrawY));
 				bmp.DeleteObject();
 
 				m_iResTypeToDraw = 5;
 				m_fDrawRes = true;
-				::DestroyWindow(m_hwndResDlg);
 			}
+			else
+				return ResLoadError();
+
 			break;
 		}
 		case 6: //RT_STRING
@@ -298,11 +308,14 @@ int CViewRightBR::ShowResource(RESHELPER* pRes)
 									{
 										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), data.size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 										if (!hIcon)
-											return -1;
+											return ResLoadError();
 										if (!GetIconInfo(hIcon, &iconInfo))
-											return -1;
+											return ResLoadError();
 										if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
-											return -1;
+											return ResLoadError();
+
+										DeleteObject(iconInfo.hbmColor);
+										DeleteObject(iconInfo.hbmMask);
 
 										m_vecImgRes.emplace_back(std::make_unique<CImageList>());
 										auto& vecBack = m_vecImgRes.back();
@@ -312,10 +325,8 @@ int CViewRightBR::ShowResource(RESHELPER* pRes)
 										m_iImgResHeight = max(m_stBmp.bmHeight, m_iImgResHeight);
 
 										if (vecBack->Add(hIcon) == -1)
-											return -1;
+											return ResLoadError();
 
-										DeleteObject(iconInfo.hbmColor);
-										DeleteObject(iconInfo.hbmMask);
 										DestroyIcon(hIcon);
 										break;
 									}
@@ -359,11 +370,14 @@ int CViewRightBR::ShowResource(RESHELPER* pRes)
 									{
 										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), data.size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 										if (!hIcon)
-											return -1;
+											return ResLoadError();
 										if (!GetIconInfo(hIcon, &iconInfo))
-											return -1;
+											return ResLoadError();
 										if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
-											return -1;
+											return ResLoadError();
+
+										DeleteObject(iconInfo.hbmColor);
+										DeleteObject(iconInfo.hbmMask);
 
 										m_vecImgRes.emplace_back(std::make_unique<CImageList>());
 										auto& vecBack = m_vecImgRes.back();
@@ -373,10 +387,8 @@ int CViewRightBR::ShowResource(RESHELPER* pRes)
 										m_iImgResHeight = max(m_stBmp.bmHeight, m_iImgResHeight);
 
 										if (vecBack->Add(hIcon) == -1)
-											return -1;
+											return ResLoadError();
 
-										DeleteObject(iconInfo.hbmColor);
-										DeleteObject(iconInfo.hbmMask);
 										DestroyIcon(hIcon);
 										break;
 									}
@@ -457,10 +469,9 @@ int CViewRightBR::ShowResource(RESHELPER* pRes)
 		}
 		}
 	}
+
 	Invalidate();
 	UpdateWindow();
-
-	return 1;
 }
 
 void CViewRightBR::OnDraw(CDC* pDC)
@@ -468,14 +479,11 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	if (!m_fDrawRes)
 		return;
 
-	CRect rect;
-	GetClientRect(&rect);
+	CRect rcClient;
+	GetClientRect(&rcClient);
 	CSize sizeScroll = GetTotalSize();
 	CPoint ptDrawAt;
 	int x, y;
-
-	pDC->GetClipBox(&rect);
-	pDC->FillSolidRect(rect, RGB(230, 230, 230));
 
 	switch (m_iResTypeToDraw)
 	{
@@ -483,48 +491,65 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case 2: //RT_BITMAP
 	case 3: //RT_ICON
 		//Draw at center independing of scrolls.
-		if (sizeScroll.cx > rect.Width())
+		pDC->FillSolidRect(rcClient, RGB(230, 230, 230));
+
+		if (sizeScroll.cx > rcClient.Width())
 			x = sizeScroll.cx / 2 - (m_stBmp.bmWidth / 2);
 		else
-			x = rect.Width() / 2 - (m_stBmp.bmWidth / 2);
-		if (sizeScroll.cy > rect.Height())
+			x = rcClient.Width() / 2 - (m_stBmp.bmWidth / 2);
+		if (sizeScroll.cy > rcClient.Height())
 			y = sizeScroll.cy / 2 - (m_stBmp.bmHeight / 2);
 		else
-			y = rect.Height() / 2 - (m_stBmp.bmHeight / 2);
+			y = rcClient.Height() / 2 - (m_stBmp.bmHeight / 2);
 
 		ptDrawAt.SetPoint(x, y);
 		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
-
 		break;
 	case 5: //RT_DIALOG
-		pDC->FillSolidRect(rect, RGB(255, 255, 255));
+	{
+		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
 		pDC->SelectObject(&m_fontEditRes);
-		pDC->TextOutW(m_iResDlgIndentToDrawX, m_iResDlgIndentToDrawY, m_strRes.data(), m_strRes.size());
+		pDC->SetTextColor(RGB(0, 0, 0));
+		pDC->TextOutW(m_iResDlgIndentToDrawX, m_iResDlgIndentToDrawY, L"Styles: ", 8);
+		pDC->SetTextColor(RGB(111, 0, 138));
+		pDC->TextOutW(m_iResDlgIndentToDrawX + m_sizeStrStyles.cx, m_iResDlgIndentToDrawY, m_strRes.data(), m_strRes.size());
 		ptDrawAt.SetPoint(m_iResDlgIndentToDrawX, m_sizeLetter.cy + m_iResDlgIndentToDrawY * 3);
 		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
 		break;
+	}
 	case 12: //RT_GROUP_CURSOR
 	case 14: //RT_GROUP_ICON
-		if (sizeScroll.cx > rect.Width())
+	{
+		pDC->FillSolidRect(rcClient, RGB(230, 230, 230));
+
+		if (sizeScroll.cx > rcClient.Width())
 			x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
 		else
-			x = rect.Width() / 2 - (m_iImgResWidth / 2);
+			x = rcClient.Width() / 2 - (m_iImgResWidth / 2);
 
 		for (int i = 0; i < (int)m_vecImgRes.size(); i++)
 		{
 			IMAGEINFO imginfo;
 			m_vecImgRes.at(i)->GetImageInfo(0, &imginfo);
 			int iImgHeight = imginfo.rcImage.bottom - imginfo.rcImage.top;
-			if (sizeScroll.cy > rect.Height())
+			if (sizeScroll.cy > rcClient.Height())
 				y = sizeScroll.cy / 2 - (iImgHeight / 2);
 			else
-				y = rect.Height() / 2 - (iImgHeight / 2);
+				y = rcClient.Height() / 2 - (iImgHeight / 2);
 
 			ptDrawAt.SetPoint(x, y);
 			m_vecImgRes.at(i)->Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
 			x += imginfo.rcImage.right - imginfo.rcImage.left;
 		}
 		break;
+	}
+	case 0xFF:
+		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
+		pDC->SetTextColor(RGB(255, 0, 0));
+		pDC->TextOutW(0, 0, m_strResLoadError.data());
+		break;
+	default:
+		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
 	}
 }
 
@@ -557,4 +582,12 @@ int CViewRightBR::CreateListTLSCallbacks()
 	}
 
 	return 0;
+}
+
+void CViewRightBR::ResLoadError()
+{
+	m_iResTypeToDraw = 0xFF;
+	m_fDrawRes = true;
+	Invalidate();
+	UpdateWindow();
 }

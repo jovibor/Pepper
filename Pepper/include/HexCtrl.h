@@ -26,7 +26,7 @@ private:
 		void ClearData();
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT nSize);
-		void SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
+		void SetColor(COLORREF clrTextHex, COLORREF clrTextOffset,
 			COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected);
 		UINT GetFontSize();
 	protected:
@@ -96,7 +96,7 @@ public:
 	void ClearData();
 	void SetFont(const LOGFONT* pLogFontNew) const;
 	void SetFontSize(UINT nSize) const;
-	void SetFontColor(COLORREF clrTextHex, COLORREF clrTextOffset,
+	void SetColor(COLORREF clrTextHex, COLORREF clrTextOffset,
 		COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected) const;
 private:
 	DECLARE_DYNAMIC(CHexCtrl)

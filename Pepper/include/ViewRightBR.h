@@ -14,7 +14,7 @@ protected:
 	virtual void OnInitialUpdate();     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
-	int ShowResource(RESHELPER*);
+	void ShowResource(RESHELPER*);
 	DECLARE_MESSAGE_MAP()
 private:
 	CWnd* m_pActiveWnd { };
@@ -29,7 +29,6 @@ private:
 	COLORREF m_clrBk { RGB(230, 230, 230) };
 	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
 	//HWND for RT_DIALOG.
-	HWND m_hwndResDlg { };
 	BITMAP m_stBmp { };
 	int m_iResTypeToDraw { };
 	//Width and height of whole image to draw.
@@ -37,9 +36,10 @@ private:
 	//Vector for RT_GROUP_ICON/CURSOR.
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { };
 	std::wstring m_strRes;
+	std::wstring m_strResLoadError { L"Unable to load resource! It's either damaged, packed or zero-length." };
 	CEdit m_stEditResStrings; //Edit control for RT_STRING, RT_VERSION
 	CFont m_fontEditRes; //Font for m_stEditResStrings.
-	SIZE m_sizeLetter;
+	SIZE m_sizeLetter, m_sizeStrStyles;
 	int m_iResDlgIndentToDrawX { 10 };
 	int m_iResDlgIndentToDrawY { 2 };
 	std::map<int, std::wstring> m_mapVerInfoStrings {
@@ -96,6 +96,7 @@ private:
 	bool m_fJustOneTime { true }; //To set splitter's size once correctly.
 private:
 	int CreateListTLSCallbacks();
+	void ResLoadError();
 };
 
 /****************************************************************
