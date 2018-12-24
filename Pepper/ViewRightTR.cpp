@@ -18,7 +18,7 @@ void CViewRightTR::OnInitialUpdate()
 		return;
 
 	//Hex control for Resources raw.
-	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_TOP_RIGHT);
+	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_TR);
 	m_stHexEdit.ShowWindow(SW_HIDE);
 }
 
@@ -28,20 +28,13 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		return;
 	if (LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
 		return;
-	if (m_fJustOneTime)
-	{
-		CRect rcParent;
-		GetParent()->GetWindowRect(&rcParent);
-		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
-		m_pChildFrame->m_stSplitterRightTop.RecalcLayout();
-		m_fJustOneTime = false;
-	}
+
 	if (m_pActiveWnd)
 		m_pActiveWnd->ShowWindow(SW_HIDE);
 
-	CRect rcClient, rcParent;
+	CRect rcParent, rcClient;
 	GetClientRect(&rcClient);
-	m_pChildFrame->m_stSplitterRight.GetPane(0, 0)->GetClientRect(&rcParent);
+	GetParent()->GetWindowRect(&rcParent);
 
 	switch (LOWORD(lHint))
 	{
@@ -50,14 +43,16 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
+		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
-	case IDC_HEX_RIGHT_TOP_RIGHT:
+	case IDC_HEX_RIGHT_TR:
 	{
 		const auto& hexData = (std::vector<std::byte>*)pHint;
 		m_stHexEdit.SetData((PBYTE)hexData->data(), hexData->size());
 		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
+		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	}
 	default:

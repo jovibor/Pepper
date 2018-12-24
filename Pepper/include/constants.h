@@ -110,7 +110,7 @@ constexpr auto IDC_TREE_RESOURCE_TOP = 0x0102;
 constexpr auto IDC_TREE_RESOURCE_BOTTOM = 0x0103;
 
 constexpr auto IDC_HEX_RIGHT_BOTTOM_LEFT = 0x0200;
-constexpr auto IDC_HEX_RIGHT_TOP_RIGHT = 0x0201;
+constexpr auto IDC_HEX_RIGHT_TR = 0x0201;
 
 constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;
 constexpr auto IDC_SHOW_RESOURCE_RBR = 0x0301;

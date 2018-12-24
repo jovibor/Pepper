@@ -18,7 +18,6 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	CWnd* m_pActiveWnd { };
 	CHexCtrl m_stHexEdit;
-	bool m_fJustOneTime { true };
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 };

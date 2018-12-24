@@ -480,7 +480,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 							if (!data.empty())
 								//Send data vector pointer to CViewRightTR
 								//to display raw data.
-								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TOP_RIGHT, 0), (CObject*)&data);
+								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), (CObject*)&data);
 						}
 					}
 				}

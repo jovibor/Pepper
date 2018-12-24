@@ -53,7 +53,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 {
 	if (!m_pChildFrame)
 		return;
-	if (LOWORD(lHint) == IDC_HEX_RIGHT_TOP_RIGHT)
+	if (LOWORD(lHint) == IDC_HEX_RIGHT_TR)
 		return;
 
 	if (m_pActiveWnd)
@@ -73,7 +73,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		m_pActiveWnd = &m_listImportEntry;
 		break;
 	case IDC_TREE_RESOURCE:
-	case IDC_HEX_RIGHT_TOP_RIGHT:
+	case IDC_HEX_RIGHT_TR:
 		m_treeResBottom.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_treeResBottom;
 		break;

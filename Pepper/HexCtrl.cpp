@@ -67,21 +67,25 @@ BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCr
 	ncm.cbSize = sizeof(NONCLIENTMETRICS);
 	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 
+	LOGFONT lf { };
+	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+	lf.lfHeight = 18;
+
 	//In case of inability to create font from LOGFONT*
 	//creating default windows font.
 	if (pLogFont)
 	{
 		if (!m_fontHexView.CreateFontIndirectW(pLogFont))
-			m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
+			if (!m_fontHexView.CreateFontIndirectW(&lf))
+				m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
 	}
 	else
-	{
-		LOGFONT lf { };
-		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
-		lf.lfHeight = 18;
 		if (!m_fontHexView.CreateFontIndirectW(&lf))
 			m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
-	}
+
+	lf.lfHeight = 16;
+	if (!m_fontRectBottom.CreateFontIndirectW(&lf))
+		m_fontRectBottom.CreateFontIndirectW(&ncm.lfMessageFont);
 
 	m_menuPopup.CreatePopupMenu();
 	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_HEX, L"Copy as Hex...");
@@ -95,12 +99,13 @@ BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCr
 
 void CHexCtrl::CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount)
 {
+	ClearData();
+
 	m_pRawData = pData;
 	m_dwRawDataCount = dwCount;
-	m_fSelected = false;
-	m_stScrollInfo.nPos = 0;
-	SetScrollInfo(SB_VERT, &m_stScrollInfo);
-	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
+
+	SetBytesDisplayedText(m_dwRawDataCount, 0);
+
 	Recalc();
 }
 
@@ -110,6 +115,7 @@ void CHexCtrl::CHexView::ClearData()
 	m_pRawData = nullptr;
 	m_fSelected = false;
 	m_stScrollInfo.nPos = 0;
+	m_strBytesDisplayed.clear();
 	SetScrollInfo(SB_VERT, &m_stScrollInfo);
 	SetScrollInfo(SB_HORZ, &m_stScrollInfo);
 }
@@ -128,7 +134,7 @@ void CHexCtrl::CHexView::SetFont(const LOGFONT* pLogFontNew)
 void CHexCtrl::CHexView::SetFontSize(UINT nSize)
 {
 	//Prevent font size from being too small or too big.
-	if (nSize < 7 || nSize > 75)
+	if (nSize < 9 || nSize > 75)
 		return;
 
 	LOGFONT lf;
@@ -141,17 +147,26 @@ void CHexCtrl::CHexView::SetFontSize(UINT nSize)
 	Recalc();
 }
 
-void CHexCtrl::CHexView::SetColor(COLORREF clrTextHex, COLORREF clrTextOffset,
-	COLORREF clrTextSelected, COLORREF clrTextBk, COLORREF clrTextBkSelected)
+void CHexCtrl::CHexView::SetColor(COLORREF clrText, COLORREF clrTextOffset,
+	COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected)
 {
-	m_clrTextHex = clrTextHex;
+	m_clrTextHexAndAscii = clrText;
 	m_clrTextOffset = clrTextOffset;
 	m_clrTextSelected = clrTextSelected;
-	m_clrTextBk = clrTextBk;
-	m_clrTextBkSelected;
+	m_clrBk = clrBk;
+	m_clrBkSelected;
 
 	Invalidate();
 	UpdateWindow();
+}
+
+void CHexCtrl::CHexView::SetCapacity(DWORD dwCapacity)
+{
+	if (dwCapacity < 1 || dwCapacity > 64)
+		return;
+
+	m_dwGridCapacity = dwCapacity;
+	Recalc();
 }
 
 UINT CHexCtrl::CHexView::GetFontSize()
@@ -243,20 +258,20 @@ void CHexCtrl::CHexView::OnMouseMove(UINT nFlags, CPoint point)
 	{
 		//If LMouse is pressed but cursor is outside client area.
 		//SetCapture() behaviour.
-		if (point.x < m_iIndentFirstHexChunk)
+		if (point.x < m_rcClient.left)
 		{
 			OnHScroll(SB_LINELEFT, m_stScrollInfo.nPos, nullptr);
 			point.x = m_iIndentFirstHexChunk;
 		}
-		else if (point.x >= m_iThirdVertLine)
+		else if (point.x >= m_rcClient.right)
 		{
 			OnHScroll(SB_LINERIGHT, m_stScrollInfo.nPos, nullptr);
-			point.x = m_iThirdVertLine - 1;
+			point.x = m_iFourthVertLine - 1;
 		}
-		if (point.y < m_iHeightHeaderRect)
+		if (point.y < m_iHeightRectHeader)
 		{
 			OnVScroll(SB_LINEUP, m_stScrollInfo.nPos, nullptr);
-			point.y = m_iHeightHeaderRect;
+			point.y = m_iHeightRectHeader;
 		}
 		else if (point.y >= m_iHeightWorkArea)
 		{
@@ -267,6 +282,9 @@ void CHexCtrl::CHexView::OnMouseMove(UINT nFlags, CPoint point)
 		const int tmpEnd = HitTest(&point);
 		if (tmpEnd != -1)
 			m_dwSelectionEnd = tmpEnd;
+
+		int iSelected = max(m_dwSelectionStart, m_dwSelectionEnd) - min(m_dwSelectionStart, m_dwSelectionEnd) + 1;
+		SetBytesDisplayedText(m_dwRawDataCount, iSelected);
 		Invalidate();
 	}
 }
@@ -278,7 +296,11 @@ BOOL CHexCtrl::CHexView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		SetFontSize(GetFontSize() + zDelta / WHEEL_DELTA * 2);
 		return TRUE;
 	}
-
+	else if (nFlags & (MK_CONTROL | MK_SHIFT))
+	{
+		SetCapacity(m_dwGridCapacity + zDelta / WHEEL_DELTA);
+		return TRUE;
+	}
 	Invalidate();
 
 	return CScrollView::OnMouseWheel(nFlags, zDelta, pt);
@@ -296,6 +318,8 @@ void CHexCtrl::CHexView::OnLButtonDown(UINT nFlags, CPoint point)
 			m_dwSelectionStart = m_dwSelectionEnd = hit;
 		m_fLMousePressed = true;
 		m_fSelected = true;
+		SetBytesDisplayedText(m_dwRawDataCount, 1);
+
 		Invalidate();
 	}
 }
@@ -362,21 +386,21 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 
 	CRect clip;
 	rDC.GetClipBox(&clip);
-	rDC.FillSolidRect(clip, m_clrTextBk);
+	rDC.FillSolidRect(clip, m_clrBk);
 	rDC.SelectObject(&m_penLines);
 	rDC.SelectObject(&m_fontHexView);
 
 	//Find the nLineStart and nLineEnd position, draw the visible portion.
 	const UINT nLineStart = nScrollVert / m_sizeLetter.cy;
-	UINT nLineEnd = m_dwRawDataCount ? (nLineStart + (m_rcClient.Height() - m_iHeightHeaderRect - m_iHeightBottomRect) / m_sizeLetter.cy) : 0;
+	UINT nLineEnd = m_dwRawDataCount ? (nLineStart + (m_rcClient.Height() - m_iHeightRectHeader - m_iHeightBottomRect) / m_sizeLetter.cy) : 0;
 	//If m_dwRawDataCount is really small
 	//we adjust nLineEnd to not to be bigger than maximum allowed.
-	if (nLineEnd > (m_dwRawDataCount / 16))
-		nLineEnd = m_dwRawDataCount % 16 ? m_dwRawDataCount / 16 + 1 : m_dwRawDataCount / 16;
+	if (nLineEnd > (m_dwRawDataCount / m_dwGridCapacity))
+		nLineEnd = m_dwRawDataCount % m_dwGridCapacity ? m_dwRawDataCount / m_dwGridCapacity + 1 : m_dwRawDataCount / m_dwGridCapacity;
 
 	//Horizontal lines coords depending on scroll position.
 	m_iFirstHorizLine = nScrollVert;
-	m_iSecondHorizLine = m_iHeightHeaderRect - 1 + nScrollVert;
+	m_iSecondHorizLine = m_iHeightRectHeader - 1 + nScrollVert;
 	m_iThirdHorizLine = m_rcClient.Height() + nScrollVert - m_iHeightBottomRect;
 	m_iFourthHorizLine = m_rcClient.Height() + nScrollVert - m_iBottomLineIndent;
 
@@ -397,19 +421,47 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 	rDC.LineTo(m_iFourthVertLine, m_iFourthHorizLine);
 
 	//"Offset" text.
-	rDC.SetTextColor(m_clrTextOffset);
 	RECT rect;
 	rect.left = m_iFirstVertLine; rect.top = m_iFirstHorizLine;
 	rect.right = m_iSecondVertLine; rect.bottom = m_iSecondHorizLine;
+	rDC.SetTextColor(m_clrTextOffset);
 	DrawTextW(rDC.m_hDC, L"Offset", 6, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
-	for (unsigned i = 0; i < 16; i++)
-		if (i <= 7) //Top offset numbers (0 1 2 3 4 5 6 7)
-			ExtTextOutW(rDC.m_hDC, m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iIndentBetweenHexChunks*i),
-				nScrollVert + (m_sizeLetter.cy / 6), NULL, nullptr, &m_strHexMap[i], 1, nullptr);
-		else //Top offset numbers, part after 7 (8 9 A B C D E F)
-			ExtTextOutW(rDC.m_hDC, m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iIndentBetweenHexChunks*i) + m_iIndentBetween78,
-				nScrollVert + (m_sizeLetter.cy / 6), NULL, nullptr, &m_strHexMap[i], 1, nullptr);
+	//"Bytes displayed:" text.
+	rect.left = m_iFirstVertLine; rect.top = m_iThirdHorizLine + 1;
+	rect.right = m_iFourthVertLine; rect.bottom = m_iFourthHorizLine;
+	rDC.FillSolidRect(&rect, m_clrBkRectBottom);
+	rDC.SetTextColor(m_clrTextBytesSelected);
+	rDC.SelectObject(&m_fontRectBottom);
+	rect.left = m_iFirstVertLine + 5;
+	DrawTextW(rDC.m_hDC, m_strBytesDisplayed.data(), m_strBytesDisplayed.size(), &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
+	rDC.SelectObject(&m_fontHexView);
+	rDC.SetTextColor(m_clrTextOffset);
+	rDC.SetBkColor(m_clrBk);
+
+	for (unsigned i = 0; i < m_dwGridCapacity; i++)
+	{
+		WCHAR str[9];
+		swprintf_s(&str[0], 3, L"%X", i);
+		int x, c;
+
+		if (i <= m_dwGridCapacity / 2 - 1) //Top offset numbers (0 1 2 3 4 5 6 7...)
+			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iIndentBetweenHexChunks*i);
+		else //Top offset numbers, part after 7 (8 9 A B C D E F...)
+			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iIndentBetweenHexChunks*i) + m_iIndentBetweenBlocks;
+
+		//If i>=16 we need two chars (10, 11..., 1F) to print as capacity.
+		if (i < 16)
+			c = 1;
+		else
+		{
+			c = 2;
+			x -= m_sizeLetter.cx;
+		}
+
+		ExtTextOutW(rDC.m_hDC, x, nScrollVert + (m_sizeLetter.cy / 6), NULL, nullptr, &str[0], c, nullptr);
+	}
 
 	//"Ascii" text.
 	rect.left = m_iThirdVertLine; rect.top = m_iFirstHorizLine;
@@ -436,43 +488,43 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 
 	for (unsigned iterLines = nLineStart; iterLines < nLineEnd; iterLines++)
 	{
-		swprintf_s(m_strOffset, 9, L"%08X", iterLines * 16);
+		swprintf_s(m_strOffset, 9, L"%08X", iterLines * m_dwGridCapacity);
 		rDC.SetTextColor(m_clrTextOffset);
 
 		//Drawing m_strOffset with bk color depending on selection range.
-		if (m_fSelected && (iterLines * 16 + 16) > min(m_dwSelectionStart, m_dwSelectionEnd) &&
-			(iterLines * 16) <= max(m_dwSelectionStart, m_dwSelectionEnd))
-			rDC.SetBkColor(m_clrTextBkSelected);
+		if (m_fSelected && (iterLines * m_dwGridCapacity + m_dwGridCapacity) > min(m_dwSelectionStart, m_dwSelectionEnd) &&
+			(iterLines * m_dwGridCapacity) <= max(m_dwSelectionStart, m_dwSelectionEnd))
+			rDC.SetBkColor(m_clrBkSelected);
 		else
-			rDC.SetBkColor(m_clrTextBk);
+			rDC.SetBkColor(m_clrBk);
 
 		//Left column offset print (00000001...0000FFFF...).
-		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_iHeightHeaderRect + (m_sizeLetter.cy * nLine + nScrollVert),
+		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_iHeightRectHeader + (m_sizeLetter.cy * nLine + nScrollVert),
 			NULL, nullptr, m_strOffset, 8, nullptr);
-		rDC.SetTextColor(m_clrTextHex);
+		rDC.SetTextColor(m_clrTextHexAndAscii);
 
 		int nIndentHexX { };
 		int nIndentAsciiX { };
-		int nIndent78 { };
+		int nIndentBetweenBlocks { };
 
 		//Main loop for printing Hex chunks and Ascii chars (right column).
-		for (int iterChunks = 0; iterChunks < 16; iterChunks++)
+		for (int iterChunks = 0; iterChunks < (int)m_dwGridCapacity; iterChunks++)
 		{
-			if (iterChunks > 7)
-				nIndent78 = m_iIndentBetween78;
+			if (iterChunks > (int)m_dwGridCapacity / 2 - 1)
+				nIndentBetweenBlocks = m_iIndentBetweenBlocks;
 
-			const UINT nFirstHexPosToPrintX = m_iIndentFirstHexChunk + nIndentHexX + nIndent78;
-			const UINT nFirstHexPosToPrintY = m_iHeightHeaderRect + m_sizeLetter.cy * nLine + nScrollVert;
+			const UINT nFirstHexPosToPrintX = m_iIndentFirstHexChunk + nIndentHexX + nIndentBetweenBlocks;
+			const UINT nFirstHexPosToPrintY = m_iHeightRectHeader + m_sizeLetter.cy * nLine + nScrollVert;
 			const UINT nAsciiPosToPrintX = m_iIndentAscii + nIndentAsciiX;
-			const UINT nAsciiPosToPrintY = m_iHeightHeaderRect + m_sizeLetter.cy * nLine + nScrollVert;
+			const UINT nAsciiPosToPrintY = m_iHeightRectHeader + m_sizeLetter.cy * nLine + nScrollVert;
 
-			//Index of next char (in m_pRawData) to draw.
-			const size_t nIndexDataToPrint = iterLines * 16 + iterChunks;
+			//Index of the next char (in m_pRawData) to draw.
+			const size_t nIndexDataToPrint = iterLines * m_dwGridCapacity + iterChunks;
 
 			//Rect of the space between HEX chunks, for proper selection drawing.
 			m_rcSpaceBetweenHex.left = nFirstHexPosToPrintX + m_sizeLetter.cx * 2;
 			m_rcSpaceBetweenHex.top = nFirstHexPosToPrintY;
-			if (iterChunks == 7)
+			if (iterChunks == m_dwGridCapacity / 2 - 1)
 				m_rcSpaceBetweenHex.right = nFirstHexPosToPrintX + m_sizeLetter.cx * 5;
 			else
 				m_rcSpaceBetweenHex.right = nFirstHexPosToPrintX + m_sizeLetter.cx * 3;
@@ -491,18 +543,18 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 				if (m_fSelected && nIndexDataToPrint >= min(m_dwSelectionStart, m_dwSelectionEnd)
 					&& nIndexDataToPrint <= max(m_dwSelectionStart, m_dwSelectionEnd))
 				{
-					rDC.SetBkColor(m_clrTextBkSelected);
+					rDC.SetBkColor(m_clrBkSelected);
 
 					//To prevent change bk color after last selected HEX in a row, and very last HEX.
-					if (nIndexDataToPrint != max(m_dwSelectionStart, m_dwSelectionEnd) && (nIndexDataToPrint + 1) % 16)
-						FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBkSelection.m_hObject);
+					if (nIndexDataToPrint != max(m_dwSelectionStart, m_dwSelectionEnd) && (nIndexDataToPrint + 1) % m_dwGridCapacity)
+						FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_stBrushBkSelected.m_hObject);
 					else
-						FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBk.m_hObject);
+						FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_stBrushBk.m_hObject);
 				}
 				else
 				{
-					rDC.SetBkColor(m_clrTextBk);
-					FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_brTextBk.m_hObject);
+					rDC.SetBkColor(m_clrBk);
+					FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_stBrushBk.m_hObject);
 				}
 
 				//HEX chunk print.
@@ -519,7 +571,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 			}
 			else
 			{	//Fill remaining chunks with blank spaces.
-				rDC.SetBkColor(m_clrTextBk);
+				rDC.SetBkColor(m_clrBk);
 				ExtTextOutW(rDC.m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
 				ExtTextOutA(rDC.m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
 			}
@@ -555,23 +607,26 @@ int CHexCtrl::CHexView::HitTest(LPPOINT pPoint)
 
 	//Checking if cursor is within HEX chunks area.
 	if ((pPoint->x >= m_iIndentFirstHexChunk) && (pPoint->x < m_iThirdVertLine)
-		&& (pPoint->y >= m_iHeightHeaderRect) && pPoint->y <= m_iHeightWorkArea)
+		&& (pPoint->y >= m_iHeightRectHeader) && pPoint->y <= m_iHeightWorkArea)
 	{
-		int tmp78;
-		if (pPoint->x > m_iIndentFirstHexChunk + (m_iIndentBetweenHexChunks * 8))
-			tmp78 = m_iIndentBetween78;
+		int tmpBetweenBlocks;
+		if (pPoint->x > m_iIndentFirstHexChunk + (m_iIndentBetweenHexChunks * (int)m_dwGridCapacity / 2))
+			tmpBetweenBlocks = m_iIndentBetweenBlocks;
 		else
-			tmp78 = 0;
+			tmpBetweenBlocks = 0;
 
 		//Calculate hit HEX chunk, taking into account scroll position and letter sizes.
-		dwHexChunk = ((pPoint->x - m_iIndentFirstHexChunk - tmp78) / (m_sizeLetter.cx * 3)) +
-			((pPoint->y - m_iHeightHeaderRect) / m_sizeLetter.cy) * 16 + ((m_stScrollInfo.nPos / m_sizeLetter.cy) * 16);
+		dwHexChunk = ((pPoint->x - m_iIndentFirstHexChunk - tmpBetweenBlocks) / (m_sizeLetter.cx * 3)) +
+			((pPoint->y - m_iHeightRectHeader) / m_sizeLetter.cy) * m_dwGridCapacity +
+			((m_stScrollInfo.nPos / m_sizeLetter.cy) * m_dwGridCapacity);
 	}
-	else if ((pPoint->x >= m_iIndentAscii) && (pPoint->x < m_iIndentAscii + m_iIndentBetweenAscii * 16) && (pPoint->y >= m_iHeightHeaderRect))
+	else if ((pPoint->x >= m_iIndentAscii) && (pPoint->x < (m_iIndentAscii + m_iIndentBetweenAscii * (int)m_dwGridCapacity))
+		&& (pPoint->y >= m_iHeightRectHeader) && pPoint->y <= m_iHeightWorkArea)
 	{
 		//Calculate hit Ascii symbol.
 		dwHexChunk = ((pPoint->x - m_iIndentAscii) / (m_iIndentBetweenAscii)) +
-			((pPoint->y - m_iHeightHeaderRect) / m_sizeLetter.cy) * 16 + ((m_stScrollInfo.nPos / m_sizeLetter.cy) * 16);
+			((pPoint->y - m_iHeightRectHeader) / m_sizeLetter.cy) * m_dwGridCapacity +
+			((m_stScrollInfo.nPos / m_sizeLetter.cy) * m_dwGridCapacity);
 	}
 	else
 		dwHexChunk = -1;
@@ -606,16 +661,17 @@ int CHexCtrl::CHexView::CopyToClipboard(UINT nType)
 		}
 		else if (nType == CLIPBOARD_COPY_AS_HEX_FORMATTED)
 		{
-			//How many spaces need to be inserted at the beginnig.
-			DWORD dwModStart = dwSelectionStart % 16;
-			//When to insert first \r\n.
-			DWORD dwTail = 16 - dwModStart;
+			//How many spaces are needed to be inserted at the beginnig.
+			DWORD dwModStart = dwSelectionStart % m_dwGridCapacity;
+			//When to insert first "\r\n".
+			DWORD dwTail = m_dwGridCapacity - dwModStart;
+			DWORD dwNextBlock = m_dwGridCapacity % 2 ? m_dwGridCapacity / 2 + 2 : m_dwGridCapacity / 2 + 1;
 
 			//If at least two rows are selected.
-			if (dwModStart + dwSelectionLen > 16)
+			if (dwModStart + dwSelectionLen > m_dwGridCapacity)
 			{
 				strToClipboard.insert(0, dwModStart * 3, ' ');
-				if (dwTail < 9)
+				if (dwTail < m_dwGridCapacity / 2 + 1)
 					strToClipboard.insert(0, 2, ' ');
 			}
 
@@ -627,14 +683,14 @@ int CHexCtrl::CHexView::CopyToClipboard(UINT nType)
 				strToClipboard += chHexToCopy[1];
 
 				if (i < (dwSelectionLen - 1) && (dwTail - 1) != 0)
-					if (dwTail == 9)
+					if (dwTail == dwNextBlock) //Space between blocks.
 						strToClipboard += "   ";
 					else
 						strToClipboard += " ";
-				if (--dwTail == 0 && i < (dwSelectionLen - 1))
+				if (--dwTail == 0 && i < (dwSelectionLen - 1)) //Next string.
 				{
 					strToClipboard += "\r\n";
-					dwTail = 16;
+					dwTail = m_dwGridCapacity;
 				}
 			}
 		}
@@ -668,6 +724,17 @@ int CHexCtrl::CHexView::CopyToClipboard(UINT nType)
 	return 1;
 }
 
+void CHexCtrl::CHexView::SetBytesDisplayedText(UINT uDisplayed, UINT uSelected)
+{
+	WCHAR buff[75];
+	if (uSelected)
+		swprintf_s(buff, L"Bytes total: 0x%X (%u), Selected: 0x%X (%u)", uDisplayed, uDisplayed, uSelected, uSelected);
+	else
+		swprintf_s(buff, L"Bytes total: 0x%X (%u)", uDisplayed, uDisplayed);
+
+	m_strBytesDisplayed = buff;
+}
+
 void CHexCtrl::CHexView::Recalc()
 {
 	GetClientRect(&m_rcClient);
@@ -687,18 +754,18 @@ void CHexCtrl::CHexView::Recalc()
 	m_iFirstVertLine = 0;
 	m_iSecondVertLine = m_sizeLetter.cx * 10;
 	m_iIndentBetweenHexChunks = m_sizeLetter.cx * 3;
-	m_iIndentBetween78 = m_sizeLetter.cx * 2;
-	m_iThirdVertLine = m_iSecondVertLine + (m_iIndentBetweenHexChunks * 16) + m_iIndentBetween78 + m_sizeLetter.cx;
+	m_iIndentBetweenBlocks = m_sizeLetter.cx * 2;
+	m_iThirdVertLine = m_iSecondVertLine + (m_iIndentBetweenHexChunks * m_dwGridCapacity) + m_iIndentBetweenBlocks + m_sizeLetter.cx;
 	m_iIndentAscii = m_iThirdVertLine + m_sizeLetter.cx;
 	m_iIndentBetweenAscii = m_sizeLetter.cx + 1;
-	m_iFourthVertLine = m_iIndentAscii + (m_iIndentBetweenAscii * 16) + m_sizeLetter.cx;
+	m_iFourthVertLine = m_iIndentAscii + (m_iIndentBetweenAscii * m_dwGridCapacity) + m_sizeLetter.cx;
 	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
-	m_iHeightHeaderRect = int(m_sizeLetter.cy*1.5);
-	m_iHeightWorkArea = m_rcClient.Height() - m_iHeightBottomRect - ((m_rcClient.Height() - m_iHeightHeaderRect - m_iHeightBottomRect) % m_sizeLetter.cy);
+	m_iHeightRectHeader = int(m_sizeLetter.cy*1.5);
+	m_iHeightWorkArea = m_rcClient.Height() - m_iHeightBottomRect - ((m_rcClient.Height() - m_iHeightRectHeader - m_iHeightBottomRect) % m_sizeLetter.cy);
 
 	//Scroll sizes according to current font size.
 	SetScrollSizes(MM_TEXT, CSize(m_iFourthVertLine + 1,
-		m_iHeightHeaderRect + m_iHeightBottomRect + (m_sizeLetter.cy * (m_dwRawDataCount / 16 + 3))));
+		m_iHeightRectHeader + m_iHeightBottomRect + (m_sizeLetter.cy * (m_dwRawDataCount / m_dwGridCapacity + 3))));
 
 	//This flag shows that Recalc() was invoked at least once before,
 	//and ScrollSizes have already been set, so we can adjust them.
@@ -793,10 +860,10 @@ void CHexCtrl::SetFontSize(UINT nSize) const
 		return GetActiveView()->SetFontSize(nSize);
 }
 
-void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextOffset,
+void CHexCtrl::SetColor(COLORREF clrText, COLORREF clrTextOffset,
 	COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected) const
 {
 	if (GetActiveView())
-		GetActiveView()->SetColor(clrTextHex, clrTextOffset, clrTextSelected,
+		GetActiveView()->SetColor(clrText, clrTextOffset, clrTextSelected,
 			clrBk, clrBkSelected);
 }

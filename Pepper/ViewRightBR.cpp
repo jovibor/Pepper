@@ -54,39 +54,33 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	if (!m_pChildFrame)
 		return;
-	if (LOWORD(lHint) == IDC_HEX_RIGHT_TOP_RIGHT)
+	if (LOWORD(lHint) == IDC_HEX_RIGHT_TR)
 		return;
-	if (m_fJustOneTime)
-	{
-		CRect rcParent;
-		GetParent()->GetWindowRect(&rcParent);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
-		m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
-		m_fJustOneTime = false;
-	}
 
 	if (m_pActiveWnd)
 		m_pActiveWnd->ShowWindow(SW_HIDE);
 
+	CRect rcParent, rcClient;
+	GetParent()->GetWindowRect(&rcParent);
+	GetClientRect(&rcClient);
 	m_fDrawRes = false;
-
-	CRect rect;
-	GetClientRect(&rect);
-	m_pChildFrame->m_stSplitterRight.GetPane(1, 0)->GetClientRect(&rect);
 
 	switch (LOWORD(lHint))
 	{
 	case IDC_LIST_TLS:
-		m_stListTLSCallbacks.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_stListTLSCallbacks.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_stListTLSCallbacks;
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
+		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 2, 0);
 		break;
 	case IDC_TREE_RESOURCE:
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
+		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case IDC_SHOW_RESOURCE_RBR:
 		ShowResource((RESHELPER*)pHint);
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
+		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	default:
 		m_pChildFrame->m_stSplitterRightBottom.HideCol(1);

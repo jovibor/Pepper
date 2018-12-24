@@ -93,7 +93,6 @@ private:
 	{ WS_SIZEBOX, L"WS_SIZEBOX" },
 	{ WS_TILEDWINDOW, L"WS_TILEDWINDOW" }
 	};
-	bool m_fJustOneTime { true }; //To set splitter's size once correctly.
 private:
 	int CreateListTLSCallbacks();
 	void ResLoadError();
@@ -130,6 +129,7 @@ struct LANGANDCODEPAGE
 	WORD wCodePage;
 };
 
+//Helper struct. Not completed.
 struct DLGTEMPLATEEX
 {
 	WORD      dlgVer;
