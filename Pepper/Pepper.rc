@@ -10,7 +10,6 @@
 #ifndef APSTUDIO_INVOKED
 #endif
 #include "afxres.h"
-#include "verrsrc.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -38,7 +37,6 @@ BEGIN
     "#ifndef APSTUDIO_INVOKED\r\n"
     "#endif\r\n"
     "#include ""afxres.h""\r\n"
-    "#include ""verrsrc.h""\r\n"
     "\0"
 END
 
@@ -149,7 +147,6 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
-
 
 
 /////////////////////////////////////////////////////////////////////////////

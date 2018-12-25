@@ -242,6 +242,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="HexCtrl.rc" />
     <ResourceCompile Include="Pepper.rc" />
   </ItemGroup>
   <ItemGroup>
@@ -270,6 +271,7 @@
     <ClInclude Include="include\TreeEx.h" />
     <ClInclude Include="include\stdafx.h" />
     <ClInclude Include="include\ViewRightTR.h" />
+    <ClInclude Include="HexCtrlRes.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

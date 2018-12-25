@@ -4,7 +4,7 @@
 * The main difference is in CListEx::Create method, which takes one			*
 * additional arg: pointer to LISTEXINFO structure, which fields are			*
 * described below.															*
-* Also, this class has set of additional methods: SetFont, SetItemTooltip,	* 
+* Also, this class has set of additional methods: SetFont, SetItemTooltip,	*
 * SetTooltipColor, SetHeaderColor, SetHeaderHeight,	SetHeaderFont,			*
 * SetHeaderColumnColor.														*
 ****************************************************************************/
@@ -64,10 +64,7 @@ private:
 		DWORD m_dwHeaderHeight { 19 }; //Standard (default) height.
 		std::unordered_map<DWORD, COLORREF> m_mapClrColumn { }; //Color of individual columns.
 	};
-	/********************************************
-	* End of CListExHeader class definition.	*
-	********************************************/
-
+/////////////////////////////////////////////////////////////////////////////////
 	DECLARE_DYNAMIC(CListEx)
 	CListEx() {}
 	virtual ~CListEx() {}
@@ -108,7 +105,7 @@ private:
 	COLORREF m_clrBkTooltip { GetSysColor(COLOR_INFOBK) };
 	COLORREF m_clrTextSubitemTt { GetSysColor(COLOR_WINDOWTEXT) };
 	COLORREF m_clrBkSubitemTt { RGB(170, 170, 230) };
-	SCROLLINFO m_stScrollInfo { sizeof(SCROLLINFO), SIF_ALL };
+	SCROLLINFO m_stScrollVert { sizeof(SCROLLINFO), SIF_ALL };
 
 	void InitHeader() override;
 	bool HasTooltip(int, int, std::wstring** ppStrTipText = nullptr, std::wstring** ppStrTipCaption = nullptr);

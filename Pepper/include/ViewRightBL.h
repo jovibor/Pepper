@@ -4,6 +4,7 @@
 #include "HexCtrl.h"
 #include "ListEx.h"
 #include "TreeEx.h"
+using namespace HEXCTRL;
 
 class CViewRightBL : public CScrollView
 {

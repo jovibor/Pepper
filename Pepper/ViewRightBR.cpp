@@ -504,7 +504,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
 		pDC->SelectObject(&m_fontEditRes);
 		pDC->SetTextColor(RGB(0, 0, 0));
-		pDC->TextOutW(m_iResDlgIndentToDrawX, m_iResDlgIndentToDrawY, L"Styles: ", 8);
+		pDC->TextOutW(m_iResDlgIndentToDrawX, m_iResDlgIndentToDrawY, L"STYLES: ", 8);
 		pDC->SetTextColor(RGB(111, 0, 138));
 		pDC->TextOutW(m_iResDlgIndentToDrawX + m_sizeStrStyles.cx, m_iResDlgIndentToDrawY, m_strRes.data(), m_strRes.size());
 		ptDrawAt.SetPoint(m_iResDlgIndentToDrawX, m_sizeLetter.cy + m_iResDlgIndentToDrawY * 3);
