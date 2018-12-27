@@ -1,19 +1,21 @@
 /************************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/							*
-* This is a HEX control for MFC, implemented as CWnd derived class.					*
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						*
+* This is a HEX control for MFC apps, implemented as CWnd derived class.			*
 * The usage is quite simple:														*
-* 1. Construct CHexCtrl object:	(CHexCtrl myHex;).									*
+* 1. Construct CHexCtrl object — CHexCtrl myHex;									*
 * 2. Call CHexCtrl::Create member function to create an instance.					*
 * 3. Call CHexCtrl::SetData method to set the data and its size to display as hex.	*
 ************************************************************************************/
 #pragma once
 #include <vector>
+#include <tuple>
 #include "HexCtrlRes.h"
 
-namespace HEXCTRL
+namespace HEXControl
 {
-	//Search tuple: 1.String 2.Type 3.Start at... 4.Direction
-	using search_tup = std::tuple<std::wstring, DWORD, DWORD, int>;
+	//Search tuple: 1.String 2.Type 3.Start at... 4.Direction 5. Flag StartAt.
+	using search_tup = std::tuple<std::wstring, DWORD, DWORD, int, bool>;
+
 	/********************************************
 	* CHexCtrl class definition.				*
 	********************************************/
@@ -21,34 +23,73 @@ namespace HEXCTRL
 	{
 	private:
 		/********************************************
-		* CHexDlgSearch class definition.			*
-		********************************************/
-		class CHexDlgSearch : public CDialogEx
-		{
-		public:
-			CHexDlgSearch(CWnd* pParent = nullptr) : CDialogEx(IDD_DIALOG_SEARCH, pParent) {}
-			virtual ~CHexDlgSearch() {}
-			BOOL Create(UINT nIDTemplate, CWnd* pParentWnd);
-			CWnd* GetParent();
-			search_tup& GetSearch();
-		protected:
-			virtual void DoDataExchange(CDataExchange* pDX);
-			virtual BOOL OnInitDialog();
-			afx_msg void OnButtonSearchF();
-			afx_msg void OnKillFocus(CWnd* pNewWnd);
-			afx_msg void OnSetFocus(CWnd* pOldWnd);
-			afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
-			DECLARE_MESSAGE_MAP()
-		private:
-			CWnd* pParent { };
-			search_tup m_tupSearch;
-		};
-
-		/********************************************
 		* CHexView class definition.				*
 		********************************************/
 		class CHexView : public CScrollView
 		{
+		private:
+			/********************************************
+			* CHexDlgSearch class definition.			*
+			********************************************/
+			class CHexDlgSearch : public CDialogEx
+			{
+			public:
+				CHexDlgSearch(CWnd* pParent = nullptr) {}
+				virtual ~CHexDlgSearch() {}
+				BOOL Create(UINT nIDTemplate, CWnd* pParentWnd);
+				CWnd* GetParent();
+				search_tup& GetSearch();
+				void SearchResult(int iResult, int iReach, DWORD dwStartAt);
+			protected:
+				virtual void DoDataExchange(CDataExchange* pDX);
+				virtual BOOL OnInitDialog();
+				afx_msg void OnButtonSearchF();
+				afx_msg void OnButtonSearchB();
+				afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
+				virtual BOOL PreTranslateMessage(MSG* pMsg);
+				afx_msg void OnClose();
+				HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+				void OnRadioBnRange(UINT nID);
+				DECLARE_MESSAGE_MAP()
+				void ClearAll();
+			private:
+				CWnd* pParent { };
+				search_tup m_tupSearch;
+				DWORD m_dwStartAt { };
+				bool m_fSearchFound { };
+				int m_iRadioCurrent { };
+				COLORREF m_clrSearchFailed { RGB(200, 0, 0) };
+				COLORREF m_clrSearchFound { RGB(0, 200, 0) };
+				CBrush m_stBrushDefault;
+				COLORREF m_clrMenu { GetSysColor(COLOR_MENU) };
+				DWORD m_dwnOccurrence { };
+				bool m_fStartAt { false };
+			};
+
+			/********************************************
+			* CHexDlgAbout class definition.			*
+			********************************************/
+			class CHexDlgAbout : public CDialogEx
+			{
+			public:
+				CHexDlgAbout(CWnd* pParent = nullptr) : CDialogEx(IDD_HEXCTRL_DIALOG_ABOUT) {}
+				virtual ~CHexDlgAbout() {}
+			protected:
+				virtual BOOL OnInitDialog() override;
+				afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+				afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+				HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+				DECLARE_MESSAGE_MAP()
+			private:
+				bool m_fGithubLink { true };
+				HCURSOR m_curHand { };
+				HCURSOR m_curArrow { };
+				HFONT m_fontDefault { };
+				HFONT m_fontUnderline { };
+				CBrush m_stBrushDefault;
+				COLORREF m_clrMenu { GetSysColor(COLOR_MENU) };
+			};
+
 		public:
 			BOOL Create(CWnd* pParent, const RECT& rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont);
 			void SetData(const unsigned char* pData, DWORD_PTR dwCount);
@@ -83,7 +124,7 @@ namespace HEXCTRL
 			void UpdateBottomBarText();
 			void Recalc();
 			void Search(search_tup&);
-			void SetSelectionTo(DWORD dwStart, DWORD dwEnd);
+			void SetSelection(DWORD dwStart, DWORD dwBytes);
 			DECLARE_MESSAGE_MAP()
 		private:
 			const BYTE* m_pRawData { };
@@ -94,6 +135,7 @@ namespace HEXCTRL
 			CFont m_fontHexView;
 			CFont m_fontRectBottom;
 			CHexDlgSearch m_dlgSearch;
+			CHexDlgAbout m_dlgAbout;
 			CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
 			COLORREF m_clrTextHexAndAscii { GetSysColor(COLOR_WINDOWTEXT) };
 			COLORREF m_clrTextOffset { RGB(0, 0, 180) };
@@ -119,7 +161,6 @@ namespace HEXCTRL
 			SCROLLBARINFO m_stSBI { sizeof(SCROLLBARINFO) };
 			bool m_fSecondLaunch { false };
 			bool m_fLMousePressed { false };
-			bool m_fSelected { false };
 			DWORD m_dwSelectionStart { }, m_dwSelectionEnd { }, m_dwSelectionClick { };
 			CRect m_rcSpaceBetweenHex { }; //Space between hex chunks, needed for selection draw.
 			CBrush m_stBrushBk { m_clrBk };
@@ -155,18 +196,24 @@ namespace HEXCTRL
 	* Internal identificators	*
 	****************************/
 
-	constexpr auto IDC_MENU_POPUP_COPY_AS_HEX = 0x01;
-	constexpr auto IDC_MENU_POPUP_COPY_AS_HEX_FORMATTED = 0x02;
-	constexpr auto IDC_MENU_POPUP_COPY_AS_ASCII = 0x03;
-	constexpr auto IDC_MENU_POPUP_SEARCH = 0x04;
+	constexpr auto IDC_MENU_POPUP_SEARCH = 0x01;
+	constexpr auto IDC_MENU_POPUP_COPY_AS_HEX = 0x02;
+	constexpr auto IDC_MENU_POPUP_COPY_AS_HEX_FORMATTED = 0x03;
+	constexpr auto IDC_MENU_POPUP_COPY_AS_ASCII = 0x04;
+	constexpr auto IDC_MENU_POPUP_ABOUT = 0x05;
 
 	constexpr auto CLIPBOARD_COPY_AS_HEX = 0x01;
 	constexpr auto CLIPBOARD_COPY_AS_HEX_FORMATTED = 0x02;
 	constexpr auto CLIPBOARD_COPY_AS_ASCII = 0x03;
 
-	constexpr auto HEXCTRL_SEARCH_HEX = 0x00;
-	constexpr auto HEXCTRL_SEARCH_ASCII = 0x01;
-	constexpr auto HEXCTRL_SEARCH_UNICODE = 0x02;
+	constexpr auto HEXCTRL_SEARCH_HEX = 0x01;
+	constexpr auto HEXCTRL_SEARCH_ASCII = 0x02;
+	constexpr auto HEXCTRL_SEARCH_UNICODE = 0x03;
+
+	constexpr auto HEXCTRL_SEARCH_FORWARD = 1;
+	constexpr auto HEXCTRL_SEARCH_BACKWARD = -1;
+	constexpr auto HEXCTRL_SEARCH_FOUND = 0x02;
+	constexpr auto HEXCTRL_SEARCH_NOTFOUND = 0x03;
 
 	constexpr auto WM_HEXCTRL_SEARCH = WM_APP + 0x1;
 };

@@ -12,7 +12,6 @@ public:
 	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
 protected:	
 	BOOL OnInitDialog() override;
-	void DoDataExchange(CDataExchange* pDX) override;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
@@ -52,11 +51,6 @@ BOOL CAboutDlg::OnInitDialog()
 	m_curArrow = LoadCursor(nullptr, IDC_ARROW);
 
 	return TRUE;
-}
-
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
-	CDialogEx::DoDataExchange(pDX);
 }
 
 HBRUSH CAboutDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)

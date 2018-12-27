@@ -1,8 +1,8 @@
 /************************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/							*
-* This is a HEX control for MFC, implemented as CWnd derived class.					*
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						*
+* This is a HEX control for MFC apps, implemented as CWnd derived class.			*
 * The usage is quite simple:														*
-* 1. Construct CHexCtrl object:	(CHexCtrl myHex;).									*
+* 1. Construct CHexCtrl object — CHexCtrl myHex;									*
 * 2. Call CHexCtrl::Create member function to create an instance.					*
 * 3. Call CHexCtrl::SetData method to set the data and its size to display as hex.	*
 ************************************************************************************/
@@ -10,7 +10,7 @@
 #include "HexCtrl.h"
 #include "strsafe.h"
 
-using namespace HEXCTRL;
+using namespace HEXControl;
 
 /************************************************************************
 * CHexCtrl implementation.												*
@@ -127,9 +127,6 @@ CRuntimeClass* CHexCtrl::CHexView::GetRuntimeClass() const
 {
 	return (CRuntimeClass*)(&CHexCtrl::CHexView::classCHexView);
 }
-/********************************************************************
-* End of custom IMPLEMENT_DYNCREATE()								*
-********************************************************************/
 
 BEGIN_MESSAGE_MAP(CHexCtrl::CHexView, CScrollView)
 	ON_WM_SIZE()
@@ -142,7 +139,7 @@ BEGIN_MESSAGE_MAP(CHexCtrl::CHexView, CScrollView)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_RBUTTONUP()
-	ON_COMMAND_RANGE(IDC_MENU_POPUP_COPY_AS_HEX, IDC_MENU_POPUP_SEARCH, &CHexCtrl::CHexView::OnMenuRange)
+	ON_COMMAND_RANGE(IDC_MENU_POPUP_SEARCH, IDC_MENU_POPUP_ABOUT, &CHexCtrl::CHexView::OnMenuRange)
 	ON_MESSAGE(WM_HEXCTRL_SEARCH, &CHexCtrl::CHexView::OnSearchRequest)
 END_MESSAGE_MAP()
 
@@ -175,12 +172,15 @@ BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCr
 		m_fontRectBottom.CreateFontIndirectW(&ncm.lfMessageFont);
 
 	m_menuPopup.CreatePopupMenu();
+	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_SEARCH, L"Search...		Ctrl+F");
+	m_menuPopup.AppendMenuW(MF_SEPARATOR);
 	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_HEX, L"Copy as Hex...		Ctrl+C");
 	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_HEX_FORMATTED, L"Copy as Formatted Hex...");
 	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_ASCII, L"Copy as Ascii...");
-	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_SEARCH, L"Search...		Ctrl+F");
+	m_menuPopup.AppendMenuW(MF_SEPARATOR);
+	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_ABOUT, L"About");
 
-	m_dlgSearch.Create(IDD_DIALOG_SEARCH, this);
+	m_dlgSearch.Create(IDD_HEXCTRL_DIALOG_SEARCH, this);
 
 	Recalc();
 
@@ -203,7 +203,7 @@ void CHexCtrl::CHexView::ClearData()
 {
 	m_dwRawDataCount = 0;
 	m_pRawData = nullptr;
-	m_fSelected = false;
+	m_dwSelectionClick = m_dwSelectionStart = m_dwSelectionEnd = m_dwBytesSelected = 0;
 	m_stScrollVert.nPos = 0;
 	m_strBytesDisplayed.clear();
 	SetScrollInfo(SB_VERT, &m_stScrollVert);
@@ -423,7 +423,7 @@ void CHexCtrl::CHexView::OnLButtonDown(UINT nFlags, CPoint point)
 	if (iHit != -1)
 	{
 		SetCapture();
-		if (m_fSelected && (nFlags & MK_SHIFT))
+		if (m_dwBytesSelected && (nFlags & MK_SHIFT))
 		{
 			if (iHit <= (int)m_dwSelectionClick)
 			{
@@ -439,10 +439,12 @@ void CHexCtrl::CHexView::OnLButtonDown(UINT nFlags, CPoint point)
 			m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;
 		}
 		else
+		{
 			m_dwSelectionClick = m_dwSelectionStart = m_dwSelectionEnd = iHit;
+			m_dwBytesSelected = 1;
+		}
 
 		m_fLMousePressed = true;
-		m_fSelected = true;
 		UpdateBottomBarText();
 		Invalidate();
 	}
@@ -479,6 +481,9 @@ void CHexCtrl::CHexView::OnMenuRange(UINT nID)
 {
 	switch (nID)
 	{
+	case IDC_MENU_POPUP_SEARCH:
+		m_dlgSearch.ShowWindow(SW_SHOW);
+		break;
 	case IDC_MENU_POPUP_COPY_AS_HEX:
 		CopyToClipboard(CLIPBOARD_COPY_AS_HEX);
 		break;
@@ -488,8 +493,8 @@ void CHexCtrl::CHexView::OnMenuRange(UINT nID)
 	case IDC_MENU_POPUP_COPY_AS_ASCII:
 		CopyToClipboard(CLIPBOARD_COPY_AS_ASCII);
 		break;
-	case IDC_MENU_POPUP_SEARCH:
-		m_dlgSearch.ShowWindow(SW_SHOW);
+	case IDC_MENU_POPUP_ABOUT:
+		m_dlgAbout.DoModal();
 		break;
 	}
 }
@@ -621,7 +626,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 		rDC.SetTextColor(m_clrTextOffset);
 
 		//Drawing m_strOffset with bk color depending on selection range.
-		if (m_fSelected && (iterLines * m_dwGridCapacity + m_dwGridCapacity) > min(m_dwSelectionStart, m_dwSelectionEnd) &&
+		if (m_dwBytesSelected && (iterLines * m_dwGridCapacity + m_dwGridCapacity) > min(m_dwSelectionStart, m_dwSelectionEnd) &&
 			(iterLines * m_dwGridCapacity) <= m_dwSelectionEnd)
 			rDC.SetBkColor(m_clrBkSelected);
 		else
@@ -669,7 +674,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 				strHexToPrint[1] = m_strHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0x0F)];
 
 				//Selection draw with different BK color.
-				if (m_fSelected && nIndexDataToPrint >= m_dwSelectionStart && nIndexDataToPrint <= m_dwSelectionEnd)
+				if (m_dwBytesSelected && nIndexDataToPrint >= m_dwSelectionStart && nIndexDataToPrint <= m_dwSelectionEnd)
 				{
 					rDC.SetBkColor(m_clrBkSelected);
 
@@ -770,7 +775,7 @@ int CHexCtrl::CHexView::HitTest(LPPOINT pPoint)
 
 int CHexCtrl::CHexView::CopyToClipboard(UINT nType)
 {
-	if (m_fSelected)
+	if (m_dwBytesSelected)
 	{
 		const char* const strHexMap = "0123456789ABCDEF";
 		char chHexToCopy[2];
@@ -831,7 +836,7 @@ int CHexCtrl::CHexView::CopyToClipboard(UINT nType)
 			for (unsigned i = 0; i < m_dwBytesSelected; i++)
 			{
 				ch = m_pRawData[m_dwSelectionStart + i];
-				//If next byte is zero �> substitute it with space.
+				//If next byte is zero —> substitute it with space.
 				if (ch == 0)
 					ch = ' ';
 				strToClipboard += ch;
@@ -861,10 +866,10 @@ void CHexCtrl::CHexView::UpdateBottomBarText()
 {
 	WCHAR buff[128];
 	if (m_dwBytesSelected)
-		swprintf_s(buff, 128, L"Bytes total: 0x%X (%u), Selected: 0x%X (%u), at offset: 0x%X (%u)",
-			m_dwRawDataCount, m_dwRawDataCount, m_dwBytesSelected, m_dwBytesSelected, m_dwSelectionStart, m_dwSelectionStart);
+		swprintf_s(buff, 128, L"Bytes selected: 0x%X(%u); Offset: 0x%X(%u) - 0x%X(%u)",
+			m_dwBytesSelected, m_dwBytesSelected, m_dwSelectionStart, m_dwSelectionStart, m_dwSelectionEnd, m_dwSelectionEnd);
 	else
-		swprintf_s(buff, 128, L"Bytes total: 0x%X (%u)", m_dwRawDataCount, m_dwRawDataCount);
+		swprintf_s(buff, 128, L"Bytes total: 0x%X(%u)", m_dwRawDataCount, m_dwRawDataCount);
 
 	m_strBytesDisplayed = buff;
 }
@@ -901,7 +906,7 @@ void CHexCtrl::CHexView::Recalc()
 	SetScrollSizes(MM_TEXT, CSize(m_iFourthVertLine + 1,
 		m_iHeightRectHeader + m_iHeightBottomRect + (m_sizeLetter.cy * (m_dwRawDataCount / m_dwGridCapacity + 3))));
 
-	//This flag shows that Recalc() was invoked at least once before,
+	//This fStartAt shows that Recalc() was invoked at least once before,
 	//and ScrollSizes have already been set, so we can adjust them.
 	if (m_fSecondLaunch)
 	{
@@ -926,78 +931,227 @@ void CHexCtrl::CHexView::Search(search_tup& rTup)
 	auto& dwType = std::get<1>(rTup);
 	auto& dwStartAt = std::get<2>(rTup);
 	auto& iDirection = std::get<3>(rTup);
+	auto fStartAt = std::get<4>(rTup);
 
-	if (wstrSearch.empty() || m_dwRawDataCount == 0 || dwStartAt > (m_dwRawDataCount - 1) ||
-		(wstrSearch.size() * sizeof(wchar_t)) > m_dwRawDataCount)
+	if (wstrSearch.empty() || m_dwRawDataCount == 0 || dwStartAt > (m_dwRawDataCount - 1))
+	{
+		m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
 		return;
+	}
 
 	int iSizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &wstrSearch[0], (int)wstrSearch.size(), nullptr, 0, nullptr, nullptr);
-	std::string strSearch(iSizeNeeded, 0);
-	WideCharToMultiByte(CP_UTF8, 0, &wstrSearch[0], (int)wstrSearch.size(), &strSearch[0], iSizeNeeded, nullptr, nullptr);
+	std::string strSearchAscii(iSizeNeeded, 0);
+	WideCharToMultiByte(CP_UTF8, 0, &wstrSearch[0], (int)wstrSearch.size(), &strSearchAscii[0], iSizeNeeded, nullptr, nullptr);
 
-	DWORD dwIterations;
+	DWORD dwUntil;
+	//Is searching from middle or 0? 
 
 	switch (dwType)
 	{
 	case HEXCTRL_SEARCH_HEX:
 	{
 		std::string strSearchHex;
-		dwIterations = strSearch.size() % 2 ? strSearch.size() / 2 + 1 : strSearch.size() / 2;
+		DWORD dwIterations = strSearchAscii.size() % 2 ? strSearchAscii.size() / 2 + 1 : strSearchAscii.size() / 2;
 		int iNextChar = 0;
-		std::string strToUL;
+		std::string strToUL { };
 
 		for (DWORD i = 0; i < dwIterations; i++)
 		{
-			if (strSearch.size() >= i + 2)
-				strToUL = strSearch.substr(iNextChar, 2);
+			if (strSearchAscii.size() >= i + 2)
+				strToUL = strSearchAscii.substr(iNextChar, 2);
 			else
-				strToUL = strSearch.substr(iNextChar, 1);
+				strToUL = strSearchAscii.substr(iNextChar, 1);
 
 			unsigned long ulNumber = strtoul(strToUL.data(), nullptr, 16);
 			strSearchHex += (unsigned char)ulNumber;
 			iNextChar += 2;
 		}
 
-		dwIterations = m_dwRawDataCount - strSearchHex.size() + 1;
-		for (DWORD i = 0; i < dwIterations; i++)
+		//If input is longer than m_dwRawDataCount.
+		if (strSearchHex.size() > m_dwRawDataCount)
 		{
-			if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+			return;
+		}
+
+		if (iDirection == HEXCTRL_SEARCH_FORWARD)
+		{
+			dwUntil = m_dwRawDataCount - strSearchHex.size();
+			dwStartAt = fStartAt ? dwStartAt + 1 : 0;
+			for (DWORD i = dwStartAt; i <= dwUntil; i++)
 			{
-				SetSelectionTo(i, i + strSearchHex.size() - 1);
-				break;
+				if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
+				{
+					SetSelection(i, strSearchHex.size());
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
+					return;
+				}
 			}
+			if (fStartAt)
+			{
+				dwStartAt = 0;
+				for (DWORD i = dwStartAt; i <= dwUntil; i++)
+				{
+					if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
+					{
+						SetSelection(i, strSearchHex.size());
+						m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 1, i);
+						return;
+					}
+				}
+			}
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+		}
+		else if (iDirection == HEXCTRL_SEARCH_BACKWARD)
+		{
+			dwStartAt = dwStartAt ? dwStartAt - 1 : 0;
+			if (fStartAt && dwStartAt == 0)
+				dwStartAt = m_dwRawDataCount - strSearchHex.size();
+			for (int i = (int)dwStartAt; i >= 0; i--)
+			{
+				if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
+				{
+					SetSelection(i, strSearchHex.size());
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
+					return;
+				}
+			}
+			//If didn't find anything go search from the end.
+			dwStartAt = m_dwRawDataCount - strSearchHex.size();
+			for (int i = (int)dwStartAt; i >= 0; i--)
+			{
+				if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
+				{
+					SetSelection(i, strSearchHex.size());
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, -1, i);
+					return;
+				}
+			}
+
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, -1, 0);
 		}
 		break;
 	}
 	case HEXCTRL_SEARCH_ASCII:
 	{
-		dwIterations = m_dwRawDataCount - strSearch.size() + 1;
-		for (DWORD i = 0; i < dwIterations; i++)
-			if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+		if (strSearchAscii.size() > m_dwRawDataCount)
+		{
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+			return;
+		}
+
+		if (iDirection == HEXCTRL_SEARCH_FORWARD)
+		{
+			dwUntil = m_dwRawDataCount - strSearchAscii.size();
+			dwStartAt = dwStartAt ? dwStartAt + 1 : 0;
+			for (DWORD i = dwStartAt; i <= dwUntil; i++)
+				if (memcmp(m_pRawData + i, strSearchAscii.data(), strSearchAscii.size()) == 0)
+				{
+					SetSelection(i, strSearchAscii.size());
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
+					return;
+				}
+			if (fStartAt)
 			{
-				SetSelectionTo(i, i + strSearch.size() - 1);
-				break;
+				dwStartAt = 0;
+				for (DWORD i = dwStartAt; i <= dwUntil; i++)
+					if (memcmp(m_pRawData + i, strSearchAscii.data(), strSearchAscii.size()) == 0)
+					{
+						SetSelection(i, strSearchAscii.size());
+						m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 1, i);
+						return;
+					}
 			}
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+		}
+		else if (iDirection == HEXCTRL_SEARCH_BACKWARD)
+		{
+			dwStartAt = dwStartAt ? dwStartAt - 1 : 0;
+			if (fStartAt && dwStartAt == 0)
+				dwStartAt = m_dwRawDataCount - strSearchAscii.size();
+			for (int i = (int)dwStartAt; i >= 0; i--)
+				if (memcmp(m_pRawData + i, strSearchAscii.data(), strSearchAscii.size()) == 0)
+				{
+					SetSelection(i, strSearchAscii.size());
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
+					return;
+				}
+			dwStartAt = m_dwRawDataCount - strSearchAscii.size();
+			for (int i = (int)dwStartAt; i >= 0; i--)
+				if (memcmp(m_pRawData + i, strSearchAscii.data(), strSearchAscii.size()) == 0)
+				{
+					SetSelection(i, strSearchAscii.size());
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, -1, i);
+					return;
+				}
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, -1, 0);
+		}
 		break;
 	}
 	case HEXCTRL_SEARCH_UNICODE:
 	{
-		dwIterations = m_dwRawDataCount - wstrSearch.length() + 1;
-		for (DWORD i = 0; i < dwIterations; i++)
-			if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
+		DWORD dwSizeBytes = wstrSearch.length() * sizeof(wchar_t);
+		if (dwSizeBytes > m_dwRawDataCount)
+		{
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+			return;
+		}
+
+		if (iDirection == HEXCTRL_SEARCH_FORWARD)
+		{
+			dwUntil = m_dwRawDataCount - dwSizeBytes;
+			dwStartAt = dwStartAt ? dwStartAt + 1 : 0;
+			for (DWORD i = dwStartAt; i <= dwUntil; i++)
+				if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
+				{
+					SetSelection(i, dwSizeBytes);
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
+					return;
+				}
+			if (fStartAt)
 			{
-				SetSelectionTo(i, i + (wstrSearch.size() * sizeof(wchar_t)) - 1);
-				break;
+				dwStartAt = 0;
+				for (DWORD i = dwStartAt; i <= dwUntil; i++)
+					if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
+					{
+						SetSelection(i, dwSizeBytes);
+						m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 1, i);
+						return;
+					}
 			}
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+		}
+		else if (iDirection == HEXCTRL_SEARCH_BACKWARD)
+		{
+			dwStartAt = dwStartAt ? dwStartAt - 1 : 0;
+			if (fStartAt && dwStartAt == 0)
+				dwStartAt = m_dwRawDataCount - dwSizeBytes;
+			for (int i = (int)dwStartAt; i >= 0; i--)
+				if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
+				{
+					SetSelection(i, dwSizeBytes);
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
+					return;
+				}
+			dwStartAt = m_dwRawDataCount - dwSizeBytes;
+			for (int i = (int)dwStartAt; i >= 0; i--)
+				if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
+				{
+					SetSelection(i, dwSizeBytes);
+					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, -1, i);
+					return;
+				}
+			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, -1, 0);
+		}
 		break;
 	}
 	}
 }
 
-void CHexCtrl::CHexView::SetSelectionTo(DWORD dwStart, DWORD dwEnd)
+void CHexCtrl::CHexView::SetSelection(DWORD dwStart, DWORD dwBytes)
 {
 	m_dwSelectionClick = m_dwSelectionStart = dwStart;
-	m_dwSelectionEnd = dwEnd;
+	m_dwSelectionEnd = m_dwSelectionStart + dwBytes - 1;
 	m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;
 
 	GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
@@ -1020,51 +1174,110 @@ afx_msg LRESULT CHexCtrl::CHexView::OnSearchRequest(WPARAM wParam, LPARAM lParam
 /****************************************************
 * CHexDlgSearch class implementation.				*
 ****************************************************/
-BEGIN_MESSAGE_MAP(CHexCtrl::CHexDlgSearch, CDialogEx)
-	ON_WM_KILLFOCUS()
-	ON_WM_SETFOCUS()
+BEGIN_MESSAGE_MAP(CHexCtrl::CHexView::CHexDlgSearch, CDialogEx)
 	ON_WM_ACTIVATE()
-	ON_BN_CLICKED(IDC_BUTTON_SEARCH_F, &CHexCtrl::CHexDlgSearch::OnButtonSearchF)
+	ON_WM_CLOSE()
+	ON_WM_CTLCOLOR()
+	ON_BN_CLICKED(IDC_BUTTON_SEARCH_F, &CHexCtrl::CHexView::CHexDlgSearch::OnButtonSearchF)
+	ON_BN_CLICKED(IDC_BUTTON_SEARCH_B, &CHexCtrl::CHexView::CHexDlgSearch::OnButtonSearchB)
+	ON_COMMAND_RANGE(IDC_RADIO_HEX, IDC_RADIO_UNICODE, &CHexCtrl::CHexView::CHexDlgSearch::OnRadioBnRange)
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::CHexDlgSearch::OnInitDialog()
-{
-	CDialogEx::OnInitDialog();
-	CheckRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE, IDC_RADIO_HEX);
-
-	return TRUE;
-}
-
-void CHexCtrl::CHexDlgSearch::DoDataExchange(CDataExchange* pDX)
-{
-	CDialogEx::DoDataExchange(pDX);
-//	DDX_Control(pDX, IDC_EDIT_SEARCH, m_stEditSearch);
-}
-
-BOOL CHexCtrl::CHexDlgSearch::Create(UINT nIDTemplate, CWnd * pParentWnd)
+BOOL CHexCtrl::CHexView::CHexDlgSearch::Create(UINT nIDTemplate, CWnd * pParentWnd)
 {
 	pParent = pParentWnd;
 
 	return CDialog::Create(nIDTemplate, pParent);
 }
 
-CWnd* CHexCtrl::CHexDlgSearch::GetParent()
+CWnd* CHexCtrl::CHexView::CHexDlgSearch::GetParent()
 {
 	//For some weird reason original GetParent() function doesn't work as intended.
 	//Could not figure out why. Just reimplemented it.
 	return pParent ? pParent : CDialog::GetParent();
 }
 
-search_tup& CHexCtrl::CHexDlgSearch::GetSearch()
+search_tup& CHexCtrl::CHexView::CHexDlgSearch::GetSearch()
 {
 	return m_tupSearch;
 }
 
-void CHexCtrl::CHexDlgSearch::OnButtonSearchF()
+BOOL CHexCtrl::CHexView::CHexDlgSearch::OnInitDialog()
 {
-	CString str;
-	GetDlgItemTextW(IDC_EDIT_SEARCH, str);
-	std::get<0>(m_tupSearch) = str.GetString();
+	CDialogEx::OnInitDialog();
+	m_iRadioCurrent = IDC_RADIO_HEX;
+	CheckRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE, m_iRadioCurrent);
+	m_stBrushDefault.CreateSolidBrush(m_clrMenu);
+
+	return TRUE;
+}
+
+void CHexCtrl::CHexView::CHexDlgSearch::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+void CHexCtrl::CHexView::CHexDlgSearch::SearchResult(int iResult, int iReach, DWORD dwStartAt)
+{	//iReach meaning depends on iResult.
+	//if iResult == HEXCTRL_SEARCH_NOTFOUND then iReach means the beginning or the end is reached.
+	//if iResult == HEXCTRL_SEARCH_FOUND iReach means: 1 if search was wrapped from end to the beginning,
+	//-1 if from the beginning to the end.
+	if (iResult == HEXCTRL_SEARCH_NOTFOUND)
+	{
+		ClearAll();
+		if (iReach == -1)
+			GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(L"Didn't find any occurrence. The begining is reached.");
+		else if (iReach == 1)
+			GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(L"Didn't find any occurrence. The end is reached.");
+	}
+	else if (iResult == HEXCTRL_SEARCH_FOUND)
+	{
+		//Occurrence number works only from top to bottom.
+		//From bottom to top - would require two pass, 
+		//that is too big overhead for such tiny feature.
+		//Or it can be implemented in form of: 1-st from bottom, 2-nd from bottom, etc...,
+		//that is not very helpful, imo.
+		if (m_dwnOccurrence != 0xFFFFFFFF)
+		{
+			if (dwStartAt > m_dwStartAt)
+				m_dwnOccurrence++;
+			else if (dwStartAt < m_dwStartAt)
+				m_dwnOccurrence--;
+			else
+				m_dwnOccurrence = 1;
+		}
+
+		if (iReach == 1)
+			m_dwnOccurrence = 1;
+		else if (iReach == -1)
+			m_dwnOccurrence = 0xFFFFFFFF;
+
+		WCHAR wstr[50];
+		if (m_dwnOccurrence != 0xFFFFFFFF)
+			swprintf_s(wstr, 49, L"Found occurrence \u2116 %u from the beginning.", m_dwnOccurrence);
+		else
+			swprintf_s(wstr, 49, L"Occurrence found.");
+
+		m_dwStartAt = dwStartAt;
+		m_fStartAt = true;
+		m_fSearchFound = true;
+
+		GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(wstr);
+	}
+}
+
+void CHexCtrl::CHexView::CHexDlgSearch::OnButtonSearchF()
+{
+	CString strSearchText;
+	GetDlgItemTextW(IDC_EDIT_SEARCH, strSearchText);
+	if (strSearchText.IsEmpty())
+		return;
+	if (strSearchText.Compare(std::get<0>(m_tupSearch).data()) != 0)
+	{
+		m_dwStartAt = 0;
+		std::get<0>(m_tupSearch) = strSearchText;
+	}
+
 	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
 	{
 	case IDC_RADIO_HEX:
@@ -1077,24 +1290,47 @@ void CHexCtrl::CHexDlgSearch::OnButtonSearchF()
 		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_UNICODE;
 		break;
 	}
+	std::get<2>(m_tupSearch) = m_dwStartAt;
+	std::get<3>(m_tupSearch) = HEXCTRL_SEARCH_FORWARD;
+	std::get<4>(m_tupSearch) = m_fStartAt;
 
 	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
 	GetParent()->SendMessageW(WM_HEXCTRL_SEARCH);
-	SetLayeredWindowAttributes(0, 150, LWA_ALPHA);
-	GetParent()->SetFocus();
 }
 
-void CHexCtrl::CHexDlgSearch::OnKillFocus(CWnd* pNewWnd)
+void CHexCtrl::CHexView::CHexDlgSearch::OnButtonSearchB()
 {
-	CDialogEx::OnKillFocus(pNewWnd);
+	CString strSearchText;
+	GetDlgItemTextW(IDC_EDIT_SEARCH, strSearchText);
+	if (strSearchText.IsEmpty())
+		return;
+	if (strSearchText.Compare(std::get<0>(m_tupSearch).data()) != 0)
+	{
+		m_dwStartAt = 0;
+		std::get<0>(m_tupSearch) = strSearchText;
+	}
+
+	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
+	{
+	case IDC_RADIO_HEX:
+		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_HEX;
+		break;
+	case IDC_RADIO_ASCII:
+		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_ASCII;
+		break;
+	case IDC_RADIO_UNICODE:
+		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_UNICODE;
+		break;
+	}
+	std::get<2>(m_tupSearch) = m_dwStartAt;
+	std::get<3>(m_tupSearch) = HEXCTRL_SEARCH_BACKWARD;
+	std::get<4>(m_tupSearch) = m_fStartAt;
+
+	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
+	GetParent()->SendMessageW(WM_HEXCTRL_SEARCH);
 }
 
-void CHexCtrl::CHexDlgSearch::OnSetFocus(CWnd* pOldWnd)
-{
-	CDialogEx::OnSetFocus(pOldWnd);
-}
-
-void CHexCtrl::CHexDlgSearch::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+void CHexCtrl::CHexView::CHexDlgSearch::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 {
 	if (nState == WA_INACTIVE)
 		SetLayeredWindowAttributes(0, 150, LWA_ALPHA);
@@ -1105,4 +1341,127 @@ void CHexCtrl::CHexDlgSearch::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMin
 	}
 
 	CDialogEx::OnActivate(nState, pWndOther, bMinimized);
+}
+
+BOOL CHexCtrl::CHexView::CHexDlgSearch::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_RETURN)
+	{
+		OnButtonSearchF();
+		return TRUE;
+	}
+
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+void CHexCtrl::CHexView::CHexDlgSearch::OnClose()
+{
+	ClearAll();
+	CDialogEx::OnClose();
+}
+
+HBRUSH CHexCtrl::CHexView::CHexDlgSearch::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_BOTTOM_TEXT)
+	{
+		pDC->SetBkColor(m_clrMenu);
+		pDC->SetTextColor(m_fSearchFound ? m_clrSearchFound : m_clrSearchFailed);
+		return m_stBrushDefault;
+	}
+
+	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+void CHexCtrl::CHexView::CHexDlgSearch::OnRadioBnRange(UINT nID)
+{
+	if (nID != m_iRadioCurrent)
+		ClearAll();
+	m_iRadioCurrent = nID;
+}
+
+void CHexCtrl::CHexView::CHexDlgSearch::ClearAll()
+{
+	m_dwnOccurrence = 0;
+	m_dwStartAt = 0;
+	m_fSearchFound = false;
+	m_fStartAt = false;
+	GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(L"");
+}
+
+
+
+/****************************************************
+* CHexDlgAbout class implementation.				*
+****************************************************/
+
+BEGIN_MESSAGE_MAP(CHexCtrl::CHexView::CHexDlgAbout, CDialogEx)
+	ON_WM_LBUTTONDOWN()
+	ON_WM_MOUSEMOVE()
+	ON_WM_CTLCOLOR()
+END_MESSAGE_MAP()
+
+BOOL CHexCtrl::CHexView::CHexDlgAbout::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	//To prevent cursor from blinking
+	SetClassLongPtr(m_hWnd, GCL_HCURSOR, 0);
+
+	m_fontDefault = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+
+	LOGFONT lf { };
+	GetObject(m_fontDefault, sizeof(lf), &lf);
+	lf.lfUnderline = TRUE;
+
+	m_fontUnderline = CreateFontIndirect(&lf);
+
+	m_stBrushDefault.CreateSolidBrush(m_clrMenu);
+
+	m_curHand = LoadCursor(nullptr, IDC_HAND);
+	m_curArrow = LoadCursor(nullptr, IDC_ARROW);
+
+	return TRUE;
+}
+
+void CHexCtrl::CHexView::CHexDlgAbout::OnMouseMove(UINT nFlags, CPoint point)
+{
+	CWnd* pWnd = ChildWindowFromPoint(point);
+
+	if (!pWnd)
+		return;
+
+	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB))
+	{
+		m_fGithubLink = !m_fGithubLink;
+		::InvalidateRect(GetDlgItem(IDC_STATIC_HTTP_GITHUB)->m_hWnd, nullptr, FALSE);
+		SetCursor(m_fGithubLink ? m_curArrow : m_curHand);
+	}
+
+	CDialogEx::OnMouseMove(nFlags, point);
+}
+
+void CHexCtrl::CHexView::CHexDlgAbout::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	CWnd* pWnd = ChildWindowFromPoint(point);
+
+	if (!pWnd)
+		return;
+
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB)
+		ShellExecute(nullptr, L"open", L"https://github.com/jovibor/Pepper", nullptr, nullptr, NULL);
+
+	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+HBRUSH CHexCtrl::CHexView::CHexDlgAbout::OnCtlColor(CDC * pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB)
+	{
+		pDC->SetBkColor(m_clrMenu);
+		pDC->SetTextColor(RGB(0, 0, 210));
+		pDC->SelectObject(m_fGithubLink ? m_fontDefault : m_fontUnderline);
+		return m_stBrushDefault;
+	}
+
+	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }
