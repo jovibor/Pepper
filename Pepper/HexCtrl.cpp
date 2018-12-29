@@ -721,6 +721,13 @@ BOOL CHexCtrl::CHexView::OnEraseBkgnd(CDC* pDC)
 	return FALSE;
 }
 
+afx_msg LRESULT CHexCtrl::CHexView::OnSearchRequest(WPARAM wParam, LPARAM lParam)
+{
+	Search(m_dlgSearch.GetSearch());
+
+	return 0;
+}
+
 BOOL CHexCtrl::CHexView::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' && GetKeyState(VK_CONTROL) < 0)
@@ -900,7 +907,8 @@ void CHexCtrl::CHexView::Recalc()
 	m_iFourthVertLine = m_iIndentAscii + (m_iIndentBetweenAscii * m_dwGridCapacity) + m_sizeLetter.cx;
 	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
 	m_iHeightRectHeader = int(m_sizeLetter.cy*1.5);
-	m_iHeightWorkArea = m_rcClient.Height() - m_iHeightBottomRect - ((m_rcClient.Height() - m_iHeightRectHeader - m_iHeightBottomRect) % m_sizeLetter.cy);
+	m_iHeightWorkArea = m_rcClient.Height() - m_iHeightBottomRect -
+		((m_rcClient.Height() - m_iHeightRectHeader - m_iHeightBottomRect) % m_sizeLetter.cy);
 
 	//Scroll sizes according to current font size.
 	SetScrollSizes(MM_TEXT, CSize(m_iFourthVertLine + 1,
@@ -1155,19 +1163,15 @@ void CHexCtrl::CHexView::SetSelection(DWORD dwStart, DWORD dwBytes)
 	m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;
 
 	GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-	m_stScrollVert.nPos = dwStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2);
+	m_stScrollVert.nPos = m_dwSelectionStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2);
 	SetScrollInfo(SB_VERT, &m_stScrollVert);
 
+	GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_ALL);
+	m_stScrollHorz.nPos = (m_dwSelectionStart % m_dwGridCapacity) * m_iIndentBetweenHexChunks;
+	SetScrollInfo(SB_HORZ, &m_stScrollHorz);
+
 	UpdateBottomBarText();
-
 	Invalidate();
-}
-
-afx_msg LRESULT CHexCtrl::CHexView::OnSearchRequest(WPARAM wParam, LPARAM lParam)
-{
-	Search(m_dlgSearch.GetSearch());
-
-	return 0;
 }
 
 

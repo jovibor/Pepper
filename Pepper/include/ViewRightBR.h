@@ -39,7 +39,7 @@ private:
 	std::wstring m_strResLoadError { L"Unable to load resource! It's either damaged, packed or zero-length." };
 	CEdit m_stEditResStrings; //Edit control for RT_STRING, RT_VERSION
 	CFont m_fontEditRes; //Font for m_stEditResStrings.
-	SIZE m_sizeLetter, m_sizeStrStyles;
+	SIZE m_sizeLetter { }, m_sizeStrStyles { };
 	int m_iResDlgIndentToDrawX { 10 };
 	int m_iResDlgIndentToDrawY { 2 };
 	std::map<int, std::wstring> m_mapVerInfoStrings {
@@ -84,13 +84,8 @@ private:
 	{ WS_HSCROLL, L"WS_HSCROLL" },
 	{ WS_SYSMENU, L"WS_SYSMENU" },
 	{ WS_THICKFRAME, L"WS_THICKFRAME" },
-	{ WS_GROUP, L"WS_GROUP" },
-	{ WS_TABSTOP, L"WS_TABSTOP" },
 	{ WS_MINIMIZEBOX, L"WS_MINIMIZEBOX" },
 	{ WS_MAXIMIZEBOX, L"WS_MAXIMIZEBOX" },
-	{ WS_TILED, L"WS_TILED" },
-	{ WS_ICONIC, L"WS_ICONIC" },
-	{ WS_SIZEBOX, L"WS_SIZEBOX" },
 	{ WS_TILEDWINDOW, L"WS_TILEDWINDOW" }
 	};
 private:

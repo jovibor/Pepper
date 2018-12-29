@@ -87,6 +87,7 @@
     <EmbedManifest>false</EmbedManifest>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -147,7 +148,7 @@
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>None</DebugInformationFormat>
       <ProgramDataBaseFileName />
-      <AdditionalIncludeDirectories>include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;res;verinfo</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -182,8 +183,17 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories);include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>powershell.exe $(ProjectDir)set_verinfo.ps1 $(TargetDir)$(ProjectName).exe</Command>
+      <Command>powershell.exe $(ProjectDir)\verinfo\set_verinfo.ps1 $(TargetDir)$(ProjectName).exe</Command>
     </PostBuildEvent>
+    <Xdcmake>
+      <OutputFile />
+    </Xdcmake>
+    <Bscmake>
+      <OutputFile />
+    </Bscmake>
+    <Manifest>
+      <OutputManifestFile />
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -242,10 +252,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="HexCtrl.rc" />
-    <ResourceCompile Include="Pepper.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="res\TreeMain_Dirs.ico" />
     <Image Include="res\TreeMain_Header.ico" />
     <Image Include="res\Pepper.ico" />
@@ -255,6 +261,7 @@
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HexCtrlRes.h" />
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\HexCtrl.h" />
@@ -272,6 +279,10 @@
     <ClInclude Include="include\TreeEx.h" />
     <ClInclude Include="include\stdafx.h" />
     <ClInclude Include="include\ViewRightTR.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\HexCtrl.rc" />
+    <ResourceCompile Include="res\Pepper.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

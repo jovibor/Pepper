@@ -147,7 +147,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 						m_stResHelper.IdResType = std::get<0>(rootvec.at(idlvlRoot)).Id;
 						m_stResHelper.IdResName = std::get<0>(lvl2vec.at(idlvl2)).Id;
 						m_stResHelper.pData = (std::vector<std::byte>*)&data;
-						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), (CObject*)&m_stResHelper);
+						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&m_stResHelper));
 					}
 				}
 			}

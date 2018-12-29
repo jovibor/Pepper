@@ -67,9 +67,9 @@ struct RESHELPER
 {	
 	RESHELPER() {}
 	RESHELPER(WORD type, WORD name, std::vector<std::byte>* data) :IdResType(type), IdResName(name),pData(data) {}
-	WORD IdResType;
-	WORD IdResName;
-	std::vector<std::byte>* pData;
+	WORD IdResType { };
+	WORD IdResName { };
+	std::vector<std::byte>* pData { };
 };
 
 /*****************************************************************

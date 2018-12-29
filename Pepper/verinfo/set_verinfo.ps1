@@ -1,6 +1,6 @@
 #Path to verpatch.exe
 $verpatch = "$PSScriptRoot\verpatch.exe"
-$versionfile = "$PSScriptRoot\include\version.h"
+$versionfile = "$PSScriptRoot\version.h"
 
 $PRODUCTNAME=""
 $PRODUCTDESC=""
