@@ -23,11 +23,11 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::Create(CWnd * pParent, const RECT & rect, UINT nID, const LOGFONT* pLogFont)
+BOOL CHexCtrl::Create(CWnd * m_pParent, const RECT & rect, UINT nID, const LOGFONT* pLogFont)
 {
 	m_pLogFontHexView = pLogFont;
 
-	return CWnd::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID);
+	return CWnd::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, m_pParent, nID);
 }
 
 int CHexCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -140,12 +140,11 @@ BEGIN_MESSAGE_MAP(CHexCtrl::CHexView, CScrollView)
 	ON_WM_LBUTTONUP()
 	ON_WM_RBUTTONUP()
 	ON_COMMAND_RANGE(IDC_MENU_POPUP_SEARCH, IDC_MENU_POPUP_ABOUT, &CHexCtrl::CHexView::OnMenuRange)
-	ON_MESSAGE(WM_HEXCTRL_SEARCH, &CHexCtrl::CHexView::OnSearchRequest)
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::CHexView::Create(CWnd * pParent, const RECT & rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont)
+BOOL CHexCtrl::CHexView::Create(CWnd * m_pParent, const RECT & rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont)
 {
-	BOOL ret = CScrollView::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, pParent, nID, pContext);
+	BOOL ret = CScrollView::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, m_pParent, nID, pContext);
 
 	NONCLIENTMETRICSW ncm;
 	ncm.cbSize = sizeof(NONCLIENTMETRICS);
@@ -721,13 +720,6 @@ BOOL CHexCtrl::CHexView::OnEraseBkgnd(CDC* pDC)
 	return FALSE;
 }
 
-afx_msg LRESULT CHexCtrl::CHexView::OnSearchRequest(WPARAM wParam, LPARAM lParam)
-{
-	Search(m_dlgSearch.GetSearch());
-
-	return 0;
-}
-
 BOOL CHexCtrl::CHexView::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' && GetKeyState(VK_CONTROL) < 0)
@@ -933,35 +925,33 @@ void CHexCtrl::CHexView::Recalc()
 	Invalidate();
 }
 
-void CHexCtrl::CHexView::Search(search_tup& rTup)
+void CHexCtrl::CHexView::Search(HEXSEARCH& rSearch)
 {
-	auto& wstrSearch = std::get<0>(rTup);
-	auto& dwType = std::get<1>(rTup);
-	auto& dwStartAt = std::get<2>(rTup);
-	auto& iDirection = std::get<3>(rTup);
-	auto fStartAt = std::get<4>(rTup);
-
-	if (wstrSearch.empty() || m_dwRawDataCount == 0 || dwStartAt > (m_dwRawDataCount - 1))
+	if (rSearch.wstrSearch.empty() || m_dwRawDataCount == 0 || rSearch.dwStartAt > (m_dwRawDataCount - 1))
 	{
-		m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+		rSearch.fFound = false;
+		m_dlgSearch.SearchCallback();
 		return;
 	}
 
-	int iSizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &wstrSearch[0], (int)wstrSearch.size(), nullptr, 0, nullptr, nullptr);
+	int iSizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &rSearch.wstrSearch[0], (int)rSearch.wstrSearch.size(), nullptr, 0, nullptr, nullptr);
 	std::string strSearchAscii(iSizeNeeded, 0);
-	WideCharToMultiByte(CP_UTF8, 0, &wstrSearch[0], (int)wstrSearch.size(), &strSearchAscii[0], iSizeNeeded, nullptr, nullptr);
+	WideCharToMultiByte(CP_UTF8, 0, &rSearch.wstrSearch[0], (int)rSearch.wstrSearch.size(), &strSearchAscii[0], iSizeNeeded, nullptr, nullptr);
 
+	auto dwStartAt = rSearch.dwStartAt;
+	DWORD dwSizeBytes;
 	DWORD dwUntil;
-	//Is searching from middle or 0? 
+	std::string strSearch { };
+	bool fUnicode { false };
 
-	switch (dwType)
+	switch (rSearch.dwSearchType)
 	{
 	case HEXCTRL_SEARCH_HEX:
 	{
-		std::string strSearchHex;
 		DWORD dwIterations = strSearchAscii.size() % 2 ? strSearchAscii.size() / 2 + 1 : strSearchAscii.size() / 2;
 		int iNextChar = 0;
-		std::string strToUL { };
+		std::string strToUL;
+		char* pEndPtr { };
 
 		for (DWORD i = 0; i < dwIterations; i++)
 		{
@@ -970,73 +960,23 @@ void CHexCtrl::CHexView::Search(search_tup& rTup)
 			else
 				strToUL = strSearchAscii.substr(iNextChar, 1);
 
-			unsigned long ulNumber = strtoul(strToUL.data(), nullptr, 16);
-			strSearchHex += (unsigned char)ulNumber;
+			unsigned long ulNumber = strtoul(strToUL.data(), &pEndPtr, 16);
+			if (ulNumber == 0 && (pEndPtr == strToUL.data() || *pEndPtr != '\0'))
+			{
+				rSearch.fFound = false;
+				m_dlgSearch.SearchCallback();
+				return;
+			}
+
+			strSearch += (unsigned char)ulNumber;
 			iNextChar += 2;
 		}
 
-		//If input is longer than m_dwRawDataCount.
-		if (strSearchHex.size() > m_dwRawDataCount)
+		if (strSearch.size() > m_dwRawDataCount)
 		{
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+			rSearch.fFound = false;
+			m_dlgSearch.SearchCallback();
 			return;
-		}
-
-		if (iDirection == HEXCTRL_SEARCH_FORWARD)
-		{
-			dwUntil = m_dwRawDataCount - strSearchHex.size();
-			dwStartAt = fStartAt ? dwStartAt + 1 : 0;
-			for (DWORD i = dwStartAt; i <= dwUntil; i++)
-			{
-				if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
-				{
-					SetSelection(i, strSearchHex.size());
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
-					return;
-				}
-			}
-			if (fStartAt)
-			{
-				dwStartAt = 0;
-				for (DWORD i = dwStartAt; i <= dwUntil; i++)
-				{
-					if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
-					{
-						SetSelection(i, strSearchHex.size());
-						m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 1, i);
-						return;
-					}
-				}
-			}
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
-		}
-		else if (iDirection == HEXCTRL_SEARCH_BACKWARD)
-		{
-			dwStartAt = dwStartAt ? dwStartAt - 1 : 0;
-			if (fStartAt && dwStartAt == 0)
-				dwStartAt = m_dwRawDataCount - strSearchHex.size();
-			for (int i = (int)dwStartAt; i >= 0; i--)
-			{
-				if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
-				{
-					SetSelection(i, strSearchHex.size());
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
-					return;
-				}
-			}
-			//If didn't find anything go search from the end.
-			dwStartAt = m_dwRawDataCount - strSearchHex.size();
-			for (int i = (int)dwStartAt; i >= 0; i--)
-			{
-				if (memcmp(m_pRawData + i, strSearchHex.data(), strSearchHex.size()) == 0)
-				{
-					SetSelection(i, strSearchHex.size());
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, -1, i);
-					return;
-				}
-			}
-
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, -1, 0);
 		}
 		break;
 	}
@@ -1044,116 +984,172 @@ void CHexCtrl::CHexView::Search(search_tup& rTup)
 	{
 		if (strSearchAscii.size() > m_dwRawDataCount)
 		{
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+			rSearch.fFound = false;
+			m_dlgSearch.SearchCallback();
 			return;
 		}
-
-		if (iDirection == HEXCTRL_SEARCH_FORWARD)
-		{
-			dwUntil = m_dwRawDataCount - strSearchAscii.size();
-			dwStartAt = dwStartAt ? dwStartAt + 1 : 0;
-			for (DWORD i = dwStartAt; i <= dwUntil; i++)
-				if (memcmp(m_pRawData + i, strSearchAscii.data(), strSearchAscii.size()) == 0)
-				{
-					SetSelection(i, strSearchAscii.size());
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
-					return;
-				}
-			if (fStartAt)
-			{
-				dwStartAt = 0;
-				for (DWORD i = dwStartAt; i <= dwUntil; i++)
-					if (memcmp(m_pRawData + i, strSearchAscii.data(), strSearchAscii.size()) == 0)
-					{
-						SetSelection(i, strSearchAscii.size());
-						m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 1, i);
-						return;
-					}
-			}
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
-		}
-		else if (iDirection == HEXCTRL_SEARCH_BACKWARD)
-		{
-			dwStartAt = dwStartAt ? dwStartAt - 1 : 0;
-			if (fStartAt && dwStartAt == 0)
-				dwStartAt = m_dwRawDataCount - strSearchAscii.size();
-			for (int i = (int)dwStartAt; i >= 0; i--)
-				if (memcmp(m_pRawData + i, strSearchAscii.data(), strSearchAscii.size()) == 0)
-				{
-					SetSelection(i, strSearchAscii.size());
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
-					return;
-				}
-			dwStartAt = m_dwRawDataCount - strSearchAscii.size();
-			for (int i = (int)dwStartAt; i >= 0; i--)
-				if (memcmp(m_pRawData + i, strSearchAscii.data(), strSearchAscii.size()) == 0)
-				{
-					SetSelection(i, strSearchAscii.size());
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, -1, i);
-					return;
-				}
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, -1, 0);
-		}
+		strSearch = std::move(strSearchAscii);
 		break;
 	}
 	case HEXCTRL_SEARCH_UNICODE:
 	{
-		DWORD dwSizeBytes = wstrSearch.length() * sizeof(wchar_t);
+		dwSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
 		if (dwSizeBytes > m_dwRawDataCount)
 		{
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
+			rSearch.fFound = false;
+			m_dlgSearch.SearchCallback();
 			return;
 		}
-
-		if (iDirection == HEXCTRL_SEARCH_FORWARD)
-		{
-			dwUntil = m_dwRawDataCount - dwSizeBytes;
-			dwStartAt = dwStartAt ? dwStartAt + 1 : 0;
-			for (DWORD i = dwStartAt; i <= dwUntil; i++)
-				if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
-				{
-					SetSelection(i, dwSizeBytes);
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
-					return;
-				}
-			if (fStartAt)
-			{
-				dwStartAt = 0;
-				for (DWORD i = dwStartAt; i <= dwUntil; i++)
-					if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
-					{
-						SetSelection(i, dwSizeBytes);
-						m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 1, i);
-						return;
-					}
-			}
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, 1, 0);
-		}
-		else if (iDirection == HEXCTRL_SEARCH_BACKWARD)
-		{
-			dwStartAt = dwStartAt ? dwStartAt - 1 : 0;
-			if (fStartAt && dwStartAt == 0)
-				dwStartAt = m_dwRawDataCount - dwSizeBytes;
-			for (int i = (int)dwStartAt; i >= 0; i--)
-				if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
-				{
-					SetSelection(i, dwSizeBytes);
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, 0, i);
-					return;
-				}
-			dwStartAt = m_dwRawDataCount - dwSizeBytes;
-			for (int i = (int)dwStartAt; i >= 0; i--)
-				if (wmemcmp((const wchar_t*)(m_pRawData + i), wstrSearch.data(), wstrSearch.length()) == 0)
-				{
-					SetSelection(i, dwSizeBytes);
-					m_dlgSearch.SearchResult(HEXCTRL_SEARCH_FOUND, -1, i);
-					return;
-				}
-			m_dlgSearch.SearchResult(HEXCTRL_SEARCH_NOTFOUND, -1, 0);
-		}
+		fUnicode = true;
 		break;
 	}
 	}
+
+	///////////////Actual Search:////////////////////////////////////////////
+	if (!fUnicode)
+	{
+		if (rSearch.iDirection == HEXCTRL_SEARCH_FORWARD)
+		{
+			dwUntil = m_dwRawDataCount - strSearch.size();
+			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
+
+			for (DWORD i = dwStartAt; i <= dwUntil; i++)
+			{
+				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+				{
+					rSearch.dwStartAt = i;
+					rSearch.fFound = true;
+					rSearch.fWrap = false;
+					m_dlgSearch.SearchCallback();
+					SetSelection(i, strSearch.size());
+					return;
+				}
+			}
+			dwStartAt = 0;
+			for (DWORD i = dwStartAt; i <= dwUntil; i++)
+			{
+				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+				{
+					rSearch.dwStartAt = i;
+					rSearch.fFound = true;
+					rSearch.fWrap = true;
+					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_END;
+					rSearch.fCount = true;
+					m_dlgSearch.SearchCallback();
+					SetSelection(i, strSearch.size());
+					return;
+				}
+			}
+		}
+		if (rSearch.iDirection == HEXCTRL_SEARCH_BACKWARD)
+		{
+			if (rSearch.fSecondMatch && dwStartAt > 0)
+				dwStartAt--;
+			if (rSearch.fSecondMatch && dwStartAt != 0)
+			{
+				for (int i = (int)dwStartAt; i >= 0; i--)
+				{
+					if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+					{
+						rSearch.dwStartAt = i;
+						rSearch.fFound = true;
+						rSearch.fWrap = false;
+						m_dlgSearch.SearchCallback();
+						SetSelection(i, strSearch.size());
+						return;
+					}
+				}
+			}
+			dwStartAt = m_dwRawDataCount - strSearch.size();
+			for (int i = (int)dwStartAt; i >= 0; i--)
+			{
+				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+				{
+					rSearch.dwStartAt = i;
+					rSearch.fFound = true;
+					rSearch.fWrap = true;
+					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_BEGINNING;
+					rSearch.fCount = false;
+					m_dlgSearch.SearchCallback();
+					SetSelection(i, strSearch.size());
+					return;
+				}
+			}
+		}
+	}
+	else //UNICODE
+	{
+		if (rSearch.iDirection == HEXCTRL_SEARCH_FORWARD)
+		{
+			dwUntil = m_dwRawDataCount - dwSizeBytes;
+			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
+
+			for (DWORD i = dwStartAt; i <= dwUntil; i++)
+			{
+				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
+				{
+					rSearch.dwStartAt = i;
+					rSearch.fFound = true;
+					rSearch.fWrap = false;
+					m_dlgSearch.SearchCallback();
+					SetSelection(i, dwSizeBytes);
+					return;
+				}
+			}
+			dwStartAt = 0;
+			for (DWORD i = dwStartAt; i <= dwUntil; i++)
+			{
+				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
+				{
+					rSearch.dwStartAt = i;
+					rSearch.fFound = true;
+					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_END;
+					rSearch.fWrap = true;
+					rSearch.fCount = true;
+					m_dlgSearch.SearchCallback();
+					SetSelection(i, dwSizeBytes);
+					return;
+				}
+			}
+		}
+		else if (rSearch.iDirection == HEXCTRL_SEARCH_BACKWARD)
+		{
+			if (rSearch.fSecondMatch && dwStartAt > 0)
+				dwStartAt--;
+			if (rSearch.fSecondMatch && dwStartAt != 0)
+			{
+				for (int i = (int)dwStartAt; i >= 0; i--)
+				{
+					if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
+					{
+						rSearch.dwStartAt = i;
+						rSearch.fFound = true;
+						rSearch.fWrap = false;
+						m_dlgSearch.SearchCallback();
+						SetSelection(i, dwSizeBytes);
+						return;
+					}
+				}
+			}
+			dwStartAt = m_dwRawDataCount - dwSizeBytes;
+			for (int i = (int)dwStartAt; i >= 0; i--)
+			{
+				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
+				{
+					rSearch.dwStartAt = i;
+					rSearch.fFound = true;
+					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_BEGINNING;
+					rSearch.fWrap = true;
+					rSearch.fCount = false;
+					m_dlgSearch.SearchCallback();
+					SetSelection(i, dwSizeBytes);
+					return;
+				}
+			}
+		}
+	}
+	rSearch.fFound = false;
+	m_dlgSearch.SearchCallback();
 }
 
 void CHexCtrl::CHexView::SetSelection(DWORD dwStart, DWORD dwBytes)
@@ -1187,23 +1183,16 @@ BEGIN_MESSAGE_MAP(CHexCtrl::CHexView::CHexDlgSearch, CDialogEx)
 	ON_COMMAND_RANGE(IDC_RADIO_HEX, IDC_RADIO_UNICODE, &CHexCtrl::CHexView::CHexDlgSearch::OnRadioBnRange)
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::CHexView::CHexDlgSearch::Create(UINT nIDTemplate, CWnd * pParentWnd)
+BOOL CHexCtrl::CHexView::CHexDlgSearch::Create(UINT nIDTemplate, CHexView* pParentWnd)
 {
-	pParent = pParentWnd;
+	m_pParent = pParentWnd;
 
-	return CDialog::Create(nIDTemplate, pParent);
+	return CDialog::Create(nIDTemplate, m_pParent);
 }
 
-CWnd* CHexCtrl::CHexView::CHexDlgSearch::GetParent()
+CHexCtrl::CHexView* CHexCtrl::CHexView::CHexDlgSearch::GetParent()
 {
-	//For some weird reason original GetParent() function doesn't work as intended.
-	//Could not figure out why. Just reimplemented it.
-	return pParent ? pParent : CDialog::GetParent();
-}
-
-search_tup& CHexCtrl::CHexView::CHexDlgSearch::GetSearch()
-{
-	return m_tupSearch;
+	return m_pParent;
 }
 
 BOOL CHexCtrl::CHexView::CHexDlgSearch::OnInitDialog()
@@ -1221,52 +1210,42 @@ void CHexCtrl::CHexView::CHexDlgSearch::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 }
 
-void CHexCtrl::CHexView::CHexDlgSearch::SearchResult(int iResult, int iReach, DWORD dwStartAt)
-{	//iReach meaning depends on iResult.
-	//if iResult == HEXCTRL_SEARCH_NOTFOUND then iReach means the beginning or the end is reached.
-	//if iResult == HEXCTRL_SEARCH_FOUND iReach means: 1 if search was wrapped from end to the beginning,
-	//-1 if from the beginning to the end.
-	if (iResult == HEXCTRL_SEARCH_NOTFOUND)
+void CHexCtrl::CHexView::CHexDlgSearch::SearchCallback()
+{
+	WCHAR wstrSearch[128];
+
+	if (m_stSearch.fFound)
 	{
-		ClearAll();
-		if (iReach == -1)
-			GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(L"Didn't find any occurrence. The begining is reached.");
-		else if (iReach == 1)
-			GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(L"Didn't find any occurrence. The end is reached.");
-	}
-	else if (iResult == HEXCTRL_SEARCH_FOUND)
-	{
-		//Occurrence number works only from top to bottom.
-		//From bottom to top - would require two pass, 
-		//that is too big overhead for such tiny feature.
-		//Or it can be implemented in form of: 1-st from bottom, 2-nd from bottom, etc...,
-		//that is not very helpful, imo.
-		if (m_dwnOccurrence != 0xFFFFFFFF)
+		if (m_stSearch.fCount)
 		{
-			if (dwStartAt > m_dwStartAt)
-				m_dwnOccurrence++;
-			else if (dwStartAt < m_dwStartAt)
-				m_dwnOccurrence--;
+			if (!m_stSearch.fWrap)
+			{
+				if (m_stSearch.iDirection == HEXCTRL_SEARCH_FORWARD)
+					m_dwnOccurrence++;
+				else if (m_stSearch.iDirection == HEXCTRL_SEARCH_BACKWARD)
+					m_dwnOccurrence--;
+			}
 			else
 				m_dwnOccurrence = 1;
+
+			swprintf_s(wstrSearch, 127, L"Found occurrence \u2116 %u from the beginning.", m_dwnOccurrence);
 		}
-
-		if (iReach == 1)
-			m_dwnOccurrence = 1;
-		else if (iReach == -1)
-			m_dwnOccurrence = 0xFFFFFFFF;
-
-		WCHAR wstr[50];
-		if (m_dwnOccurrence != 0xFFFFFFFF)
-			swprintf_s(wstr, 49, L"Found occurrence \u2116 %u from the beginning.", m_dwnOccurrence);
 		else
-			swprintf_s(wstr, 49, L"Occurrence found.");
+			swprintf_s(wstrSearch, 127, L"Search found occurrence.");
 
-		m_dwStartAt = dwStartAt;
-		m_fStartAt = true;
-		m_fSearchFound = true;
+		m_stSearch.fSecondMatch = true;
+		GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(wstrSearch);
+	}
+	else
+	{
+		ClearAll();
 
-		GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(wstr);
+		if (m_stSearch.iWrap == 1)
+			swprintf_s(wstrSearch, 127, L"Didn't find any occurrence. The end is reached.");
+		else
+			swprintf_s(wstrSearch, 127, L"Didn't find any occurrence. The begining is reached.");
+
+		GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(wstrSearch);
 	}
 }
 
@@ -1276,30 +1255,28 @@ void CHexCtrl::CHexView::CHexDlgSearch::OnButtonSearchF()
 	GetDlgItemTextW(IDC_EDIT_SEARCH, strSearchText);
 	if (strSearchText.IsEmpty())
 		return;
-	if (strSearchText.Compare(std::get<0>(m_tupSearch).data()) != 0)
+	if (strSearchText.Compare(m_stSearch.wstrSearch.data()) != 0)
 	{
-		m_dwStartAt = 0;
-		std::get<0>(m_tupSearch) = strSearchText;
+		ClearAll();
+		m_stSearch.wstrSearch = strSearchText;
 	}
 
 	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
 	{
 	case IDC_RADIO_HEX:
-		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_HEX;
+		m_stSearch.dwSearchType = HEXCTRL_SEARCH_HEX;
 		break;
 	case IDC_RADIO_ASCII:
-		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_ASCII;
+		m_stSearch.dwSearchType = HEXCTRL_SEARCH_ASCII;
 		break;
 	case IDC_RADIO_UNICODE:
-		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_UNICODE;
+		m_stSearch.dwSearchType = HEXCTRL_SEARCH_UNICODE;
 		break;
 	}
-	std::get<2>(m_tupSearch) = m_dwStartAt;
-	std::get<3>(m_tupSearch) = HEXCTRL_SEARCH_FORWARD;
-	std::get<4>(m_tupSearch) = m_fStartAt;
+	m_stSearch.iDirection = HEXCTRL_SEARCH_FORWARD;
 
 	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
-	GetParent()->SendMessageW(WM_HEXCTRL_SEARCH);
+	GetParent()->Search(m_stSearch);
 }
 
 void CHexCtrl::CHexView::CHexDlgSearch::OnButtonSearchB()
@@ -1308,30 +1285,28 @@ void CHexCtrl::CHexView::CHexDlgSearch::OnButtonSearchB()
 	GetDlgItemTextW(IDC_EDIT_SEARCH, strSearchText);
 	if (strSearchText.IsEmpty())
 		return;
-	if (strSearchText.Compare(std::get<0>(m_tupSearch).data()) != 0)
+	if (strSearchText.Compare(m_stSearch.wstrSearch.data()) != 0)
 	{
-		m_dwStartAt = 0;
-		std::get<0>(m_tupSearch) = strSearchText;
+		ClearAll();
+		m_stSearch.wstrSearch = strSearchText;
 	}
 
 	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
 	{
 	case IDC_RADIO_HEX:
-		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_HEX;
+		m_stSearch.dwSearchType = HEXCTRL_SEARCH_HEX;
 		break;
 	case IDC_RADIO_ASCII:
-		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_ASCII;
+		m_stSearch.dwSearchType = HEXCTRL_SEARCH_ASCII;
 		break;
 	case IDC_RADIO_UNICODE:
-		std::get<1>(m_tupSearch) = HEXCTRL_SEARCH_UNICODE;
+		m_stSearch.dwSearchType = HEXCTRL_SEARCH_UNICODE;
 		break;
 	}
-	std::get<2>(m_tupSearch) = m_dwStartAt;
-	std::get<3>(m_tupSearch) = HEXCTRL_SEARCH_BACKWARD;
-	std::get<4>(m_tupSearch) = m_fStartAt;
+	m_stSearch.iDirection = HEXCTRL_SEARCH_BACKWARD;
 
 	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
-	GetParent()->SendMessageW(WM_HEXCTRL_SEARCH);
+	GetParent()->Search(m_stSearch);
 }
 
 void CHexCtrl::CHexView::CHexDlgSearch::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
@@ -1369,7 +1344,7 @@ HBRUSH CHexCtrl::CHexView::CHexDlgSearch::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT 
 	if (pWnd->GetDlgCtrlID() == IDC_STATIC_BOTTOM_TEXT)
 	{
 		pDC->SetBkColor(m_clrMenu);
-		pDC->SetTextColor(m_fSearchFound ? m_clrSearchFound : m_clrSearchFailed);
+		pDC->SetTextColor(m_stSearch.fFound ? m_clrSearchFound : m_clrSearchFailed);
 		return m_stBrushDefault;
 	}
 
@@ -1386,9 +1361,12 @@ void CHexCtrl::CHexView::CHexDlgSearch::OnRadioBnRange(UINT nID)
 void CHexCtrl::CHexView::CHexDlgSearch::ClearAll()
 {
 	m_dwnOccurrence = 0;
-	m_dwStartAt = 0;
-	m_fSearchFound = false;
-	m_fStartAt = false;
+	m_stSearch.dwStartAt = 0;
+	m_stSearch.fSecondMatch = false;
+	m_stSearch.wstrSearch = { };
+	m_stSearch.fWrap = false;
+	m_stSearch.fCount = true;
+
 	GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(L"");
 }
 

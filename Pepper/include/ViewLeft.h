@@ -4,10 +4,11 @@
 
 class CViewLeft : public CView
 {
-protected:
-	DECLARE_DYNCREATE(CViewLeft)
+public:
 	CViewLeft() {} // protected constructor used by dynamic creation
 	virtual ~CViewLeft() {}
+	DECLARE_DYNCREATE(CViewLeft)
+protected:
 	void OnInitialUpdate() override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
 	void OnDraw(CDC*) override;

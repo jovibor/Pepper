@@ -7,8 +7,8 @@
 
 class CViewRightTL : public CScrollView
 {
-protected:
 	DECLARE_DYNCREATE(CViewRightTL)
+protected:
 	CViewRightTL() {}
 	virtual ~CViewRightTL() {}
 	void OnInitialUpdate() override;

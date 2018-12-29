@@ -10,7 +10,7 @@ IMPLEMENT_DYNAMIC(CSplitterEx, CSplitterWndEx)
 BEGIN_MESSAGE_MAP(CSplitterEx, CSplitterWndEx)
 END_MESSAGE_MAP()
 
-BOOL CSplitterEx::CreateStatic(CWnd * pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
+BOOL CSplitterEx::CreateStatic(CWnd * m_pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
 {
 	//If already created.
 	if ((!m_vecRows.empty() && !m_vecCols.empty()) || !(nRows | nCols) || (nRows | nCols) > 16)
@@ -21,7 +21,7 @@ BOOL CSplitterEx::CreateStatic(CWnd * pParent, int nRows, int nCols, DWORD dwSty
 	for (int i = 0; i < nCols; i++)
 		m_vecCols.emplace_back(true);
 
-	return CSplitterWndEx::CreateStatic(pParent, nRows, nCols, dwStyle, nID);
+	return CSplitterWndEx::CreateStatic(m_pParent, nRows, nCols, dwStyle, nID);
 }
 
 BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE sizeInit, CCreateContext * pContext)

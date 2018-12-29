@@ -65,6 +65,7 @@ private:
 		std::unordered_map<DWORD, COLORREF> m_mapClrColumn { }; //Color of individual columns.
 	};
 /////////////////////////////////////////////////////////////////////////////////
+public:
 	DECLARE_DYNAMIC(CListEx)
 	CListEx() {}
 	virtual ~CListEx() {}

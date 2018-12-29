@@ -5,9 +5,9 @@ using namespace libpe;
 class CPepperDoc : public CDocument
 {
 public:	
+	DECLARE_DYNCREATE(CPepperDoc)
 	libpe_ptr m_pLibpe { };
 private:
-	DECLARE_DYNCREATE(CPepperDoc)
 	CPepperDoc() {}
 	virtual ~CPepperDoc() {}
 	BOOL OnOpenDocument(LPCTSTR lpszPathName) override;

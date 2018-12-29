@@ -24,7 +24,7 @@ public:
 	DECLARE_DYNAMIC(CSplitterEx)
 	CSplitterEx() {}
 	virtual ~CSplitterEx() {}
-	BOOL CreateStatic(CWnd* pParent, int nRows, int nCols, DWORD dwStyle = WS_CHILD | WS_VISIBLE, UINT nID = AFX_IDW_PANE_FIRST) override;
+	BOOL CreateStatic(CWnd* m_pParent, int nRows, int nCols, DWORD dwStyle = WS_CHILD | WS_VISIBLE, UINT nID = AFX_IDW_PANE_FIRST) override;
 	BOOL CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE sizeInit, CCreateContext* pContext);
 	bool AddNested(int row, int col, CWnd* pNested);
 	bool HideRow(UINT nRow);

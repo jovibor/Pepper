@@ -8,8 +8,8 @@ using namespace HEXControl;
 
 class CViewRightBL : public CScrollView
 {
-protected:
 	DECLARE_DYNCREATE(CViewRightBL)
+protected:
 	CViewRightBL() {}
 	virtual ~CViewRightBL() {}
 	void OnInitialUpdate() override;
