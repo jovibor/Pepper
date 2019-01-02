@@ -101,7 +101,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		return;
 	if (LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
 		return;
-	
+
 	if (m_pActiveWnd)
 		m_pActiveWnd->ShowWindow(SW_HIDE);
 
@@ -426,7 +426,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	const LPNMITEMACTIVATE pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 	if (pNMI->iItem == -1)
 		return TRUE;
-	
+
 	switch (pNMI->hdr.idFrom)
 	{
 	case IDC_LIST_IMPORT:
@@ -2019,7 +2019,7 @@ int CViewRightTL::CreateTreeResources()
 		CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_TOP);
 	m_treeResTop.ShowWindow(SW_HIDE);
 
-	m_hTreeResDir = m_treeResTop.InsertItem(L"Resources tree.");
+	m_hTreeResDir = m_treeResTop.InsertItem(L"Resource tree.");
 
 	WCHAR str[MAX_PATH] { };
 	HTREEITEM treeRoot { }, treeLvL2 { };
@@ -2032,13 +2032,13 @@ int CViewRightTL::CreateTreeResources()
 		if (pResDirEntry->DataIsDirectory)
 		{
 			if (pResDirEntry->NameIsString)
-				swprintf(str, MAX_PATH, L"Entry: %i, Name: %s", ilvlRoot, std::get<1>(iterRoot).c_str());
+				swprintf(str, MAX_PATH, L"Entry: %i [Name: %s]", ilvlRoot, std::get<1>(iterRoot).c_str());
 			else
 			{
 				if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
-					swprintf(str, MAX_PATH, L"Entry: %i, Id: %u, %s", ilvlRoot, pResDirEntry->Id, g_mapResType.at(pResDirEntry->Id).c_str());
+					swprintf(str, MAX_PATH, L"Entry: %i [Id: %u, %s]", ilvlRoot, pResDirEntry->Id, g_mapResType.at(pResDirEntry->Id).c_str());
 				else
-					swprintf(str, MAX_PATH, L"Entry: %i, Id: %u", ilvlRoot, pResDirEntry->Id);
+					swprintf(str, MAX_PATH, L"Entry: %i [Id: %u]", ilvlRoot, pResDirEntry->Id);
 			}
 			treeRoot = m_treeResTop.InsertItem(str, m_hTreeResDir);
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
@@ -2382,11 +2382,11 @@ int CViewRightTL::CreateListTLS()
 
 int CViewRightTL::CreateListLoadConfigTable()
 {
-	PCLIBPE_LOADCONFIGTABLE_VAR pLCD { };
+	PCLIBPE_LOADCONFIGTABLE_VAR pLCD;
 	if (m_pLibpe->GetLoadConfigTable(pLCD) != S_OK)
 		return -1;
 
-	PCLIBPE_DATADIRS_VEC pDataDirs { };
+	PCLIBPE_DATADIRS_VEC pDataDirs;
 	if (m_pLibpe->GetDataDirectories(pDataDirs) != S_OK)
 		return -1;
 

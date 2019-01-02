@@ -127,7 +127,7 @@ namespace HEXControl
 			virtual BOOL PreTranslateMessage(MSG* pMsg);
 			void OnMenuRange(UINT nID);
 			int HitTest(LPPOINT); //Is any hex chunk withing given LPPOINT?
-			int CopyToClipboard(UINT nType);
+			void CopyToClipboard(UINT nType);
 			void UpdateBottomBarText();
 			void Recalc();
 			void Search(HEXSEARCH& rSearch);

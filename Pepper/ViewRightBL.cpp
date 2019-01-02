@@ -431,7 +431,7 @@ int CViewRightBL::CreateTreeResources()
 		else
 		{	//Setting Treectrl root node name depending on Resource typeID.
 			if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
-				swprintf(str, MAX_PATH, L"%s, Id: %u", g_mapResType.at(pResDirEntry->Id).c_str(), pResDirEntry->Id);
+				swprintf(str, MAX_PATH, L"%s [Id: %u]", g_mapResType.at(pResDirEntry->Id).data(), pResDirEntry->Id);
 			else
 				swprintf(str, MAX_PATH, L"%u", pResDirEntry->Id);
 		}

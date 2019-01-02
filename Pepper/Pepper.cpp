@@ -10,7 +10,7 @@ class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
-protected:	
+protected:
 	BOOL OnInitDialog() override;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
@@ -191,16 +191,16 @@ void CPepperApp::OnFileOpen()
 	//divided with NULLs ('\0'). See OFN_ALLOWMULTISELECT description.
 	if (strFilePath[stOFN.nFileOffset - 1] == '\0')
 	{
-		WCHAR* str = stOFN.lpstrFile;
-		std::wstring strDir = str;
-		str += (strDir.length() + 1);
-		while (*str)
+		WCHAR* pwszFileName = stOFN.lpstrFile;
+		std::wstring strDir = pwszFileName;
+		pwszFileName += (strDir.length() + 1);
+		while (*pwszFileName)
 		{
-			std::wstring strFileName = str;
-			str += (strFileName.length() + 1);
+			std::wstring strFileName = pwszFileName;
+			pwszFileName += (strFileName.length() + 1);
 			std::wstring strFullPath = strDir + L"\\" + strFileName;
 
-			CWinAppEx::OpenDocumentFile(strFullPath.c_str());
+			CWinAppEx::OpenDocumentFile(strFullPath.data());
 		}
 	}
 	else

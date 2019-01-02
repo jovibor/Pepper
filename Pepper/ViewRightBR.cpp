@@ -111,13 +111,13 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 
 	if (pRes)
 	{
-		if (pRes->pData->empty())
-			return ResLoadError();
-
 		switch (pRes->IdResType)
 		{
 		case 1: //RT_CURSOR
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			hIcon = CreateIconFromResourceEx((PBYTE)pRes->pData->data(), pRes->pData->size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 			if (!hIcon)
 				return ResLoadError();
@@ -142,6 +142,9 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 		}
 		case 2: //RT_BITMAP
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			BITMAPINFO* pDIBInfo = (BITMAPINFO*)pRes->pData->data();
 			int iColors = pDIBInfo->bmiHeader.biClrUsed ? pDIBInfo->bmiHeader.biClrUsed : 1 << pDIBInfo->bmiHeader.biBitCount;
 			LPVOID  pDIBBits;
@@ -177,6 +180,9 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 		}
 		case 3: //RT_ICON
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			hIcon = CreateIconFromResourceEx((PBYTE)pRes->pData->data(), pRes->pData->size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 			if (!hIcon)
 				return ResLoadError();
@@ -202,10 +208,13 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			m_fDrawRes = true;
 			break;
 		}
-		case 4: //RT_MENU
-			break;
+		//		case 4: //RT_MENU
+		//			break;
 		case 5: //RT_DIALOG
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			HWND hwndResDlg = CreateDialogIndirectParamW(nullptr, (LPCDLGTEMPLATEW)pRes->pData->data(), m_hWnd, nullptr, NULL);
 			if (hwndResDlg)
 			{
@@ -258,6 +267,9 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 		}
 		case 6: //RT_STRING
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			LPCWSTR pwszResString = reinterpret_cast<LPCWSTR>(pRes->pData->data());
 			std::wstring strTmp;
 			for (int i = 0; i < 16; i++)
@@ -276,6 +288,9 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 		}
 		case 12: //RT_GROUP_CURSOR
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			pGRPIDir = (LPGRPICONDIR)pRes->pData->data();
 
 			for (int i = 0; i < pGRPIDir->idCount; i++)
@@ -338,6 +353,9 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 		}
 		case 14: //RT_GROUP_ICON
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			pGRPIDir = (LPGRPICONDIR)pRes->pData->data();
 
 			for (int i = 0; i < pGRPIDir->idCount; i++)
@@ -400,6 +418,9 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 		}
 		case 16: //RT_VERSION
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			LANGANDCODEPAGE* pLangAndCP;
 			UINT dwBytesOut;
 
@@ -434,6 +455,9 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 		}
 		case 241: //RT_TOOLBAR
 		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
 			auto& rootvec = std::get<1>(*pTupResRoot);
 			for (auto& iterRoot : rootvec)
 			{
@@ -461,6 +485,9 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			}
 			break;
 		}
+		default:
+			m_iResTypeToDraw = pRes->IdResType;
+			m_fDrawRes = true;
 		}
 	}
 
@@ -475,6 +502,19 @@ void CViewRightBR::OnDraw(CDC* pDC)
 
 	CRect rcClient;
 	GetClientRect(&rcClient);
+
+	SCROLLINFO stScroll { sizeof(SCROLLINFO), SIF_ALL };
+	GetScrollInfo(SB_HORZ, &stScroll, SIF_ALL);
+	int nScrollHorz = stScroll.nPos;
+	GetScrollInfo(SB_VERT, &stScroll, SIF_ALL);
+	int nScrollVert = stScroll.nPos;
+
+	rcClient.top += nScrollVert;
+	rcClient.bottom += nScrollVert;
+	rcClient.left += nScrollHorz;
+	rcClient.right += nScrollHorz;
+	pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
+
 	CSize sizeScroll = GetTotalSize();
 	CPoint ptDrawAt;
 	int x, y;
@@ -484,8 +524,9 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case 1: //RT_CURSOR
 	case 2: //RT_BITMAP
 	case 3: //RT_ICON
+	{
 		//Draw at center independing of scrolls.
-		pDC->FillSolidRect(rcClient, RGB(230, 230, 230));
+		pDC->FillSolidRect(rcClient, m_clrBkIcons);
 
 		if (sizeScroll.cx > rcClient.Width())
 			x = sizeScroll.cx / 2 - (m_stBmp.bmWidth / 2);
@@ -499,6 +540,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 		ptDrawAt.SetPoint(x, y);
 		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
 		break;
+	}
 	case 5: //RT_DIALOG
 	{
 		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
@@ -514,7 +556,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case 12: //RT_GROUP_CURSOR
 	case 14: //RT_GROUP_ICON
 	{
-		pDC->FillSolidRect(rcClient, RGB(230, 230, 230));
+		pDC->FillSolidRect(rcClient, m_clrBkIcons);
 
 		if (sizeScroll.cx > rcClient.Width())
 			x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
@@ -540,10 +582,10 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case 0xFF:
 		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
 		pDC->SetTextColor(RGB(255, 0, 0));
-		pDC->TextOutW(0, 0, m_strResLoadError.data());
+		pDC->TextOutW(0, 0, L"Unable to load resource! It's either damaged, packed or zero-length.");
 		break;
 	default:
-		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
+		pDC->TextOutW(0, 0, L"This Resource type is not supported.");
 	}
 }
 

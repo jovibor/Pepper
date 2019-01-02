@@ -772,93 +772,92 @@ int CHexCtrl::CHexView::HitTest(LPPOINT pPoint)
 	return dwHexChunk;
 }
 
-int CHexCtrl::CHexView::CopyToClipboard(UINT nType)
+void CHexCtrl::CHexView::CopyToClipboard(UINT nType)
 {
-	if (m_dwBytesSelected)
+	if (!m_dwBytesSelected)
+		return;
+
+	const char* const strHexMap = "0123456789ABCDEF";
+	char chHexToCopy[2];
+	std::string strToClipboard { };
+
+	switch (nType)
 	{
-		const char* const strHexMap = "0123456789ABCDEF";
-		char chHexToCopy[2];
-		std::string strToClipboard { };
-
-		switch (nType)
+	case CLIPBOARD_COPY_AS_HEX:
+	{
+		for (unsigned i = 0; i < m_dwBytesSelected; i++)
 		{
-		case CLIPBOARD_COPY_AS_HEX:
-		{
-			for (unsigned i = 0; i < m_dwBytesSelected; i++)
-			{
-				chHexToCopy[0] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0xF0) >> 4];
-				chHexToCopy[1] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0x0F)];
-				strToClipboard += chHexToCopy[0];
-				strToClipboard += chHexToCopy[1];
-			}
-			break;
+			chHexToCopy[0] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0xF0) >> 4];
+			chHexToCopy[1] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0x0F)];
+			strToClipboard += chHexToCopy[0];
+			strToClipboard += chHexToCopy[1];
 		}
-		case CLIPBOARD_COPY_AS_HEX_FORMATTED:
-		{
-			//How many spaces are needed to be inserted at the beginnig.
-			DWORD dwModStart = m_dwSelectionStart % m_dwGridCapacity;
-			//When to insert first "\r\n".
-			DWORD dwTail = m_dwGridCapacity - dwModStart;
-			DWORD dwNextBlock = m_dwGridCapacity % 2 ? m_dwGridCapacity / 2 + 2 : m_dwGridCapacity / 2 + 1;
-
-			//If at least two rows are selected.
-			if (dwModStart + m_dwBytesSelected > m_dwGridCapacity)
-			{
-				strToClipboard.insert(0, dwModStart * 3, ' ');
-				if (dwTail < m_dwGridCapacity / 2 + 1)
-					strToClipboard.insert(0, 2, ' ');
-			}
-
-			for (unsigned i = 0; i < m_dwBytesSelected; i++)
-			{
-				chHexToCopy[0] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0xF0) >> 4];
-				chHexToCopy[1] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0x0F)];
-				strToClipboard += chHexToCopy[0];
-				strToClipboard += chHexToCopy[1];
-
-				if (i < (m_dwBytesSelected - 1) && (dwTail - 1) != 0)
-					if (dwTail == dwNextBlock) //Space between blocks.
-						strToClipboard += "   ";
-					else
-						strToClipboard += " ";
-				if (--dwTail == 0 && i < (m_dwBytesSelected - 1)) //Next string.
-				{
-					strToClipboard += "\r\n";
-					dwTail = m_dwGridCapacity;
-				}
-			}
-			break;
-		}
-		case CLIPBOARD_COPY_AS_ASCII:
-		{
-			char ch;
-			for (unsigned i = 0; i < m_dwBytesSelected; i++)
-			{
-				ch = m_pRawData[m_dwSelectionStart + i];
-				//If next byte is zero —> substitute it with space.
-				if (ch == 0)
-					ch = ' ';
-				strToClipboard += ch;
-			}
-			break;
-		}
-		}
-
-		HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, strToClipboard.length() + 1);
-		if (!hMem)
-			return -1;
-		LPVOID hMemLock = GlobalLock(hMem);
-		if (!hMemLock)
-			return -1;
-
-		memcpy(hMemLock, strToClipboard.data(), strToClipboard.length() + 1);
-		GlobalUnlock(hMem);
-		OpenClipboard();
-		EmptyClipboard();
-		SetClipboardData(CF_TEXT, hMem);
-		CloseClipboard();
+		break;
 	}
-	return 1;
+	case CLIPBOARD_COPY_AS_HEX_FORMATTED:
+	{
+		//How many spaces are needed to be inserted at the beginnig.
+		DWORD dwModStart = m_dwSelectionStart % m_dwGridCapacity;
+		//When to insert first "\r\n".
+		DWORD dwTail = m_dwGridCapacity - dwModStart;
+		DWORD dwNextBlock = m_dwGridCapacity % 2 ? m_dwGridCapacity / 2 + 2 : m_dwGridCapacity / 2 + 1;
+
+		//If at least two rows are selected.
+		if (dwModStart + m_dwBytesSelected > m_dwGridCapacity)
+		{
+			strToClipboard.insert(0, dwModStart * 3, ' ');
+			if (dwTail < m_dwGridCapacity / 2 + 1)
+				strToClipboard.insert(0, 2, ' ');
+		}
+
+		for (unsigned i = 0; i < m_dwBytesSelected; i++)
+		{
+			chHexToCopy[0] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0xF0) >> 4];
+			chHexToCopy[1] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0x0F)];
+			strToClipboard += chHexToCopy[0];
+			strToClipboard += chHexToCopy[1];
+
+			if (i < (m_dwBytesSelected - 1) && (dwTail - 1) != 0)
+				if (dwTail == dwNextBlock) //Space between blocks.
+					strToClipboard += "   ";
+				else
+					strToClipboard += " ";
+			if (--dwTail == 0 && i < (m_dwBytesSelected - 1)) //Next string.
+			{
+				strToClipboard += "\r\n";
+				dwTail = m_dwGridCapacity;
+			}
+		}
+		break;
+	}
+	case CLIPBOARD_COPY_AS_ASCII:
+	{
+		char ch;
+		for (unsigned i = 0; i < m_dwBytesSelected; i++)
+		{
+			ch = m_pRawData[m_dwSelectionStart + i];
+			//If next byte is zero —> substitute it with space.
+			if (ch == 0)
+				ch = ' ';
+			strToClipboard += ch;
+		}
+		break;
+	}
+	}
+
+	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, strToClipboard.length() + 1);
+	if (!hMem)
+		return;
+	LPVOID hMemLock = GlobalLock(hMem);
+	if (!hMemLock)
+		return;
+
+	memcpy(hMemLock, strToClipboard.data(), strToClipboard.length() + 1);
+	GlobalUnlock(hMem);
+	OpenClipboard();
+	EmptyClipboard();
+	SetClipboardData(CF_TEXT, hMem);
+	CloseClipboard();
 }
 
 void CHexCtrl::CHexView::UpdateBottomBarText()

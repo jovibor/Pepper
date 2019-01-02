@@ -26,7 +26,7 @@ private:
 	LOGFONT m_lf { }, m_hdrlf { };
 	CImageList m_stImgRes;
 	bool m_fDrawRes { false };
-	COLORREF m_clrBk { RGB(230, 230, 230) };
+	COLORREF m_clrBkIcons { RGB(230, 230, 230) }; 
 	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
 	//HWND for RT_DIALOG.
 	BITMAP m_stBmp { };
@@ -36,7 +36,6 @@ private:
 	//Vector for RT_GROUP_ICON/CURSOR.
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { };
 	std::wstring m_strRes;
-	std::wstring m_strResLoadError { L"Unable to load resource! It's either damaged, packed or zero-length." };
 	CEdit m_stEditResStrings; //Edit control for RT_STRING, RT_VERSION
 	CFont m_fontEditRes; //Font for m_stEditResStrings.
 	SIZE m_sizeLetter { }, m_sizeStrStyles { };
