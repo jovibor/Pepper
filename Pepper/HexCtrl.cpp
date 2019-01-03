@@ -1,11 +1,14 @@
-/************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						*
-* This is a HEX control for MFC apps, implemented as CWnd derived class.			*
-* The usage is quite simple:														*
-* 1. Construct CHexCtrl object — CHexCtrl myHex;									*
-* 2. Call CHexCtrl::Create member function to create an instance.					*
-* 3. Call CHexCtrl::SetData method to set the data and its size to display as hex.	*
-************************************************************************************/
+/****************************************************************************************
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
+* This software is available under the "MIT License modified with The Commons Clause".  *
+* https://github.com/jovibor/Pepper/blob/master/LICENSE                                 *
+*                                                                                       *
+* This is a HEX control for MFC apps, implemented as CWnd derived class.			    *
+* The usage is quite simple:														    *
+* 1. Construct CHexCtrl object — HEXControl::CHexCtrl myHex;						    *
+* 2. Call myHex.Create member function to create an instance.   					    *
+* 3. Call myHex.SetData method to set the data and its size to display as hex.	        *
+****************************************************************************************/
 #include "stdafx.h"
 #include "HexCtrl.h"
 #include "strsafe.h"
@@ -86,11 +89,11 @@ void CHexCtrl::SetFontSize(UINT nSize) const
 		return GetActiveView()->SetFontSize(nSize);
 }
 
-void CHexCtrl::SetColor(COLORREF clrText, COLORREF clrTextOffset,
-	COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected) const
+void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
+	COLORREF clrBk, COLORREF clrBkSelected) const
 {
 	if (GetActiveView())
-		GetActiveView()->SetColor(clrText, clrTextOffset, clrTextSelected,
+		GetActiveView()->SetColor(clrTextHex, clrTextAscii, clrTextCaption,
 			clrBk, clrBkSelected);
 }
 
@@ -236,14 +239,14 @@ void CHexCtrl::CHexView::SetFontSize(UINT nSize)
 	Recalc();
 }
 
-void CHexCtrl::CHexView::SetColor(COLORREF clrText, COLORREF clrTextOffset,
-	COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected)
+void CHexCtrl::CHexView::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
+	COLORREF clrBk, COLORREF clrBkSelected)
 {
-	m_clrTextHexAndAscii = clrText;
-	m_clrTextOffset = clrTextOffset;
-	m_clrTextSelected = clrTextSelected;
+	m_clrTextHex = clrTextHex;
+	m_clrTextAscii = clrTextAscii;
+	m_clrTextCaption = clrTextCaption;
 	m_clrBk = clrBk;
-	m_clrBkSelected;
+	m_clrBkSelected = clrBkSelected;
 
 	Invalidate();
 	UpdateWindow();
@@ -556,21 +559,21 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 	RECT rect;
 	rect.left = m_iFirstVertLine; rect.top = m_iFirstHorizLine;
 	rect.right = m_iSecondVertLine; rect.bottom = m_iSecondHorizLine;
-	rDC.SetTextColor(m_clrTextOffset);
+	rDC.SetTextColor(m_clrTextCaption);
 	DrawTextW(rDC.m_hDC, L"Offset", 6, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//"Bytes displayed:" text.
 	rect.left = m_iFirstVertLine; rect.top = m_iThirdHorizLine + 1;
 	rect.right = m_rcClient.right > m_iFourthVertLine ? m_rcClient.right : m_iFourthVertLine;
 	rect.bottom = m_iFourthHorizLine;
-	rDC.FillSolidRect(&rect, m_clrBkRectBottom);
-	rDC.SetTextColor(m_clrTextBytesSelected);
+	rDC.FillSolidRect(&rect, m_clrBkBottomRect);
+	rDC.SetTextColor(m_clrTextBottomRect);
 	rDC.SelectObject(&m_fontRectBottom);
 	rect.left = m_iFirstVertLine + 5;
 	DrawTextW(rDC.m_hDC, m_strBytesDisplayed.data(), m_strBytesDisplayed.size(), &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 	rDC.SelectObject(&m_fontHexView);
-	rDC.SetTextColor(m_clrTextOffset);
+	rDC.SetTextColor(m_clrTextCaption);
 	rDC.SetBkColor(m_clrBk);
 
 	for (unsigned i = 0; i < m_dwGridCapacity; i++)
@@ -622,7 +625,6 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 	for (unsigned iterLines = nLineStart; iterLines < nLineEnd; iterLines++)
 	{
 		swprintf_s(m_strOffset, 9, L"%08X", iterLines * m_dwGridCapacity);
-		rDC.SetTextColor(m_clrTextOffset);
 
 		//Drawing m_strOffset with bk color depending on selection range.
 		if (m_dwBytesSelected && (iterLines * m_dwGridCapacity + m_dwGridCapacity) > min(m_dwSelectionStart, m_dwSelectionEnd) &&
@@ -632,9 +634,9 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 			rDC.SetBkColor(m_clrBk);
 
 		//Left column offset print (00000001...0000FFFF...).
+		rDC.SetTextColor(m_clrTextCaption);
 		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_iHeightRectHeader + (m_sizeLetter.cy * nLine + nScrollVert),
 			NULL, nullptr, m_strOffset, 8, nullptr);
-		rDC.SetTextColor(m_clrTextHexAndAscii);
 
 		int nIndentHexX { };
 		int nIndentAsciiX { };
@@ -689,7 +691,8 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 					FillRect(rDC.m_hDC, &m_rcSpaceBetweenHex, (HBRUSH)m_stBrushBk.m_hObject);
 				}
 
-				//HEX chunk print.
+				//HEX chunk printing.
+				rDC.SetTextColor(m_clrTextHex);
 				ExtTextOutW(rDC.m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, &strHexToPrint[0], 2, nullptr);
 
 				//Ascii to print.
@@ -698,7 +701,8 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 				if (chAsciiToPrint < 32 || chAsciiToPrint == 127)
 					chAsciiToPrint = '.';
 
-				//Ascii print..
+				//Ascii printing.
+				rDC.SetTextColor(m_clrTextAscii);
 				ExtTextOutA(rDC.m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
 			}
 			else
@@ -707,7 +711,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 				ExtTextOutW(rDC.m_hDC, nFirstHexPosToPrintX, nFirstHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
 				ExtTextOutA(rDC.m_hDC, nAsciiPosToPrintX, nAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
 			}
-			//Increasing indents for next print, for both - Hex and ASCII
+			//Increasing indents for next print, for both - Hex and Ascii
 			nIndentHexX += m_iIndentBetweenHexChunks;
 			nIndentAsciiX += m_iIndentBetweenAscii;
 		}
@@ -926,22 +930,18 @@ void CHexCtrl::CHexView::Recalc()
 
 void CHexCtrl::CHexView::Search(HEXSEARCH& rSearch)
 {
+	rSearch.fFound = false;
+	DWORD dwStartAt = rSearch.dwStartAt;
+	DWORD dwSizeBytes;
+	DWORD dwUntil;
+	std::string strSearch { };
+
 	if (rSearch.wstrSearch.empty() || m_dwRawDataCount == 0 || rSearch.dwStartAt > (m_dwRawDataCount - 1))
-	{
-		rSearch.fFound = false;
-		m_dlgSearch.SearchCallback();
-		return;
-	}
+		return m_dlgSearch.SearchCallback();
 
 	int iSizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &rSearch.wstrSearch[0], (int)rSearch.wstrSearch.size(), nullptr, 0, nullptr, nullptr);
 	std::string strSearchAscii(iSizeNeeded, 0);
 	WideCharToMultiByte(CP_UTF8, 0, &rSearch.wstrSearch[0], (int)rSearch.wstrSearch.size(), &strSearchAscii[0], iSizeNeeded, nullptr, nullptr);
-
-	auto dwStartAt = rSearch.dwStartAt;
-	DWORD dwSizeBytes;
-	DWORD dwUntil;
-	std::string strSearch { };
-	bool fUnicode { false };
 
 	switch (rSearch.dwSearchType)
 	{
@@ -971,22 +971,18 @@ void CHexCtrl::CHexView::Search(HEXSEARCH& rSearch)
 			iNextChar += 2;
 		}
 
-		if (strSearch.size() > m_dwRawDataCount)
-		{
-			rSearch.fFound = false;
-			m_dlgSearch.SearchCallback();
-			return;
-		}
+		dwSizeBytes = strSearch.size();
+		if (dwSizeBytes > m_dwRawDataCount)
+			goto End;
+
 		break;
 	}
 	case HEXCTRL_SEARCH_ASCII:
 	{
-		if (strSearchAscii.size() > m_dwRawDataCount)
-		{
-			rSearch.fFound = false;
-			m_dlgSearch.SearchCallback();
-			return;
-		}
+		dwSizeBytes = strSearchAscii.size();
+		if (dwSizeBytes > m_dwRawDataCount)
+			goto End;
+
 		strSearch = std::move(strSearchAscii);
 		break;
 	}
@@ -994,18 +990,16 @@ void CHexCtrl::CHexView::Search(HEXSEARCH& rSearch)
 	{
 		dwSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
 		if (dwSizeBytes > m_dwRawDataCount)
-		{
-			rSearch.fFound = false;
-			m_dlgSearch.SearchCallback();
-			return;
-		}
-		fUnicode = true;
+			goto End;
+
 		break;
 	}
 	}
 
 	///////////////Actual Search:////////////////////////////////////////////
-	if (!fUnicode)
+	switch (rSearch.dwSearchType) {
+	case HEXCTRL_SEARCH_HEX:
+	case HEXCTRL_SEARCH_ASCII:
 	{
 		if (rSearch.iDirection == HEXCTRL_SEARCH_FORWARD)
 		{
@@ -1016,67 +1010,61 @@ void CHexCtrl::CHexView::Search(HEXSEARCH& rSearch)
 			{
 				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
 				{
-					rSearch.dwStartAt = i;
 					rSearch.fFound = true;
+					rSearch.dwStartAt = i;
 					rSearch.fWrap = false;
-					m_dlgSearch.SearchCallback();
-					SetSelection(i, strSearch.size());
-					return;
+					goto End;
 				}
 			}
+
 			dwStartAt = 0;
 			for (DWORD i = dwStartAt; i <= dwUntil; i++)
 			{
 				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
 				{
-					rSearch.dwStartAt = i;
 					rSearch.fFound = true;
+					rSearch.dwStartAt = i;
 					rSearch.fWrap = true;
 					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_END;
 					rSearch.fCount = true;
-					m_dlgSearch.SearchCallback();
-					SetSelection(i, strSearch.size());
-					return;
+					goto End;
 				}
 			}
 		}
 		if (rSearch.iDirection == HEXCTRL_SEARCH_BACKWARD)
 		{
 			if (rSearch.fSecondMatch && dwStartAt > 0)
-				dwStartAt--;
-			if (rSearch.fSecondMatch && dwStartAt != 0)
 			{
+				dwStartAt--;
 				for (int i = (int)dwStartAt; i >= 0; i--)
 				{
 					if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
 					{
-						rSearch.dwStartAt = i;
 						rSearch.fFound = true;
+						rSearch.dwStartAt = i;
 						rSearch.fWrap = false;
-						m_dlgSearch.SearchCallback();
-						SetSelection(i, strSearch.size());
-						return;
+						goto End;
 					}
 				}
 			}
+
 			dwStartAt = m_dwRawDataCount - strSearch.size();
 			for (int i = (int)dwStartAt; i >= 0; i--)
 			{
 				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
 				{
-					rSearch.dwStartAt = i;
 					rSearch.fFound = true;
+					rSearch.dwStartAt = i;
 					rSearch.fWrap = true;
 					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_BEGINNING;
 					rSearch.fCount = false;
-					m_dlgSearch.SearchCallback();
-					SetSelection(i, strSearch.size());
-					return;
+					goto End;
 				}
 			}
 		}
+		break;
 	}
-	else //UNICODE
+	case HEXCTRL_SEARCH_UNICODE:
 	{
 		if (rSearch.iDirection == HEXCTRL_SEARCH_FORWARD)
 		{
@@ -1087,72 +1075,75 @@ void CHexCtrl::CHexView::Search(HEXSEARCH& rSearch)
 			{
 				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
-					rSearch.dwStartAt = i;
 					rSearch.fFound = true;
+					rSearch.dwStartAt = i;
 					rSearch.fWrap = false;
-					m_dlgSearch.SearchCallback();
-					SetSelection(i, dwSizeBytes);
-					return;
+					goto End;
 				}
 			}
+
 			dwStartAt = 0;
 			for (DWORD i = dwStartAt; i <= dwUntil; i++)
 			{
 				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
-					rSearch.dwStartAt = i;
 					rSearch.fFound = true;
+					rSearch.dwStartAt = i;
 					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_END;
 					rSearch.fWrap = true;
 					rSearch.fCount = true;
-					m_dlgSearch.SearchCallback();
-					SetSelection(i, dwSizeBytes);
-					return;
+					goto End;
 				}
 			}
 		}
 		else if (rSearch.iDirection == HEXCTRL_SEARCH_BACKWARD)
 		{
 			if (rSearch.fSecondMatch && dwStartAt > 0)
-				dwStartAt--;
-			if (rSearch.fSecondMatch && dwStartAt != 0)
 			{
+				dwStartAt--;
 				for (int i = (int)dwStartAt; i >= 0; i--)
 				{
 					if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 					{
-						rSearch.dwStartAt = i;
 						rSearch.fFound = true;
+						rSearch.dwStartAt = i;
 						rSearch.fWrap = false;
-						m_dlgSearch.SearchCallback();
-						SetSelection(i, dwSizeBytes);
-						return;
+						goto End;
 					}
 				}
 			}
+
 			dwStartAt = m_dwRawDataCount - dwSizeBytes;
 			for (int i = (int)dwStartAt; i >= 0; i--)
 			{
 				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
-					rSearch.dwStartAt = i;
 					rSearch.fFound = true;
-					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_BEGINNING;
+					rSearch.dwStartAt = i;
 					rSearch.fWrap = true;
+					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_BEGINNING;
 					rSearch.fCount = false;
-					m_dlgSearch.SearchCallback();
-					SetSelection(i, dwSizeBytes);
-					return;
+					goto End;
 				}
 			}
 		}
+		break;
 	}
-	rSearch.fFound = false;
-	m_dlgSearch.SearchCallback();
+	}
+
+End:
+	{
+		m_dlgSearch.SearchCallback();
+		if (rSearch.fFound)
+			SetSelection(rSearch.dwStartAt, dwSizeBytes);
+	}
 }
 
 void CHexCtrl::CHexView::SetSelection(DWORD dwStart, DWORD dwBytes)
 {
+	if (!dwBytes)
+		return;
+
 	m_dwSelectionClick = m_dwSelectionStart = dwStart;
 	m_dwSelectionEnd = m_dwSelectionStart + dwBytes - 1;
 	m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;

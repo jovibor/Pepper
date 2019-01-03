@@ -1,11 +1,14 @@
-/************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						*
-* This is a HEX control for MFC apps, implemented as CWnd derived class.			*
-* The usage is quite simple:														*
-* 1. Construct CHexCtrl object — CHexCtrl myHex;									*
-* 2. Call CHexCtrl::Create member function to create an instance.					*
-* 3. Call CHexCtrl::SetData method to set the data and its size to display as hex.	*
-************************************************************************************/
+/****************************************************************************************
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
+* This software is available under the "MIT License modified with The Commons Clause".  *
+* https://github.com/jovibor/Pepper/blob/master/LICENSE                                 *
+*                                                                                       *
+* This is a HEX control for MFC apps, implemented as CWnd derived class.			    *
+* The usage is quite simple:														    *
+* 1. Construct CHexCtrl object — HEXControl::CHexCtrl myHex;						    *
+* 2. Call myHex.Create member function to create an instance.   					    *
+* 3. Call myHex.SetData method to set the data and its size to display as hex.	        *
+****************************************************************************************/
 #pragma once
 #include <vector>
 #include <tuple>
@@ -105,8 +108,8 @@ namespace HEXControl
 			void ClearData();
 			void SetFont(const LOGFONT* pLogFontNew);
 			void SetFontSize(UINT nSize);
-			void SetColor(COLORREF clrText, COLORREF clrTextOffset,
-				COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected);
+			void SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
+				COLORREF clrBk, COLORREF clrBkSelected);
 			void SetCapacity(DWORD dwCapacity);
 			UINT GetFontSize();
 		protected:
@@ -144,13 +147,13 @@ namespace HEXControl
 			CHexDlgSearch m_dlgSearch;
 			CHexDlgAbout m_dlgAbout;
 			CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
-			COLORREF m_clrTextHexAndAscii { GetSysColor(COLOR_WINDOWTEXT) };
-			COLORREF m_clrTextOffset { RGB(0, 0, 180) };
-			COLORREF m_clrTextSelected { RGB(0, 0, 180) };
+			COLORREF m_clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };
+			COLORREF m_clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };
+			COLORREF m_clrTextCaption { RGB(0, 0, 180) };
 			COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) };
 			COLORREF m_clrBkSelected { RGB(200, 200, 255) };
-			COLORREF m_clrBkRectBottom { RGB(250, 250, 250) };
-			COLORREF m_clrTextBytesSelected { RGB(0, 0, 0) };
+			COLORREF m_clrTextBottomRect { GetSysColor(COLOR_WINDOWTEXT) };
+			COLORREF m_clrBkBottomRect { RGB(250, 250, 250) };
 			int m_iIndentAscii { }; //Offset of Ascii text begining.
 			int m_iIndentFirstHexChunk { }; //First HEX chunk indentation.
 			int m_iIndentBetweenHexChunks { }; //Indent between begining of two HEX chunks.
@@ -188,8 +191,11 @@ namespace HEXControl
 		void ClearData();
 		void SetFont(const LOGFONT* pLogFontNew) const;
 		void SetFontSize(UINT nSize) const;
-		void SetColor(COLORREF clrText, COLORREF clrTextOffset,
-			COLORREF clrTextSelected, COLORREF clrBk, COLORREF clrBkSelected) const;
+		void SetColor(COLORREF clrTextHex = GetSysColor(COLOR_WINDOWTEXT),
+			COLORREF clrTextAscii = GetSysColor(COLOR_WINDOWTEXT),
+			COLORREF clrTextCaption = RGB(0, 0, 180),
+			COLORREF clrBk = GetSysColor(COLOR_WINDOW),
+			COLORREF clrBkSelected = RGB(200, 200, 255)) const;
 	private:
 		CHexView* m_pHexView { };
 		const LOGFONT* m_pLogFontHexView { };
