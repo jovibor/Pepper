@@ -69,8 +69,17 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "Pepper.ico"
+
 IDI_TREE_MAIN_HEADER_ICON ICON                    "TreeMain_Header.ico"
+
 IDI_TREE_MAIN_DIR_ICON  ICON                    "TreeMain_Dirs.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
 IDR_MAINFRAME_256       BITMAP                  "Toolbar256.bmp"
 
 
@@ -281,7 +290,7 @@ END
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE 9, 1
-#include "Pepper.rc2"  // non-Microsoft Visual C++ edited resources
+#include "res\Pepper.rc2"  // non-Microsoft Visual C++ edited resources
 #include "afxres.rc"      // Standard components
 #if !defined(_AFXDLL)
 #include "afxprint.rc"        // printing/print preview resources

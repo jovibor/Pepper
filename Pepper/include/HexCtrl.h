@@ -165,20 +165,19 @@ namespace HEXControl
 			int m_iBottomLineIndent { 1 }; //Bottom line indent from window's bottom.
 			int m_iHeightBottomRect { m_iBottomLineIndent + 22 }; //Height of the not visible rect from window's bottom to m_iThirdHorizLine.
 			WCHAR m_strOffset[9] { };
-			const wchar_t* const m_strHexMap = L"0123456789ABCDEF";
+			const wchar_t* const m_pwszHexMap = L"0123456789ABCDEF";
 			SCROLLINFO m_stScrollVert { sizeof(SCROLLINFO), SIF_ALL };
 			SCROLLINFO m_stScrollHorz { sizeof(SCROLLINFO), SIF_ALL };
 			SCROLLBARINFO m_stSBI { sizeof(SCROLLBARINFO) };
 			bool m_fSecondLaunch { false };
 			bool m_fLMousePressed { false };
-			DWORD m_dwSelectionStart { }, m_dwSelectionEnd { }, m_dwSelectionClick { };
+			DWORD m_dwSelectionStart { }, m_dwSelectionEnd { }, m_dwSelectionClick { }, m_dwBytesSelected { };
 			CRect m_rcSpaceBetweenHex { }; //Space between hex chunks, needed for selection draw.
 			CBrush m_stBrushBk { m_clrBk };
 			CBrush m_stBrushBkSelected { m_clrBkSelected };
 			int m_iHeightWorkArea { }; //Needed for mouse selection point.y calculation.
 			CMenu m_menuPopup;
-			std::wstring m_strBytesDisplayed;
-			DWORD m_dwBytesSelected { };
+			std::wstring m_wstrBottomRect;
 		};
 		//////////////////////////////////////////////////////////////////
 	public:

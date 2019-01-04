@@ -35,7 +35,7 @@ private:
 	int m_iImgResWidth { }, m_iImgResHeight { };
 	//Vector for RT_GROUP_ICON/CURSOR.
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { };
-	std::wstring m_strRes;
+	std::wstring m_wstrRes;
 	CEdit m_stEditResStrings; //Edit control for RT_STRING, RT_VERSION
 	CFont m_fontEditRes; //Font for m_stEditResStrings.
 	SIZE m_sizeLetter { }, m_sizeStrStyles { };

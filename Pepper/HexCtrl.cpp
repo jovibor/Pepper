@@ -197,7 +197,6 @@ void CHexCtrl::CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount)
 	m_dwRawDataCount = dwCount;
 
 	UpdateBottomBarText();
-
 	Recalc();
 }
 
@@ -207,9 +206,11 @@ void CHexCtrl::CHexView::ClearData()
 	m_pRawData = nullptr;
 	m_dwSelectionClick = m_dwSelectionStart = m_dwSelectionEnd = m_dwBytesSelected = 0;
 	m_stScrollVert.nPos = 0;
-	m_strBytesDisplayed.clear();
+	m_stScrollHorz.nPos = 0;
+	m_wstrBottomRect.clear();
 	SetScrollInfo(SB_VERT, &m_stScrollVert);
-	SetScrollInfo(SB_HORZ, &m_stScrollVert);
+	SetScrollInfo(SB_HORZ, &m_stScrollHorz);
+	m_dlgSearch.ClearAll();
 }
 
 void CHexCtrl::CHexView::SetFont(const LOGFONT* pLogFontNew)
@@ -562,7 +563,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 	rDC.SetTextColor(m_clrTextCaption);
 	DrawTextW(rDC.m_hDC, L"Offset", 6, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
-	//"Bytes displayed:" text.
+	//"Bytes total:" text.
 	rect.left = m_iFirstVertLine; rect.top = m_iThirdHorizLine + 1;
 	rect.right = m_rcClient.right > m_iFourthVertLine ? m_rcClient.right : m_iFourthVertLine;
 	rect.bottom = m_iFourthHorizLine;
@@ -570,7 +571,7 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 	rDC.SetTextColor(m_clrTextBottomRect);
 	rDC.SelectObject(&m_fontRectBottom);
 	rect.left = m_iFirstVertLine + 5;
-	DrawTextW(rDC.m_hDC, m_strBytesDisplayed.data(), m_strBytesDisplayed.size(), &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+	DrawTextW(rDC.m_hDC, m_wstrBottomRect.data(), m_wstrBottomRect.size(), &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 	rDC.SelectObject(&m_fontHexView);
 	rDC.SetTextColor(m_clrTextCaption);
@@ -578,25 +579,23 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 
 	for (unsigned i = 0; i < m_dwGridCapacity; i++)
 	{
-		WCHAR str[9];
-		swprintf_s(&str[0], 3, L"%X", i);
+		WCHAR wstrOffset[4];
+		swprintf_s(&wstrOffset[0], 3, L"%X", i);
 		int x, c;
 
 		if (i <= m_dwGridCapacity / 2 - 1) //Top offset numbers (0 1 2 3 4 5 6 7...)
 			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iIndentBetweenHexChunks*i);
-		else //Top offset numbers, part after 7 (8 9 A B C D E F...)
+		else //Top offset numbers, second block (8 9 A B C D E F...).
 			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iIndentBetweenHexChunks*i) + m_iIndentBetweenBlocks;
 
-		//If i>=16 we need two chars (10, 11..., 1F) to print as capacity.
+		//If i >= 16 two chars needed (10, 11..., 1F) to print as offset.
 		if (i < 16)
 			c = 1;
-		else
-		{
+		else {
 			c = 2;
 			x -= m_sizeLetter.cx;
 		}
-
-		ExtTextOutW(rDC.m_hDC, x, nScrollVert + (m_sizeLetter.cy / 6), NULL, nullptr, &str[0], c, nullptr);
+		ExtTextOutW(rDC.m_hDC, x, nScrollVert + (m_sizeLetter.cy / 6), NULL, nullptr, &wstrOffset[0], c, nullptr);
 	}
 
 	//"Ascii" text.
@@ -671,8 +670,8 @@ void CHexCtrl::CHexView::OnDraw(CDC* pDC)
 				//HEX chunk to print.
 				wchar_t strHexToPrint[2];
 
-				strHexToPrint[0] = m_strHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0xF0) >> 4];
-				strHexToPrint[1] = m_strHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0x0F)];
+				strHexToPrint[0] = m_pwszHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0xF0) >> 4];
+				strHexToPrint[1] = m_pwszHexMap[((const unsigned char)m_pRawData[nIndexDataToPrint] & 0x0F)];
 
 				//Selection draw with different BK color.
 				if (m_dwBytesSelected && nIndexDataToPrint >= m_dwSelectionStart && nIndexDataToPrint <= m_dwSelectionEnd)
@@ -873,7 +872,7 @@ void CHexCtrl::CHexView::UpdateBottomBarText()
 	else
 		swprintf_s(buff, 128, L"Bytes total: 0x%X(%u)", m_dwRawDataCount, m_dwRawDataCount);
 
-	m_strBytesDisplayed = buff;
+	m_wstrBottomRect = buff;
 }
 
 void CHexCtrl::CHexView::Recalc()
@@ -1148,14 +1147,20 @@ void CHexCtrl::CHexView::SetSelection(DWORD dwStart, DWORD dwBytes)
 	m_dwSelectionEnd = m_dwSelectionStart + dwBytes - 1;
 	m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;
 
-	GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-	m_stScrollVert.nPos = m_dwSelectionStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2);
-	SetScrollInfo(SB_VERT, &m_stScrollVert);
-
-	GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_ALL);
-	m_stScrollHorz.nPos = (m_dwSelectionStart % m_dwGridCapacity) * m_iIndentBetweenHexChunks;
-	SetScrollInfo(SB_HORZ, &m_stScrollHorz);
-
+	GetScrollBarInfo(OBJID_VSCROLL, &m_stSBI);
+	if (!(m_stSBI.rgstate[0] & STATE_SYSTEM_INVISIBLE))
+	{
+		GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
+		m_stScrollVert.nPos = m_dwSelectionStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2);
+		SetScrollInfo(SB_VERT, &m_stScrollVert);
+	}
+	GetScrollBarInfo(OBJID_HSCROLL, &m_stSBI);
+	if (!(m_stSBI.rgstate[0] & STATE_SYSTEM_INVISIBLE))
+	{
+		GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_ALL);
+		m_stScrollHorz.nPos = (m_dwSelectionStart % m_dwGridCapacity) * m_iIndentBetweenHexChunks;
+		SetScrollInfo(SB_HORZ, &m_stScrollHorz);
+	}
 	UpdateBottomBarText();
 	Invalidate();
 }

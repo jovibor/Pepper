@@ -100,7 +100,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 	m_iImgResWidth = 0;
 	m_iImgResHeight = 0;
 	m_vecImgRes.clear();
-	m_strRes.clear();
+	m_wstrRes.clear();
 
 	CRect rcClient;
 	GetClientRect(&rcClient);
@@ -228,10 +228,10 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 
 				for (auto& i : m_mapDlgStyles)
 					if (i.first & dwStyle)
-						if (!m_strRes.empty())
-							m_strRes += L" | " + i.second;
+						if (!m_wstrRes.empty())
+							m_wstrRes += L" | " + i.second;
 						else
-							m_strRes += i.second;
+							m_wstrRes += i.second;
 
 				HDC hDC = ::GetDC(m_hWnd);
 				HDC hDCMemory = CreateCompatibleDC(hDC);
@@ -241,7 +241,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 				::PrintWindow(hwndResDlg, hDCMemory, 0);
 				::DestroyWindow(hwndResDlg);
 				GetTextExtentPoint32W(hDC, L"STYLES: ", 8, &m_sizeStrStyles);
-				GetTextExtentPoint32W(hDC, m_strRes.data(), m_strRes.size(), &m_sizeLetter);
+				GetTextExtentPoint32W(hDC, m_wstrRes.data(), m_wstrRes.size(), &m_sizeLetter);
 				DeleteDC(hDCMemory);
 				::ReleaseDC(m_hWnd, hDC);
 
@@ -274,13 +274,13 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			std::wstring strTmp;
 			for (int i = 0; i < 16; i++)
 			{
-				m_strRes += strTmp.assign(pwszResString + 1, (UINT)*pwszResString);
+				m_wstrRes += strTmp.assign(pwszResString + 1, (UINT)*pwszResString);
 				if (i != 15)
-					m_strRes += L"\r\n";
+					m_wstrRes += L"\r\n";
 				pwszResString += 1 + (UINT)*pwszResString;
 			}
 
-			m_stEditResStrings.SetWindowTextW(m_strRes.data());
+			m_stEditResStrings.SetWindowTextW(m_wstrRes.data());
 			m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 			m_pActiveWnd = &m_stEditResStrings;
@@ -437,20 +437,35 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 					swprintf_s(strSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
 						pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, m_mapVerInfoStrings.at(i).data());
 
-					m_strRes += m_mapVerInfoStrings.at(i).data();
-					m_strRes += L" - ";
+					m_wstrRes += m_mapVerInfoStrings.at(i).data();
+					m_wstrRes += L" - ";
 
 					WCHAR* pszBufferOut;
 					if (VerQueryValueW(pRes->pData->data(), strSubBlock, (LPVOID*)&pszBufferOut, &dwBytesOut))
 						if (dwBytesOut)
-							m_strRes += pszBufferOut;
-					m_strRes += L"\r\n";
+							m_wstrRes += pszBufferOut;
+					m_wstrRes += L"\r\n";
 				}
 			}
-			m_stEditResStrings.SetWindowTextW(m_strRes.data());
+			m_stEditResStrings.SetWindowTextW(m_wstrRes.data());
 			m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 			m_pActiveWnd = &m_stEditResStrings;
+			break;
+		}
+		case 24: //RT_MANIFEST
+		{
+			if (pRes->pData->empty())
+				return ResLoadError();
+
+			m_wstrRes.resize(pRes->pData->size());
+			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)pRes->pData->data(), (int)pRes->pData->size(), &m_wstrRes[0], pRes->pData->size());
+
+			m_stEditResStrings.SetWindowTextW(m_wstrRes.data());
+			m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+			m_pActiveWnd = &m_stEditResStrings;
+
 			break;
 		}
 		case 241: //RT_TOOLBAR
@@ -548,7 +563,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 		pDC->SetTextColor(RGB(0, 0, 0));
 		pDC->TextOutW(m_iResDlgIndentToDrawX, m_iResDlgIndentToDrawY, L"STYLES: ", 8);
 		pDC->SetTextColor(RGB(111, 0, 138));
-		pDC->TextOutW(m_iResDlgIndentToDrawX + m_sizeStrStyles.cx, m_iResDlgIndentToDrawY, m_strRes.data(), m_strRes.size());
+		pDC->TextOutW(m_iResDlgIndentToDrawX + m_sizeStrStyles.cx, m_iResDlgIndentToDrawY, m_wstrRes.data(), m_wstrRes.size());
 		ptDrawAt.SetPoint(m_iResDlgIndentToDrawX, m_sizeLetter.cy + m_iResDlgIndentToDrawY * 3);
 		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
 		break;

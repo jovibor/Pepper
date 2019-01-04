@@ -272,13 +272,13 @@
     <ClInclude Include="include\Pepper.h" />
     <ClInclude Include="include\PepperDoc.h" />
     <ClInclude Include="include\ListEx.h" />
-    <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\ViewRightBL.h" />
     <ClInclude Include="include\ViewRightBR.h" />
     <ClInclude Include="include\ViewRightTL.h" />
     <ClInclude Include="include\TreeEx.h" />
     <ClInclude Include="include\stdafx.h" />
     <ClInclude Include="include\ViewRightTR.h" />
+    <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\HexCtrl.rc" />
