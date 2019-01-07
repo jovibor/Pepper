@@ -24,7 +24,7 @@ void CViewLeft::OnInitialUpdate()
 
 	const DWORD m_dwFileSummary = *pFileSummary;
 
-	m_ImgListRootTree.Create(16, 16, ILC_COLORDDB, 0, 4);
+	m_ImgListRootTree.Create(16, 16, ILC_COLORDDB, 0, 2);
 	const int iconHdr = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_HEADER_ICON));
 	const int iconDirs = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_DIR_ICON));
 

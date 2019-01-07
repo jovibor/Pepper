@@ -106,7 +106,6 @@ private:
 	COLORREF m_clrBkTooltip { GetSysColor(COLOR_INFOBK) };
 	COLORREF m_clrTextSubitemTt { GetSysColor(COLOR_WINDOWTEXT) };
 	COLORREF m_clrBkSubitemTt { RGB(170, 170, 230) };
-	SCROLLINFO m_stScrollVert { sizeof(SCROLLINFO), SIF_ALL };
 
 	void InitHeader() override;
 	bool HasTooltip(int, int, std::wstring** ppStrTipText = nullptr, std::wstring** ppStrTipCaption = nullptr);

@@ -73,7 +73,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,146,54,50,14
     LTEXT           "https://github.com/jovibor/Pepper",IDC_STATIC_HTTP_GITHUB,29,34,116,8
-    LTEXT           "Hex Control for MFC, v1.5",IDC_STATIC,29,14,87,8
+    LTEXT           "Hex Control for MFC, v1.6",IDC_STATIC,29,14,87,8
     LTEXT           "Author: Jovibor (C), 2018-2019.",IDC_STATIC,29,24,105,8
 END
 
@@ -102,6 +102,17 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_HEXCTRL_DIALOG_ABOUT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
