@@ -55,7 +55,6 @@ private:
 		afx_msg void OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted) override;
 		afx_msg LRESULT OnLayout(WPARAM wParam, LPARAM lParam);
 		DECLARE_MESSAGE_MAP()
-
 		CFont m_fontHdr;
 		COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) };

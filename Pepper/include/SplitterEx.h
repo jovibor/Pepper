@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/						*
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						*
 * Extended CSplitterWnd class with the ability to Hide/Show individual			*
 * rows and columns.																*
 * Has five additional methods: 1.HideRow() 2. ShowRow()							*

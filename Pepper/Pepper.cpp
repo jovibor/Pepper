@@ -89,7 +89,7 @@ void CAboutDlg::OnMouseMove(UINT nFlags, CPoint point)
 	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB))
 	{
 		m_fGithubLink = !m_fGithubLink;
-		::InvalidateRect(GetDlgItem(IDC_STATIC_HTTP_GITHUB)->m_hWnd, nullptr, FALSE);
+		GetDlgItem(IDC_STATIC_HTTP_GITHUB)->RedrawWindow();
 		SetCursor(m_fGithubLink ? m_curArrow : m_curHand);
 	}
 

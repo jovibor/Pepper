@@ -505,9 +505,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			m_fDrawRes = true;
 		}
 	}
-
-	Invalidate();
-	UpdateWindow();
+	RedrawWindow();
 }
 
 void CViewRightBR::OnDraw(CDC* pDC)
@@ -639,6 +637,5 @@ void CViewRightBR::ResLoadError()
 {
 	m_iResTypeToDraw = 0xFF;
 	m_fDrawRes = true;
-	Invalidate();
-	UpdateWindow();
+	RedrawWindow();
 }

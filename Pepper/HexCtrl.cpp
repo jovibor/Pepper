@@ -142,6 +142,7 @@ BEGIN_MESSAGE_MAP(CHexView, CScrollView)
 	ON_WM_LBUTTONUP()
 	ON_WM_RBUTTONUP()
 	ON_COMMAND_RANGE(IDC_MENU_POPUP_SEARCH, IDC_MENU_POPUP_ABOUT, &CHexView::OnMenuRange)
+	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 BOOL CHexView::Create(CWnd * m_pParent, const RECT & rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont)
@@ -194,7 +195,7 @@ void CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount)
 	m_pRawData = pData;
 	m_dwRawDataCount = dwCount;
 
-	UpdateBottomBarText();
+	UpdateInfoText();
 	Recalc();
 }
 
@@ -203,8 +204,9 @@ void CHexView::ClearData()
 	m_dwRawDataCount = 0;
 	m_pRawData = nullptr;
 	m_dwSelectionClick = m_dwSelectionStart = m_dwSelectionEnd = m_dwBytesSelected = 0;
-	m_wstrBottomText.clear();
+	SetScrollSizes(MM_TEXT, CSize(0, 0));
 	m_dlgSearch.ClearAll();
+	UpdateInfoText();
 }
 
 void CHexView::SetFont(const LOGFONT* pLogFontNew)
@@ -243,8 +245,7 @@ void CHexView::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clr
 	m_clrBk = clrBk;
 	m_clrBkSelected = clrBkSelected;
 
-	Invalidate();
-	UpdateWindow();
+	RedrawWindow();
 }
 
 void CHexView::SetCapacity(DWORD dwCapacity)
@@ -270,68 +271,6 @@ void CHexView::OnInitialUpdate()
 	CScrollView::OnInitialUpdate();
 }
 
-void CHexView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
-{
-	SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
-	GetScrollInfo(SB_VERT, &si, SIF_ALL);
-
-	int pos = si.nPos;
-	switch (nSBCode)
-	{
-	case SB_TOP: pos = si.nMin; break;
-	case SB_BOTTOM: pos = si.nMax; break;
-	case SB_LINEUP: pos -= m_sizeLetter.cy; break;
-	case SB_LINEDOWN: pos += m_sizeLetter.cy;  break;
-	case SB_PAGEUP: pos -= m_sizeLetter.cy * 16; break;
-	case SB_PAGEDOWN: pos += m_sizeLetter.cy * 16; break;
-	case SB_THUMBPOSITION: pos = si.nTrackPos; break;
-	case SB_THUMBTRACK: pos = si.nTrackPos; break;
-	}
-
-	//Make sure the new position is within range.
-	if (pos < si.nMin)
-		pos = si.nMin;
-	int max = si.nMax - si.nPage + 1;
-	if (pos > max)
-		pos = max;
-
-	si.nPos = pos;
-	SetScrollInfo(SB_VERT, &si);
-
-	Invalidate();
-}
-
-void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
-{
-	SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
-	GetScrollInfo(SB_HORZ, &si, SIF_ALL);
-
-	int pos = si.nPos;
-	switch (nSBCode)
-	{
-	case SB_LEFT: pos = si.nMin; break;
-	case SB_RIGHT: pos = si.nMax; break;
-	case SB_LINELEFT: pos -= m_sizeLetter.cx; break;
-	case SB_LINERIGHT: pos += m_sizeLetter.cx;  break;
-	case SB_PAGELEFT: pos -= si.nPage; break;
-	case SB_PAGERIGHT: pos += si.nPage; break;
-	case SB_THUMBPOSITION: pos = si.nTrackPos; break;
-	case SB_THUMBTRACK: pos = si.nTrackPos; break;
-	}
-
-	//Make sure the new position is within range.
-	if (pos < si.nMin)
-		pos = si.nMin;
-	int max = si.nMax - si.nPage + 1;
-	if (pos > max)
-		pos = max;
-
-	si.nPos = pos;
-	SetScrollInfo(SB_HORZ, &si);
-
-	Invalidate();
-}
-
 void CHexView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (m_fLMousePressed)
@@ -352,8 +291,6 @@ void CHexView::OnMouseMove(UINT nFlags, CPoint point)
 			else if (point.x >= m_rcClient.right)
 			{
 				SetScrollPos(SB_HORZ, GetScrollPos(SB_HORZ) + m_sizeLetter.cx);
-				point.x = m_iIndentFirstHexChunk;
-
 				point.x = m_iFourthVertLine - 1;
 			}
 		}
@@ -386,10 +323,10 @@ void CHexView::OnMouseMove(UINT nFlags, CPoint point)
 
 			m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;
 
-			UpdateBottomBarText();
+			UpdateInfoText();
 		}
 
-		Invalidate();
+		RedrawWindow();
 	}
 }
 
@@ -438,8 +375,7 @@ void CHexView::OnLButtonDown(UINT nFlags, CPoint point)
 		}
 
 		m_fLMousePressed = true;
-		UpdateBottomBarText();
-		Invalidate();
+		UpdateInfoText();
 	}
 }
 
@@ -463,9 +399,170 @@ void CHexView::OnMButtonDown(UINT nFlags, CPoint point)
 {
 }
 
+void CHexView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	switch (nChar)
+	{
+	case VK_RIGHT:
+		if (m_dwBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
+		{
+			if (m_dwSelectionStart == m_dwSelectionClick)
+				SetSelection(m_dwSelectionClick, m_dwSelectionClick, m_dwBytesSelected + 1);
+			else
+				SetSelection(m_dwSelectionClick, m_dwSelectionStart + 1, m_dwBytesSelected - 1);
+		}
+		else
+			SetSelection(m_dwSelectionClick + 1, m_dwSelectionClick + 1, 1);
+		break;
+	case VK_LEFT:
+		if (m_dwBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
+		{
+			if (m_dwSelectionStart == m_dwSelectionClick && m_dwBytesSelected > 1)
+				SetSelection(m_dwSelectionClick, m_dwSelectionClick, m_dwBytesSelected - 1);
+			else
+				SetSelection(m_dwSelectionClick, m_dwSelectionStart - 1, m_dwBytesSelected + 1);
+		}
+		else
+			SetSelection(m_dwSelectionClick - 1, m_dwSelectionClick - 1, 1);
+		break;
+	case VK_DOWN:
+		if (m_dwBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
+		{
+			if (m_dwSelectionStart == m_dwSelectionClick)
+				SetSelection(m_dwSelectionClick, m_dwSelectionClick, m_dwBytesSelected + m_dwGridCapacity);
+			else if (m_dwSelectionStart < m_dwSelectionClick)
+			{
+				DWORD dwStartAt = m_dwBytesSelected > m_dwGridCapacity ? m_dwSelectionStart + m_dwGridCapacity : m_dwSelectionClick;
+				DWORD dwBytes = m_dwBytesSelected >= m_dwGridCapacity ? m_dwBytesSelected - m_dwGridCapacity : m_dwGridCapacity;
+				SetSelection(m_dwSelectionClick, dwStartAt, dwBytes ? dwBytes : 1);
+			}
+		}
+		else
+			SetSelection(m_dwSelectionClick + m_dwGridCapacity, m_dwSelectionClick + m_dwGridCapacity, 1);
+		break;
+	case VK_UP:
+		if (m_dwBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
+		{
+			if (m_dwSelectionStart == 0)
+				return;
+
+			if (m_dwSelectionStart < m_dwSelectionClick)
+			{
+				DWORD dwStartAt;
+				DWORD dwBytes;
+				if (m_dwSelectionStart < m_dwGridCapacity)
+				{
+					dwStartAt = 0;
+					dwBytes = m_dwBytesSelected + m_dwSelectionStart;
+				}
+				else
+				{
+					dwStartAt = m_dwSelectionStart - m_dwGridCapacity;
+					dwBytes = m_dwBytesSelected + m_dwGridCapacity;
+				}
+				SetSelection(m_dwSelectionClick, dwStartAt, dwBytes);
+			}
+			else
+			{
+				DWORD dwStartAt = m_dwBytesSelected >= m_dwGridCapacity ? m_dwSelectionClick : m_dwSelectionClick - m_dwGridCapacity + 1;
+				DWORD dwBytes = m_dwBytesSelected >= m_dwGridCapacity ? m_dwBytesSelected - m_dwGridCapacity : m_dwGridCapacity;
+				SetSelection(m_dwSelectionClick, dwStartAt, dwBytes ? dwBytes : 1);
+			}
+		}
+		else
+			SetSelection(m_dwSelectionClick - m_dwGridCapacity, m_dwSelectionClick - m_dwGridCapacity, 1);
+		break;
+	case VK_PRIOR: //Page-Up
+		SetScrollPos(SB_VERT, GetScrollPos(SB_VERT) - m_sizeLetter.cy * 16);
+		break;
+	case VK_NEXT:  //Page-Down
+		SetScrollPos(SB_VERT, GetScrollPos(SB_VERT) + m_sizeLetter.cy * 16);
+		break;
+	case VK_HOME:
+	{
+		SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
+		GetScrollInfo(SB_VERT, &si, SIF_ALL);
+		SetScrollPos(SB_VERT, si.nMin);
+	}
+	break;
+	case VK_END:
+	{
+		SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
+		GetScrollInfo(SB_VERT, &si, SIF_ALL);
+		SetScrollPos(SB_VERT, si.nMax);
+	}
+	break;
+	}
+	RedrawWindow();
+
+	CScrollView::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+
+void CHexView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
+	GetScrollInfo(SB_VERT, &si, SIF_ALL);
+
+	int pos = si.nPos;
+	switch (nSBCode)
+	{
+	case SB_TOP: pos = si.nMin; break;
+	case SB_BOTTOM: pos = si.nMax; break;
+	case SB_LINEUP: pos -= m_sizeLetter.cy; break;
+	case SB_LINEDOWN: pos += m_sizeLetter.cy;  break;
+	case SB_PAGEUP: pos -= m_sizeLetter.cy * 16; break;
+	case SB_PAGEDOWN: pos += m_sizeLetter.cy * 16; break;
+	case SB_THUMBPOSITION: pos = si.nTrackPos; break;
+	case SB_THUMBTRACK: pos = si.nTrackPos; break;
+	}
+
+	//Make sure the new position is within range.
+	if (pos < si.nMin)
+		pos = si.nMin;
+	int max = si.nMax - si.nPage + 1;
+	if (pos > max)
+		pos = max;
+
+	si.nPos = pos;
+	SetScrollInfo(SB_VERT, &si);
+	RedrawWindow();
+}
+
+void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
+	GetScrollInfo(SB_HORZ, &si, SIF_ALL);
+
+	int pos = si.nPos;
+	switch (nSBCode)
+	{
+	case SB_LEFT: pos = si.nMin; break;
+	case SB_RIGHT: pos = si.nMax; break;
+	case SB_LINELEFT: pos -= m_sizeLetter.cx; break;
+	case SB_LINERIGHT: pos += m_sizeLetter.cx;  break;
+	case SB_PAGELEFT: pos -= si.nPage; break;
+	case SB_PAGERIGHT: pos += si.nPage; break;
+	case SB_THUMBPOSITION: pos = si.nTrackPos; break;
+	case SB_THUMBTRACK: pos = si.nTrackPos; break;
+	}
+
+	//Make sure the new position is within range.
+	if (pos < si.nMin)
+		pos = si.nMin;
+	int max = si.nMax - si.nPage + 1;
+	if (pos > max)
+		pos = max;
+
+	si.nPos = pos;
+	SetScrollInfo(SB_HORZ, &si);
+	RedrawWindow();
+}
+
 void CHexView::OnSize(UINT nType, int cx, int cy)
 {
 	Recalc();
+
 	CScrollView::OnSize(nType, cx, cy);
 }
 
@@ -845,16 +942,20 @@ void CHexView::CopyToClipboard(UINT nType)
 	CloseClipboard();
 }
 
-void CHexView::UpdateBottomBarText()
+void CHexView::UpdateInfoText()
 {
-	WCHAR buff[128];
-	if (m_dwBytesSelected)
-		swprintf_s(buff, 128, L"Bytes selected: 0x%X(%u); Offset: 0x%X(%u) - 0x%X(%u)",
-			m_dwBytesSelected, m_dwBytesSelected, m_dwSelectionStart, m_dwSelectionStart, m_dwSelectionEnd, m_dwSelectionEnd);
+	if (!m_dwRawDataCount)
+		m_wstrBottomText.clear();
 	else
-		swprintf_s(buff, 128, L"Bytes total: 0x%X(%u)", m_dwRawDataCount, m_dwRawDataCount);
-
-	m_wstrBottomText = buff;
+	{
+		m_wstrBottomText.resize(128);
+		if (m_dwBytesSelected)
+			m_wstrBottomText.resize(swprintf_s(m_wstrBottomText.data(), 128, L"Bytes selected: 0x%X(%u); Offset: 0x%X(%u) - 0x%X(%u)",
+				m_dwBytesSelected, m_dwBytesSelected, m_dwSelectionStart, m_dwSelectionStart, m_dwSelectionEnd, m_dwSelectionEnd));
+		else
+			m_wstrBottomText.resize(swprintf_s(m_wstrBottomText.data(), 128, L"Bytes total: 0x%X(%u)", m_dwRawDataCount, m_dwRawDataCount));
+	}
+	RedrawWindow();
 }
 
 void CHexView::Recalc()
@@ -898,7 +999,7 @@ void CHexView::Recalc()
 	else
 		m_fSecondLaunch = true;
 
-	Invalidate();
+	RedrawWindow();
 }
 
 void CHexView::Search(HEXSEARCH& rSearch)
@@ -1108,28 +1209,33 @@ End:
 	{
 		m_dlgSearch.SearchCallback();
 		if (rSearch.fFound)
-			SetSelection(rSearch.dwStartAt, dwSizeBytes);
+			SetSelection(rSearch.dwStartAt, rSearch.dwStartAt, dwSizeBytes);
 	}
 }
 
-void CHexView::SetSelection(DWORD dwStart, DWORD dwBytes)
+void CHexView::SetSelection(DWORD dwClick, DWORD dwStart, DWORD dwBytes)
 {
-	if (!dwBytes)
+	if (dwClick >= m_dwRawDataCount || dwStart >= m_dwRawDataCount || !dwBytes)
 		return;
+	if ((dwStart + dwBytes) > m_dwRawDataCount)
+		dwBytes = m_dwRawDataCount - dwStart;
 
-	m_dwSelectionClick = m_dwSelectionStart = dwStart;
-	m_dwSelectionEnd = m_dwSelectionStart + dwBytes - 1;
+	//New scroll depending on selection direction: top<->bottom.
+	int iNewScrollV = dwStart < m_dwSelectionClick ? dwStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2) :
+		(dwStart + dwBytes - 1) / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2);
+	m_dwSelectionClick = dwClick;
+	m_dwSelectionStart = dwStart;
+	m_dwSelectionEnd = dwStart + dwBytes - 1;
 	m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;
 
 	BOOL fHorz, fVert;
 	CheckScrollBars(fHorz, fVert);
 	if (fVert)
-		SetScrollPos(SB_VERT, m_dwSelectionStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2));
+		SetScrollPos(SB_VERT, iNewScrollV);
 	if (fHorz)
 		SetScrollPos(SB_HORZ, (m_dwSelectionStart % m_dwGridCapacity) * m_iSpaceBetweenHexChunks);
 
-	UpdateBottomBarText();
-	Invalidate();
+	UpdateInfoText();
 }
 
 
@@ -1377,7 +1483,7 @@ void CHexDlgAbout::OnMouseMove(UINT nFlags, CPoint point)
 	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB))
 	{
 		m_fGithubLink = !m_fGithubLink;
-		::InvalidateRect(GetDlgItem(IDC_STATIC_HTTP_GITHUB)->m_hWnd, nullptr, FALSE);
+		GetDlgItem(IDC_STATIC_HTTP_GITHUB)->RedrawWindow();
 		SetCursor(m_fGithubLink ? m_curArrow : m_curHand);
 	}
 

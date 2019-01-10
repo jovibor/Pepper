@@ -66,15 +66,17 @@ BEGIN
     LTEXT           "",IDC_STATIC_BOTTOM_TEXT,12,104,289,8
 END
 
-IDD_HEXCTRL_DIALOG_ABOUT DIALOGEX 0, 0, 203, 75
+IDD_HEXCTRL_DIALOG_ABOUT DIALOGEX 0, 0, 211, 84
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,146,54,50,14
-    LTEXT           "https://github.com/jovibor/Pepper",IDC_STATIC_HTTP_GITHUB,29,34,116,8
-    LTEXT           "Hex Control for MFC, v1.6",IDC_STATIC,29,14,87,8
-    LTEXT           "Author: Jovibor (C), 2018-2019.",IDC_STATIC,29,24,105,8
+    DEFPUSHBUTTON   "OK",IDOK,154,63,50,14
+    LTEXT           "https://github.com/jovibor/Pepper",IDC_STATIC_HTTP_GITHUB,30,49,116,8
+    LTEXT           "Hex Control for MFC, v1.6",IDC_STATIC,29,10,87,8
+    LTEXT           "Author: Jovibor (C), 2018-2019.",IDC_STATIC,29,19,105,8
+    LTEXT           "To increase font size:         Ctrl+MouseWheel",IDC_STATIC,29,28,163,8
+    LTEXT           "To increase grid capacity:  Ctrl+Shift+MouseWheel",IDC_STATIC,29,37,167,8
 END
 
 
@@ -96,23 +98,14 @@ BEGIN
     IDD_HEXCTRL_DIALOG_ABOUT, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 196
+        RIGHTMARGIN, 204
         TOPMARGIN, 7
-        BOTTOMMARGIN, 68
+        BOTTOMMARGIN, 77
     END
 END
 #endif    // APSTUDIO_INVOKED
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// AFX_DIALOG_LAYOUT
-//
-
-IDD_HEXCTRL_DIALOG_ABOUT AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

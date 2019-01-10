@@ -119,15 +119,16 @@ namespace HEXControl
 		afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 		afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 		afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+		afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 		virtual BOOL PreTranslateMessage(MSG* pMsg);
 		void OnMenuRange(UINT nID);
+		void Recalc();
 		int HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void CopyToClipboard(UINT nType);
-		void UpdateBottomBarText();
-		void Recalc();
 		void Search(HEXSEARCH& rSearch);
-		void SetSelection(DWORD dwStart, DWORD dwBytes);
+		void SetSelection(DWORD dwClick, DWORD dwStart, DWORD dwBytes);	
+		void UpdateInfoText();
 		DECLARE_MESSAGE_MAP()
 	private:
 		const BYTE* m_pRawData { };

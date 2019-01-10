@@ -81,8 +81,7 @@ void CListEx::CListExHeader::SetColor(COLORREF clrText, COLORREF clrBk)
 	m_clrText = clrText;
 	m_clrBk = clrBk;
 
-	Invalidate();
-	UpdateWindow();
+	RedrawWindow();
 }
 
 void CListEx::CListExHeader::SetColumnColor(DWORD nColumn, COLORREF clr)
@@ -91,8 +90,7 @@ void CListEx::CListExHeader::SetColumnColor(DWORD nColumn, COLORREF clr)
 		return;
 
 	m_mapClrColumn[nColumn] = clr;
-	Invalidate();
-	UpdateWindow();
+	RedrawWindow();
 }
 
 void CListEx::CListExHeader::SetFont(const LOGFONT* pLogFontNew)
@@ -246,8 +244,7 @@ void CListEx::SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk, CO
 	::SendMessage(m_hwndTooltip, TTM_SETTIPTEXTCOLOR, (WPARAM)m_clrTextTooltip, 0);
 	::SendMessage(m_hwndTooltip, TTM_SETTIPBKCOLOR, (WPARAM)m_clrBkTooltip, 0);
 
-	Invalidate();
-	UpdateWindow();
+	RedrawWindow();
 }
 
 void CListEx::SetHeaderColor(COLORREF clrHdrText, COLORREF clrHdrBk)
@@ -259,24 +256,21 @@ void CListEx::SetHeaderHeight(DWORD dwHeight)
 {
 	GetHeaderCtrl().SetHeight(dwHeight);
 	Update(0);
-	GetHeaderCtrl().Invalidate();
-	GetHeaderCtrl().UpdateWindow();
+	GetHeaderCtrl().RedrawWindow();
 }
 
 void CListEx::SetHeaderFont(const LOGFONT* pLogFontNew)
 {
 	GetHeaderCtrl().SetFont(pLogFontNew);
 	Update(0);
-	GetHeaderCtrl().Invalidate();
-	GetHeaderCtrl().UpdateWindow();
+	GetHeaderCtrl().RedrawWindow();
 }
 
 void CListEx::SetHeaderColumnColor(DWORD nColumn, COLORREF clr)
 {
 	GetHeaderCtrl().SetColumnColor(nColumn, clr);
 	Update(0);
-	GetHeaderCtrl().Invalidate();
-	GetHeaderCtrl().UpdateWindow();
+	GetHeaderCtrl().RedrawWindow();
 }
 
 void CListEx::InitHeader()
@@ -442,8 +436,7 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint point)
 
 BOOL CListEx::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	GetHeaderCtrl().Invalidate();
-	GetHeaderCtrl().UpdateWindow();
+	GetHeaderCtrl().RedrawWindow();
 
 	return CMFCListCtrl::OnMouseWheel(nFlags, zDelta, pt);
 }
@@ -549,7 +542,7 @@ void CListEx::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CListEx::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	GetHeaderCtrl().Invalidate();
+	GetHeaderCtrl().RedrawWindow();
 
 	CMFCListCtrl::OnHScroll(nSBCode, nPos, pScrollBar);
 }
