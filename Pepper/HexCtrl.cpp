@@ -203,11 +203,7 @@ void CHexView::ClearData()
 	m_dwRawDataCount = 0;
 	m_pRawData = nullptr;
 	m_dwSelectionClick = m_dwSelectionStart = m_dwSelectionEnd = m_dwBytesSelected = 0;
-	m_stScrollVert.nPos = 0;
-	m_stScrollHorz.nPos = 0;
 	m_wstrBottomText.clear();
-	SetScrollInfo(SB_VERT, &m_stScrollVert);
-	SetScrollInfo(SB_HORZ, &m_stScrollHorz);
 	m_dlgSearch.ClearAll();
 }
 
@@ -276,70 +272,62 @@ void CHexView::OnInitialUpdate()
 
 void CHexView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	//If scrollbar doesn't exist on the screen - do nothing.
-	GetScrollBarInfo(OBJID_VSCROLL, &m_stSBI);
-	if (m_stSBI.rgstate[0] & STATE_SYSTEM_INVISIBLE)
-		return;
+	SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
+	GetScrollInfo(SB_VERT, &si, SIF_ALL);
 
-	GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-
-	int pos = m_stScrollVert.nPos;
+	int pos = si.nPos;
 	switch (nSBCode)
 	{
-	case SB_TOP: pos = m_stScrollVert.nMin; break;
-	case SB_BOTTOM: pos = m_stScrollVert.nMax; break;
+	case SB_TOP: pos = si.nMin; break;
+	case SB_BOTTOM: pos = si.nMax; break;
 	case SB_LINEUP: pos -= m_sizeLetter.cy; break;
 	case SB_LINEDOWN: pos += m_sizeLetter.cy;  break;
 	case SB_PAGEUP: pos -= m_sizeLetter.cy * 16; break;
 	case SB_PAGEDOWN: pos += m_sizeLetter.cy * 16; break;
-	case SB_THUMBPOSITION: pos = m_stScrollVert.nTrackPos; break;
-	case SB_THUMBTRACK: pos = m_stScrollVert.nTrackPos; break;
+	case SB_THUMBPOSITION: pos = si.nTrackPos; break;
+	case SB_THUMBTRACK: pos = si.nTrackPos; break;
 	}
 
 	//Make sure the new position is within range.
-	if (pos < m_stScrollVert.nMin)
-		pos = m_stScrollVert.nMin;
-	int max = m_stScrollVert.nMax - m_stScrollVert.nPage + 1;
+	if (pos < si.nMin)
+		pos = si.nMin;
+	int max = si.nMax - si.nPage + 1;
 	if (pos > max)
 		pos = max;
 
-	m_stScrollVert.nPos = pos;
-	SetScrollInfo(SB_VERT, &m_stScrollVert);
+	si.nPos = pos;
+	SetScrollInfo(SB_VERT, &si);
 
 	Invalidate();
 }
 
 void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	//If scrollbar doesn't exist on the screen - do nothing.
-	GetScrollBarInfo(OBJID_HSCROLL, &m_stSBI);
-	if (m_stSBI.rgstate[0] & STATE_SYSTEM_INVISIBLE)
-		return;
+	SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
+	GetScrollInfo(SB_HORZ, &si, SIF_ALL);
 
-	GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_ALL);
-
-	int pos = m_stScrollHorz.nPos;
+	int pos = si.nPos;
 	switch (nSBCode)
 	{
-	case SB_LEFT: pos = m_stScrollHorz.nMin; break;
-	case SB_RIGHT: pos = m_stScrollHorz.nMax; break;
+	case SB_LEFT: pos = si.nMin; break;
+	case SB_RIGHT: pos = si.nMax; break;
 	case SB_LINELEFT: pos -= m_sizeLetter.cx; break;
 	case SB_LINERIGHT: pos += m_sizeLetter.cx;  break;
-	case SB_PAGELEFT: pos -= m_stScrollHorz.nPage; break;
-	case SB_PAGERIGHT: pos += m_stScrollHorz.nPage; break;
-	case SB_THUMBPOSITION: pos = m_stScrollHorz.nTrackPos; break;
-	case SB_THUMBTRACK: pos = m_stScrollHorz.nTrackPos; break;
+	case SB_PAGELEFT: pos -= si.nPage; break;
+	case SB_PAGERIGHT: pos += si.nPage; break;
+	case SB_THUMBPOSITION: pos = si.nTrackPos; break;
+	case SB_THUMBTRACK: pos = si.nTrackPos; break;
 	}
 
 	//Make sure the new position is within range.
-	if (pos < m_stScrollHorz.nMin)
-		pos = m_stScrollHorz.nMin;
-	int max = m_stScrollHorz.nMax - m_stScrollHorz.nPage + 1;
+	if (pos < si.nMin)
+		pos = si.nMin;
+	int max = si.nMax - si.nPage + 1;
 	if (pos > max)
 		pos = max;
 
-	m_stScrollHorz.nPos = pos;
-	SetScrollInfo(SB_HORZ, &m_stScrollHorz);
+	si.nPos = pos;
+	SetScrollInfo(SB_HORZ, &si);
 
 	Invalidate();
 }
@@ -352,39 +340,33 @@ void CHexView::OnMouseMove(UINT nFlags, CPoint point)
 		//SetCapture() behaviour.
 
 		//Checking for scrollbars existence first.
-		GetScrollBarInfo(OBJID_HSCROLL, &m_stSBI);
-		if (!(m_stSBI.rgstate[0] & STATE_SYSTEM_INVISIBLE))
+		BOOL fHorz, fVert;
+		CheckScrollBars(fHorz, fVert);
+		if (fHorz)
 		{
 			if (point.x < m_rcClient.left)
 			{
-				GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_ALL);
-				m_stScrollHorz.nPos -= m_sizeLetter.cx;
-				SetScrollInfo(SB_HORZ, &m_stScrollHorz);
+				SetScrollPos(SB_HORZ, GetScrollPos(SB_HORZ) - m_sizeLetter.cx);
 				point.x = m_iIndentFirstHexChunk;
 			}
 			else if (point.x >= m_rcClient.right)
 			{
-				GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_ALL);
-				m_stScrollHorz.nPos += m_sizeLetter.cx;
-				SetScrollInfo(SB_HORZ, &m_stScrollHorz);
+				SetScrollPos(SB_HORZ, GetScrollPos(SB_HORZ) + m_sizeLetter.cx);
+				point.x = m_iIndentFirstHexChunk;
+
 				point.x = m_iFourthVertLine - 1;
 			}
 		}
-		GetScrollBarInfo(OBJID_VSCROLL, &m_stSBI);
-		if (!(m_stSBI.rgstate[0] & STATE_SYSTEM_INVISIBLE))
+		if (fVert)
 		{
 			if (point.y < m_iHeightTopRect)
 			{
-				GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-				m_stScrollVert.nPos -= m_sizeLetter.cy;
-				SetScrollInfo(SB_VERT, &m_stScrollVert);
+				SetScrollPos(SB_VERT, GetScrollPos(SB_VERT) - m_sizeLetter.cy);
 				point.y = m_iHeightTopRect;
 			}
 			else if (point.y >= m_iHeightWorkArea)
 			{
-				GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-				m_stScrollVert.nPos += m_sizeLetter.cy;
-				SetScrollInfo(SB_VERT, &m_stScrollVert);
+				SetScrollPos(SB_VERT, GetScrollPos(SB_VERT) + m_sizeLetter.cy);
 				point.y = m_iHeightWorkArea - 1;
 			}
 		}
@@ -511,15 +493,15 @@ void CHexView::OnMenuRange(UINT nID)
 
 void CHexView::OnDraw(CDC* pDC)
 {
-	GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_ALL);
-	GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-
+	int iScrollV = GetScrollPos(SB_VERT);
+	int iScrollH = GetScrollPos(SB_HORZ);
 	RECT rc; //Used for all local rect related drawing.
+
 	rc = m_rcClient;
-	rc.top += m_stScrollVert.nPos;
-	rc.bottom += m_stScrollVert.nPos;
-	rc.left += m_stScrollHorz.nPos;
-	rc.right += m_stScrollHorz.nPos;
+	rc.top += iScrollV;
+	rc.bottom += iScrollV;
+	rc.left += iScrollH;
+	rc.right += iScrollH;
 
 	//Drawing through CMemDC to avoid any flickering.
 	CMemDC memDC(*pDC, rc);
@@ -531,7 +513,7 @@ void CHexView::OnDraw(CDC* pDC)
 	rDC.SelectObject(&m_fontHexView);
 
 	//Find the iLineStart and iLineEnd position, draw the visible portion.
-	const UINT iLineStart = m_stScrollVert.nPos / m_sizeLetter.cy;
+	const UINT iLineStart = iScrollV / m_sizeLetter.cy;
 	UINT iLineEnd = m_dwRawDataCount ?
 		(iLineStart + (m_rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) / m_sizeLetter.cy) : 0;
 	//If m_dwRawDataCount is really small we adjust iLineEnd to not be bigger than maximum allowed.
@@ -539,7 +521,7 @@ void CHexView::OnDraw(CDC* pDC)
 		iLineEnd = m_dwRawDataCount % m_dwGridCapacity ? m_dwRawDataCount / m_dwGridCapacity + 1 : m_dwRawDataCount / m_dwGridCapacity;
 
 	//Horizontal lines depending on scroll.
-	const int iFirstHorizLine = m_stScrollVert.nPos;
+	const int iFirstHorizLine = iScrollV;
 	const int iSecondHorizLine = iFirstHorizLine + m_iHeightTopRect - 1;
 	const int iThirdHorizLine = iFirstHorizLine + m_rcClient.Height() - m_iHeightBottomOffArea;
 	const int iFourthHorizLine = iThirdHorizLine + m_iHeightBottomRect;
@@ -607,19 +589,19 @@ void CHexView::OnDraw(CDC* pDC)
 	DrawTextW(rDC.m_hDC, L"Ascii", 5, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//First Vertical line.
-	rDC.MoveTo(m_iFirstVertLine, m_stScrollVert.nPos);
+	rDC.MoveTo(m_iFirstVertLine, iScrollV);
 	rDC.LineTo(m_iFirstVertLine, iFourthHorizLine);
 
 	//Second Vertical line.
-	rDC.MoveTo(m_iSecondVertLine, m_stScrollVert.nPos);
+	rDC.MoveTo(m_iSecondVertLine, iScrollV);
 	rDC.LineTo(m_iSecondVertLine, iThirdHorizLine);
 
 	//Third Vertical line.
-	rDC.MoveTo(m_iThirdVertLine, m_stScrollVert.nPos);
+	rDC.MoveTo(m_iThirdVertLine, iScrollV);
 	rDC.LineTo(m_iThirdVertLine, iThirdHorizLine);
 
 	//Fourth Vertical line.
-	rDC.MoveTo(m_iFourthVertLine, m_stScrollVert.nPos);
+	rDC.MoveTo(m_iFourthVertLine, iScrollV);
 	rDC.LineTo(m_iFourthVertLine, iFourthHorizLine);
 
 	int iLine { };
@@ -637,7 +619,7 @@ void CHexView::OnDraw(CDC* pDC)
 
 		//Left column offset print (00000001...0000FFFF...).
 		rDC.SetTextColor(m_clrTextCaption);
-		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_iHeightTopRect + (m_sizeLetter.cy * iLine + m_stScrollVert.nPos),
+		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_iHeightTopRect + (m_sizeLetter.cy * iLine + iScrollV),
 			NULL, nullptr, wstrOffset, 8, nullptr);
 
 		int iIndentHexX { };
@@ -651,9 +633,9 @@ void CHexView::OnDraw(CDC* pDC)
 				iIndentBetweenBlocks = m_iSpaceBetweenBlocks;
 
 			const UINT iHexPosToPrintX = m_iIndentFirstHexChunk + iIndentHexX + iIndentBetweenBlocks;
-			const UINT iHexPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine + m_stScrollVert.nPos;
+			const UINT iHexPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine + iScrollV;
 			const UINT iAsciiPosToPrintX = m_iIndentAscii + iIndentAsciiX;
-			const UINT iAsciiPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine + m_stScrollVert.nPos;
+			const UINT iAsciiPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine + iScrollV;
 
 			//Index of the next char (in m_pRawData) to draw.
 			const size_t iIndexDataToPrint = iterLines * m_dwGridCapacity + iterChunks;
@@ -737,10 +719,10 @@ BOOL CHexView::PreTranslateMessage(MSG* pMsg)
 int CHexView::HitTest(LPPOINT pPoint)
 {
 	DWORD dwHexChunk;
-	GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_POS);
-	GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_POS);
+	int iScrollV = GetScrollPos(SB_VERT);// GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_POS);
+	int iScrollH = GetScrollPos(SB_HORZ);// GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_POS);
 	//To compensate horizontal scroll.
-	pPoint->x += m_stScrollHorz.nPos;
+	pPoint->x += iScrollH;
 
 	//Checking if cursor is within HEX chunks area.
 	if ((pPoint->x >= m_iIndentFirstHexChunk) && (pPoint->x < m_iThirdVertLine)
@@ -755,7 +737,7 @@ int CHexView::HitTest(LPPOINT pPoint)
 		//Calculate iHit HEX chunk, taking into account scroll position and letter sizes.
 		dwHexChunk = ((pPoint->x - m_iIndentFirstHexChunk - tmpBetweenBlocks) / (m_sizeLetter.cx * 3)) +
 			((pPoint->y - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity +
-			((m_stScrollVert.nPos / m_sizeLetter.cy) * m_dwGridCapacity);
+			((iScrollV / m_sizeLetter.cy) * m_dwGridCapacity);
 	}
 	else if ((pPoint->x >= m_iIndentAscii) && (pPoint->x < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwGridCapacity))
 		&& (pPoint->y >= m_iHeightTopRect) && pPoint->y <= m_iHeightWorkArea)
@@ -763,7 +745,7 @@ int CHexView::HitTest(LPPOINT pPoint)
 		//Calculate iHit Ascii symbol.
 		dwHexChunk = ((pPoint->x - m_iIndentAscii) / (m_iSpaceBetweenAscii)) +
 			((pPoint->y - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity +
-			((m_stScrollVert.nPos / m_sizeLetter.cy) * m_dwGridCapacity);
+			((iScrollV / m_sizeLetter.cy) * m_dwGridCapacity);
 	}
 	else
 		dwHexChunk = -1;
@@ -881,10 +863,7 @@ void CHexView::Recalc()
 
 	UINT iStartLine { };
 	if (m_fSecondLaunch)
-	{
-		GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-		iStartLine = m_stScrollVert.nPos / m_sizeLetter.cy;
-	}
+		iStartLine = GetScrollPos(SB_VERT) / m_sizeLetter.cy;
 
 	HDC hDC = ::GetDC(m_hWnd);
 	SelectObject(hDC, m_fontHexView.m_hObject);
@@ -912,18 +891,10 @@ void CHexView::Recalc()
 	SetScrollSizes(MM_TEXT, CSize(m_iFourthVertLine + 1,
 		m_iHeightTopRect + m_iHeightBottomOffArea + (m_sizeLetter.cy * (m_dwRawDataCount / m_dwGridCapacity + 3))));
 
-	//This fStartAt shows that Recalc() was invoked at least once before,
+	//This m_fSecondLaunch shows that Recalc() was invoked at least once before,
 	//and ScrollSizes have already been set, so we can adjust them.
 	if (m_fSecondLaunch)
-	{
-		GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-		m_stScrollVert.nPos = m_sizeLetter.cy * iStartLine;
-
-		int max = m_stScrollVert.nMax - m_stScrollVert.nPage + 1;
-		if (m_stScrollVert.nPos > max)
-			m_stScrollVert.nPos = max;
-		SetScrollInfo(SB_VERT, &m_stScrollVert);
-	}
+		SetScrollPos(SB_VERT, m_sizeLetter.cy * iStartLine);
 	else
 		m_fSecondLaunch = true;
 
@@ -1150,20 +1121,13 @@ void CHexView::SetSelection(DWORD dwStart, DWORD dwBytes)
 	m_dwSelectionEnd = m_dwSelectionStart + dwBytes - 1;
 	m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;
 
-	GetScrollBarInfo(OBJID_VSCROLL, &m_stSBI);
-	if (!(m_stSBI.rgstate[0] & STATE_SYSTEM_INVISIBLE))
-	{
-		GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_ALL);
-		m_stScrollVert.nPos = m_dwSelectionStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2);
-		SetScrollInfo(SB_VERT, &m_stScrollVert);
-	}
-	GetScrollBarInfo(OBJID_HSCROLL, &m_stSBI);
-	if (!(m_stSBI.rgstate[0] & STATE_SYSTEM_INVISIBLE))
-	{
-		GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_ALL);
-		m_stScrollHorz.nPos = (m_dwSelectionStart % m_dwGridCapacity) * m_iSpaceBetweenHexChunks;
-		SetScrollInfo(SB_HORZ, &m_stScrollHorz);
-	}
+	BOOL fHorz, fVert;
+	CheckScrollBars(fHorz, fVert);
+	if (fVert)
+		SetScrollPos(SB_VERT, m_dwSelectionStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2));
+	if (fHorz)
+		SetScrollPos(SB_HORZ, (m_dwSelectionStart % m_dwGridCapacity) * m_iSpaceBetweenHexChunks);
+
 	UpdateBottomBarText();
 	Invalidate();
 }

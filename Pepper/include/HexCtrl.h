@@ -141,9 +141,6 @@ namespace HEXControl
 		CHexDlgSearch m_dlgSearch;
 		CHexDlgAbout m_dlgAbout;
 		CMenu m_menuPopup;
-		SCROLLINFO m_stScrollVert { sizeof(SCROLLINFO), SIF_ALL };
-		SCROLLINFO m_stScrollHorz { sizeof(SCROLLINFO), SIF_ALL };
-		SCROLLBARINFO m_stSBI { sizeof(SCROLLBARINFO) };
 		COLORREF m_clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrTextCaption { RGB(0, 0, 180) };
