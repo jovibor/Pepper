@@ -58,8 +58,8 @@ void CViewRightTL::OnInitialUpdate()
 	m_pLibpe->GetExceptionTable(m_pExceptionDir);
 	m_pLibpe->GetRelocationTable(m_pRelocTable);
 
-	m_stListInfo.clrListTextTooltip = RGB(255, 255, 255);
-	m_stListInfo.clrListBkTooltip = RGB(0, 132, 132);
+	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
+	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
 	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
 	m_stListInfo.dwHeaderHeight = 39;
@@ -931,7 +931,7 @@ int CViewRightTL::CreateListFileHeader()
 	m_listFileHeader.SetItemText(listindex, 3, str);
 	auto iterMachine = mapMachineType.find(pFileHeader->Machine);
 	if (iterMachine != mapMachineType.end())
-		m_listFileHeader.SetItemTooltip(listindex, 3, iterMachine->second, L"Machine:");
+		m_listFileHeader.SetCellTooltip(listindex, 3, iterMachine->second, L"Machine:");
 
 	listindex = m_listFileHeader.InsertItem(listindex + 1, L"NumberOfSections");
 	swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, FileHeader.NumberOfSections) + m_dwPeStart);
@@ -952,7 +952,7 @@ int CViewRightTL::CreateListFileHeader()
 	{
 		__time64_t time = pFileHeader->TimeDateStamp;
 		_wctime64_s(str, MAX_PATH, &time);
-		m_listFileHeader.SetItemTooltip(listindex, 3, str, L"Time / Date:");
+		m_listFileHeader.SetCellTooltip(listindex, 3, str, L"Time / Date:");
 	}
 
 	listindex = m_listFileHeader.InsertItem(listindex + 1, L"PointerToSymbolTable");
@@ -993,7 +993,7 @@ int CViewRightTL::CreateListFileHeader()
 	if (!strCharact.empty())
 	{
 		strCharact.erase(strCharact.size() - 1); //to remove last '\n'
-		m_listFileHeader.SetItemTooltip(listindex, 3, strCharact, L"Characteristics:");
+		m_listFileHeader.SetCellTooltip(listindex, 3, strCharact, L"Characteristics:");
 	}
 	return 0;
 }
@@ -1064,7 +1064,7 @@ int CViewRightTL::CreateListOptHeader()
 		m_listOptHeader.SetItemText(listindex, 2, str);
 		swprintf_s(str, 5, L"%04X", pOptHeader32->Magic);
 		m_listOptHeader.SetItemText(listindex, 3, str);
-		m_listOptHeader.SetItemTooltip(listindex, 3, L"IMAGE_NT_OPTIONAL_HDR32_MAGIC", L"Magic:");
+		m_listOptHeader.SetCellTooltip(listindex, 3, L"IMAGE_NT_OPTIONAL_HDR32_MAGIC", L"Magic:");
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"MajorLinkerVersion");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, OptionalHeader.MajorLinkerVersion) + m_dwPeStart);
@@ -1244,7 +1244,7 @@ int CViewRightTL::CreateListOptHeader()
 		if (mapSubSystem.find(pOptHeader32->Subsystem) != mapSubSystem.end())
 		{
 			swprintf_s(str, MAX_PATH, L"%S", mapSubSystem.at(pOptHeader32->Subsystem).c_str());
-			m_listOptHeader.SetItemTooltip(listindex, 3, str, L"Subsystem:");
+			m_listOptHeader.SetCellTooltip(listindex, 3, str, L"Subsystem:");
 		}
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"DllCharacteristics");
@@ -1264,7 +1264,7 @@ int CViewRightTL::CreateListOptHeader()
 		if (!strTmp.empty())
 		{
 			strTmp.erase(strTmp.size() - 1);//to remove last '\n'
-			m_listOptHeader.SetItemTooltip(listindex, 3, strTmp, L"DllCharacteristics:");
+			m_listOptHeader.SetCellTooltip(listindex, 3, strTmp, L"DllCharacteristics:");
 		}
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"SizeOfStackReserve");
@@ -1326,7 +1326,7 @@ int CViewRightTL::CreateListOptHeader()
 		m_listOptHeader.SetItemText(listindex, 2, str);
 		swprintf_s(str, 5, L"%04X", pOptHeader64->Magic);
 		m_listOptHeader.SetItemText(listindex, 3, str);
-		m_listOptHeader.SetItemTooltip(listindex, 3, L"IMAGE_NT_OPTIONAL_HDR64_MAGIC", L"Magic:");
+		m_listOptHeader.SetCellTooltip(listindex, 3, L"IMAGE_NT_OPTIONAL_HDR64_MAGIC", L"Magic:");
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"MajorLinkerVersion");
 		swprintf_s(str, 9, L"%08X", offsetof(IMAGE_NT_HEADERS64, OptionalHeader.MajorLinkerVersion) + m_dwPeStart);
@@ -1498,7 +1498,7 @@ int CViewRightTL::CreateListOptHeader()
 		if (mapSubSystem.find(pOptHeader64->Subsystem) != mapSubSystem.end())
 		{
 			swprintf_s(str, MAX_PATH, L"%S", mapSubSystem.at(pOptHeader64->Subsystem).c_str());
-			m_listOptHeader.SetItemTooltip(listindex, 3, str, L"Subsystem:");
+			m_listOptHeader.SetCellTooltip(listindex, 3, str, L"Subsystem:");
 		}
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"DllCharacteristics");
@@ -1518,7 +1518,7 @@ int CViewRightTL::CreateListOptHeader()
 		if (!strTmp.empty())
 		{
 			strTmp.erase(strTmp.size() - 1);//to remove last '\n'
-			m_listOptHeader.SetItemTooltip(listindex, 3, strTmp, L"DllCharacteristics:");
+			m_listOptHeader.SetCellTooltip(listindex, 3, strTmp, L"DllCharacteristics:");
 		}
 
 		listindex = m_listOptHeader.InsertItem(listindex + 1, L"SizeOfStackReserve");
@@ -1656,7 +1656,7 @@ int CViewRightTL::CreateListDataDirectories()
 	swprintf_s(str, 9, L"%08X", pDataDirs->VirtualAddress);
 	m_listDataDirs.SetItemText(listindex, 2, str);
 	if (pDataDirs->VirtualAddress)
-		m_listDataDirs.SetItemTooltip(listindex, 2, L"This address is a file raw offset on disk.");
+		m_listDataDirs.SetCellTooltip(listindex, 2, L"This address is a file raw offset on disk.");
 	swprintf_s(str, 9, L"%08X", pDataDirs->Size);
 	m_listDataDirs.SetItemText(listindex, 3, str);
 	swprintf_s(str, 9, L"%.8S", std::get<1>(pLibPeDataDirs->at(IMAGE_DIRECTORY_ENTRY_SECURITY)).c_str());
@@ -1872,7 +1872,7 @@ int CViewRightTL::CreateListSecHeaders()
 
 		if (!strTipText.empty())
 		{
-			m_listSecHeaders.SetItemTooltip(listindex, 9, strTipText, L"Section Flags:");
+			m_listSecHeaders.SetCellTooltip(listindex, 9, strTipText, L"Section Flags:");
 			strTipText.clear();
 		}
 
@@ -1914,7 +1914,7 @@ int CViewRightTL::CreateListExport()
 	{
 		__time64_t time = pExportDir->TimeDateStamp;
 		_wctime64_s(str, MAX_PATH, &time);
-		m_listExportDir.SetItemTooltip(listindex, 2, str, L"Time / Date:");
+		m_listExportDir.SetCellTooltip(listindex, 2, str, L"Time / Date:");
 	}
 
 	listindex = m_listExportDir.InsertItem(listindex + 1, L"MajorVersion");
@@ -2000,7 +2000,7 @@ int CViewRightTL::CreateListImport()
 		{
 			__time64_t time = pImportDesc->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &time);
-			m_listImport.SetItemTooltip(listindex, 2, str, L"Time / Date:");
+			m_listImport.SetCellTooltip(listindex, 2, str, L"Time / Date:");
 		}
 		listindex++;
 	}
@@ -2230,7 +2230,7 @@ int CViewRightTL::CreateListDebug()
 		{
 			__time64_t _time = pDebug->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
-			m_listDebugDir.SetItemTooltip(listindex, 1, str, L"Time / Date:");
+			m_listDebugDir.SetCellTooltip(listindex, 1, str, L"Time / Date:");
 		}
 		swprintf_s(str, 5, L"%04u", pDebug->MajorVersion);
 		m_listDebugDir.SetItemText(listindex, 2, str);
@@ -2240,7 +2240,7 @@ int CViewRightTL::CreateListDebug()
 		m_listDebugDir.SetItemText(listindex, 4, str);
 		for (auto&j : mapDebugType)
 			if (j.first == pDebug->Type)
-				m_listDebugDir.SetItemTooltip(listindex, 4, j.second);
+				m_listDebugDir.SetCellTooltip(listindex, 4, j.second);
 		swprintf_s(str, 9, L"%08X", pDebug->SizeOfData);
 		m_listDebugDir.SetItemText(listindex, 5, str);
 		swprintf_s(str, 9, L"%08X", pDebug->AddressOfRawData);
@@ -2330,7 +2330,7 @@ int CViewRightTL::CreateListTLS()
 
 		auto iterCharact = mapCharact.find(pTLSDir32->Characteristics);
 		if (iterCharact != mapCharact.end())
-			m_listTLSDir.SetItemTooltip(listindex, 2, iterCharact->second, L"Characteristics:");
+			m_listTLSDir.SetCellTooltip(listindex, 2, iterCharact->second, L"Characteristics:");
 	}
 	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 	{
@@ -2374,7 +2374,7 @@ int CViewRightTL::CreateListTLS()
 
 		auto iterCharact = mapCharact.find(pTLSDir64->Characteristics);
 		if (iterCharact != mapCharact.end())
-			m_listTLSDir.SetItemTooltip(listindex, 2, iterCharact->second, L"Characteristics:");
+			m_listTLSDir.SetCellTooltip(listindex, 2, iterCharact->second, L"Characteristics:");
 	}
 
 	return 0;
@@ -2439,7 +2439,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		{
 			__time64_t _time = pLoadConfDir32->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
-			m_listLoadConfigDir.SetItemTooltip(listindex, 2, str, L"Time / Date:");
+			m_listLoadConfigDir.SetCellTooltip(listindex, 2, str, L"Time / Date:");
 		}
 
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"MajorVersion");
@@ -2584,7 +2584,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 			if (i.first & pLoadConfDir32->GuardFlags)
 				_tooltip += i.second + L"\n";
 		if (!_tooltip.empty())
-			m_listLoadConfigDir.SetItemTooltip(listindex, 2, _tooltip, L"GuardFlags:");
+			m_listLoadConfigDir.SetCellTooltip(listindex, 2, _tooltip, L"GuardFlags:");
 
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.Flags");
 		swprintf_s(str, 3, L"%u", sizeof(pLoadConfDir32->CodeIntegrity.Flags));
@@ -2725,7 +2725,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		{
 			__time64_t _time = pLoadConfDir64->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
-			m_listLoadConfigDir.SetItemTooltip(listindex, 2, str, L"Time / Date:");
+			m_listLoadConfigDir.SetCellTooltip(listindex, 2, str, L"Time / Date:");
 		}
 
 		dwTotalSize += sizeof(pLoadConfDir64->MajorVersion);
@@ -2939,7 +2939,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 			if (i.first & pLoadConfDir64->GuardFlags)
 				_tooltip += i.second + L"\n";
 		if (!_tooltip.empty())
-			m_listLoadConfigDir.SetItemTooltip(listindex, 2, _tooltip, L"GuardFlags:");
+			m_listLoadConfigDir.SetCellTooltip(listindex, 2, _tooltip, L"GuardFlags:");
 
 		dwTotalSize += sizeof(pLoadConfDir64->CodeIntegrity.Flags);
 		if (dwTotalSize > dwLCTSize)
@@ -3145,7 +3145,7 @@ int CViewRightTL::CreateListBoundImport()
 		{
 			__time64_t _time = pBoundImpDir->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &_time);
-			m_listBoundImportDir.SetItemTooltip(listindex, 1, str, L"Time / Date:");
+			m_listBoundImportDir.SetCellTooltip(listindex, 1, str, L"Time / Date:");
 		}
 		swprintf_s(str, 5, L"%04X", pBoundImpDir->OffsetModuleName);
 		m_listBoundImportDir.SetItemText(listindex, 2, str);
@@ -3206,7 +3206,7 @@ int CViewRightTL::CreateListDelayImport()
 		{
 			__time64_t time = pDelayImpDir->TimeDateStamp;
 			_wctime64_s(str, MAX_PATH, &time);
-			m_listDelayImportDir.SetItemTooltip(listindex, 8, str, L"Time / Date:");
+			m_listDelayImportDir.SetCellTooltip(listindex, 8, str, L"Time / Date:");
 		}
 
 		listindex++;
@@ -3269,7 +3269,7 @@ int CViewRightTL::CreateListCOM()
 		if (i.first & pCOMDesc->Flags)
 			strToolTip += i.second + L"\n";
 	if (!strToolTip.empty())
-		m_listCOMDir.SetItemTooltip(listindex, 1, strToolTip, L"Flags:");
+		m_listCOMDir.SetCellTooltip(listindex, 1, strToolTip, L"Flags:");
 
 	listindex = m_listCOMDir.InsertItem(listindex + 1, L"EntryPointToken");
 	swprintf_s(str, 9, L"%08X", pCOMDesc->EntryPointToken);

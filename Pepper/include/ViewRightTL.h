@@ -5,6 +5,8 @@
 #include "ListEx.h"
 #include "TreeEx.h"
 
+using namespace LISTEX;
+
 class CViewRightTL : public CScrollView
 {
 	DECLARE_DYNCREATE(CViewRightTL)

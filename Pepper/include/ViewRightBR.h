@@ -4,6 +4,8 @@
 #include "ListEx.h"
 #include <memory>
 
+using namespace LISTEX;
+
 class CViewRightBR : public CScrollView
 {
 	DECLARE_DYNCREATE(CViewRightBR)

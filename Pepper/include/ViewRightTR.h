@@ -2,6 +2,7 @@
 #include "ChildFrm.h"
 #include "PepperDoc.h"
 #include "HexCtrl.h"
+
 using namespace HEXControl;
 
 class CViewRightTR : public CScrollView
