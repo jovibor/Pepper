@@ -2,14 +2,15 @@
 * Copyright (C) 2018, Jovibor: https://github.com/jovibor/	                *
 * This is an extended and quite featured version of CMFCListCtrl class.		*
 * The main difference is in CListEx::Create method, which takes one			*
-* additional arg: pointer to LISTEXINFO structure, which fields are			*
+* additional arg - pointer to LISTEXINFO structure, which fields are		*
 * described below.															*
-* Also, this class has set of additional methods: SetFont, SetCellTooltip,	*
-* SetTooltipColor, SetHeaderColor, SetHeaderHeight,	SetHeaderFont,			*
-* SetHeaderColumnColor.														*
+* Also, this class has set of additional public methods to help customize	*
+* your control in many different aspects.									*
 ****************************************************************************/
 #pragma once
+#include <afxcontrolbars.h>
 #include <unordered_map>
+
 namespace LISTEX {
 	/************************************************
 	* Helper struct for CListEx class.				*
@@ -22,15 +23,15 @@ namespace LISTEX {
 		DWORD dwListGridWidth { 1 }; //Width of the list grid.
 		COLORREF clrListTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) }; //Selected item text color.
 		COLORREF clrListBkSelected { GetSysColor(COLOR_HIGHLIGHT) }; //Selected item bk color.
-		COLORREF clrListTooltipText { GetSysColor(COLOR_INFOTEXT) }; //Tooltip window text color.
-		COLORREF clrListTooltipBk { GetSysColor(COLOR_INFOBK) }; //Tooltip window bk color.
+		COLORREF clrTooltipText { GetSysColor(COLOR_INFOTEXT) }; //Tooltip window text color.
+		COLORREF clrTooltipBk { GetSysColor(COLOR_INFOBK) }; //Tooltip window bk color.
 		COLORREF clrListTextCellTt { GetSysColor(COLOR_WINDOWTEXT) }; //Text color of a cell that has tooltip.
 		COLORREF clrListBkCellTt { RGB(170, 170, 230) }; //Bk color of a cell that has tooltip.
-		const LOGFONT* pListLogFont { nullptr }; //List font.
+		const LOGFONT* pListLogFont { }; //List font.
 		COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) }; //List header text color.
 		COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) }; //List header bk color.
 		DWORD dwHeaderHeight { 19 }; //List header height.
-		const LOGFONT* pHeaderLogFont { nullptr }; //List header font.
+		const LOGFONT* pHeaderLogFont { }; //List header font.
 	} *PLISTEXINFO;
 
 	/********************************************
@@ -42,7 +43,7 @@ namespace LISTEX {
 		void SetHeight(DWORD dwHeight);
 		void SetFont(const LOGFONT* pFontNew);
 		void SetColor(COLORREF clrText, COLORREF clrBk);
-		void SetColumnColor(DWORD nColumn, COLORREF clr);
+		void SetColumnColor(DWORD iColumn, COLORREF clr);
 		CListExHeader();
 		virtual ~CListExHeader() {}
 	protected:
@@ -51,12 +52,13 @@ namespace LISTEX {
 		DECLARE_MESSAGE_MAP()
 	private:
 		CFont m_fontHdr;
+		COLORREF m_clrBkNWA { GetSysColor(COLOR_WINDOW) }; //Bk of non working area.
 		COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) };
 		HDITEMW m_hdItem { }; //For drawing.
 		WCHAR m_wstrHeaderText[MAX_PATH] { };
 		DWORD m_dwHeaderHeight { 19 }; //Standard (default) height.
-		std::unordered_map<DWORD, COLORREF> m_mapClrColumn { }; //Color of individual columns.
+		std::unordered_map<DWORD, COLORREF> m_umapClrColumn { }; //Color of individual columns.
 	};
 
 	/********************************************
@@ -68,9 +70,11 @@ namespace LISTEX {
 		DECLARE_DYNAMIC(CListEx)
 		CListEx() {}
 		virtual ~CListEx() {}
-		BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pInfo = nullptr);
+		BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo = nullptr);
 		CListExHeader& GetHeaderCtrl() override { return m_stListHeader; }
 		void SetFont(const LOGFONT* pLogFontNew);
+		void SetFontSize(UINT uiSize);
+		UINT GetFontSize();
 		//To remove tooltip from specific subitem just set it again with empty (L"") string.
 		void SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTooltip, const std::wstring& wstrCaption = { });
 		void SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk,
@@ -94,10 +98,12 @@ namespace LISTEX {
 		afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 		afx_msg void OnTimer(UINT_PTR nIDEvent);
-		afx_msg void OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 		afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 		afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMIS);
+		afx_msg void OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult);
+		afx_msg void OnHdnBegintrack(NMHDR *pNMHDR, LRESULT *pResult);
+		afx_msg void OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult);
 	private:
 		CListExHeader m_stListHeader;
 		CFont m_fontList;
@@ -109,7 +115,7 @@ namespace LISTEX {
 		HWND m_hwndTt { };
 		TOOLINFO m_stToolInfo { };
 		LVHITTESTINFO m_stCurrCell { };
-		COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) }; //Bk of non working area.
+		COLORREF m_clrBkNWA { GetSysColor(COLOR_WINDOW) }; //Bk of non working area.
 		COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrBkRow1 { GetSysColor(COLOR_WINDOW) };
 		COLORREF m_clrBkRow2 { GetSysColor(COLOR_WINDOW) };
@@ -124,4 +130,15 @@ namespace LISTEX {
 	};
 
 	constexpr auto ID_TIMER_TOOLTIP = 0x01;
+
+	/*******************Setting the manifest for ComCtl32.dll version 6.***********************/
+#ifdef _UNICODE
+#if defined _M_IX86
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_X64
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#else
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+#endif
 }

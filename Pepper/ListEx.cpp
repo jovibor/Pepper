@@ -1,6 +1,11 @@
 /****************************************************************************
 * Copyright (C) 2018, Jovibor: https://github.com/jovibor/	                *
-* CListEx and CListExHeader class implementations.							*
+* This is an extended and quite featured version of CMFCListCtrl class.		*
+* The main difference is in CListEx::Create method, which takes one			*
+* additional arg - pointer to LISTEXINFO structure, which fields are		*
+* described below.															*
+* Also, this class has set of additional public methods to help customize	*
+* your control in many different aspects.									*
 ****************************************************************************/
 #include "stdafx.h"
 #include "ListEx.h"
@@ -17,9 +22,11 @@ END_MESSAGE_MAP()
 
 CListExHeader::CListExHeader()
 {
-	NONCLIENTMETRICSW ncm;
-	ncm.cbSize = sizeof(NONCLIENTMETRICS);
+	NONCLIENTMETRICSW ncm { };
+	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
 	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+	ncm.lfMessageFont.lfHeight = 18; //For some weird reason above func returns this value as MAX_LONG.
+
 	m_fontHdr.CreateFontIndirectW(&ncm.lfMessageFont);
 
 	m_hdItem.mask = HDI_TEXT;
@@ -32,8 +39,13 @@ void CListExHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed,
 	CMemDC memDC(*pDC, rect);
 	CDC& rDC = memDC.GetDC();
 
-	if (m_mapClrColumn.find(iItem) != m_mapClrColumn.end())
-		rDC.FillSolidRect(&rect, m_mapClrColumn.at(iItem));
+	if (iItem < 0) { //Non working area, after last column.
+		rDC.FillSolidRect(&rect, m_clrBkNWA);
+		return;
+	}
+
+	if (m_umapClrColumn.find(iItem) != m_umapClrColumn.end())
+		rDC.FillSolidRect(&rect, m_umapClrColumn.at(iItem));
 	else
 		rDC.FillSolidRect(&rect, m_clrBk);
 	rDC.SetTextColor(m_clrText);
@@ -85,12 +97,9 @@ void CListExHeader::SetColor(COLORREF clrText, COLORREF clrBk)
 	RedrawWindow();
 }
 
-void CListExHeader::SetColumnColor(DWORD nColumn, COLORREF clr)
+void CListExHeader::SetColumnColor(DWORD iColumn, COLORREF clr)
 {
-	if (nColumn >= (DWORD)GetItemCount())
-		return;
-
-	m_mapClrColumn[nColumn] = clr;
+	m_umapClrColumn[iColumn] = clr;
 	RedrawWindow();
 }
 
@@ -109,9 +118,9 @@ void CListExHeader::SetFont(const LOGFONT* pLogFontNew)
 	pDC->SelectObject(&m_fontHdr);
 	GetTextMetricsW(pDC->m_hDC, &tm);
 	ReleaseDC(pDC);
-	DWORD dwHeight = tm.tmHeight + tm.tmExternalLeading + 1;
-	if (dwHeight > m_dwHeaderHeight)
-		SetHeight(dwHeight);
+	DWORD dwHeightFont = tm.tmHeight + tm.tmExternalLeading + 1;
+	if (dwHeightFont > m_dwHeaderHeight)
+		SetHeight(dwHeightFont);
 }
 
 
@@ -123,8 +132,6 @@ IMPLEMENT_DYNAMIC(CListEx, CMFCListCtrl)
 BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
 	ON_WM_SETCURSOR()
 	ON_WM_KILLFOCUS()
-	ON_NOTIFY(HDN_DIVIDERDBLCLICKA, 0, &CListEx::OnHdnDividerdblclick)
-	ON_NOTIFY(HDN_DIVIDERDBLCLICKW, 0, &CListEx::OnHdnDividerdblclick)
 	ON_WM_HSCROLL()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_LBUTTONDOWN()
@@ -135,59 +142,66 @@ BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
 	ON_WM_MOUSEWHEEL()
 	ON_WM_PAINT()
 	ON_WM_MEASUREITEM_REFLECT()
+	ON_NOTIFY(HDN_DIVIDERDBLCLICKA, 0, &CListEx::OnHdnDividerdblclick)
+	ON_NOTIFY(HDN_DIVIDERDBLCLICKW, 0, &CListEx::OnHdnDividerdblclick)
+	ON_NOTIFY(HDN_BEGINTRACKA, 0, &CListEx::OnHdnBegintrack)
+	ON_NOTIFY(HDN_BEGINTRACKW, 0, &CListEx::OnHdnBegintrack)
+	ON_NOTIFY(HDN_TRACKA, 0, &CListEx::OnHdnTrack)
+	ON_NOTIFY(HDN_TRACKW, 0, &CListEx::OnHdnTrack)
 END_MESSAGE_MAP()
 
-BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pInfo)
+BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo)
 {
-	CMFCListCtrl::Create(dwStyle | LVS_OWNERDRAWFIXED | WS_CLIPSIBLINGS | LVS_REPORT, rect, pParentWnd, nID);
+	BOOL fRet = CMFCListCtrl::Create(dwStyle | LVS_OWNERDRAWFIXED | LVS_REPORT, rect, pParentWnd, nID);
 
 	m_hwndTt = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
-		TTS_BALLOON | TTS_NOPREFIX | TTS_ALWAYSTIP,
+		TTS_BALLOON | TTS_NOANIMATE | TTS_NOFADE | TTS_NOPREFIX | TTS_ALWAYSTIP,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		nullptr, nullptr, nullptr, nullptr);
+	SetWindowTheme(m_hwndTt, nullptr, L""); //To prevent Windows from changing theme of Balloon window.
 
 	m_stToolInfo.cbSize = TTTOOLINFOW_V1_SIZE;
 	m_stToolInfo.uFlags = TTF_TRACK;
 	m_stToolInfo.uId = 0x1;
+	::SendMessageW(m_hwndTt, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
+	::SendMessageW(m_hwndTt, TTM_SETMAXTIPWIDTH, 0, (LPARAM)400); //to allow use of newline \n.
 
-	::SendMessage(m_hwndTt, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
-	::SendMessage(m_hwndTt, TTM_SETMAXTIPWIDTH, 0, (LPARAM)400); //to allow use of newline \n.
-
-	NONCLIENTMETRICSW ncm;
-	ncm.cbSize = sizeof(NONCLIENTMETRICS);
+	NONCLIENTMETRICSW ncm { };
+	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
 	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+	ncm.lfMessageFont.lfHeight = 18; //For some weird reason above func returns this value as MAX_LONG.
 
-	if (pInfo)
+	if (pListExInfo)
 	{
-		m_clrText = pInfo->clrListText;
-		m_clrBkRow1 = pInfo->clrListBkRow1;
-		m_clrBkRow2 = pInfo->clrListBkRow2;
-		m_clrTextSelected = pInfo->clrListTextSelected;
-		m_clrBkSelected = pInfo->clrListBkSelected;
-		m_clrTooltipText = pInfo->clrListTooltipText;
-		::SendMessage(m_hwndTt, TTM_SETTIPTEXTCOLOR, (WPARAM)m_clrTooltipText, 0);
-		m_clrTooltipBk = pInfo->clrListTooltipBk;
-		::SendMessage(m_hwndTt, TTM_SETTIPBKCOLOR, (WPARAM)m_clrTooltipBk, 0);
-		m_clrTextCellTt = pInfo->clrListTextCellTt;
-		m_clrBkCellTt = pInfo->clrListBkCellTt;
-		m_clrGrid = pInfo->clrListGrid;
-		m_dwGridWidth = pInfo->dwListGridWidth;
+		m_clrText = pListExInfo->clrListText;
+		m_clrBkRow1 = pListExInfo->clrListBkRow1;
+		m_clrBkRow2 = pListExInfo->clrListBkRow2;
+		m_clrTextSelected = pListExInfo->clrListTextSelected;
+		m_clrBkSelected = pListExInfo->clrListBkSelected;
+		m_clrTooltipText = pListExInfo->clrTooltipText;
+		::SendMessageW(m_hwndTt, TTM_SETTIPTEXTCOLOR, (WPARAM)m_clrTooltipText, 0);
+		m_clrTooltipBk = pListExInfo->clrTooltipBk;
+		::SendMessageW(m_hwndTt, TTM_SETTIPBKCOLOR, (WPARAM)m_clrTooltipBk, 0);
+		m_clrTextCellTt = pListExInfo->clrListTextCellTt;
+		m_clrBkCellTt = pListExInfo->clrListBkCellTt;
+		m_clrGrid = pListExInfo->clrListGrid;
+		m_dwGridWidth = pListExInfo->dwListGridWidth;
 
-		if (pInfo->pListLogFont)
-			m_fontList.CreateFontIndirectW(pInfo->pListLogFont);
+		if (pListExInfo->pListLogFont)
+			m_fontList.CreateFontIndirectW(pListExInfo->pListLogFont);
 		else
 			m_fontList.CreateFontIndirectW(&ncm.lfMessageFont);
 
-		GetHeaderCtrl().SetColor(pInfo->clrHeaderText, pInfo->clrHeaderBk);
-		GetHeaderCtrl().SetHeight(pInfo->dwHeaderHeight);
-		GetHeaderCtrl().SetFont(pInfo->pHeaderLogFont);
+		GetHeaderCtrl().SetColor(pListExInfo->clrHeaderText, pListExInfo->clrHeaderBk);
+		GetHeaderCtrl().SetHeight(pListExInfo->dwHeaderHeight);
+		GetHeaderCtrl().SetFont(pListExInfo->pHeaderLogFont);
 	}
 	else
 		m_fontList.CreateFontIndirectW(&ncm.lfMessageFont);
 
 	m_penGrid.CreatePen(PS_SOLID, m_dwGridWidth, m_clrGrid);
 
-	return TRUE;
+	return fRet;
 }
 
 void CListEx::SetFont(const LOGFONT* pLogFontNew)
@@ -199,16 +213,49 @@ void CListEx::SetFont(const LOGFONT* pLogFontNew)
 	m_fontList.CreateFontIndirectW(pLogFontNew);
 
 	//To get WM_MEASUREITEM msg after changing font.
-	CRect rect;
-	GetWindowRect(&rect);
+	CRect rc;
+	GetWindowRect(&rc);
 	WINDOWPOS wp;
 	wp.hwnd = m_hWnd;
-	wp.cx = rect.Width();
-	wp.cy = rect.Height();
+	wp.cx = rc.Width();
+	wp.cy = rc.Height();
 	wp.flags = SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER;
 	SendMessageW(WM_WINDOWPOSCHANGED, 0, (LPARAM)&wp);
 
 	Update(0);
+}
+
+void CListEx::SetFontSize(UINT uiSize)
+{
+	//Prevent size from being too small or too big.
+	if (uiSize < 9 || uiSize > 75)
+		return;
+
+	LOGFONT lf;
+	m_fontList.GetLogFont(&lf);
+	lf.lfHeight = uiSize;
+	m_fontList.DeleteObject();
+	m_fontList.CreateFontIndirectW(&lf);
+
+	//To get WM_MEASUREITEM msg after changing font.
+	CRect rc;
+	GetWindowRect(&rc);
+	WINDOWPOS wp;
+	wp.hwnd = m_hWnd;
+	wp.cx = rc.Width();
+	wp.cy = rc.Height();
+	wp.flags = SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER;
+	SendMessageW(WM_WINDOWPOSCHANGED, 0, (LPARAM)&wp);
+
+	Update(0);
+}
+
+UINT CListEx::GetFontSize()
+{
+	LOGFONT lf;
+	m_fontList.GetLogFont(&lf);
+
+	return lf.lfHeight;
 }
 
 void CListEx::SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTt, const std::wstring& wstrCaption)
@@ -439,6 +486,11 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint pt)
 
 BOOL CListEx::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
+	if (nFlags == MK_CONTROL)
+	{
+		SetFontSize(GetFontSize() + zDelta / WHEEL_DELTA * 2);
+		return TRUE;
+	}
 	GetHeaderCtrl().RedrawWindow();
 
 	return CMFCListCtrl::OnMouseWheel(nFlags, zDelta, pt);
@@ -526,14 +578,27 @@ void CListEx::OnPaint()
 	CDC& rDC = memDC.GetDC();
 
 	rDC.GetClipBox(&rc);
-	rDC.FillSolidRect(rc, m_clrBk);
+	rDC.FillSolidRect(rc, m_clrBkNWA);
 
 	DefWindowProcW(WM_PAINT, (WPARAM)rDC.m_hDC, (LPARAM)0);
 }
 
 void CListEx::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	*pResult = 0;
+	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	//*pResult = 0;
+}
+
+void CListEx::OnHdnBegintrack(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	//*pResult = 0;
+}
+
+void CListEx::OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	//*pResult = 0;
 }
 
 void CListEx::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)

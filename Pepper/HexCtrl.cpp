@@ -149,9 +149,10 @@ BOOL CHexView::Create(CWnd * m_pParent, const RECT & rect, UINT nID, CCreateCont
 {
 	BOOL ret = CScrollView::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, m_pParent, nID, pContext);
 
-	NONCLIENTMETRICSW ncm;
-	ncm.cbSize = sizeof(NONCLIENTMETRICS);
+	NONCLIENTMETRICSW ncm { };
+	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
 	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+	ncm.lfMessageFont.lfHeight = 18; //For some weird reason above func returns this value as MAX_LONG.
 
 	LOGFONT lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
@@ -220,20 +221,27 @@ void CHexView::SetFont(const LOGFONT* pLogFontNew)
 	Recalc();
 }
 
-void CHexView::SetFontSize(UINT nSize)
+void CHexView::SetFontSize(UINT uiSize)
 {
 	//Prevent font size from being too small or too big.
-	if (nSize < 9 || nSize > 75)
+	if (uiSize < 9 || uiSize > 75)
 		return;
 
 	LOGFONT lf;
 	m_fontHexView.GetLogFont(&lf);
-	lf.lfHeight = nSize;
-
+	lf.lfHeight = uiSize;
 	m_fontHexView.DeleteObject();
 	m_fontHexView.CreateFontIndirectW(&lf);
 
 	Recalc();
+}
+
+UINT CHexView::GetFontSize()
+{
+	LOGFONT lf;
+	m_fontHexView.GetLogFont(&lf);
+
+	return lf.lfHeight;
 }
 
 void CHexView::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
@@ -256,14 +264,6 @@ void CHexView::SetCapacity(DWORD dwCapacity)
 	m_dwGridCapacity = dwCapacity;
 	m_dwGridBlockSize = m_dwGridCapacity / 2;
 	Recalc();
-}
-
-UINT CHexView::GetFontSize()
-{
-	LOGFONT lf;
-	m_fontHexView.GetLogFont(&lf);
-
-	return lf.lfHeight;
 }
 
 void CHexView::OnInitialUpdate()
@@ -497,7 +497,6 @@ void CHexView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	CScrollView::OnKeyDown(nChar, nRepCnt, nFlags);
 }
-
 
 void CHexView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {

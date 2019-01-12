@@ -58,8 +58,8 @@ void CViewRightTL::OnInitialUpdate()
 	m_pLibpe->GetExceptionTable(m_pExceptionDir);
 	m_pLibpe->GetRelocationTable(m_pRelocTable);
 
-	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
-	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
+	m_stListInfo.clrTooltipText = RGB(255, 255, 255);
+	m_stListInfo.clrTooltipBk = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
 	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
 	m_stListInfo.dwHeaderHeight = 39;
@@ -859,7 +859,6 @@ int CViewRightTL::CreateListFileHeader()
 		return -1;
 
 	m_listFileHeader.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_FILEHEADER, &m_stListInfo);
-
 	m_listFileHeader.ShowWindow(SW_HIDE);
 	m_listFileHeader.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listFileHeader.InsertColumn(0, L"Name", LVCFMT_CENTER, 200);

@@ -100,11 +100,11 @@ namespace HEXControl
 		void SetData(const unsigned char* pData, DWORD_PTR dwCount);
 		void ClearData();
 		void SetFont(const LOGFONT* pLogFontNew);
-		void SetFontSize(UINT nSize);
+		void SetFontSize(UINT uiSize);
+		UINT GetFontSize();
 		void SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
 			COLORREF clrBk, COLORREF clrBkSelected);
 		void SetCapacity(DWORD dwCapacity);
-		UINT GetFontSize();
 	protected:
 		CHexView() {}
 		virtual ~CHexView() {}

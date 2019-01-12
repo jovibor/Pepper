@@ -33,8 +33,8 @@ void CViewRightBR::OnInitialUpdate()
 	}
 	m_stEditResStrings.SetFont(&m_fontEditRes);
 
-	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
-	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
+	m_stListInfo.clrTooltipText = RGB(255, 255, 255);
+	m_stListInfo.clrTooltipBk = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
 	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
 	m_stListInfo.dwHeaderHeight = 35;

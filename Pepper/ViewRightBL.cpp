@@ -31,8 +31,8 @@ void CViewRightBL::OnInitialUpdate()
 	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_BOTTOM_LEFT);
 	m_stHexEdit.ShowWindow(SW_HIDE);
 
-	m_stListInfo.clrListTooltipText = RGB(255, 255, 255);
-	m_stListInfo.clrListTooltipBk = RGB(0, 132, 132);
+	m_stListInfo.clrTooltipText = RGB(255, 255, 255);
+	m_stListInfo.clrTooltipBk = RGB(0, 132, 132);
 	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
 	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
 	m_stListInfo.dwHeaderHeight = 35;
