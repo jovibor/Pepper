@@ -59,13 +59,13 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	if (m_pActiveWnd)
 		m_pActiveWnd->ShowWindow(SW_HIDE);
 
-	CRect rect;
-	GetClientRect(&rect);
+	CRect rc;
+	GetClientRect(&rc);
 
 	switch (LOWORD(lHint))
 	{
 	case IDC_LIST_EXPORT:
-		m_listExportFuncs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_listExportFuncs.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listExportFuncs;
 		break;
 	case IDC_LIST_IMPORT_ENTRY:
@@ -74,7 +74,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		break;
 	case IDC_TREE_RESOURCE:
 	case IDC_HEX_RIGHT_TR:
-		m_treeResBottom.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_treeResBottom.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_treeResBottom;
 		break;
 	case IDC_LIST_SECURITY_ENTRY:
@@ -110,6 +110,11 @@ void CViewRightBL::OnSize(UINT nType, int cx, int cy)
 
 void CViewRightBL::OnDraw(CDC* pDC)
 {
+}
+
+BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
+{
+	return CScrollView::OnEraseBkgnd(pDC);
 }
 
 BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
@@ -158,11 +163,6 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	}
 
 	return CScrollView::OnNotify(wParam, lParam, pResult);
-}
-
-BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
-{
-	return CScrollView::OnEraseBkgnd(pDC);
 }
 
 int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)

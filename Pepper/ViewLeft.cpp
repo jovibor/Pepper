@@ -6,6 +6,7 @@ IMPLEMENT_DYNCREATE(CViewLeft, CView)
 
 BEGIN_MESSAGE_MAP(CViewLeft, CView)
 	ON_WM_SIZE()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 void CViewLeft::OnInitialUpdate()
@@ -168,6 +169,11 @@ BOOL CViewLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 
 void CViewLeft::OnDraw(CDC* pDC)
 {
+}
+
+BOOL CViewLeft::OnEraseBkgnd(CDC* pDC)
+{
+	return FALSE;
 }
 
 void CViewLeft::OnSize(UINT nType, int cx, int cy)

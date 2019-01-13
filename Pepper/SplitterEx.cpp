@@ -8,6 +8,7 @@
 IMPLEMENT_DYNAMIC(CSplitterEx, CSplitterWndEx)
 
 BEGIN_MESSAGE_MAP(CSplitterEx, CSplitterWndEx)
+	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
 BOOL CSplitterEx::CreateStatic(CWnd * m_pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
@@ -151,7 +152,33 @@ void CSplitterEx::RecalcPanes()
 	RecalcLayout();
 }
 
+void CSplitterEx::OnInvertTracker(const CRect& rect)
+{
+	return;
+}
+
 void CSplitterEx::OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect)
 {
 	CSplitterWndEx::OnDrawSplitter(pDC, nType, rect);
+}
+
+void CSplitterEx::StartTracking(int ht)
+{
+	CSplitterWndEx::StartTracking(ht);
+}
+
+void CSplitterEx::StopTracking(BOOL fAccept)
+{
+	CSplitterWndEx::StopTracking(fAccept);
+}
+
+void CSplitterEx::OnMouseMove(UINT nFlags, CPoint pt)
+{
+	CSplitterWndEx::OnMouseMove(nFlags, pt);
+
+	if (m_bTracking)
+	{
+		OnLButtonUp(0, pt);
+		OnLButtonDown(0, pt);
+	}
 }

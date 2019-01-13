@@ -11,6 +11,7 @@ BEGIN_MESSAGE_MAP(CViewRightTL, CView)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_IMPORT, &CViewRightTL::OnListImportGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_RELOCATIONS, &CViewRightTL::OnListRelocGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_EXCEPTION, &CViewRightTL::OnListExceptionGetDispInfo)
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 void CViewRightTL::OnInitialUpdate()
@@ -115,123 +116,103 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	{
 	case IDC_SHOW_FILE_SUMMARY:
 		m_fFileSummaryShow = true;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_DOSHEADER:
 		m_listDOSHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listDOSHeader;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_RICHHEADER:
 		m_listRichHdr.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listRichHdr;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_NTHEADER:
 		m_listNTHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listNTHeader;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_FILEHEADER:
 		m_listFileHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listFileHeader;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_OPTIONALHEADER:
 		m_listOptHeader.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listOptHeader;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_DATADIRECTORIES:
 		m_listDataDirs.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listDataDirs;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_SECHEADERS:
 		m_listSecHeaders.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listSecHeaders;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_EXPORT:
 		m_listExportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listExportDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_IAT:
 	case IDC_LIST_IMPORT:
 		m_listImport.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listImport;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_TREE_RESOURCE:
 		m_treeResTop.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_treeResTop;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_EXCEPTION:
 		m_listExceptionDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listExceptionDir;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_SECURITY:
 		m_listSecurityDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listSecurityDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_RELOCATIONS:
 		m_listRelocDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listRelocDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_DEBUG:
 		m_listDebugDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listDebugDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_TLS:
 		m_listTLSDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listTLSDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_LOADCONFIG:
 		m_listLoadConfigDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listLoadConfigDir;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_BOUNDIMPORT:
 		m_listBoundImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height() / 2, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listBoundImportDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	case IDC_LIST_DELAYIMPORT:
 		m_listDelayImportDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listDelayImportDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height() / 2, 0);
 		break;
 	case IDC_LIST_COMDESCRIPTOR:
 		m_listCOMDir.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listCOMDir;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
-		m_pChildFrame->m_stSplitterRight.SetRowInfo(0, rectClient.Height(), 0);
 		break;
 	}
 	m_pChildFrame->m_stSplitterRight.RecalcLayout();
@@ -243,23 +224,32 @@ void CViewRightTL::OnDraw(CDC* pDC)
 	//currently oppened file's type and name.
 	if (m_fFileSummaryShow)
 	{
+		CRect rc;
+		GetClientRect(rc);
+		pDC->FillSolidRect(rc, RGB(255, 255, 255));
 		pDC->SelectObject(m_fontSummary);
-		CRect rect { 20, 20, 400, 150 };
 
+		rc.SetRect(20, 20, 400, 150);
 		GetTextExtentPoint32W(pDC->m_hDC, m_strFileName.c_str(), m_strFileName.length(), &m_sizeTextToDraw);
-		if (m_sizeTextToDraw.cx > rect.Width())
-			rect.right = m_sizeTextToDraw.cx + rect.left + 30;
-		pDC->Rectangle(&rect);
+		if (m_sizeTextToDraw.cx > rc.Width())
+			rc.right = m_sizeTextToDraw.cx + rc.left + 30;
+		pDC->Rectangle(&rc);
 
 		pDC->SetTextColor(RGB(200, 50, 30));
 		GetTextExtentPoint32W(pDC->m_hDC, m_strVersion.c_str(), m_strVersion.length(), &m_sizeTextToDraw);
-		ExtTextOutW(pDC->m_hDC, (rect.Width() - m_sizeTextToDraw.cx) / 2 + rect.left, 10, 0, nullptr,
+		ExtTextOutW(pDC->m_hDC, (rc.Width() - m_sizeTextToDraw.cx) / 2 + rc.left, 10, 0, nullptr,
 			m_strVersion.c_str(), m_strVersion.length(), nullptr);
 
 		pDC->SetTextColor(RGB(0, 0, 255));
 		ExtTextOutW(pDC->m_hDC, 35, 25 + m_sizeTextToDraw.cy, 0, nullptr, m_strFileType.c_str(), m_strFileType.length(), nullptr);
 		ExtTextOutW(pDC->m_hDC, 35, 55 + m_sizeTextToDraw.cy, 0, nullptr, m_strFileName.c_str(), m_strFileName.length(), nullptr);
 	}
+}
+
+BOOL CViewRightTL::OnEraseBkgnd(CDC* pDC)
+{
+	//return CScrollView::OnEraseBkgnd(pDC);
+	return FALSE;
 }
 
 void CViewRightTL::OnSize(UINT nType, int cx, int cy)

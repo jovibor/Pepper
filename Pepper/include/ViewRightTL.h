@@ -17,6 +17,7 @@ protected:
 	void OnUpdate(CView*, LPARAM, CObject*) override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
 	void OnDraw(CDC* pDC) override; // overridden to draw this view.
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnListSectionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);

@@ -12,7 +12,8 @@ protected:
 	void OnInitialUpdate() override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
 	void OnDraw(CDC*) override;
-	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnSize(UINT nType, int cx, int cy);	
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe { };

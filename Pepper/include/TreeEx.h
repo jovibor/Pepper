@@ -6,6 +6,7 @@ class CTreeEx : public CTreeCtrl
 	CTreeEx() {}
 	virtual ~CTreeEx() {}
 protected:
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	DECLARE_MESSAGE_MAP()

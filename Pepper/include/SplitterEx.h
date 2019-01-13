@@ -7,7 +7,7 @@
 * Public method AddNested() is used when dealing with nested splitters.			*
 * It's needed to properly handle Hide/Show row/cols methods on splitters		*
 * without generic views, i.e. splitters that is used as host for other, nested	*
-* splitters. Below is an example:												*																		
+* splitters. Below is an example:												*
 * CSplitterEx mainSpl, leftSpl, rightSpl;										*
 * mainSpl.CreateStatic(this, 2, 1);												*
 * leftSpl.CreateStatic(&mainSpl, 1, 2, dwStyle, mainSpl.IdFromRowCol(0, 0));	*
@@ -34,11 +34,15 @@ public:
 	DECLARE_MESSAGE_MAP()
 protected:
 	void RecalcPanes();
+	void StartTracking(int ht);
+	void StopTracking(BOOL fAccept);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	virtual void OnInvertTracker(const CRect& rect);
+	virtual void OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect);
+private:
 	//Vector of row/col is visible?
 	std::vector<bool> m_vecRows { };
 	std::vector<bool> m_vecCols { };
 	//row, column ,pPane.
 	std::vector<std::tuple<int, int, CWnd*>> m_vecPanes { };
-private:
-	virtual void OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect);
 };
