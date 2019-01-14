@@ -15,7 +15,6 @@ void CViewRightBL::OnInitialUpdate()
 	CScrollView::OnInitialUpdate();
 
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
-
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 	if (!m_pLibpe)
@@ -58,7 +57,8 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 
 	if (m_pActiveWnd)
 		m_pActiveWnd->ShowWindow(SW_HIDE);
-
+	
+	m_fRedraw = false;
 	CRect rc;
 	GetClientRect(&rc);
 
@@ -97,6 +97,8 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		CreateHexDebugEntry(HIWORD(lHint));
 		m_pActiveWnd = &m_stHexEdit;
 		break;
+	default:
+		m_fRedraw = true;
 	}
 }
 
@@ -114,7 +116,10 @@ void CViewRightBL::OnDraw(CDC* pDC)
 
 BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 {
-	return CScrollView::OnEraseBkgnd(pDC);
+	if (m_fRedraw)
+		return CScrollView::OnEraseBkgnd(pDC);
+
+	return FALSE;
 }
 
 BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
@@ -193,27 +198,25 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 
 	m_listImportEntry.DestroyWindow();
 	m_listImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
-
-	m_listImportEntry.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listImportEntry.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 175);
 	m_listImportEntry.InsertColumn(1, L"Ordinal / Hint", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
 	m_listImportEntry.InsertColumn(2, L"ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 150);
 
 	int listindex = 0;
-	TCHAR str[MAX_PATH] { };
+	WCHAR wstr[MAX_PATH];
 
 	m_listImportEntry.SetRedraw(FALSE);
 	for (auto& i : std::get<2>(m_pImportTable->at(dwEntry)))
 	{
-		swprintf_s(str, 256, L"%S", std::get<1>(i).c_str());
-		m_listImportEntry.InsertItem(listindex, str);
-		swprintf_s(str, 17, L"%04llX", std::get<0>(i));
-		m_listImportEntry.SetItemText(listindex, 1, str);
+		swprintf_s(wstr, 256, L"%S", std::get<1>(i).c_str());
+		m_listImportEntry.InsertItem(listindex, wstr);
+		swprintf_s(wstr, 17, L"%04llX", std::get<0>(i));
+		m_listImportEntry.SetItemText(listindex, 1, wstr);
 		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(str, 9, L"%08llX", std::get<2>(i));
+			swprintf_s(wstr, 9, L"%08llX", std::get<2>(i));
 		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(str, 17, L"%016llX", std::get<2>(i));
-		m_listImportEntry.SetItemText(listindex, 2, str);
+			swprintf_s(wstr, 17, L"%016llX", std::get<2>(i));
+		m_listImportEntry.SetItemText(listindex, 2, wstr);
 
 		listindex++;
 	}
@@ -238,8 +241,6 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 
 	m_listDelayImportEntry.DestroyWindow();
 	m_listDelayImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS, &m_stListInfo);
-
-	m_listDelayImportEntry.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listDelayImportEntry.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
 	m_listDelayImportEntry.InsertColumn(1, L"Ordinal / Hint", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
 	m_listDelayImportEntry.InsertColumn(2, L"ImportNameTable ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 200);
@@ -248,35 +249,35 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 	m_listDelayImportEntry.InsertColumn(5, L"UnloadInformationTable ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 240);
 
 	int listindex = 0;
-	TCHAR str[MAX_PATH] { };
+	WCHAR wstr[MAX_PATH];
 
 	m_listDelayImportEntry.SetRedraw(FALSE);
 	for (auto&i : std::get<2>(pDelayImport->at(dwEntry)))
 	{
-		swprintf_s(str, 256, L"%S", std::get<1>(i).c_str());
-		m_listDelayImportEntry.InsertItem(listindex, str);
-		swprintf_s(str, 17, L"%04llX", std::get<0>(i));
-		m_listDelayImportEntry.SetItemText(listindex, 1, str);
+		swprintf_s(wstr, 256, L"%S", std::get<1>(i).c_str());
+		m_listDelayImportEntry.InsertItem(listindex, wstr);
+		swprintf_s(wstr, 17, L"%04llX", std::get<0>(i));
+		m_listDelayImportEntry.SetItemText(listindex, 1, wstr);
 		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(str, 9, L"%08llX", std::get<2>(i));
+			swprintf_s(wstr, 9, L"%08llX", std::get<2>(i));
 		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(str, 17, L"%016llX", std::get<2>(i));
-		m_listDelayImportEntry.SetItemText(listindex, 2, str);
+			swprintf_s(wstr, 17, L"%016llX", std::get<2>(i));
+		m_listDelayImportEntry.SetItemText(listindex, 2, wstr);
 		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(str, 9, L"%08llX", std::get<3>(i));
+			swprintf_s(wstr, 9, L"%08llX", std::get<3>(i));
 		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(str, 17, L"%016llX", std::get<3>(i));
-		m_listDelayImportEntry.SetItemText(listindex, 3, str);
+			swprintf_s(wstr, 17, L"%016llX", std::get<3>(i));
+		m_listDelayImportEntry.SetItemText(listindex, 3, wstr);
 		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(str, 9, L"%08llX", std::get<4>(i));
+			swprintf_s(wstr, 9, L"%08llX", std::get<4>(i));
 		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(str, 17, L"%016llX", std::get<4>(i));
-		m_listDelayImportEntry.SetItemText(listindex, 4, str);
+			swprintf_s(wstr, 17, L"%016llX", std::get<4>(i));
+		m_listDelayImportEntry.SetItemText(listindex, 4, wstr);
 		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(str, 9, L"%08llX", std::get<5>(i));
+			swprintf_s(wstr, 9, L"%08llX", std::get<5>(i));
 		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(str, 17, L"%016llX", std::get<5>(i));
-		m_listDelayImportEntry.SetItemText(listindex, 5, str);
+			swprintf_s(wstr, 17, L"%016llX", std::get<5>(i));
+		m_listDelayImportEntry.SetItemText(listindex, 5, wstr);
 
 		listindex++;
 	}
@@ -298,7 +299,6 @@ int CViewRightBL::CreateListExportFuncs()
 
 	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, &m_stListInfo);
 	m_listExportFuncs.ShowWindow(SW_HIDE);
-	m_listExportFuncs.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listExportFuncs.InsertColumn(0, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
 	m_listExportFuncs.InsertColumn(1, L"Ordinal", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
 	m_listExportFuncs.InsertColumn(2, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
@@ -306,18 +306,18 @@ int CViewRightBL::CreateListExportFuncs()
 
 	m_listExportFuncs.SetRedraw(FALSE); //to increase the speed of List populating
 	int listindex = 0;
-	WCHAR str[MAX_PATH] { };
+	WCHAR wstr[MAX_PATH];
 
 	for (auto& i : std::get<2>(*pExportTable))
 	{
-		swprintf_s(str, 9, L"%08X", std::get<0>(i));
-		m_listExportFuncs.InsertItem(listindex, str);
-		swprintf_s(str, 9, L"%u", std::get<1>(i));
-		m_listExportFuncs.SetItemText(listindex, 1, str);
-		swprintf_s(str, MAX_PATH, L"%S", std::get<2>(i).c_str());
-		m_listExportFuncs.SetItemText(listindex, 2, str);
-		swprintf_s(str, MAX_PATH, L"%S", std::get<3>(i).c_str());
-		m_listExportFuncs.SetItemText(listindex, 3, str);
+		swprintf_s(wstr, 9, L"%08X", std::get<0>(i));
+		m_listExportFuncs.InsertItem(listindex, wstr);
+		swprintf_s(wstr, 9, L"%u", std::get<1>(i));
+		m_listExportFuncs.SetItemText(listindex, 1, wstr);
+		swprintf_s(wstr, MAX_PATH, L"%S", std::get<2>(i).c_str());
+		m_listExportFuncs.SetItemText(listindex, 2, wstr);
+		swprintf_s(wstr, MAX_PATH, L"%S", std::get<3>(i).c_str());
+		m_listExportFuncs.SetItemText(listindex, 3, wstr);
 
 		listindex++;
 	}
@@ -339,7 +339,6 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 
 	m_listRelocsEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, &m_stListInfo);
 	m_listRelocsEntry.ShowWindow(SW_HIDE);
-	m_listRelocsEntry.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_listRelocsEntry.InsertColumn(0, L"Reloc type", LVCFMT_CENTER, 250);
 	m_listRelocsEntry.InsertColumn(1, L"Offset", LVCFMT_LEFT, 100);
 
@@ -358,7 +357,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	};
 
 	int listindex = 0;
-	WCHAR str[MAX_PATH] { };
+	WCHAR wstr[MAX_PATH];
 
 	m_listRelocsEntry.SetRedraw(FALSE);
 	for (auto& iterRelocs : std::get<1>(pRelocTable->at(dwEntry)))
@@ -366,13 +365,13 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 		WORD wRelocType = std::get<0>(iterRelocs);
 		auto it = mapRelocTypes.find(wRelocType);
 		if (it != mapRelocTypes.end())
-			swprintf_s(str, MAX_PATH, L"%s", it->second.data());
+			swprintf_s(wstr, MAX_PATH, L"%s", it->second.data());
 		else
-			swprintf_s(str, MAX_PATH, L"%u", wRelocType);
+			swprintf_s(wstr, MAX_PATH, L"%u", wRelocType);
 
-		m_listRelocsEntry.InsertItem(listindex, str);
-		swprintf_s(str, 5, L"%04X", std::get<1>(iterRelocs));
-		m_listRelocsEntry.SetItemText(listindex, 1, str);
+		m_listRelocsEntry.InsertItem(listindex, wstr);
+		swprintf_s(wstr, 5, L"%04X", std::get<1>(iterRelocs));
+		m_listRelocsEntry.SetItemText(listindex, 1, wstr);
 
 		listindex++;
 	}
@@ -412,7 +411,7 @@ int CViewRightBL::CreateTreeResources()
 		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_BOTTOM);
 	m_treeResBottom.ShowWindow(SW_HIDE);
 
-	WCHAR str[MAX_PATH] { };
+	WCHAR wstr[MAX_PATH];
 
 	m_imglTreeRes.Create(16, 16, ILC_COLOR32, 0, 4);
 	const int iconDirs = m_imglTreeRes.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_DIR_ICON));
@@ -427,16 +426,16 @@ int CViewRightBL::CreateTreeResources()
 		const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry = &std::get<0>(iterRoot);
 		if (pResDirEntry->NameIsString)
 			//Enclose in double quotes.
-			swprintf(str, MAX_PATH, L"\u00AB%s\u00BB", std::get<1>(iterRoot).c_str());
+			swprintf(wstr, MAX_PATH, L"\u00AB%s\u00BB", std::get<1>(iterRoot).c_str());
 		else
 		{	//Setting Treectrl root node name depending on Resource typeID.
 			if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
-				swprintf(str, MAX_PATH, L"%s [Id: %u]", g_mapResType.at(pResDirEntry->Id).data(), pResDirEntry->Id);
+				swprintf(wstr, MAX_PATH, L"%s [Id: %u]", g_mapResType.at(pResDirEntry->Id).data(), pResDirEntry->Id);
 			else
-				swprintf(str, MAX_PATH, L"%u", pResDirEntry->Id);
+				swprintf(wstr, MAX_PATH, L"%u", pResDirEntry->Id);
 		}
 
-		const HTREEITEM treeRoot = m_treeResBottom.InsertItem(str, iconDirs, iconDirs);
+		const HTREEITEM treeRoot = m_treeResBottom.InsertItem(wstr, iconDirs, iconDirs);
 		m_vecResId.emplace_back(ilvlRoot, -1, -1);
 		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
 		ilvl2 = 0;
@@ -454,12 +453,12 @@ int CViewRightBL::CreateTreeResources()
 			{
 				pResDirEntry = &std::get<0>(iterLvL3);
 				if (pResDirEntry->NameIsString)
-					swprintf(str, MAX_PATH, L"«%s» - lang: %i", std::get<1>(iterLvL2).c_str(), pResDirEntry->Id);
+					swprintf(wstr, MAX_PATH, L"«%s» - lang: %i", std::get<1>(iterLvL2).c_str(), pResDirEntry->Id);
 				else
-					swprintf(str, MAX_PATH, L"%u - lang: %i", std::get<0>(iterLvL2).Id, pResDirEntry->Id);
+					swprintf(wstr, MAX_PATH, L"%u - lang: %i", std::get<0>(iterLvL2).Id, pResDirEntry->Id);
 
 				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
-				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(str, treeRoot), m_vecResId.size() - 1);
+				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(wstr, treeRoot), m_vecResId.size() - 1);
 				ilvl3++;
 			}
 			ilvl2++;

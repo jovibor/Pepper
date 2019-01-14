@@ -564,19 +564,17 @@ BOOL CListEx::OnEraseBkgnd(CDC* pDC)
 }
 
 void CListEx::OnPaint()
-{
-	CPaintDC dc(this);
-
+{	
 	//To avoid flickering.
 	//Drawing to CMemDC, excluding list header area (rc).
 	CRect rc, rcHdr;
 	GetClientRect(&rc);
 	GetHeaderCtrl().GetClientRect(rcHdr);
 	rc.top += rcHdr.Height();
-
+	
+	CPaintDC dc(this);
 	CMemDC memDC(dc, rc);
 	CDC& rDC = memDC.GetDC();
-
 	rDC.GetClipBox(&rc);
 	rDC.FillSolidRect(rc, m_clrBkNWA);
 

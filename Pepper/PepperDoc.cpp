@@ -17,14 +17,14 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	HRESULT hr;
 	if ((hr = m_pLibpe->LoadPe(lpszPathName)) != S_OK)
 	{
-		WCHAR str[MAX_PATH] { };
+		WCHAR wstr[MAX_PATH];
 		const auto it = g_mapLibpeErrors.find(hr);
 		if (it != g_mapLibpeErrors.end())
-			swprintf_s(str, L"File load failed with libpe error code: 0x0%X\n%s", hr, it->second.data());
+			swprintf_s(wstr, L"File load failed with libpe error code: 0x0%X\n%s", hr, it->second.data());
 		else
-			swprintf_s(str, L"File load failed with libpe error code: 0x0%X", hr);
+			swprintf_s(wstr, L"File load failed with libpe error code: 0x0%X", hr);
 
-		MessageBoxW(nullptr, str, L"File load failed.", MB_ICONERROR);
+		MessageBoxW(nullptr, wstr, L"File load failed.", MB_ICONERROR);
 
 		return FALSE;
 	}

@@ -32,9 +32,9 @@ END_MESSAGE_MAP()
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	WCHAR strVersion[MAX_PATH] { };
-	swprintf_s(strVersion, MAX_PATH, L"Version: %u.%u.%u", MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION);
-	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, strVersion);
+	WCHAR wstrVersion[MAX_PATH];
+	swprintf_s(wstrVersion, MAX_PATH, L"Version: %u.%u.%u", MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION);
+	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, wstrVersion);
 
 	//to prevent cursor from blinking
 	SetClassLongPtr(m_hWnd, GCL_HCURSOR, 0);
@@ -170,14 +170,14 @@ void CPepperApp::OnAppAbout()
 
 void CPepperApp::OnFileOpen()
 {
-	WCHAR strFilePath[2048] { };
+	WCHAR wstrFilePath[2048] { }; //Initial zeroing is needed.
 
 	OPENFILENAME stOFN { };
 	stOFN.lStructSize = sizeof(stOFN);
 	stOFN.hwndOwner = AfxGetMainWnd()->GetSafeHwnd();
 	stOFN.lpstrFilter = L"All files (*.*)\0*.*\0\0";
-	stOFN.lpstrFile = strFilePath;
-	stOFN.nMaxFile = sizeof(strFilePath) / sizeof(WCHAR);
+	stOFN.lpstrFile = wstrFilePath;
+	stOFN.nMaxFile = sizeof(wstrFilePath) / sizeof(WCHAR);
 	stOFN.lpstrTitle = L"Select one or more PE files";
 	stOFN.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
 		OFN_EXPLORER | OFN_ENABLESIZING | OFN_DONTADDTORECENT;
@@ -186,10 +186,10 @@ void CPepperApp::OnFileOpen()
 		return;
 
 	//Checking for multi file selection:
-	//If strFilePath at offset [stOFN.nFileOffset - 1] equals '\0'
+	//If wstrFilePath at offset [stOFN.nFileOffset - 1] equals '\0'
 	//it means that we have multiple file names following path name,
 	//divided with NULLs ('\0'). See OFN_ALLOWMULTISELECT description.
-	if (strFilePath[stOFN.nFileOffset - 1] == '\0')
+	if (wstrFilePath[stOFN.nFileOffset - 1] == '\0')
 	{
 		WCHAR* pwszFileName = stOFN.lpstrFile;
 		std::wstring strDir = pwszFileName;

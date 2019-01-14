@@ -427,21 +427,21 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			//Read the list of languages and code pages.
 			VerQueryValueW(pRes->pData->data(), L"\\VarFileInfo\\Translation", (LPVOID*)&pLangAndCP, &dwBytesOut);
 
-			WCHAR strSubBlock[50];
+			WCHAR wstrSubBlock[50];
 			DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
 			//Read the file description for each language and code page.
 			for (unsigned iterCodePage = 0; iterCodePage < dwLangCount; iterCodePage++)
 			{
 				for (unsigned i = 0; i < m_mapVerInfoStrings.size(); i++) //sizeof pstrVerInfoStrings [];
 				{
-					swprintf_s(strSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
+					swprintf_s(wstrSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
 						pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, m_mapVerInfoStrings.at(i).data());
 
 					m_wstrRes += m_mapVerInfoStrings.at(i).data();
 					m_wstrRes += L" - ";
 
 					WCHAR* pszBufferOut;
-					if (VerQueryValueW(pRes->pData->data(), strSubBlock, (LPVOID*)&pszBufferOut, &dwBytesOut))
+					if (VerQueryValueW(pRes->pData->data(), wstrSubBlock, (LPVOID*)&pszBufferOut, &dwBytesOut))
 						if (dwBytesOut)
 							m_wstrRes += pszBufferOut;
 					m_wstrRes += L"\r\n";
@@ -617,16 +617,15 @@ int CViewRightBR::CreateListTLSCallbacks()
 		return -1;
 
 	m_stListTLSCallbacks.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_TLS_CALLBACKS, &m_stListInfo);
-	m_stListTLSCallbacks.SendMessageW(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 	m_stListTLSCallbacks.InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
 
 	int listindex { };
-	WCHAR str[9] { };
+	WCHAR wstr[9];
 
 	for (auto& iterCallbacks : std::get<2>(*pTLS))
 	{
-		swprintf_s(str, 9, L"%08X", iterCallbacks);
-		m_stListTLSCallbacks.InsertItem(listindex, str);
+		swprintf_s(wstr, 9, L"%08X", iterCallbacks);
+		m_stListTLSCallbacks.InsertItem(listindex, wstr);
 		listindex++;
 	}
 
