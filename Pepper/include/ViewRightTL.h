@@ -26,11 +26,12 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe { };
-	std::wstring m_strVersion { };
 	SIZE m_sizeTextToDraw { };
 	CFont m_fontSummary;
-	std::wstring m_strFileName { };
-	std::wstring m_strFileType { };
+	std::wstring m_wstrAppVersion { };
+	std::wstring m_wstrFileName { };
+	std::wstring m_wstrFileType { };
+	std::wstring m_wstrFullPath { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	LISTEXINFO m_stListInfo;

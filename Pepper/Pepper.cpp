@@ -134,12 +134,23 @@ BOOL CPepperApp::InitInstance()
 	}
 	m_pMainWnd = pMainFrame;
 
+	//For Drag'n Drop working, even in elevated state.
+	//Good explanation here:
+	//helgeklein.com/blog/2010/03/how-to-enable-drag-and-drop-for-an-elevated-mfc-application-on-vistawindows-7/
+	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
+	ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
+	ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
+	DragAcceptFiles(m_pMainWnd->m_hWnd, TRUE);
+
 	// Parse command line for standard shell commands, DDE, file open
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
 	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)
 		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
 
+	PVOID pOldValue;
+	Wow64DisableWow64FsRedirection(&pOldValue);
+	
 	// Dispatch commands specified on the command line. Will return FALSE if
 	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
 	if (!ProcessShellCommand(cmdInfo))
@@ -153,6 +164,8 @@ BOOL CPepperApp::InitInstance()
 	//(with command line arg file name to be opened).
 	if (cmdInfo.m_strFileName.IsEmpty())
 		OnFileOpen();
+
+	Wow64RevertWow64FsRedirection(pOldValue);
 
 	return TRUE;
 }
@@ -172,26 +185,28 @@ void CPepperApp::OnFileOpen()
 {
 	WCHAR wstrFilePath[2048] { }; //Initial zeroing is needed.
 
-	OPENFILENAME stOFN { };
-	stOFN.lStructSize = sizeof(stOFN);
-	stOFN.hwndOwner = AfxGetMainWnd()->GetSafeHwnd();
-	stOFN.lpstrFilter = L"All files (*.*)\0*.*\0\0";
-	stOFN.lpstrFile = wstrFilePath;
-	stOFN.nMaxFile = sizeof(wstrFilePath) / sizeof(WCHAR);
-	stOFN.lpstrTitle = L"Select one or more PE files";
-	stOFN.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
+	OPENFILENAME ofn { };
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = AfxGetMainWnd()->GetSafeHwnd();
+	ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
+	ofn.lpstrFile = wstrFilePath;
+	ofn.nMaxFile = sizeof(wstrFilePath) / sizeof(WCHAR);
+	ofn.lpstrTitle = L"Select one or more PE files";
+	ofn.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
 		OFN_EXPLORER | OFN_ENABLESIZING | OFN_DONTADDTORECENT;
 
-	if (!GetOpenFileNameW(&stOFN))
+	PVOID pOldValue;
+//	Wow64DisableWow64FsRedirection(&pOldValue);
+	if (!GetOpenFileNameW(&ofn))
 		return;
 
 	//Checking for multi file selection:
-	//If wstrFilePath at offset [stOFN.nFileOffset - 1] equals '\0'
+	//If wstrFilePath at offset [ofn.nFileOffset - 1] equals '\0'
 	//it means that we have multiple file names following path name,
 	//divided with NULLs ('\0'). See OFN_ALLOWMULTISELECT description.
-	if (wstrFilePath[stOFN.nFileOffset - 1] == '\0')
+	if (wstrFilePath[ofn.nFileOffset - 1] == '\0')
 	{
-		WCHAR* pwszFileName = stOFN.lpstrFile;
+		WCHAR* pwszFileName = ofn.lpstrFile;
 		std::wstring strDir = pwszFileName;
 		pwszFileName += (strDir.length() + 1);
 		while (*pwszFileName)
@@ -204,7 +219,9 @@ void CPepperApp::OnFileOpen()
 		}
 	}
 	else
-		CWinAppEx::OpenDocumentFile(stOFN.lpstrFile);
+		CWinAppEx::OpenDocumentFile(ofn.lpstrFile);
+
+//	Wow64RevertWow64FsRedirection(pOldValue);
 }
 
 void CPepperApp::PreLoadState()

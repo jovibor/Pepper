@@ -44,14 +44,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// improves the usability of the taskbar because the document name is visible with the thumbnail.
 	ModifyStyle(0, FWS_PREFIXTITLE);
 
-	//For Drag'n Drop working, even in elevated state.
-	//Good explanation here:
-	//helgeklein.com/blog/2010/03/how-to-enable-drag-and-drop-for-an-elevated-mfc-application-on-vistawindows-7/
-	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
-	ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
-	ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
-	DragAcceptFiles();
-
 	return 0;
 }
 
@@ -85,8 +77,11 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 }
 
 void CMainFrame::OnDropFiles(HDROP hDropInfo)
-{	
+{
+	PVOID pOldValue;
+	Wow64DisableWow64FsRedirection(&pOldValue);
 	CMDIFrameWndEx::OnDropFiles(hDropInfo);
+	Wow64RevertWow64FsRedirection(pOldValue);
 }
 
 void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
