@@ -21,7 +21,7 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnListSectionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnListRelocGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListRelocsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListExceptionGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	DECLARE_MESSAGE_MAP()
 private:
@@ -48,7 +48,7 @@ private:
 	CListEx m_listSecurityDir;
 	CListEx m_listRelocDir;
 	CListEx m_listDebugDir;
-	CListEx m_listLoadConfigDir;
+	CListEx m_listLCD;
 	CListEx m_listBoundImportDir;
 	CListEx m_listDelayImportDir;
 	CListEx m_listTLSDir;
@@ -59,7 +59,7 @@ private:
 	ULONG m_dwPeStart { };
 	DWORD m_dwFileSummary { };
 	PCLIBPE_SECHEADERS_VEC m_pSecHeaders { };
-	PCLIBPE_IMPORT_VEC m_pImportTable { };
+	PCLIBPE_IMPORT_VEC m_pImport { };
 	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
 	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
 	CWnd* m_pActiveWnd { };
@@ -79,9 +79,9 @@ private:
 	int CreateListExport();
 	int CreateListImport();
 	int CreateTreeResources();
-	int CreateListException();
+	int CreateListExceptions();
 	int CreateListSecurity();
-	int CreateListRelocation();
+	int CreateListRelocations();
 	int CreateListDebug();
 	int CreateListTLS();
 	int CreateListLoadConfigTable();

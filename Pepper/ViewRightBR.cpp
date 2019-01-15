@@ -105,8 +105,8 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
-	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
-	if (m_pLibpe->GetResources(pTupResRoot) != S_OK)
+	PCLIBPE_RESOURCE_ROOT pstResRoot;
+	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 		return;
 
 	if (pRes)
@@ -295,24 +295,24 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 
 			for (int i = 0; i < pGRPIDir->idCount; i++)
 			{
-				auto& rootvec = std::get<1>(*pTupResRoot);
+				auto& rootvec = pstResRoot->vecResRoot;
 				for (auto& iterRoot : rootvec)
 				{
-					if (std::get<0>(iterRoot).Id == 1) //RT_CURSOR
+					if (iterRoot.stResDirEntryRoot.Id == 1) //RT_CURSOR
 					{
-						auto& lvl2tup = std::get<4>(iterRoot);
-						auto& lvl2vec = std::get<1>(lvl2tup);
+						auto& lvl2tup = iterRoot.stResLvL2;
+						auto& lvl2vec = lvl2tup.vecResLvL2;
 
 						for (auto& iterlvl2 : lvl2vec)
 						{
-							if (std::get<0>(iterlvl2).Id == pGRPIDir->idEntries[i].nID)
+							if (iterlvl2.stResDirEntryLvL2.Id == pGRPIDir->idEntries[i].nID)
 							{
-								auto& lvl3tup = std::get<4>(iterlvl2);
-								auto& lvl3vec = std::get<1>(lvl3tup);
+								auto& lvl3tup = iterlvl2.stResLvL3;
+								auto& lvl3vec = lvl3tup.vecResLvL3;
 
 								if (!lvl3vec.empty())
 								{
-									auto& data = std::get<3>(lvl3vec.at(0));
+									auto& data =lvl3vec.at(0).vecResRawDataLvL3;
 									if (!data.empty())
 									{
 										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), data.size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
@@ -360,24 +360,24 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 
 			for (int i = 0; i < pGRPIDir->idCount; i++)
 			{
-				auto& rootvec = std::get<1>(*pTupResRoot);
+				auto& rootvec = pstResRoot->vecResRoot;
 				for (auto& iterRoot : rootvec)
 				{
-					if (std::get<0>(iterRoot).Id == 3) //RT_ICON
+					if (iterRoot.stResDirEntryRoot.Id == 3) //RT_ICON
 					{
-						auto& lvl2tup = std::get<4>(iterRoot);
-						auto& lvl2vec = std::get<1>(lvl2tup);
+						auto& lvl2tup = iterRoot.stResLvL2;
+						auto& lvl2vec = lvl2tup.vecResLvL2;
 
 						for (auto& iterlvl2 : lvl2vec)
 						{
-							if (std::get<0>(iterlvl2).Id == pGRPIDir->idEntries[i].nID)
+							if (iterlvl2.stResDirEntryLvL2.Id == pGRPIDir->idEntries[i].nID)
 							{
-								auto& lvl3tup = std::get<4>(iterlvl2);
-								auto& lvl3vec = std::get<1>(lvl3tup);
+								auto& lvl3tup = iterlvl2.stResLvL3;
+								auto& lvl3vec = lvl3tup.vecResLvL3;
 
 								if (!lvl3vec.empty())
 								{
-									auto& data = std::get<3>(lvl3vec.at(0));
+									auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 									if (!data.empty())
 									{
 										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), data.size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
@@ -473,24 +473,24 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			if (pRes->pData->empty())
 				return ResLoadError();
 
-			auto& rootvec = std::get<1>(*pTupResRoot);
+			auto& rootvec = pstResRoot->vecResRoot;
 			for (auto& iterRoot : rootvec)
 			{
-				if (std::get<0>(iterRoot).Id == 2) //RT_BITMAP
+				if (iterRoot.stResDirEntryRoot.Id == 2) //RT_BITMAP
 				{
-					auto& lvl2tup = std::get<4>(iterRoot);
-					auto& lvl2vec = std::get<1>(lvl2tup);
+					auto& lvl2tup = iterRoot.stResLvL2;
+					auto& lvl2vec = lvl2tup.vecResLvL2;
 
 					for (auto& iterlvl2 : lvl2vec)
 					{
-						if (std::get<0>(iterlvl2).Id == pRes->IdResName)
+						if (iterlvl2.stResDirEntryLvL2.Id == pRes->IdResName)
 						{
-							auto& lvl3tup = std::get<4>(iterlvl2);
-							auto& lvl3vec = std::get<1>(lvl3tup);
+							auto& lvl3tup = iterlvl2.stResLvL3;
+							auto& lvl3vec = lvl3tup.vecResLvL3;
 
 							if (!lvl3vec.empty())
 							{
-								auto& data = std::get<3>(lvl3vec.at(0));
+								auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 								if (!data.empty())
 									ShowResource(&RESHELPER(2, pRes->IdResName, (std::vector<std::byte>*)&data));
 							}
@@ -612,7 +612,7 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 
 int CViewRightBR::CreateListTLSCallbacks()
 {
-	PCLIBPE_TLS_TUP pTLS { };
+	PCLIBPE_TLS pTLS;
 	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
 
@@ -622,7 +622,7 @@ int CViewRightBR::CreateListTLSCallbacks()
 	int listindex { };
 	WCHAR wstr[9];
 
-	for (auto& iterCallbacks : std::get<2>(*pTLS))
+	for (auto& iterCallbacks : pTLS->vecTLSCallbacks)
 	{
 		swprintf_s(wstr, 9, L"%08X", iterCallbacks);
 		m_stListTLSCallbacks.InsertItem(listindex, wstr);

@@ -61,12 +61,12 @@ inline const std::map<WORD, std::wstring> g_mapResType {
 { 28, L"RT_RIBBON_XML" },
 { 240, L"RT_DLGINIT" },
 { 241, L"RT_TOOLBAR" }
-}; 
+};
 
 struct RESHELPER
-{	
+{
 	RESHELPER() {}
-	RESHELPER(WORD type, WORD name, std::vector<std::byte>* data) :IdResType(type), IdResName(name),pData(data) {}
+	RESHELPER(WORD type, WORD name, std::vector<std::byte>* data) :IdResType(type), IdResName(name), pData(data) {}
 	WORD IdResType { };
 	WORD IdResName { };
 	std::vector<std::byte>* pData { };
@@ -117,3 +117,5 @@ constexpr auto IDC_SHOW_RESOURCE_RBR = 0x0301;
 /********************************************************
 * End of IDC.											*
 ********************************************************/
+
+constexpr COLORREF g_clrOffset = RGB(150, 150, 150);
