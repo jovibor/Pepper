@@ -106,7 +106,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 	GetClientRect(&rcClient);
 
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
-	if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
+	if (m_pLibpe->GetResources(pTupResRoot) != S_OK)
 		return;
 
 	if (pRes)
@@ -271,10 +271,10 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 				return ResLoadError();
 
 			LPCWSTR pwszResString = reinterpret_cast<LPCWSTR>(pRes->pData->data());
-			std::wstring strTmp;
+			std::wstring wstrTmp;
 			for (int i = 0; i < 16; i++)
 			{
-				m_wstrRes += strTmp.assign(pwszResString + 1, (UINT)*pwszResString);
+				m_wstrRes += wstrTmp.assign(pwszResString + 1, (UINT)*pwszResString);
 				if (i != 15)
 					m_wstrRes += L"\r\n";
 				pwszResString += 1 + (UINT)*pwszResString;
@@ -613,7 +613,7 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 int CViewRightBR::CreateListTLSCallbacks()
 {
 	PCLIBPE_TLS_TUP pTLS { };
-	if (m_pLibpe->GetTLSTable(pTLS) != S_OK)
+	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
 
 	m_stListTLSCallbacks.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_TLS_CALLBACKS, &m_stListInfo);

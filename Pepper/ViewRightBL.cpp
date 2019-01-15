@@ -21,7 +21,7 @@ void CViewRightBL::OnInitialUpdate()
 		return;
 
 	const DWORD* pFileSummary { };
-	if (m_pLibpe->GetFileSummary(pFileSummary) != S_OK)
+	if (m_pLibpe->GetPESummary(pFileSummary) != S_OK)
 		return;
 
 	m_dwFileSummary = *pFileSummary;
@@ -129,7 +129,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	{
 		PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
-		if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
+		if (m_pLibpe->GetResources(pTupResRoot) != S_OK)
 			return -1;
 
 		const DWORD_PTR dwResId = m_treeResBottom.GetItemData(pTree->itemNew.hItem);
@@ -172,7 +172,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 
 int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 {
-	if (m_pLibpe->GetSecurityTable(m_vecSec) != S_OK)
+	if (m_pLibpe->GetSecurity(m_vecSec) != S_OK)
 		return -1;
 	if (nSertId > m_vecSec->size())
 		return -1;
@@ -190,7 +190,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 {
 	PCLIBPE_IMPORT_VEC m_pImportTable { };
 
-	if (m_pLibpe->GetImportTable(m_pImportTable) != S_OK)
+	if (m_pLibpe->GetImport(m_pImportTable) != S_OK)
 		return -1;
 
 	if (dwEntry > m_pImportTable->size())
@@ -233,7 +233,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 {
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
-	if (m_pLibpe->GetDelayImportTable(pDelayImport) != S_OK)
+	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK)
 		return -1;
 
 	if (dwEntry > pDelayImport->size())
@@ -294,7 +294,7 @@ int CViewRightBL::CreateListExportFuncs()
 {
 	PCLIBPE_EXPORT_TUP pExportTable { };
 
-	if (m_pLibpe->GetExportTable(pExportTable) != S_OK)
+	if (m_pLibpe->GetExport(pExportTable) != S_OK)
 		return -1;
 
 	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, &m_stListInfo);
@@ -330,7 +330,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 {
 	PCLIBPE_RELOCATION_VEC pRelocTable { };
 
-	if (m_pLibpe->GetRelocationTable(pRelocTable) != S_OK)
+	if (m_pLibpe->GetRelocations(pRelocTable) != S_OK)
 		return -1;
 	if (pRelocTable->empty() || pRelocTable->size() < dwEntry)
 		return -1;
@@ -387,7 +387,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 {
 	PCLIBPE_DEBUG_VEC pDebug;
-	if (m_pLibpe->GetDebugTable(pDebug) != S_OK)
+	if (m_pLibpe->GetDebug(pDebug) != S_OK)
 		return -1;
 
 	const auto& debugEntry = std::get<1>(pDebug->at(dwEntry));
@@ -404,7 +404,7 @@ int CViewRightBL::CreateTreeResources()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
-	if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
+	if (m_pLibpe->GetResources(pTupResRoot) != S_OK)
 		return -1;
 
 	m_treeResBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
@@ -472,7 +472,7 @@ int CViewRightBL::CreateTreeResources()
 int CViewRightBL::CreateHexTLS()
 {
 	PCLIBPE_TLS_TUP pTLS;
-	if (m_pLibpe->GetTLSTable(pTLS) != S_OK)
+	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
 
 	const auto& tls = std::get<1>(*pTLS);

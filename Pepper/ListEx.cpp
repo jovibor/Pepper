@@ -459,7 +459,7 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint pt)
 		m_fTtShown = true;
 		m_stCurrCell.iItem = hi.iItem;
 		m_stCurrCell.iSubItem = hi.iSubItem;
-		m_stToolInfo.lpszText = pwstrTt->data();
+		m_stToolInfo.lpszText = const_cast<LPWSTR>(pwstrTt->data());
 
 		ClientToScreen(&pt);
 		::SendMessage(m_hwndTt, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(pt.x, pt.y));
@@ -549,8 +549,7 @@ void CListEx::OnTimer(UINT_PTR nIDEvent)
 
 BOOL CListEx::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
-	SetFocus();
-
+//	SetFocus();
 	return CMFCListCtrl::OnSetCursor(pWnd, nHitTest, message);
 }
 

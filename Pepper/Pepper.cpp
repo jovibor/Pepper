@@ -195,8 +195,6 @@ void CPepperApp::OnFileOpen()
 	ofn.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
 		OFN_EXPLORER | OFN_ENABLESIZING | OFN_DONTADDTORECENT;
 
-	PVOID pOldValue;
-//	Wow64DisableWow64FsRedirection(&pOldValue);
 	if (!GetOpenFileNameW(&ofn))
 		return;
 
@@ -207,21 +205,19 @@ void CPepperApp::OnFileOpen()
 	if (wstrFilePath[ofn.nFileOffset - 1] == '\0')
 	{
 		WCHAR* pwszFileName = ofn.lpstrFile;
-		std::wstring strDir = pwszFileName;
-		pwszFileName += (strDir.length() + 1);
+		std::wstring wstrDir = pwszFileName;
+		pwszFileName += (wstrDir.length() + 1);
 		while (*pwszFileName)
 		{
-			std::wstring strFileName = pwszFileName;
-			pwszFileName += (strFileName.length() + 1);
-			std::wstring strFullPath = strDir + L"\\" + strFileName;
+			std::wstring wstrFileName = pwszFileName;
+			pwszFileName += (wstrFileName.length() + 1);
+			std::wstring wstrFullPath = wstrDir + L"\\" + wstrFileName;
 
-			CWinAppEx::OpenDocumentFile(strFullPath.data());
+			CWinAppEx::OpenDocumentFile(wstrFullPath.data());
 		}
 	}
 	else
 		CWinAppEx::OpenDocumentFile(ofn.lpstrFile);
-
-//	Wow64RevertWow64FsRedirection(pOldValue);
 }
 
 void CPepperApp::PreLoadState()

@@ -34,7 +34,7 @@ void CViewRightTL::OnInitialUpdate()
 	}
 
 	const DWORD* m_pFileSummary { };
-	if (m_pLibpe->GetFileSummary(m_pFileSummary) != S_OK)
+	if (m_pLibpe->GetPESummary(m_pFileSummary) != S_OK)
 		return;
 
 	m_wstrFullPath = L"Full path: " + m_pMainDoc->GetPathName();
@@ -56,9 +56,9 @@ void CViewRightTL::OnInitialUpdate()
 	m_wstrAppVersion = wstrVersion;
 
 	m_pLibpe->GetSectionsHeaders(m_pSecHeaders);
-	m_pLibpe->GetImportTable(m_pImportTable);
-	m_pLibpe->GetExceptionTable(m_pExceptionDir);
-	m_pLibpe->GetRelocationTable(m_pRelocTable);
+	m_pLibpe->GetImport(m_pImportTable);
+	m_pLibpe->GetExceptions(m_pExceptionDir);
+	m_pLibpe->GetRelocations(m_pRelocTable);
 
 	m_stListInfo.clrTooltipText = RGB(255, 255, 255);
 	m_stListInfo.clrTooltipBk = RGB(0, 132, 132);
@@ -235,7 +235,7 @@ void CViewRightTL::OnDraw(CDC* pDC)
 		GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), m_wstrFullPath.length(), &m_sizeTextToDraw);
 		rc.SetRect(20, 20, 400, m_sizeTextToDraw.cy * 6);
 		if (m_sizeTextToDraw.cx > rc.Width())
-			rc.right = m_sizeTextToDraw.cx + rc.left + 30;
+			rc.right = m_sizeTextToDraw.cx + rc.left + 50;
 		rDC.Rectangle(&rc);
 
 		rDC.SetTextColor(RGB(200, 50, 30));
@@ -323,28 +323,28 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 	if (pItem->mask & LVIF_TEXT)
 	{
 		WCHAR wstr[MAX_PATH] { };
-		const IMAGE_IMPORT_DESCRIPTOR* pImpDescriptor = &std::get<0>(m_pImportTable->at(pItem->iItem));
+		const IMAGE_IMPORT_DESCRIPTOR* pImpDesc = &std::get<0>(m_pImportTable->at(pItem->iItem));
 
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, MAX_PATH, L"%S (%u)", std::get<1>(m_pImportTable->at(pItem->iItem)).c_str(),
+			swprintf_s(wstr, MAX_PATH, L"%S (%u)", std::get<1>(m_pImportTable->at(pItem->iItem)).data(),
 				std::get<2>(m_pImportTable->at(pItem->iItem)).size());
 			break;
 		case 1:
-			swprintf_s(wstr, 9, L"%08X", pImpDescriptor->OriginalFirstThunk);
+			swprintf_s(wstr, 9, L"%08X", pImpDesc->OriginalFirstThunk);
 			break;
 		case 2:
-			swprintf_s(wstr, 9, L"%08X", pImpDescriptor->TimeDateStamp);
+			swprintf_s(wstr, 9, L"%08X", pImpDesc->TimeDateStamp);
 			break;
 		case 3:
-			swprintf_s(wstr, 9, L"%08X", pImpDescriptor->ForwarderChain);
+			swprintf_s(wstr, 9, L"%08X", pImpDesc->ForwarderChain);
 			break;
 		case 4:
-			swprintf_s(wstr, 9, L"%08X", pImpDescriptor->Name);
+			swprintf_s(wstr, 9, L"%08X", pImpDesc->Name);
 			break;
 		case 5:
-			swprintf_s(wstr, 9, L"%08X", pImpDescriptor->FirstThunk);
+			swprintf_s(wstr, 9, L"%08X", pImpDesc->FirstThunk);
 			break;
 		}
 		lstrcpynW(pItem->pszText, wstr, pItem->cchTextMax);
@@ -441,7 +441,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		{
 			PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
-			if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
+			if (m_pLibpe->GetResources(pTupResRoot) != S_OK)
 				return -1;
 
 			const DWORD_PTR dwResId = m_treeResTop.GetItemData(pTree->itemNew.hItem);
@@ -1842,18 +1842,18 @@ int CViewRightTL::CreateListSecHeaders()
 	};
 
 	UINT listindex = 0;
-	std::wstring strTipText;
+	std::wstring wstrTipText;
 
 	for (auto& iterSecHdrs : *m_pSecHeaders)
 	{
 		for (auto& flags : mapSecFlags)
 			if (flags.first & std::get<0>(iterSecHdrs).Characteristics)
-				strTipText += flags.second + L"\n";
+				wstrTipText += flags.second + L"\n";
 
-		if (!strTipText.empty())
+		if (!wstrTipText.empty())
 		{
-			m_listSecHeaders.SetCellTooltip(listindex, 9, strTipText, L"Section Flags:");
-			strTipText.clear();
+			m_listSecHeaders.SetCellTooltip(listindex, 9, wstrTipText, L"Section Flags:");
+			wstrTipText.clear();
 		}
 
 		listindex++;
@@ -1865,7 +1865,7 @@ int CViewRightTL::CreateListSecHeaders()
 int CViewRightTL::CreateListExport()
 {
 	PCLIBPE_EXPORT_TUP pExportTable { };
-	if (m_pLibpe->GetExportTable(pExportTable) != S_OK)
+	if (m_pLibpe->GetExport(pExportTable) != S_OK)
 		return -1;
 
 	WCHAR wstr[MAX_PATH];
@@ -1960,7 +1960,7 @@ int CViewRightTL::CreateListImport()
 
 	m_listImport.Create(WS_CHILD | WS_VISIBLE | LVS_OWNERDATA, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT, &m_stListInfo);
 	m_listImport.ShowWindow(SW_HIDE);
-	m_listImport.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 330);
+	m_listImport.InsertColumn(0, L"Module Name (funcs number)", LVCFMT_CENTER, 300);
 	m_listImport.InsertColumn(1, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_LEFT, 170);
 	m_listImport.InsertColumn(2, L"TimeDateStamp", LVCFMT_LEFT, 115);
 	m_listImport.InsertColumn(3, L"ForwarderChain", LVCFMT_LEFT, 110);
@@ -1990,7 +1990,7 @@ int CViewRightTL::CreateTreeResources()
 {
 	PCLIBPE_RESOURCE_ROOT_TUP pTupResRoot { };
 
-	if (m_pLibpe->GetResourceTable(pTupResRoot) != S_OK)
+	if (m_pLibpe->GetResources(pTupResRoot) != S_OK)
 		return -1;
 
 	m_treeResTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
@@ -2110,7 +2110,7 @@ int CViewRightTL::CreateListException()
 int CViewRightTL::CreateListSecurity()
 {
 	PCLIBPE_SECURITY_VEC pSecurityDir { };
-	if (m_pLibpe->GetSecurityTable(pSecurityDir) != S_OK)
+	if (m_pLibpe->GetSecurity(pSecurityDir) != S_OK)
 		return -1;
 
 	m_listSecurityDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_SECURITY, &m_stListInfo);
@@ -2156,7 +2156,7 @@ int CViewRightTL::CreateListDebug()
 {
 	PCLIBPE_DEBUG_VEC pDebugDir { };
 
-	if (m_pLibpe->GetDebugTable(pDebugDir) != S_OK)
+	if (m_pLibpe->GetDebug(pDebugDir) != S_OK)
 		return -1;
 
 	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DEBUG, &m_stListInfo);
@@ -2224,14 +2224,14 @@ int CViewRightTL::CreateListDebug()
 
 		listindex++;
 	}
-
+	
 	return 0;
 }
 
 int CViewRightTL::CreateListTLS()
 {
 	PCLIBPE_TLS_TUP pTLSDir { };
-	if (m_pLibpe->GetTLSTable(pTLSDir) != S_OK)
+	if (m_pLibpe->GetTLS(pTLSDir) != S_OK)
 		return -1;
 
 	m_listTLSDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_TLS, &m_stListInfo);
@@ -2355,8 +2355,8 @@ int CViewRightTL::CreateListTLS()
 
 int CViewRightTL::CreateListLoadConfigTable()
 {
-	PCLIBPE_LOADCONFIGTABLE_VAR pLCD;
-	if (m_pLibpe->GetLoadConfigTable(pLCD) != S_OK)
+	PCLIBPE_LOADCONFIG_VAR pLCD;
+	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK)
 		return -1;
 
 	PCLIBPE_DATADIRS_VEC pDataDirs;
@@ -2389,834 +2389,836 @@ int CViewRightTL::CreateListLoadConfigTable()
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
 	std::wstring wstrTooltip;
-	const DWORD dwLCDSize = std::get<0>(*pLCD).Size;
+	DWORD dwLCDSize;
 	DWORD dwTotalSize { };
 
 	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
-		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLoadConfDir32 = &std::get<0>(*pLCD);
-		
-		dwTotalSize += sizeof(pLoadConfDir32->Size);
+		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLCD32 = &std::get<0>(*pLCD);
+		dwLCDSize = pLCD32->Size;
+
+		dwTotalSize += sizeof(pLCD32->Size);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex, L"Size");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->Size));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Size));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->Size);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->Size);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->TimeDateStamp);
+		dwTotalSize += sizeof(pLCD32->TimeDateStamp);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"TimeDateStamp");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->TimeDateStamp));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->TimeDateStamp));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%08X", pLoadConfDir32->TimeDateStamp);
+		swprintf_s(wstr, MAX_PATH, L"%08X", pLCD32->TimeDateStamp);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
-		if (pLoadConfDir32->TimeDateStamp)
+		if (pLCD32->TimeDateStamp)
 		{
-			__time64_t time = pLoadConfDir32->TimeDateStamp;
+			__time64_t time = pLCD32->TimeDateStamp;
 			_wctime64_s(wstr, MAX_PATH, &time);
 			m_listLoadConfigDir.SetCellTooltip(listindex, 2, wstr, L"Time / Date:");
 		}
 
-		dwTotalSize += sizeof(pLoadConfDir32->MajorVersion);
+		dwTotalSize += sizeof(pLCD32->MajorVersion);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"MajorVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->MajorVersion));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MajorVersion));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLoadConfDir32->MajorVersion);
+		swprintf_s(wstr, 5, L"%04X", pLCD32->MajorVersion);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->MinorVersion);
+		dwTotalSize += sizeof(pLCD32->MinorVersion);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"MinorVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->MinorVersion));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MinorVersion));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLoadConfDir32->MinorVersion);
+		swprintf_s(wstr, 5, L"%04X", pLCD32->MinorVersion);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GlobalFlagsClear);
+		dwTotalSize += sizeof(pLCD32->GlobalFlagsClear);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GlobalFlagsClear");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GlobalFlagsClear));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GlobalFlagsClear));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GlobalFlagsClear);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GlobalFlagsClear);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GlobalFlagsSet);
+		dwTotalSize += sizeof(pLCD32->GlobalFlagsSet);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GlobalFlagsSet");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GlobalFlagsSet));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GlobalFlagsSet));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GlobalFlagsSet);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GlobalFlagsSet);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->CriticalSectionDefaultTimeout);
+		dwTotalSize += sizeof(pLCD32->CriticalSectionDefaultTimeout);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CriticalSectionDefaultTimeout");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->CriticalSectionDefaultTimeout));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CriticalSectionDefaultTimeout));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->CriticalSectionDefaultTimeout);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->CriticalSectionDefaultTimeout);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->DeCommitFreeBlockThreshold);
+		dwTotalSize += sizeof(pLCD32->DeCommitFreeBlockThreshold);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DeCommitFreeBlockThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->DeCommitFreeBlockThreshold));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DeCommitFreeBlockThreshold));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->DeCommitFreeBlockThreshold);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->DeCommitFreeBlockThreshold);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->DeCommitTotalFreeThreshold);
+		dwTotalSize += sizeof(pLCD32->DeCommitTotalFreeThreshold);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DeCommitTotalFreeThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->DeCommitTotalFreeThreshold));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DeCommitTotalFreeThreshold));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->DeCommitTotalFreeThreshold);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->DeCommitTotalFreeThreshold);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->LockPrefixTable);
+		dwTotalSize += sizeof(pLCD32->LockPrefixTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"LockPrefixTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->LockPrefixTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->LockPrefixTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->LockPrefixTable);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->LockPrefixTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->MaximumAllocationSize);
+		dwTotalSize += sizeof(pLCD32->MaximumAllocationSize);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"MaximumAllocationSize");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->MaximumAllocationSize));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MaximumAllocationSize));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->MaximumAllocationSize);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->MaximumAllocationSize);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->VirtualMemoryThreshold);
+		dwTotalSize += sizeof(pLCD32->VirtualMemoryThreshold);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"VirtualMemoryThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->VirtualMemoryThreshold));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->VirtualMemoryThreshold));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->VirtualMemoryThreshold);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->VirtualMemoryThreshold);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->ProcessHeapFlags);
+		dwTotalSize += sizeof(pLCD32->ProcessHeapFlags);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"ProcessHeapFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->ProcessHeapFlags));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->ProcessHeapFlags));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->ProcessHeapFlags);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->ProcessHeapFlags);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->ProcessAffinityMask);
+		dwTotalSize += sizeof(pLCD32->ProcessAffinityMask);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"ProcessAffinityMask");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->ProcessAffinityMask));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->ProcessAffinityMask));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->ProcessAffinityMask);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->ProcessAffinityMask);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->CSDVersion);
+		dwTotalSize += sizeof(pLCD32->CSDVersion);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CSDVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->CSDVersion));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CSDVersion));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLoadConfDir32->CSDVersion);
+		swprintf_s(wstr, 5, L"%04X", pLCD32->CSDVersion);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->DependentLoadFlags);
+		dwTotalSize += sizeof(pLCD32->DependentLoadFlags);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DependentLoadFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->DependentLoadFlags));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DependentLoadFlags));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLoadConfDir32->DependentLoadFlags);
+		swprintf_s(wstr, 5, L"%04X", pLCD32->DependentLoadFlags);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->EditList);
+		dwTotalSize += sizeof(pLCD32->EditList);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"EditList");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->EditList));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->EditList));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->EditList);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->EditList);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->SecurityCookie);
+		dwTotalSize += sizeof(pLCD32->SecurityCookie);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"SecurityCookie");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->SecurityCookie));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SecurityCookie));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->SecurityCookie);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->SecurityCookie);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->SEHandlerTable);
+		dwTotalSize += sizeof(pLCD32->SEHandlerTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"SEHandlerTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->SEHandlerTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SEHandlerTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->SEHandlerTable);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->SEHandlerTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->SEHandlerCount);
+		dwTotalSize += sizeof(pLCD32->SEHandlerCount);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"SEHandlerCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->SEHandlerCount));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SEHandlerCount));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->SEHandlerCount);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->SEHandlerCount);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardCFCheckFunctionPointer);
+		dwTotalSize += sizeof(pLCD32->GuardCFCheckFunctionPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardCFCheckFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardCFCheckFunctionPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFCheckFunctionPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardCFCheckFunctionPointer);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardCFCheckFunctionPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardCFDispatchFunctionPointer);
+		dwTotalSize += sizeof(pLCD32->GuardCFDispatchFunctionPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardCFDispatchFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardCFDispatchFunctionPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFDispatchFunctionPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardCFDispatchFunctionPointer);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardCFDispatchFunctionPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardCFFunctionTable);
+		dwTotalSize += sizeof(pLCD32->GuardCFFunctionTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardCFFunctionTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardCFFunctionTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFFunctionTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardCFFunctionTable);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardCFFunctionTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardCFFunctionCount);
+		dwTotalSize += sizeof(pLCD32->GuardCFFunctionCount);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardCFFunctionCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardCFFunctionCount));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFFunctionCount));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardCFFunctionCount);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardCFFunctionCount);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardFlags);
+		dwTotalSize += sizeof(pLCD32->GuardFlags);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardFlags));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardFlags));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardFlags);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardFlags);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 		wstrTooltip.clear();
 		for (auto&i : mapGuardFlags)
-			if (i.first & pLoadConfDir32->GuardFlags)
+			if (i.first & pLCD32->GuardFlags)
 				wstrTooltip += i.second + L"\n";
 		if (!wstrTooltip.empty())
 			m_listLoadConfigDir.SetCellTooltip(listindex, 2, wstrTooltip, L"GuardFlags:");
 
-		dwTotalSize += sizeof(pLoadConfDir32->CodeIntegrity.Flags);
+		dwTotalSize += sizeof(pLCD32->CodeIntegrity.Flags);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.Flags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->CodeIntegrity.Flags));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Flags));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLoadConfDir32->CodeIntegrity.Flags);
+		swprintf_s(wstr, 9, L"%04X", pLCD32->CodeIntegrity.Flags);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->CodeIntegrity.Catalog);
+		dwTotalSize += sizeof(pLCD32->CodeIntegrity.Catalog);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.Catalog");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->CodeIntegrity.Catalog));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Catalog));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLoadConfDir32->CodeIntegrity.Catalog);
+		swprintf_s(wstr, 9, L"%04X", pLCD32->CodeIntegrity.Catalog);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->CodeIntegrity.CatalogOffset);
+		dwTotalSize += sizeof(pLCD32->CodeIntegrity.CatalogOffset);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.CatalogOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->CodeIntegrity.CatalogOffset));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.CatalogOffset));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->CodeIntegrity.CatalogOffset);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->CodeIntegrity.CatalogOffset);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->CodeIntegrity.Reserved);
+		dwTotalSize += sizeof(pLCD32->CodeIntegrity.Reserved);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.Reserved");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->CodeIntegrity.Reserved));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Reserved));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->CodeIntegrity.Reserved);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->CodeIntegrity.Reserved);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardAddressTakenIatEntryTable);
+		dwTotalSize += sizeof(pLCD32->GuardAddressTakenIatEntryTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardAddressTakenIatEntryTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardAddressTakenIatEntryTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardAddressTakenIatEntryTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardAddressTakenIatEntryTable);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardAddressTakenIatEntryTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardAddressTakenIatEntryCount);
+		dwTotalSize += sizeof(pLCD32->GuardAddressTakenIatEntryCount);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardAddressTakenIatEntryCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardAddressTakenIatEntryCount));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardAddressTakenIatEntryCount));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardAddressTakenIatEntryCount);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardAddressTakenIatEntryCount);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardLongJumpTargetTable);
+		dwTotalSize += sizeof(pLCD32->GuardLongJumpTargetTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardLongJumpTargetTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardLongJumpTargetTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardLongJumpTargetTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardLongJumpTargetTable);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardLongJumpTargetTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardLongJumpTargetCount);
+		dwTotalSize += sizeof(pLCD32->GuardLongJumpTargetCount);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardLongJumpTargetCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardLongJumpTargetCount));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardLongJumpTargetCount));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardLongJumpTargetCount);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardLongJumpTargetCount);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->DynamicValueRelocTable);
+		dwTotalSize += sizeof(pLCD32->DynamicValueRelocTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DynamicValueRelocTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->DynamicValueRelocTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->DynamicValueRelocTable);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->DynamicValueRelocTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->CHPEMetadataPointer);
+		dwTotalSize += sizeof(pLCD32->CHPEMetadataPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CHPEMetadataPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->CHPEMetadataPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CHPEMetadataPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->CHPEMetadataPointer);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->CHPEMetadataPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardRFFailureRoutine);
+		dwTotalSize += sizeof(pLCD32->GuardRFFailureRoutine);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardRFFailureRoutine");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardRFFailureRoutine));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFFailureRoutine));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardRFFailureRoutine);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardRFFailureRoutine);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardRFFailureRoutineFunctionPointer);
+		dwTotalSize += sizeof(pLCD32->GuardRFFailureRoutineFunctionPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardRFFailureRoutineFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardRFFailureRoutineFunctionPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFFailureRoutineFunctionPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardRFFailureRoutineFunctionPointer);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardRFFailureRoutineFunctionPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->DynamicValueRelocTableOffset);
+		dwTotalSize += sizeof(pLCD32->DynamicValueRelocTableOffset);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DynamicValueRelocTableOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->DynamicValueRelocTableOffset));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTableOffset));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->DynamicValueRelocTableOffset);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->DynamicValueRelocTableOffset);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->DynamicValueRelocTableSection);
+		dwTotalSize += sizeof(pLCD32->DynamicValueRelocTableSection);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DynamicValueRelocTableSection");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->DynamicValueRelocTableSection));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTableSection));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLoadConfDir32->DynamicValueRelocTableSection);
+		swprintf_s(wstr, 9, L"%04X", pLCD32->DynamicValueRelocTableSection);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->Reserved2);
+		dwTotalSize += sizeof(pLCD32->Reserved2);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"Reserved2");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->Reserved2));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Reserved2));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLoadConfDir32->Reserved2);
+		swprintf_s(wstr, 9, L"%04X", pLCD32->Reserved2);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->GuardRFVerifyStackPointerFunctionPointer);
+		dwTotalSize += sizeof(pLCD32->GuardRFVerifyStackPointerFunctionPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardRFVerifyStackPointerFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->GuardRFVerifyStackPointerFunctionPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFVerifyStackPointerFunctionPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->GuardRFVerifyStackPointerFunctionPointer);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardRFVerifyStackPointerFunctionPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->HotPatchTableOffset);
+		dwTotalSize += sizeof(pLCD32->HotPatchTableOffset);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"HotPatchTableOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->HotPatchTableOffset));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->HotPatchTableOffset));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->HotPatchTableOffset);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->HotPatchTableOffset);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->Reserved3);
+		dwTotalSize += sizeof(pLCD32->Reserved3);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"Reserved3");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->Reserved3));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Reserved3));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->Reserved3);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->Reserved3);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir32->EnclaveConfigurationPointer);
+		dwTotalSize += sizeof(pLCD32->EnclaveConfigurationPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"EnclaveConfigurationPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir32->EnclaveConfigurationPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->EnclaveConfigurationPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir32->EnclaveConfigurationPointer);
+		swprintf_s(wstr, 9, L"%08X", pLCD32->EnclaveConfigurationPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 	}
 	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 	{
-		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLoadConfDir64 = &std::get<1>(*pLCD);
+		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLCD64 = &std::get<1>(*pLCD);
+		dwLCDSize = pLCD64->Size;
 
-		dwTotalSize += sizeof(pLoadConfDir64->Size);
+		dwTotalSize += sizeof(pLCD64->Size);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex, L"Size");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->Size));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Size));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->Size);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->Size);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->TimeDateStamp);
+		dwTotalSize += sizeof(pLCD64->TimeDateStamp);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"TimeDateStamp");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->TimeDateStamp));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->TimeDateStamp));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%08X", pLoadConfDir64->TimeDateStamp);
+		swprintf_s(wstr, MAX_PATH, L"%08X", pLCD64->TimeDateStamp);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
-		if (pLoadConfDir64->TimeDateStamp)
+		if (pLCD64->TimeDateStamp)
 		{
-			__time64_t _time = pLoadConfDir64->TimeDateStamp;
+			__time64_t _time = pLCD64->TimeDateStamp;
 			_wctime64_s(wstr, MAX_PATH, &_time);
 			m_listLoadConfigDir.SetCellTooltip(listindex, 2, wstr, L"Time / Date:");
 		}
 
-		dwTotalSize += sizeof(pLoadConfDir64->MajorVersion);
+		dwTotalSize += sizeof(pLCD64->MajorVersion);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"MajorVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->MajorVersion));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MajorVersion));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLoadConfDir64->MajorVersion);
+		swprintf_s(wstr, 5, L"%04X", pLCD64->MajorVersion);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->MinorVersion);
+		dwTotalSize += sizeof(pLCD64->MinorVersion);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"MinorVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->MinorVersion));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MinorVersion));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLoadConfDir64->MinorVersion);
+		swprintf_s(wstr, 5, L"%04X", pLCD64->MinorVersion);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GlobalFlagsClear);
+		dwTotalSize += sizeof(pLCD64->GlobalFlagsClear);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GlobalFlagsClear");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GlobalFlagsClear));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GlobalFlagsClear));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->GlobalFlagsClear);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->GlobalFlagsClear);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GlobalFlagsSet);
+		dwTotalSize += sizeof(pLCD64->GlobalFlagsSet);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GlobalFlagsSet");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GlobalFlagsSet));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GlobalFlagsSet));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->GlobalFlagsSet);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->GlobalFlagsSet);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->CriticalSectionDefaultTimeout);
+		dwTotalSize += sizeof(pLCD64->CriticalSectionDefaultTimeout);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CriticalSectionDefaultTimeout");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->CriticalSectionDefaultTimeout));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CriticalSectionDefaultTimeout));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->CriticalSectionDefaultTimeout);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->CriticalSectionDefaultTimeout);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->DeCommitFreeBlockThreshold);
+		dwTotalSize += sizeof(pLCD64->DeCommitFreeBlockThreshold);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DeCommitFreeBlockThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->DeCommitFreeBlockThreshold));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DeCommitFreeBlockThreshold));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->DeCommitFreeBlockThreshold);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->DeCommitFreeBlockThreshold);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->DeCommitTotalFreeThreshold);
+		dwTotalSize += sizeof(pLCD64->DeCommitTotalFreeThreshold);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DeCommitTotalFreeThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->DeCommitTotalFreeThreshold));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DeCommitTotalFreeThreshold));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->DeCommitTotalFreeThreshold);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->DeCommitTotalFreeThreshold);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->LockPrefixTable);
+		dwTotalSize += sizeof(pLCD64->LockPrefixTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"LockPrefixTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->LockPrefixTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->LockPrefixTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->LockPrefixTable);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->LockPrefixTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->MaximumAllocationSize);
+		dwTotalSize += sizeof(pLCD64->MaximumAllocationSize);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"MaximumAllocationSize");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->MaximumAllocationSize));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MaximumAllocationSize));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->MaximumAllocationSize);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->MaximumAllocationSize);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->VirtualMemoryThreshold);
+		dwTotalSize += sizeof(pLCD64->VirtualMemoryThreshold);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"VirtualMemoryThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->VirtualMemoryThreshold));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->VirtualMemoryThreshold));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->VirtualMemoryThreshold);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->VirtualMemoryThreshold);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->ProcessHeapFlags);
+		dwTotalSize += sizeof(pLCD64->ProcessHeapFlags);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"ProcessHeapFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->ProcessHeapFlags));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->ProcessHeapFlags));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->ProcessHeapFlags);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->ProcessHeapFlags);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->ProcessAffinityMask);
+		dwTotalSize += sizeof(pLCD64->ProcessAffinityMask);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"ProcessAffinityMask");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->ProcessAffinityMask));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->ProcessAffinityMask));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->ProcessAffinityMask);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->ProcessAffinityMask);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->CSDVersion);
+		dwTotalSize += sizeof(pLCD64->CSDVersion);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CSDVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->CSDVersion));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CSDVersion));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLoadConfDir64->CSDVersion);
+		swprintf_s(wstr, 5, L"%04X", pLCD64->CSDVersion);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->DependentLoadFlags);
+		dwTotalSize += sizeof(pLCD64->DependentLoadFlags);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DependentLoadFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->DependentLoadFlags));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DependentLoadFlags));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLoadConfDir64->DependentLoadFlags);
+		swprintf_s(wstr, 5, L"%04X", pLCD64->DependentLoadFlags);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->EditList);
+		dwTotalSize += sizeof(pLCD64->EditList);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"EditList");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->EditList));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->EditList));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->EditList);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->EditList);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->SecurityCookie);
+		dwTotalSize += sizeof(pLCD64->SecurityCookie);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"SecurityCookie");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->SecurityCookie));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SecurityCookie));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->SecurityCookie);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->SecurityCookie);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->SEHandlerTable);
+		dwTotalSize += sizeof(pLCD64->SEHandlerTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"SEHandlerTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->SEHandlerTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SEHandlerTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->SEHandlerTable);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->SEHandlerTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->SEHandlerCount);
+		dwTotalSize += sizeof(pLCD64->SEHandlerCount);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"SEHandlerCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->SEHandlerCount));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SEHandlerCount));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->SEHandlerCount);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->SEHandlerCount);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardCFCheckFunctionPointer);
+		dwTotalSize += sizeof(pLCD64->GuardCFCheckFunctionPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardCFCheckFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardCFCheckFunctionPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFCheckFunctionPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardCFCheckFunctionPointer);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardCFCheckFunctionPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardCFDispatchFunctionPointer);
+		dwTotalSize += sizeof(pLCD64->GuardCFDispatchFunctionPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardCFDispatchFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardCFDispatchFunctionPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFDispatchFunctionPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardCFDispatchFunctionPointer);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardCFDispatchFunctionPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardCFFunctionTable);
+		dwTotalSize += sizeof(pLCD64->GuardCFFunctionTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardCFFunctionTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardCFFunctionTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFFunctionTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardCFFunctionTable);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardCFFunctionTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardCFFunctionCount);
+		dwTotalSize += sizeof(pLCD64->GuardCFFunctionCount);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardCFFunctionCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardCFFunctionCount));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFFunctionCount));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardCFFunctionCount);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardCFFunctionCount);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardFlags);
+		dwTotalSize += sizeof(pLCD64->GuardFlags);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardFlags));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardFlags));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->GuardFlags);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->GuardFlags);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 		wstrTooltip.clear();
 		for (auto&i : mapGuardFlags)
-			if (i.first & pLoadConfDir64->GuardFlags)
+			if (i.first & pLCD64->GuardFlags)
 				wstrTooltip += i.second + L"\n";
 		if (!wstrTooltip.empty())
 			m_listLoadConfigDir.SetCellTooltip(listindex, 2, wstrTooltip, L"GuardFlags:");
 
-		dwTotalSize += sizeof(pLoadConfDir64->CodeIntegrity.Flags);
+		dwTotalSize += sizeof(pLCD64->CodeIntegrity.Flags);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.Flags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->CodeIntegrity.Flags));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Flags));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLoadConfDir64->CodeIntegrity.Flags);
+		swprintf_s(wstr, 9, L"%04X", pLCD64->CodeIntegrity.Flags);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->CodeIntegrity.Catalog);
+		dwTotalSize += sizeof(pLCD64->CodeIntegrity.Catalog);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.Catalog");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->CodeIntegrity.Catalog));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Catalog));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLoadConfDir64->CodeIntegrity.Catalog);
+		swprintf_s(wstr, 9, L"%04X", pLCD64->CodeIntegrity.Catalog);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->CodeIntegrity.CatalogOffset);
+		dwTotalSize += sizeof(pLCD64->CodeIntegrity.CatalogOffset);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.CatalogOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->CodeIntegrity.CatalogOffset));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.CatalogOffset));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->CodeIntegrity.CatalogOffset);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->CodeIntegrity.CatalogOffset);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->CodeIntegrity.Reserved);
+		dwTotalSize += sizeof(pLCD64->CodeIntegrity.Reserved);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CodeIntegrity.Reserved");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->CodeIntegrity.Reserved));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Reserved));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->CodeIntegrity.Reserved);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->CodeIntegrity.Reserved);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardAddressTakenIatEntryTable);
+		dwTotalSize += sizeof(pLCD64->GuardAddressTakenIatEntryTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardAddressTakenIatEntryTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardAddressTakenIatEntryTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardAddressTakenIatEntryTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardAddressTakenIatEntryTable);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardAddressTakenIatEntryTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardAddressTakenIatEntryCount);
+		dwTotalSize += sizeof(pLCD64->GuardAddressTakenIatEntryCount);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardAddressTakenIatEntryCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardAddressTakenIatEntryCount));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardAddressTakenIatEntryCount));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardAddressTakenIatEntryCount);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardAddressTakenIatEntryCount);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardLongJumpTargetTable);
+		dwTotalSize += sizeof(pLCD64->GuardLongJumpTargetTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardLongJumpTargetTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardLongJumpTargetTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardLongJumpTargetTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardLongJumpTargetTable);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardLongJumpTargetTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardLongJumpTargetCount);
+		dwTotalSize += sizeof(pLCD64->GuardLongJumpTargetCount);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardLongJumpTargetCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardLongJumpTargetCount));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardLongJumpTargetCount));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardLongJumpTargetCount);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardLongJumpTargetCount);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->DynamicValueRelocTable);
+		dwTotalSize += sizeof(pLCD64->DynamicValueRelocTable);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DynamicValueRelocTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->DynamicValueRelocTable));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTable));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->DynamicValueRelocTable);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->DynamicValueRelocTable);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->CHPEMetadataPointer);
+		dwTotalSize += sizeof(pLCD64->CHPEMetadataPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"CHPEMetadataPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->CHPEMetadataPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CHPEMetadataPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->CHPEMetadataPointer);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->CHPEMetadataPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardRFFailureRoutine);
+		dwTotalSize += sizeof(pLCD64->GuardRFFailureRoutine);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardRFFailureRoutine");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardRFFailureRoutine));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFFailureRoutine));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardRFFailureRoutine);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardRFFailureRoutine);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardRFFailureRoutineFunctionPointer);
+		dwTotalSize += sizeof(pLCD64->GuardRFFailureRoutineFunctionPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardRFFailureRoutineFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardRFFailureRoutineFunctionPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFFailureRoutineFunctionPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardRFFailureRoutineFunctionPointer);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardRFFailureRoutineFunctionPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->DynamicValueRelocTableOffset);
+		dwTotalSize += sizeof(pLCD64->DynamicValueRelocTableOffset);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DynamicValueRelocTableOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->DynamicValueRelocTableOffset));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTableOffset));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->DynamicValueRelocTableOffset);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->DynamicValueRelocTableOffset);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->DynamicValueRelocTableSection);
+		dwTotalSize += sizeof(pLCD64->DynamicValueRelocTableSection);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"DynamicValueRelocTableSection");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->DynamicValueRelocTableSection));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTableSection));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLoadConfDir64->DynamicValueRelocTableSection);
+		swprintf_s(wstr, 9, L"%04X", pLCD64->DynamicValueRelocTableSection);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->Reserved2);
+		dwTotalSize += sizeof(pLCD64->Reserved2);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"Reserved2");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->Reserved2));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Reserved2));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLoadConfDir64->Reserved2);
+		swprintf_s(wstr, 9, L"%04X", pLCD64->Reserved2);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->GuardRFVerifyStackPointerFunctionPointer);
+		dwTotalSize += sizeof(pLCD64->GuardRFVerifyStackPointerFunctionPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"GuardRFVerifyStackPointerFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->GuardRFVerifyStackPointerFunctionPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFVerifyStackPointerFunctionPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->GuardRFVerifyStackPointerFunctionPointer);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardRFVerifyStackPointerFunctionPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->HotPatchTableOffset);
+		dwTotalSize += sizeof(pLCD64->HotPatchTableOffset);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"HotPatchTableOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->HotPatchTableOffset));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->HotPatchTableOffset));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->HotPatchTableOffset);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->HotPatchTableOffset);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->Reserved3);
+		dwTotalSize += sizeof(pLCD64->Reserved3);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"Reserved3");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->Reserved3));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Reserved3));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLoadConfDir64->Reserved3);
+		swprintf_s(wstr, 9, L"%08X", pLCD64->Reserved3);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 
-		dwTotalSize += sizeof(pLoadConfDir64->EnclaveConfigurationPointer);
+		dwTotalSize += sizeof(pLCD64->EnclaveConfigurationPointer);
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 		listindex = m_listLoadConfigDir.InsertItem(listindex + 1, L"EnclaveConfigurationPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLoadConfDir64->EnclaveConfigurationPointer));
+		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->EnclaveConfigurationPointer));
 		m_listLoadConfigDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLoadConfDir64->EnclaveConfigurationPointer);
+		swprintf_s(wstr, 17, L"%016llX", pLCD64->EnclaveConfigurationPointer);
 		m_listLoadConfigDir.SetItemText(listindex, 2, wstr);
 	}
-
+	
 	return 0;
 }
 
@@ -3224,7 +3226,7 @@ int CViewRightTL::CreateListBoundImport()
 {
 	PCLIBPE_BOUNDIMPORT_VEC pBoundImport { };
 
-	if (m_pLibpe->GetBoundImportTable(pBoundImport) != S_OK)
+	if (m_pLibpe->GetBoundImport(pBoundImport) != S_OK)
 		return -1;
 
 	m_listBoundImportDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
@@ -3265,7 +3267,7 @@ int CViewRightTL::CreateListDelayImport()
 {
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
 
-	if (m_pLibpe->GetDelayImportTable(pDelayImport) != S_OK)
+	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK)
 		return -1;
 
 	m_listDelayImportDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
@@ -3321,7 +3323,7 @@ int CViewRightTL::CreateListCOM()
 {
 	PCLIBPE_COMDESCRIPTOR pCOMDesc { };
 
-	if (m_pLibpe->GetCOMDescriptorTable(pCOMDesc) != S_OK)
+	if (m_pLibpe->GetCOMDescriptor(pCOMDesc) != S_OK)
 		return -1;
 
 	m_listCOMDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT, &m_stListInfo);
@@ -3341,7 +3343,7 @@ int CViewRightTL::CreateListCOM()
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
-	std::wstring strToolTip;
+	std::wstring wstrToolTip;
 
 	m_listCOMDir.InsertItem(listindex, L"cb");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->cb);
@@ -3368,9 +3370,9 @@ int CViewRightTL::CreateListCOM()
 	m_listCOMDir.SetItemText(listindex, 1, wstr);
 	for (auto&i : mapFlags)
 		if (i.first & pCOMDesc->Flags)
-			strToolTip += i.second + L"\n";
-	if (!strToolTip.empty())
-		m_listCOMDir.SetCellTooltip(listindex, 1, strToolTip, L"Flags:");
+			wstrToolTip += i.second + L"\n";
+	if (!wstrToolTip.empty())
+		m_listCOMDir.SetCellTooltip(listindex, 1, wstrToolTip, L"Flags:");
 
 	listindex = m_listCOMDir.InsertItem(listindex + 1, L"EntryPointToken");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->EntryPointToken);

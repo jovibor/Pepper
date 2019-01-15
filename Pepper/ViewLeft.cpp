@@ -19,11 +19,11 @@ void CViewLeft::OnInitialUpdate()
 	if (!(m_pLibpe = m_pMainDoc->m_pLibpe))
 		return;
 
-	const DWORD* pFileSummary { };
-	if (m_pLibpe->GetFileSummary(pFileSummary) != S_OK)
+	const DWORD* pdwPESummary { };
+	if (m_pLibpe->GetPESummary(pdwPESummary) != S_OK)
 		return;
 
-	const DWORD m_dwFileSummary = *pFileSummary;
+	const DWORD m_dwFileSummary = *pdwPESummary;
 
 	m_ImgListRootTree.Create(16, 16, ILC_COLORDDB, 0, 2);
 	const int iconHdr = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_HEADER_ICON));
