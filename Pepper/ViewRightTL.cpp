@@ -33,16 +33,13 @@ void CViewRightTL::OnInitialUpdate()
 		m_fontSummary.CreateFontIndirectW(&lf);
 	}
 
-	const DWORD* m_pFileSummary { };
-	if (m_pLibpe->GetPESummary(m_pFileSummary) != S_OK)
+	if (m_pLibpe->GetPESummary(m_dwFileSummary) != S_OK)
 		return;
 
 	m_wstrFullPath = L"Full path: " + m_pMainDoc->GetPathName();
 	m_wstrFileName = m_pMainDoc->GetPathName();
 	m_wstrFileName.erase(0, m_wstrFileName.find_last_of('\\') + 1);
 	m_wstrFileName.insert(0, L"File name: ");
-
-	m_dwFileSummary = *m_pFileSummary;
 
 	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 		m_wstrFileType = L"File type: PE32 (x86)";
@@ -274,15 +271,18 @@ void CViewRightTL::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).dwOffset);
+			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).dwOffsetSecHdrDesc);
 			break;
 		case 1:
-			if (m_pSecHeaders->at(pItem->iItem).strSecName.empty())
-				swprintf_s(wstr, 9, L"%.8S", m_pSecHeaders->at(pItem->iItem).stSecHdr.Name);
+		{
+			auto& rstr = m_pSecHeaders->at(pItem->iItem);
+			if (rstr.strSecName.empty())
+				swprintf_s(wstr, 9, L"%.8S", rstr.stSecHdr.Name);
 			else
-				swprintf_s(wstr, 50, L"%.8S (%S)", m_pSecHeaders->at(pItem->iItem).stSecHdr.Name,
+				swprintf_s(wstr, 50, L"%.8S (%S)", rstr.stSecHdr.Name,
 					m_pSecHeaders->at(pItem->iItem).strSecName.data());
-			break;
+		}
+		break;
 		case 2:
 			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.Misc.VirtualSize);
 			break;
@@ -331,7 +331,7 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, 9, L"%08X", m_pImport->at(pItem->iItem).dwOffsetDescriptor);
+			swprintf_s(wstr, 9, L"%08X", m_pImport->at(pItem->iItem).dwOffsetImpDesc);
 			break;
 		case 1:
 			swprintf_s(wstr, MAX_PATH, L"%S (%u)", m_pImport->at(pItem->iItem).strModuleName.data(),
@@ -372,7 +372,7 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, 9, L"%08X", m_pRelocTable->at(pItem->iItem).dwOffset);
+			swprintf_s(wstr, 9, L"%08X", m_pRelocTable->at(pItem->iItem).dwOffsetReloc);
 			break;
 		case 1:
 			swprintf_s(wstr, 9, L"%08X", pReloc->VirtualAddress);
@@ -402,7 +402,7 @@ void CViewRightTL::OnListExceptionGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).dwOffset);
+			swprintf_s(wstr, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).dwOffsetRuntimeFuncDesc);
 			break;
 		case 1:
 			swprintf_s(wstr, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.BeginAddress);
@@ -788,7 +788,7 @@ int CViewRightTL::CreateListRichHeader()
 
 	for (auto& i : *pRichHeader)
 	{
-		swprintf_s(wstr, 9, L"%08X", i.dwOffset);
+		swprintf_s(wstr, 9, L"%08X", i.dwOffsetRich);
 		m_listRichHdr.InsertItem(listindex, wstr);
 		swprintf_s(wstr, MAX_PATH, L"%i", listindex + 1);
 		m_listRichHdr.SetItemText(listindex, 1, wstr);
@@ -1890,7 +1890,7 @@ int CViewRightTL::CreateListExport()
 	m_listExportDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listExportDir.InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset);
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc);
 	m_listExportDir.InsertItem(listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"Export flags (Characteristics)");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->Characteristics));
@@ -1898,7 +1898,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 9, L"%08X", pExportDir->Characteristics);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, TimeDateStamp));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, TimeDateStamp));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"Time/Date Stamp");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->TimeDateStamp));
@@ -1912,7 +1912,7 @@ int CViewRightTL::CreateListExport()
 		m_listExportDir.SetCellTooltip(listindex, 3, wstr, L"Time / Date:");
 	}
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, MajorVersion));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, MajorVersion));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"MajorVersion");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->MajorVersion));
@@ -1920,7 +1920,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 5, L"%04X", pExportDir->MajorVersion);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, MinorVersion));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, MinorVersion));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"MinorVersion");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->MinorVersion));
@@ -1928,7 +1928,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 5, L"%04X", pExportDir->MinorVersion);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, Name));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, Name));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"Name RVA");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->Name));
@@ -1936,7 +1936,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, MAX_PATH, L"%08X (%S)", pExportDir->Name, pExport->strModuleName.data());
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, Base));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, Base));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"Base (OrdinalBase)");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->Base));
@@ -1944,7 +1944,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 9, L"%08X", pExportDir->Base);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, NumberOfFunctions));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, NumberOfFunctions));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"NumberOfFunctions");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->NumberOfFunctions));
@@ -1952,7 +1952,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 9, L"%08X", pExportDir->NumberOfFunctions);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, NumberOfNames));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, NumberOfNames));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"NumberOfNames");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->NumberOfNames));
@@ -1960,7 +1960,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 9, L"%08X", pExportDir->NumberOfNames);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfFunctions));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfFunctions));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"AddressOfFunctions");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->AddressOfFunctions));
@@ -1968,7 +1968,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 9, L"%08X", pExportDir->AddressOfFunctions);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfNames));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfNames));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"AddressOfNames");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->AddressOfNames));
@@ -1976,7 +1976,7 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 9, L"%08X", pExportDir->AddressOfNames);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pExport->dwOffset + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfNameOrdinals));
+	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfNameOrdinals));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"AddressOfNameOrdinals");
 	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->AddressOfNameOrdinals));
@@ -2164,7 +2164,7 @@ int CViewRightTL::CreateListSecurity()
 	WCHAR wstr[9];
 	for (auto& i : *pSecurityDir)
 	{
-		swprintf_s(wstr, 9, L"%08X", i.dwOffset);
+		swprintf_s(wstr, 9, L"%08X", i.dwOffsetWinCertDesc);
 		m_listSecurityDir.InsertItem(listindex, wstr);
 
 		const WIN_CERTIFICATE* pSert = &i.stWinSert;
@@ -2244,7 +2244,7 @@ int CViewRightTL::CreateListDebug()
 	{
 		const IMAGE_DEBUG_DIRECTORY* pDebug = &i.stDebugDir;
 
-		swprintf_s(wstr, 9, L"%08X", i.dwOffset);
+		swprintf_s(wstr, 9, L"%08X", i.dwOffsetDebug);
 		m_listDebugDir.InsertItem(listindex, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDebug->Characteristics);
 		m_listDebugDir.SetItemText(listindex, 1, wstr);
@@ -2315,9 +2315,9 @@ int CViewRightTL::CreateListTLS()
 
 	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
-		const IMAGE_TLS_DIRECTORY32*  pTLSDir32 = &pTLSDir->varTLSdir.stTLSDir32;
+		const IMAGE_TLS_DIRECTORY32*  pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset);
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS);
 		m_listTLSDir.InsertItem(listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"StartAddressOfRawData");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir32->StartAddressOfRawData));
@@ -2325,7 +2325,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 9, L"%08X", pTLSDir32->StartAddressOfRawData);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY32, EndAddressOfRawData));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY32, EndAddressOfRawData));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"EndAddressOfRawData");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir32->EndAddressOfRawData));
@@ -2333,7 +2333,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 9, L"%08X", pTLSDir32->EndAddressOfRawData);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY32, AddressOfIndex));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY32, AddressOfIndex));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"AddressOfIndex");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir32->AddressOfIndex));
@@ -2341,7 +2341,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 9, L"%08X", pTLSDir32->AddressOfIndex);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY32, AddressOfCallBacks));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY32, AddressOfCallBacks));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"AddressOfCallBacks");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir32->AddressOfCallBacks));
@@ -2349,7 +2349,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 9, L"%08X", pTLSDir32->AddressOfCallBacks);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY32, SizeOfZeroFill));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY32, SizeOfZeroFill));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"SizeOfZeroFill");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir32->SizeOfZeroFill));
@@ -2357,7 +2357,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 9, L"%08X", pTLSDir32->SizeOfZeroFill);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY32, Characteristics));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY32, Characteristics));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"Characteristics");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir32->Characteristics));
@@ -2371,9 +2371,9 @@ int CViewRightTL::CreateListTLS()
 	}
 	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 	{
-		const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &pTLSDir->varTLSdir.stTLSDir64;
+		const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset);
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS);
 		m_listTLSDir.InsertItem(listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"StartAddressOfRawData");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir64->StartAddressOfRawData));
@@ -2381,7 +2381,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 17, L"%016llX", pTLSDir64->StartAddressOfRawData);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY64, EndAddressOfRawData));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY64, EndAddressOfRawData));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"EndAddressOfRawData");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir64->EndAddressOfRawData));
@@ -2389,7 +2389,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 17, L"%016llX", pTLSDir64->EndAddressOfRawData);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY64, AddressOfIndex));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY64, AddressOfIndex));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"AddressOfIndex");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir64->AddressOfIndex));
@@ -2397,7 +2397,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 17, L"%016llX", pTLSDir64->AddressOfIndex);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY64, AddressOfCallBacks));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY64, AddressOfCallBacks));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"AddressOfCallBacks");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir64->AddressOfCallBacks));
@@ -2405,7 +2405,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 17, L"%016llX", pTLSDir64->AddressOfCallBacks);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY64, SizeOfZeroFill));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY64, SizeOfZeroFill));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"SizeOfZeroFill");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir64->SizeOfZeroFill));
@@ -2413,7 +2413,7 @@ int CViewRightTL::CreateListTLS()
 		swprintf_s(wstr, 9, L"%08X", pTLSDir64->SizeOfZeroFill);
 		m_listTLSDir.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffset + offsetof(IMAGE_TLS_DIRECTORY64, Characteristics));
+		swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + offsetof(IMAGE_TLS_DIRECTORY64, Characteristics));
 		m_listTLSDir.InsertItem(++listindex, wstr);
 		m_listTLSDir.SetItemText(listindex, 1, L"Characteristics");
 		swprintf_s(wstr, 3, L"%u", sizeof(pTLSDir64->Characteristics));
@@ -2479,7 +2479,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Size));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Size));
 		m_listLCD.InsertItem(listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"Size");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Size));
@@ -2491,7 +2491,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, TimeDateStamp));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, TimeDateStamp));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"TimeDateStamp");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->TimeDateStamp));
@@ -2509,7 +2509,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MajorVersion));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MajorVersion));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"MajorVersion");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MajorVersion));
@@ -2521,7 +2521,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MinorVersion));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MinorVersion));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"MinorVersion");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MinorVersion));
@@ -2533,7 +2533,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GlobalFlagsClear));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GlobalFlagsClear));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GlobalFlagsClear");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GlobalFlagsClear));
@@ -2545,7 +2545,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GlobalFlagsSet));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GlobalFlagsSet));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GlobalFlagsSet");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GlobalFlagsSet));
@@ -2557,7 +2557,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CriticalSectionDefaultTimeout));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CriticalSectionDefaultTimeout));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CriticalSectionDefaultTimeout");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CriticalSectionDefaultTimeout));
@@ -2569,7 +2569,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DeCommitFreeBlockThreshold));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DeCommitFreeBlockThreshold));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DeCommitFreeBlockThreshold");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DeCommitFreeBlockThreshold));
@@ -2581,7 +2581,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DeCommitTotalFreeThreshold));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DeCommitTotalFreeThreshold));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DeCommitTotalFreeThreshold");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DeCommitTotalFreeThreshold));
@@ -2593,7 +2593,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, LockPrefixTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, LockPrefixTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"LockPrefixTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->LockPrefixTable));
@@ -2605,7 +2605,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MaximumAllocationSize));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MaximumAllocationSize));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"MaximumAllocationSize");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MaximumAllocationSize));
@@ -2617,7 +2617,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, VirtualMemoryThreshold));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, VirtualMemoryThreshold));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"VirtualMemoryThreshold");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->VirtualMemoryThreshold));
@@ -2629,7 +2629,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, ProcessHeapFlags));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, ProcessHeapFlags));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"ProcessHeapFlags");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->ProcessHeapFlags));
@@ -2641,7 +2641,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, ProcessAffinityMask));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, ProcessAffinityMask));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"ProcessAffinityMask");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->ProcessAffinityMask));
@@ -2653,7 +2653,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CSDVersion));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CSDVersion));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CSDVersion");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CSDVersion));
@@ -2665,7 +2665,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DependentLoadFlags));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DependentLoadFlags));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DependentLoadFlags");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DependentLoadFlags));
@@ -2677,7 +2677,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, EditList));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, EditList));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"EditList");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->EditList));
@@ -2689,7 +2689,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SecurityCookie));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SecurityCookie));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"SecurityCookie");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SecurityCookie));
@@ -2701,7 +2701,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SEHandlerTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SEHandlerTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"SEHandlerTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SEHandlerTable));
@@ -2713,7 +2713,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SEHandlerCount));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SEHandlerCount));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"SEHandlerCount");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SEHandlerCount));
@@ -2725,7 +2725,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFCheckFunctionPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFCheckFunctionPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardCFCheckFunctionPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFCheckFunctionPointer));
@@ -2737,7 +2737,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFDispatchFunctionPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFDispatchFunctionPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardCFDispatchFunctionPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFDispatchFunctionPointer));
@@ -2749,7 +2749,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFFunctionTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFFunctionTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardCFFunctionTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFFunctionTable));
@@ -2761,7 +2761,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFFunctionCount));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFFunctionCount));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardCFFunctionCount");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFFunctionCount));
@@ -2773,7 +2773,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardFlags));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardFlags));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardFlags");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardFlags));
@@ -2791,7 +2791,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Catalog));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Catalog));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CodeIntegrity.Catalog");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Flags));
@@ -2803,7 +2803,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Catalog));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Catalog));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CodeIntegrity.Catalog");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Catalog));
@@ -2815,7 +2815,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.CatalogOffset));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.CatalogOffset));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CatalogOffset");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.CatalogOffset));
@@ -2827,7 +2827,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Reserved));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Reserved));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"Reserved");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Reserved));
@@ -2839,7 +2839,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardAddressTakenIatEntryTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardAddressTakenIatEntryTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardAddressTakenIatEntryTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardAddressTakenIatEntryTable));
@@ -2851,7 +2851,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardAddressTakenIatEntryCount));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardAddressTakenIatEntryCount));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardAddressTakenIatEntryCount");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardAddressTakenIatEntryCount));
@@ -2863,7 +2863,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardLongJumpTargetTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardLongJumpTargetTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardLongJumpTargetTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardLongJumpTargetTable));
@@ -2875,7 +2875,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardLongJumpTargetCount));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardLongJumpTargetCount));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardLongJumpTargetCount");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardLongJumpTargetCount));
@@ -2887,7 +2887,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTable));
@@ -2899,7 +2899,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CHPEMetadataPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CHPEMetadataPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CHPEMetadataPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CHPEMetadataPointer));
@@ -2911,7 +2911,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFFailureRoutine));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFFailureRoutine));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardRFFailureRoutine");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFFailureRoutine));
@@ -2923,7 +2923,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFFailureRoutineFunctionPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFFailureRoutineFunctionPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardRFFailureRoutineFunctionPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFFailureRoutineFunctionPointer));
@@ -2935,7 +2935,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTableOffset));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTableOffset));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTableOffset");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTableOffset));
@@ -2947,7 +2947,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTableSection));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTableSection));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTableSection");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTableSection));
@@ -2959,7 +2959,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Reserved2));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Reserved2));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"Reserved2");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Reserved2));
@@ -2971,7 +2971,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFVerifyStackPointerFunctionPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFVerifyStackPointerFunctionPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardRFVerifyStackPointerFunctionPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFVerifyStackPointerFunctionPointer));
@@ -2983,7 +2983,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, HotPatchTableOffset));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, HotPatchTableOffset));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"HotPatchTableOffset");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->HotPatchTableOffset));
@@ -2995,7 +2995,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Reserved3));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Reserved3));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"Reserved3");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Reserved3));
@@ -3007,7 +3007,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, EnclaveConfigurationPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, EnclaveConfigurationPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"EnclaveConfigurationPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->EnclaveConfigurationPointer));
@@ -3024,7 +3024,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Size));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Size));
 		m_listLCD.InsertItem(listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"Size");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Size));
@@ -3036,7 +3036,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, TimeDateStamp));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, TimeDateStamp));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"TimeDateStamp");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->TimeDateStamp));
@@ -3054,7 +3054,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MajorVersion));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MajorVersion));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"MajorVersion");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MajorVersion));
@@ -3066,7 +3066,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MinorVersion));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MinorVersion));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"MinorVersion");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MinorVersion));
@@ -3078,7 +3078,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GlobalFlagsClear));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GlobalFlagsClear));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GlobalFlagsClear");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GlobalFlagsClear));
@@ -3090,7 +3090,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GlobalFlagsSet));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GlobalFlagsSet));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GlobalFlagsSet");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GlobalFlagsSet));
@@ -3102,7 +3102,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CriticalSectionDefaultTimeout));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CriticalSectionDefaultTimeout));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CriticalSectionDefaultTimeout");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CriticalSectionDefaultTimeout));
@@ -3114,7 +3114,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DeCommitFreeBlockThreshold));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DeCommitFreeBlockThreshold));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DeCommitFreeBlockThreshold");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DeCommitFreeBlockThreshold));
@@ -3126,7 +3126,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DeCommitTotalFreeThreshold));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DeCommitTotalFreeThreshold));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DeCommitTotalFreeThreshold");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DeCommitTotalFreeThreshold));
@@ -3138,7 +3138,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, LockPrefixTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, LockPrefixTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"LockPrefixTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->LockPrefixTable));
@@ -3150,7 +3150,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MaximumAllocationSize));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MaximumAllocationSize));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"MaximumAllocationSize");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MaximumAllocationSize));
@@ -3162,7 +3162,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, VirtualMemoryThreshold));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, VirtualMemoryThreshold));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"VirtualMemoryThreshold");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->VirtualMemoryThreshold));
@@ -3174,7 +3174,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, ProcessHeapFlags));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, ProcessHeapFlags));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"ProcessHeapFlags");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->ProcessHeapFlags));
@@ -3186,7 +3186,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, ProcessAffinityMask));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, ProcessAffinityMask));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"ProcessAffinityMask");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->ProcessAffinityMask));
@@ -3198,7 +3198,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CSDVersion));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CSDVersion));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CSDVersion");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CSDVersion));
@@ -3210,7 +3210,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DependentLoadFlags));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DependentLoadFlags));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DependentLoadFlags");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DependentLoadFlags));
@@ -3222,7 +3222,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, EditList));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, EditList));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"EditList");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->EditList));
@@ -3234,7 +3234,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SecurityCookie));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SecurityCookie));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"SecurityCookie");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SecurityCookie));
@@ -3246,7 +3246,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SEHandlerTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SEHandlerTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"SEHandlerTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SEHandlerTable));
@@ -3258,7 +3258,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SEHandlerCount));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SEHandlerCount));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"SEHandlerCount");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SEHandlerCount));
@@ -3270,7 +3270,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFCheckFunctionPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFCheckFunctionPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardCFCheckFunctionPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFCheckFunctionPointer));
@@ -3282,7 +3282,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFDispatchFunctionPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFDispatchFunctionPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardCFDispatchFunctionPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFDispatchFunctionPointer));
@@ -3294,7 +3294,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFFunctionTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFFunctionTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardCFFunctionTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFFunctionTable));
@@ -3306,7 +3306,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFFunctionCount));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFFunctionCount));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardCFFunctionCount");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFFunctionCount));
@@ -3318,7 +3318,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardFlags));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardFlags));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardFlags");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardFlags));
@@ -3336,7 +3336,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Catalog));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Catalog));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CodeIntegrity.Catalog");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Flags));
@@ -3348,7 +3348,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Catalog));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Catalog));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CodeIntegrity.Catalog");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Catalog));
@@ -3360,7 +3360,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.CatalogOffset));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.CatalogOffset));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CatalogOffset");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.CatalogOffset));
@@ -3372,7 +3372,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Reserved));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Reserved));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"Reserved");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Reserved));
@@ -3384,7 +3384,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardAddressTakenIatEntryTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardAddressTakenIatEntryTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardAddressTakenIatEntryTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardAddressTakenIatEntryTable));
@@ -3396,7 +3396,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardAddressTakenIatEntryCount));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardAddressTakenIatEntryCount));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardAddressTakenIatEntryCount");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardAddressTakenIatEntryCount));
@@ -3408,7 +3408,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardLongJumpTargetTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardLongJumpTargetTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardLongJumpTargetTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardLongJumpTargetTable));
@@ -3420,7 +3420,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardLongJumpTargetCount));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardLongJumpTargetCount));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardLongJumpTargetCount");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardLongJumpTargetCount));
@@ -3432,7 +3432,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTable));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTable));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTable");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTable));
@@ -3444,7 +3444,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CHPEMetadataPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CHPEMetadataPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"CHPEMetadataPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CHPEMetadataPointer));
@@ -3456,7 +3456,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFFailureRoutine));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFFailureRoutine));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardRFFailureRoutine");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFFailureRoutine));
@@ -3468,7 +3468,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFFailureRoutineFunctionPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFFailureRoutineFunctionPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardRFFailureRoutineFunctionPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFFailureRoutineFunctionPointer));
@@ -3480,7 +3480,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTableOffset));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTableOffset));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTableOffset");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTableOffset));
@@ -3492,7 +3492,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTableSection));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTableSection));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTableSection");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTableSection));
@@ -3504,7 +3504,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Reserved2));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Reserved2));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"Reserved2");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Reserved2));
@@ -3516,7 +3516,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFVerifyStackPointerFunctionPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFVerifyStackPointerFunctionPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"GuardRFVerifyStackPointerFunctionPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFVerifyStackPointerFunctionPointer));
@@ -3528,7 +3528,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, HotPatchTableOffset));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, HotPatchTableOffset));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"HotPatchTableOffset");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->HotPatchTableOffset));
@@ -3540,7 +3540,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Reserved3));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Reserved3));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"Reserved3");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Reserved3));
@@ -3552,7 +3552,7 @@ int CViewRightTL::CreateListLoadConfigTable()
 		if (dwTotalSize > dwLCDSize)
 			return 0;
 
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffset + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, EnclaveConfigurationPointer));
+		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, EnclaveConfigurationPointer));
 		m_listLCD.InsertItem(++listindex, wstr);
 		m_listLCD.SetItemText(listindex, 1, L"EnclaveConfigurationPointer");
 		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->EnclaveConfigurationPointer));
@@ -3585,7 +3585,7 @@ int CViewRightTL::CreateListBoundImport()
 
 	for (auto& i : *pBoundImp)
 	{
-		swprintf_s(wstr, 9, L"%08X", i.dwOffset);
+		swprintf_s(wstr, 9, L"%08X", i.dwOffsetBoundImpDesc);
 		m_listBoundImportDir.InsertItem(listindex, wstr);
 
 		const IMAGE_BOUND_IMPORT_DESCRIPTOR* pBoundImpDir = &i.stBoundImpDesc;
@@ -3636,7 +3636,7 @@ int CViewRightTL::CreateListDelayImport()
 
 	for (auto& i : *pDelayImp)
 	{
-		swprintf_s(wstr, 9, L"%08X", i.dwOffset);
+		swprintf_s(wstr, 9, L"%08X", i.dwOffsetDelayImpDesc);
 		m_listDelayImportDir.InsertItem(listindex, wstr);
 
 		const IMAGE_DELAYLOAD_DESCRIPTOR* pDelayImpDir = &i.stDelayImpDesc;
@@ -3699,37 +3699,37 @@ int CViewRightTL::CreateListCOM()
 	WCHAR wstr[MAX_PATH];
 	std::wstring wstrToolTip;
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, cb));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, cb));
 	m_listCOMDir.InsertItem(listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"cb");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.cb);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, MajorRuntimeVersion));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, MajorRuntimeVersion));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"MajorRuntimeVersion");
 	swprintf_s(wstr, 5, L"%04X", pCOMDesc->stCorHdr.MajorRuntimeVersion);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, MinorRuntimeVersion));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, MinorRuntimeVersion));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"MinorRuntimeVersion");
 	swprintf_s(wstr, 5, L"%04X", pCOMDesc->stCorHdr.MinorRuntimeVersion);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, MetaData.VirtualAddress));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, MetaData.VirtualAddress));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"MetaData.RVA");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.MetaData.VirtualAddress);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, MetaData.Size));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, MetaData.Size));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"MetaData.Size");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.MetaData.Size);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, Flags));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, Flags));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"Flags");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.Flags);
@@ -3740,79 +3740,79 @@ int CViewRightTL::CreateListCOM()
 	if (!wstrToolTip.empty())
 		m_listCOMDir.SetCellTooltip(listindex, 2, wstrToolTip, L"Flags:");
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, EntryPointToken));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, EntryPointToken));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"EntryPointToken");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.EntryPointToken);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, Resources.VirtualAddress));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, Resources.VirtualAddress));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"Resources.RVA");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.Resources.VirtualAddress);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, Resources.Size));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, Resources.Size));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"Resources.Size");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.Resources.Size);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, StrongNameSignature.VirtualAddress));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, StrongNameSignature.VirtualAddress));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"StrongNameSignature.RVA");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.StrongNameSignature.VirtualAddress);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, StrongNameSignature.Size));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, StrongNameSignature.Size));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"StrongNameSignature.Size");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.StrongNameSignature.Size);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, CodeManagerTable.VirtualAddress));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, CodeManagerTable.VirtualAddress));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"CodeManagerTable.RVA");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.CodeManagerTable.VirtualAddress);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, CodeManagerTable.Size));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, CodeManagerTable.Size));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"CodeManagerTable.Size");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.CodeManagerTable.Size);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, VTableFixups.VirtualAddress));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, VTableFixups.VirtualAddress));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"VTableFixups.RVA");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.VTableFixups.VirtualAddress);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, VTableFixups.Size));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, VTableFixups.Size));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"VTableFixups.Size");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.VTableFixups.Size);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, ExportAddressTableJumps.VirtualAddress));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, ExportAddressTableJumps.VirtualAddress));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"ExportAddressTableJumps.RVA");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.ExportAddressTableJumps.VirtualAddress);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, ExportAddressTableJumps.Size));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, ExportAddressTableJumps.Size));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"ExportAddressTableJumps.Size");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.ExportAddressTableJumps.Size);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, ManagedNativeHeader.VirtualAddress));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, ManagedNativeHeader.VirtualAddress));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"ManagedNativeHeader.RVA");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.ManagedNativeHeader.VirtualAddress);
 	m_listCOMDir.SetItemText(listindex, 2, wstr);
 
-	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffset + offsetof(IMAGE_COR20_HEADER, ManagedNativeHeader.Size));
+	swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + offsetof(IMAGE_COR20_HEADER, ManagedNativeHeader.Size));
 	m_listCOMDir.InsertItem(++listindex, wstr);
 	m_listCOMDir.SetItemText(listindex, 1, L"ManagedNativeHeader.Size");
 	swprintf_s(wstr, 9, L"%08X", pCOMDesc->stCorHdr.ManagedNativeHeader.Size);

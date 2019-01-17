@@ -20,11 +20,8 @@ void CViewRightBL::OnInitialUpdate()
 	if (!m_pLibpe)
 		return;
 
-	const DWORD* pFileSummary { };
-	if (m_pLibpe->GetPESummary(pFileSummary) != S_OK)
+	if (m_pLibpe->GetPESummary(m_dwFileSummary) != S_OK)
 		return;
-
-	m_dwFileSummary = *pFileSummary;
 
 	//Hex control for SecurityDir and TLSdir.
 	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_BOTTOM_LEFT);
@@ -170,130 +167,6 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	return CScrollView::OnNotify(wParam, lParam, pResult);
 }
 
-int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
-{
-	if (m_pLibpe->GetSecurity(m_vecSec) != S_OK)
-		return -1;
-	if (nSertId > m_vecSec->size())
-		return -1;
-
-	const auto& secEntry = m_vecSec->at(nSertId).vecRawData;
-	m_stHexEdit.SetData((PBYTE)secEntry.data(), secEntry.size());
-
-	CRect rect;
-	GetClientRect(&rect);
-	m_stHexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	return 0;
-}
-
-int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
-{
-	PCLIBPE_IMPORT_VEC m_pImport { };
-
-	if (m_pLibpe->GetImport(m_pImport) != S_OK)
-		return -1;
-
-	if (dwEntry > m_pImport->size())
-		return -1;
-
-	m_listImportEntry.DestroyWindow();
-	m_listImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
-	m_listImportEntry.InsertColumn(0, L"Offset", 0, 90);
-	m_listImportEntry.SetHeaderColumnColor(0, g_clrOffset);
-	m_listImportEntry.InsertColumn(1, L"Function Name", 0, 175);
-	m_listImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
-	m_listImportEntry.InsertColumn(3, L"ThunkRVA", 0, 150);
-
-	int listindex = 0;
-	WCHAR wstr[MAX_PATH];
-
-	m_listImportEntry.SetRedraw(FALSE);
-	for (auto& i : m_pImport->at(dwEntry).vecImportFunc)
-	{
-		swprintf_s(wstr, 9, L"%08X", i.dwOffsetThunk);
-		m_listImportEntry.InsertItem(listindex, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%S", i.strFuncName.data());
-		m_listImportEntry.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 17, L"%04llX", i.ullOrdHint);
-		m_listImportEntry.SetItemText(listindex, 2, wstr);
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(wstr, 9, L"%08llX", i.ullThunkRVA);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(wstr, 17, L"%016llX", i.ullThunkRVA);
-		m_listImportEntry.SetItemText(listindex, 3, wstr);
-
-		listindex++;
-	}
-	m_listImportEntry.SetRedraw(TRUE);
-
-	CRect rect;
-	GetClientRect(&rect);
-	m_listImportEntry.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-	return 0;
-}
-
-int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
-{
-	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
-
-	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK)
-		return -1;
-
-	if (dwEntry > pDelayImport->size())
-		return -1;
-
-	m_listDelayImportEntry.DestroyWindow();
-	m_listDelayImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS, &m_stListInfo);
-	m_listDelayImportEntry.InsertColumn(0, L"Function Name", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
-	m_listDelayImportEntry.InsertColumn(1, L"Ordinal / Hint", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
-	m_listDelayImportEntry.InsertColumn(2, L"ImportNameTable ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 200);
-	m_listDelayImportEntry.InsertColumn(3, L"ImportAddressTable ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 220);
-	m_listDelayImportEntry.InsertColumn(4, L"BoundImportAddressTable ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
-	m_listDelayImportEntry.InsertColumn(5, L"UnloadInformationTable ThunkRVA", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 240);
-
-	int listindex = 0;
-	WCHAR wstr[MAX_PATH];
-
-	m_listDelayImportEntry.SetRedraw(FALSE);
-	for (auto&i : pDelayImport->at(dwEntry).vecDelayImpFunc)
-	{
-		swprintf_s(wstr, 256, L"%S", i.strFuncName.data());
-		m_listDelayImportEntry.InsertItem(listindex, wstr);
-		swprintf_s(wstr, 17, L"%04llX", i.ullOrdHint);
-		m_listDelayImportEntry.SetItemText(listindex, 1, wstr);
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(wstr, 9, L"%08llX", i.ullImportNameTableRVA);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(wstr, 17, L"%016llX", i.ullImportNameTableRVA);
-		m_listDelayImportEntry.SetItemText(listindex, 2, wstr);
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(wstr, 9, L"%08llX", i.ullImportAddressTableRVA);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(wstr, 17, L"%016llX", i.ullImportAddressTableRVA);
-		m_listDelayImportEntry.SetItemText(listindex, 3, wstr);
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(wstr, 9, L"%08llX", i.ullBoundImportAddressTableRVA);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(wstr, 17, L"%016llX", i.ullBoundImportAddressTableRVA);
-		m_listDelayImportEntry.SetItemText(listindex, 4, wstr);
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-			swprintf_s(wstr, 9, L"%08llX", i.ullUnloadInformationTableRVA);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
-			swprintf_s(wstr, 17, L"%016llX", i.ullUnloadInformationTableRVA);
-		m_listDelayImportEntry.SetItemText(listindex, 5, wstr);
-
-		listindex++;
-	}
-	m_listDelayImportEntry.SetRedraw(TRUE);
-
-	CRect rect;
-	GetClientRect(&rect);
-	m_listDelayImportEntry.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-	return 0;
-}
-
 int CViewRightBL::CreateListExportFuncs()
 {
 	PCLIBPE_EXPORT pExport;
@@ -326,6 +199,183 @@ int CViewRightBL::CreateListExportFuncs()
 		listindex++;
 	}
 	m_listExportFuncs.SetRedraw(TRUE);
+
+	return 0;
+}
+
+int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
+{
+	PCLIBPE_IMPORT_VEC m_pImport;
+
+	if (m_pLibpe->GetImport(m_pImport) != S_OK)
+		return -1;
+
+	if (dwEntry > m_pImport->size())
+		return -1;
+
+	m_listImportEntry.DestroyWindow();
+	m_listImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
+	m_listImportEntry.InsertColumn(0, L"Offset", 0, 90);
+	m_listImportEntry.SetHeaderColumnColor(0, g_clrOffset);
+	m_listImportEntry.InsertColumn(1, L"Function Name", 0, 175);
+	m_listImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
+	m_listImportEntry.InsertColumn(3, L"AddressOfData", 0, 150);
+
+	int listindex = 0;
+	WCHAR wstr[MAX_PATH];
+	auto& rImp = m_pImport->at(dwEntry).stImportDesc;
+	DWORD dwThunkOffset;
+	m_pLibpe->GetOffsetFromRVA(rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk, dwThunkOffset);
+
+	m_listImportEntry.SetRedraw(FALSE);
+	for (auto& i : m_pImport->at(dwEntry).vecImportFunc)
+	{
+		swprintf_s(wstr, 9, L"%08X", dwThunkOffset);
+		m_listImportEntry.InsertItem(listindex, wstr);
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+			dwThunkOffset += sizeof(IMAGE_THUNK_DATA32);
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+			dwThunkOffset += sizeof(IMAGE_THUNK_DATA64);
+
+		swprintf_s(wstr, MAX_PATH, L"%S", i.strFuncName.data());
+		m_listImportEntry.SetItemText(listindex, 1, wstr);
+
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		{
+			if (i.varThunk.stThunk32.u1.Ordinal & IMAGE_ORDINAL_FLAG32)
+				swprintf_s(wstr, 5, L"%04X", IMAGE_ORDINAL32(i.varThunk.stThunk32.u1.Ordinal));
+			else
+				swprintf_s(wstr, 5, L"%04X", i.stImpByName.Hint);
+		}
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		{
+			if (i.varThunk.stThunk64.u1.Ordinal & IMAGE_ORDINAL_FLAG64)
+				swprintf_s(wstr, 5, L"%04llX", i.varThunk.stThunk64.u1.Ordinal);
+			else
+				swprintf_s(wstr, 5, L"%04X", i.stImpByName.Hint);
+		}
+		m_listImportEntry.SetItemText(listindex, 2, wstr);
+
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+			swprintf_s(wstr, 9, L"%08X", i.varThunk.stThunk32.u1.AddressOfData);
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+			swprintf_s(wstr, 17, L"%016llX", i.varThunk.stThunk64.u1.AddressOfData);
+		m_listImportEntry.SetItemText(listindex, 3, wstr);
+
+		listindex++;
+	}
+	m_listImportEntry.SetRedraw(TRUE);
+
+	CRect rect;
+	GetClientRect(&rect);
+	m_listImportEntry.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+	return 0;
+}
+
+int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
+{
+	if (m_pLibpe->GetSecurity(m_vecSec) != S_OK)
+		return -1;
+	if (nSertId > m_vecSec->size())
+		return -1;
+
+	const auto& secEntry = m_vecSec->at(nSertId).vecRawData;
+	m_stHexEdit.SetData((PBYTE)secEntry.data(), secEntry.size());
+
+	CRect rect;
+	GetClientRect(&rect);
+	m_stHexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	return 0;
+}
+
+int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
+{
+	PCLIBPE_DELAYIMPORT_VEC pDelayImport { };
+
+	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK)
+		return -1;
+
+	if (dwEntry > pDelayImport->size())
+		return -1;
+
+	m_listDelayImportEntry.DestroyWindow();
+	m_listDelayImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_FUNCS, &m_stListInfo);
+	m_listDelayImportEntry.InsertColumn(0, L"Offset", 0, 90);
+	m_listDelayImportEntry.SetHeaderColumnColor(0, g_clrOffset);
+	m_listDelayImportEntry.InsertColumn(1, L"Function Name", 0, 300);
+	m_listDelayImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
+	m_listDelayImportEntry.InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
+	m_listDelayImportEntry.InsertColumn(4, L"IAT AddresOfData", 0, 200);
+	m_listDelayImportEntry.InsertColumn(5, L"BoundIAT AddresOfData", 0, 230);
+	m_listDelayImportEntry.InsertColumn(6, L"UnloadInfoTable AddresOfData", 0, 240);
+
+	int listindex = 0;
+	WCHAR wstr[MAX_PATH];
+
+	DWORD dwThunkOffset { };
+	m_pLibpe->GetOffsetFromRVA(pDelayImport->at(dwEntry).stDelayImpDesc.ImportNameTableRVA, dwThunkOffset);
+
+	m_listDelayImportEntry.SetRedraw(FALSE);
+	for (auto&i : pDelayImport->at(dwEntry).vecDelayImpFunc)
+	{
+		swprintf_s(wstr, 9, L"%08X", dwThunkOffset);
+		m_listDelayImportEntry.InsertItem(listindex, wstr);
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+			dwThunkOffset += sizeof(IMAGE_THUNK_DATA32);
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+			dwThunkOffset += sizeof(IMAGE_THUNK_DATA64);
+
+		swprintf_s(wstr, 256, L"%S", i.strFuncName.data());
+		m_listDelayImportEntry.SetItemText(listindex, 1, wstr);
+
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		{
+			if (i.varThunk.st32.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG32)
+				swprintf_s(wstr, 5, L"%04X", IMAGE_ORDINAL32(i.varThunk.st32.stImportNameTable.u1.Ordinal));
+			else
+				swprintf_s(wstr, 5, L"%04X", i.stImpByName.Hint);
+		}
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		{
+			if (i.varThunk.st64.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG64)
+				swprintf_s(wstr, 5, L"%04llX", IMAGE_ORDINAL64(i.varThunk.st64.stImportNameTable.u1.Ordinal));
+			else
+				swprintf_s(wstr, 5, L"%04X", i.stImpByName.Hint);
+		}
+		m_listDelayImportEntry.SetItemText(listindex, 2, wstr);
+
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stImportNameTable.u1.AddressOfData);
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stImportNameTable.u1.AddressOfData);
+		m_listDelayImportEntry.SetItemText(listindex, 3, wstr);
+
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stImportAddressTable.u1.AddressOfData);
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stImportAddressTable.u1.AddressOfData);
+		m_listDelayImportEntry.SetItemText(listindex, 4, wstr);
+
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stBoundImportAddressTable.u1.AddressOfData);
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stBoundImportAddressTable.u1.AddressOfData);
+		m_listDelayImportEntry.SetItemText(listindex, 5, wstr);
+
+		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stUnloadInformationTable.u1.AddressOfData);
+		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stUnloadInformationTable.u1.AddressOfData);
+		m_listDelayImportEntry.SetItemText(listindex, 6, wstr);
+
+		listindex++;
+	}
+	m_listDelayImportEntry.SetRedraw(TRUE);
+
+	CRect rect;
+	GetClientRect(&rect);
+	m_listDelayImportEntry.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	return 0;
 }
@@ -368,7 +418,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	m_listRelocsEntry.SetRedraw(FALSE);
 	for (auto& iterRelocs : pReloc->at(dwEntry).vecRelocData)
 	{
-		swprintf_s(wstr, 9, L"%08X", iterRelocs.dwOffset);
+		swprintf_s(wstr, 9, L"%08X", iterRelocs.dwOffsetRelocData);
 		m_listRelocsEntry.InsertItem(listindex, wstr);
 
 		auto it = mapRelocTypes.find(iterRelocs.wRelocType);
