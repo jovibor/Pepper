@@ -1,7 +1,6 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "HexCtrl.h"
 #include "ListEx.h"
 #include "TreeEx.h"
 

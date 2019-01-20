@@ -15,8 +15,6 @@ void CViewRightBR::OnInitialUpdate()
 
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
-	if (!m_pLibpe)
-		return;
 
 	m_stEditResStrings.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);

@@ -39,7 +39,6 @@ private:
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };
 	RESHELPER m_stResHelper { };
-	bool m_fRedraw { true };
 
 	int CreateListImportEntry(DWORD dwEntry);
 	int CreateListDelayImportEntry(DWORD dwEntry);
@@ -50,4 +49,5 @@ private:
 	int CreateHexTLS();
 	int CreateHexSecurityEntry(unsigned nSertId);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 };

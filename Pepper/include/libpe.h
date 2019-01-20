@@ -59,10 +59,12 @@ namespace libpe
 	using PCLIBPE_SECHEADERS_VEC = const LIBPE_SECHEADERS_VEC*;
 
 	//Export table.
-	//Tuple of: IMAGE_EXPORT_DIRECTORY, Actual export module name
-	//and vector of exported funcs: RVA, ordinal, func name, func forwarder name.
+	//IMAGE_EXPORT_DIRECTORY, Actual export module name, vector of exported funcs: RVA, ordinal, func name, func forwarder name.
 	struct LIBPE_EXPORT_FUNC { DWORD dwRVA; DWORD dwOrdinal; std::string strFuncName; std::string strForwarderName; };
-	struct LIBPE_EXPORT { DWORD dwOffsetExportDesc; IMAGE_EXPORT_DIRECTORY stExport; std::string strModuleName; std::vector<LIBPE_EXPORT_FUNC> vecFuncs; };
+	struct LIBPE_EXPORT {
+		DWORD dwOffsetExportDesc; IMAGE_EXPORT_DIRECTORY stExportDesc;
+		std::string strModuleName; std::vector<LIBPE_EXPORT_FUNC> vecFuncs;
+	};
 	using PCLIBPE_EXPORT = const LIBPE_EXPORT*;
 
 	//Import table:

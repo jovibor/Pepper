@@ -14,8 +14,6 @@ void CViewRightTR::OnInitialUpdate()
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
-	if (!m_pLibpe)
-		return;
 
 	//Hex control for Resources raw.
 	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_TR);

@@ -21,8 +21,6 @@ void CViewRightTL::OnInitialUpdate()
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
-	if (!m_pLibpe)
-		return;
 
 	LOGFONT lf { };
 	StringCchCopyW(lf.lfFaceName, 18, L"Consolas");
@@ -1880,7 +1878,7 @@ int CViewRightTL::CreateListExport()
 
 	WCHAR wstr[MAX_PATH];
 	int listindex = 0;
-	const IMAGE_EXPORT_DIRECTORY* pExportDir = &pExport->stExport;
+	const IMAGE_EXPORT_DIRECTORY* pExportDesc = &pExport->stExportDesc;
 
 	m_listExportDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT, &m_stListInfo);
 	m_listExportDir.ShowWindow(SW_HIDE);
@@ -1893,21 +1891,21 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc);
 	m_listExportDir.InsertItem(listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"Export flags (Characteristics)");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->Characteristics));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->Characteristics));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 9, L"%08X", pExportDir->Characteristics);
+	swprintf_s(wstr, 9, L"%08X", pExportDesc->Characteristics);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, TimeDateStamp));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"Time/Date Stamp");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->TimeDateStamp));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->TimeDateStamp));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, MAX_PATH, L"%08X", pExportDir->TimeDateStamp);
+	swprintf_s(wstr, MAX_PATH, L"%08X", pExportDesc->TimeDateStamp);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
-	if (pExportDir->TimeDateStamp)
+	if (pExportDesc->TimeDateStamp)
 	{
-		__time64_t time = pExportDir->TimeDateStamp;
+		__time64_t time = pExportDesc->TimeDateStamp;
 		_wctime64_s(wstr, MAX_PATH, &time);
 		m_listExportDir.SetCellTooltip(listindex, 3, wstr, L"Time / Date:");
 	}
@@ -1915,73 +1913,73 @@ int CViewRightTL::CreateListExport()
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, MajorVersion));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"MajorVersion");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->MajorVersion));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->MajorVersion));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pExportDir->MajorVersion);
+	swprintf_s(wstr, 5, L"%04X", pExportDesc->MajorVersion);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, MinorVersion));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"MinorVersion");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->MinorVersion));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->MinorVersion));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pExportDir->MinorVersion);
+	swprintf_s(wstr, 5, L"%04X", pExportDesc->MinorVersion);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, Name));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"Name RVA");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->Name));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->Name));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, MAX_PATH, L"%08X (%S)", pExportDir->Name, pExport->strModuleName.data());
+	swprintf_s(wstr, MAX_PATH, L"%08X (%S)", pExportDesc->Name, pExport->strModuleName.data());
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, Base));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"Base (OrdinalBase)");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->Base));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->Base));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 9, L"%08X", pExportDir->Base);
+	swprintf_s(wstr, 9, L"%08X", pExportDesc->Base);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, NumberOfFunctions));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"NumberOfFunctions");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->NumberOfFunctions));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->NumberOfFunctions));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 9, L"%08X", pExportDir->NumberOfFunctions);
+	swprintf_s(wstr, 9, L"%08X", pExportDesc->NumberOfFunctions);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, NumberOfNames));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"NumberOfNames");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->NumberOfNames));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->NumberOfNames));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 9, L"%08X", pExportDir->NumberOfNames);
+	swprintf_s(wstr, 9, L"%08X", pExportDesc->NumberOfNames);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfFunctions));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"AddressOfFunctions");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->AddressOfFunctions));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->AddressOfFunctions));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 9, L"%08X", pExportDir->AddressOfFunctions);
+	swprintf_s(wstr, 9, L"%08X", pExportDesc->AddressOfFunctions);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfNames));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"AddressOfNames");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->AddressOfNames));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->AddressOfNames));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 9, L"%08X", pExportDir->AddressOfNames);
+	swprintf_s(wstr, 9, L"%08X", pExportDesc->AddressOfNames);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + offsetof(IMAGE_EXPORT_DIRECTORY, AddressOfNameOrdinals));
 	m_listExportDir.InsertItem(++listindex, wstr);
 	m_listExportDir.SetItemText(listindex, 1, L"AddressOfNameOrdinals");
-	swprintf_s(wstr, 2, L"%X", sizeof(pExportDir->AddressOfNameOrdinals));
+	swprintf_s(wstr, 2, L"%X", sizeof(pExportDesc->AddressOfNameOrdinals));
 	m_listExportDir.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 9, L"%08X", pExportDir->AddressOfNameOrdinals);
+	swprintf_s(wstr, 9, L"%08X", pExportDesc->AddressOfNameOrdinals);
 	m_listExportDir.SetItemText(listindex, 3, wstr);
 
 	return 0;

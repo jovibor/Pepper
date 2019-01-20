@@ -96,9 +96,10 @@ namespace HEXControl
 	public:
 		friend class CHexDlgSearch;
 		DECLARE_DYNCREATE(CHexView)
-		BOOL Create(CWnd* m_pParent, const RECT& rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont);
+		BOOL Create(CWnd* pWndParent, const RECT& rc, UINT iId, CCreateContext* pContext, const LOGFONT* pLogFont);
 		void SetData(const unsigned char* pData, DWORD_PTR dwCount);
 		void ClearData();
+		void SetSelection(DWORD dwOffset);
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
@@ -108,7 +109,6 @@ namespace HEXControl
 	protected:
 		CHexView() {}
 		virtual ~CHexView() {}
-		void OnInitialUpdate() override;
 		void OnDraw(CDC* pDC) override;
 		afx_msg void OnSize(UINT nType, int cx, int cy);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
@@ -121,13 +121,12 @@ namespace HEXControl
 		afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 		afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-		virtual BOOL PreTranslateMessage(MSG* pMsg);
 		void OnMenuRange(UINT nID);
 		void Recalc();
 		int HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void CopyToClipboard(UINT nType);
 		void Search(HEXSEARCH& rSearch);
-		void SetSelection(DWORD dwClick, DWORD dwStart, DWORD dwBytes);	
+		void SetSelection(DWORD dwClick, DWORD dwStart, DWORD dwBytes);
 		void UpdateInfoText();
 		DECLARE_MESSAGE_MAP()
 	private:
@@ -180,10 +179,11 @@ namespace HEXControl
 		DECLARE_DYNAMIC(CHexCtrl)
 		CHexCtrl() {}
 		virtual ~CHexCtrl() {}
-		BOOL Create(CWnd* m_pParent, const RECT& rect, UINT nID, const LOGFONT* pLogFont = nullptr/*default*/);
+		BOOL Create(CWnd* pWndParent, const RECT& rc, UINT iCtrlId, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
 		CHexView* GetActiveView() const { return m_pHexView; };
 		void SetData(const PBYTE pData, DWORD_PTR dwCount) const;
 		void ClearData();
+		void SetSelection(DWORD dwOffset);
 		void SetFont(const LOGFONT* pLogFontNew) const;
 		void SetFontSize(UINT nSize) const;
 		void SetColor(COLORREF clrTextHex = GetSysColor(COLOR_WINDOWTEXT),
@@ -192,12 +192,13 @@ namespace HEXControl
 			COLORREF clrBk = GetSysColor(COLOR_WINDOW),
 			COLORREF clrBkSelected = RGB(200, 200, 255)) const;
 	private:
+		DECLARE_MESSAGE_MAP()
 		CHexView* m_pHexView { };
 		const LOGFONT* m_pLogFontHexView { };
 		afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 		afx_msg void OnSize(UINT nType, int cx, int cy);
-		DECLARE_MESSAGE_MAP()
+		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 	};
 
 	/****************************

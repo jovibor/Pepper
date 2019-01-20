@@ -13,16 +13,12 @@ void CViewLeft::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
 
-	if (!(m_pMainDoc = (CPepperDoc*)GetDocument()))
-		return;
-
-	if (!(m_pLibpe = m_pMainDoc->m_pLibpe))
-		return;
+	m_pMainDoc = (CPepperDoc*)GetDocument();
+	m_pLibpe = m_pMainDoc->m_pLibpe;
 	
-	DWORD dwFileSummary { };
+	DWORD dwFileSummary;
 	if (m_pLibpe->GetPESummary(dwFileSummary) != S_OK)
 		return;
-
 
 	m_ImgListRootTree.Create(16, 16, ILC_COLORDDB, 0, 2);
 	const int iconHdr = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_HEADER_ICON));

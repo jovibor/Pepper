@@ -24,13 +24,19 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_CREATE()
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
+	ON_WM_ACTIVATE()
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::Create(CWnd * m_pParent, const RECT& rect, UINT nID, const LOGFONT* pLogFont)
+BOOL CHexCtrl::Create(CWnd* pWndParent, const RECT& rc, UINT iCtrlId, bool fFloat, const LOGFONT* pLogFont)
 {
 	m_pLogFontHexView = pLogFont;
+	DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN;
+	if (fFloat) {
+		dwStyle &= ~WS_CHILD;
+		dwStyle |= WS_OVERLAPPEDWINDOW;
+	}
 
-	return CWnd::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, m_pParent, nID);
+	return CWnd::CreateEx(0, 0, L"HexControl", dwStyle, rc, pWndParent, fFloat ? 0 : iCtrlId);
 }
 
 int CHexCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -44,20 +50,27 @@ int CHexCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	m_pHexView = (CHexView*)pNewViewClass->CreateObject();
 
-	CRect rect;
-	GetClientRect(rect);
-	m_pHexView->Create(this, rect, 0x01, &context, m_pLogFontHexView);
+	CRect rc;
+	GetClientRect(rc);
+	m_pHexView->Create(this, rc, 1, &context, m_pLogFontHexView);
 	m_pHexView->ShowWindow(SW_SHOW);
 
 	return 0;
 }
 
+void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+{
+	CWnd::OnActivate(nState, pWndOther, bMinimized);
+	if (GetActiveView())
+		GetActiveView()->SetFocus();
+}
+
 void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 {
-	if (m_pHexView)
-		m_pHexView->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
-
 	CWnd::OnSize(nType, cx, cy);
+
+	if (GetActiveView())
+		GetActiveView()->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
@@ -75,6 +88,12 @@ void CHexCtrl::ClearData()
 {
 	if (GetActiveView())
 		GetActiveView()->ClearData();
+}
+
+void CHexCtrl::SetSelection(DWORD dwOffset)
+{
+	if (GetActiveView())
+		GetActiveView()->SetSelection(dwOffset);
 }
 
 void CHexCtrl::SetFont(const LOGFONT* pLogFontNew) const
@@ -145,9 +164,9 @@ BEGIN_MESSAGE_MAP(CHexView, CScrollView)
 	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
-BOOL CHexView::Create(CWnd * m_pParent, const RECT & rect, UINT nID, CCreateContext* pContext, const LOGFONT* pLogFont)
+BOOL CHexView::Create(CWnd* pWndParent, const RECT& rc, UINT iId, CCreateContext* pContext, const LOGFONT* pLogFont)
 {
-	BOOL ret = CScrollView::Create(nullptr, nullptr, WS_VISIBLE | WS_CHILD, rect, m_pParent, nID, pContext);
+	BOOL ret = CScrollView::Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, rc, pWndParent, iId, pContext);
 
 	NONCLIENTMETRICSW ncm { };
 	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
@@ -210,6 +229,11 @@ void CHexView::ClearData()
 	UpdateInfoText();
 }
 
+void CHexView::SetSelection(DWORD dwOffset)
+{
+	SetSelection(dwOffset, dwOffset, 1);
+}
+
 void CHexView::SetFont(const LOGFONT* pLogFontNew)
 {
 	if (!pLogFontNew)
@@ -264,11 +288,6 @@ void CHexView::SetCapacity(DWORD dwCapacity)
 	m_dwGridCapacity = dwCapacity;
 	m_dwGridBlockSize = m_dwGridCapacity / 2;
 	Recalc();
-}
-
-void CHexView::OnInitialUpdate()
-{
-	CScrollView::OnInitialUpdate();
 }
 
 void CHexView::OnMouseMove(UINT nFlags, CPoint point)
@@ -403,6 +422,14 @@ void CHexView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	switch (nChar)
 	{
+	case 'F':
+		if (GetKeyState(VK_CONTROL) < 0)
+			OnMenuRange(IDC_MENU_POPUP_SEARCH);
+		break;
+	case 'C':
+		if (GetKeyState(VK_CONTROL) < 0)
+			CopyToClipboard(CLIPBOARD_COPY_AS_HEX);
+		break;
 	case VK_RIGHT:
 		if (m_dwBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
 		{
@@ -591,7 +618,7 @@ void CHexView::OnDraw(CDC* pDC)
 {
 	int iScrollV = GetScrollPos(SB_VERT);
 	int iScrollH = GetScrollPos(SB_HORZ);
-	RECT rc; //Used for all local rect related drawing.
+	RECT rc; //Used for all local rc related drawing.
 
 	rc = m_rcClient;
 	rc.top += iScrollV;
@@ -800,16 +827,6 @@ void CHexView::OnDraw(CDC* pDC)
 BOOL CHexView::OnEraseBkgnd(CDC* pDC)
 {
 	return FALSE;
-}
-
-BOOL CHexView::PreTranslateMessage(MSG* pMsg)
-{
-	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' && GetKeyState(VK_CONTROL) < 0)
-		CopyToClipboard(CLIPBOARD_COPY_AS_HEX);
-	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'F' && GetKeyState(VK_CONTROL) < 0)
-		OnMenuRange(IDC_MENU_POPUP_SEARCH);
-
-	return CScrollView::PreTranslateMessage(pMsg);
 }
 
 int CHexView::HitTest(LPPOINT pPoint)
