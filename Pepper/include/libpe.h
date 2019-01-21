@@ -224,7 +224,7 @@ namespace libpe
 	{
 	public:
 		virtual HRESULT LoadPe(LPCWSTR) = 0;
-		virtual HRESULT GetPESummary(DWORD&) = 0;
+		virtual HRESULT GetImageUlong(DWORD&) = 0;
 		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset) = 0;
 		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&) = 0;
 		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&) = 0;

@@ -31,7 +31,7 @@ void CViewRightTL::OnInitialUpdate()
 		m_fontSummary.CreateFontIndirectW(&lf);
 	}
 
-	if (m_pLibpe->GetPESummary(m_dwFileSummary) != S_OK)
+	if (m_pLibpe->GetImageUlong(m_dwFileSummary) != S_OK)
 		return;
 
 	m_wstrFullPath = L"Full path: " + m_pMainDoc->GetPathName();
@@ -68,6 +68,9 @@ void CViewRightTL::OnInitialUpdate()
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
 	m_stListInfo.pHeaderLogFont = &m_hdrlf;
+
+	m_menuList.CreatePopupMenu();
+	m_menuList.AppendMenuW(MF_STRING, IDC_MENU_LIST_GOTOOFFSET, L"Go to offset...");
 
 	CreateListDOSHeader();
 	CreateListRichHeader();
@@ -431,6 +434,9 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	case IDC_LIST_IMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_ENTRY, pNMI->iItem));
+		else if (pNMI->hdr.code == LISTEX_MENU_SELECTED)
+		{
+		}
 		break;
 	case IDC_LIST_SECURITY:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
@@ -2001,19 +2007,33 @@ int CViewRightTL::CreateListImport()
 	m_listImport.InsertColumn(5, L"Name RVA", LVCFMT_LEFT, 90);
 	m_listImport.InsertColumn(6, L"FirstThunk (IAT)", LVCFMT_LEFT, 135);
 	m_listImport.SetItemCountEx(m_pImport->size(), LVSICF_NOSCROLL);
+	m_listImport.SetListMenu(&m_menuList);
 
 	WCHAR wstr[MAX_PATH];
 	int listindex = 0;
 
 	for (auto& i : *m_pImport)
 	{
-		const IMAGE_IMPORT_DESCRIPTOR* pImportDesc = &i.stImportDesc;
-		if (pImportDesc->TimeDateStamp)
+		DWORD dwOffset;
+		const IMAGE_IMPORT_DESCRIPTOR* pImpDesc = &i.stImportDesc;
+		m_pLibpe->GetOffsetFromRVA(pImpDesc->Name, dwOffset);
+		m_listImport.SetCellData(listindex, 1, dwOffset);
+		m_pLibpe->GetOffsetFromRVA(pImpDesc->OriginalFirstThunk, dwOffset);
+		m_listImport.SetCellData(listindex, 2, dwOffset);
+		m_listImport.SetCellData(listindex, 3, i.dwOffsetImpDesc + offsetof(IMAGE_IMPORT_DESCRIPTOR, TimeDateStamp));
+		m_pLibpe->GetOffsetFromRVA(pImpDesc->ForwarderChain, dwOffset);
+		m_listImport.SetCellData(listindex, 4, dwOffset);
+		m_pLibpe->GetOffsetFromRVA(pImpDesc->Name, dwOffset);
+		m_listImport.SetCellData(listindex, 5, dwOffset);
+		m_pLibpe->GetOffsetFromRVA(pImpDesc->FirstThunk, dwOffset);
+		m_listImport.SetCellData(listindex, 6, dwOffset);
+		if (pImpDesc->TimeDateStamp)
 		{
-			__time64_t time = pImportDesc->TimeDateStamp;
+			__time64_t time = pImpDesc->TimeDateStamp;
 			_wctime64_s(wstr, MAX_PATH, &time);
 			m_listImport.SetCellTooltip(listindex, 3, wstr, L"Time / Date:");
 		}
+
 		listindex++;
 	}
 

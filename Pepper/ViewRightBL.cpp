@@ -25,7 +25,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 
-	if (m_pLibpe->GetPESummary(m_dwFileSummary) != S_OK)
+	if (m_pLibpe->GetImageUlong(m_dwFileSummary) != S_OK)
 		return;
 
 	//Hex control for SecurityDir and TLSdir.

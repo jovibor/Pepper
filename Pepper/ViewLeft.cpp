@@ -17,7 +17,7 @@ void CViewLeft::OnInitialUpdate()
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 	
 	DWORD dwFileSummary;
-	if (m_pLibpe->GetPESummary(dwFileSummary) != S_OK)
+	if (m_pLibpe->GetImageUlong(dwFileSummary) != S_OK)
 		return;
 
 	m_ImgListRootTree.Create(16, 16, ILC_COLORDDB, 0, 2);

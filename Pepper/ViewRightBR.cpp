@@ -235,9 +235,29 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 				HDC hDCMemory = CreateCompatibleDC(hDC);
 				HBITMAP hBitmap = CreateCompatibleBitmap(hDC, rcDlg.Width(), rcDlg.Height());
 				::SelectObject(hDCMemory, hBitmap);
+
+				//To avoid window pop-up, removing animation temporarily, then restore back.
+				ANIMATIONINFO aninfo;
+				aninfo.cbSize = sizeof(ANIMATIONINFO);
+				SystemParametersInfo(SPI_GETANIMATION, aninfo.cbSize, &aninfo, 0);
+				int iMinAnimate = aninfo.iMinAnimate;
+				if (iMinAnimate) {
+					aninfo.iMinAnimate = 0;
+					SystemParametersInfo(SPI_SETANIMATION, aninfo.cbSize, &aninfo, SPIF_SENDCHANGE);
+				}
+				LONG lLong = GetWindowLongW(hwndResDlg, GWL_EXSTYLE);
+				SetWindowLongW(hwndResDlg, GWL_EXSTYLE, lLong | WS_EX_LAYERED);
+				::SetLayeredWindowAttributes(hwndResDlg, 0, 1, LWA_ALPHA);
+
 				::ShowWindow(hwndResDlg, SW_SHOWNOACTIVATE);
 				::PrintWindow(hwndResDlg, hDCMemory, 0);
 				::DestroyWindow(hwndResDlg);
+
+				if (iMinAnimate) {
+					aninfo.iMinAnimate = iMinAnimate;
+					SystemParametersInfo(SPI_SETANIMATION, aninfo.cbSize, &aninfo, SPIF_SENDCHANGE);
+				}
+
 				GetTextExtentPoint32W(hDC, L"STYLES: ", 8, &m_sizeStrStyles);
 				GetTextExtentPoint32W(hDC, m_wstrRes.data(), m_wstrRes.size(), &m_sizeLetter);
 				DeleteDC(hDCMemory);
@@ -310,7 +330,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 
 								if (!lvl3vec.empty())
 								{
-									auto& data =lvl3vec.at(0).vecResRawDataLvL3;
+									auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 									if (!data.empty())
 									{
 										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), data.size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);

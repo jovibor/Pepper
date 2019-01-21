@@ -29,6 +29,9 @@ END_MESSAGE_MAP()
 
 BOOL CHexCtrl::Create(CWnd* pWndParent, const RECT& rc, UINT iCtrlId, bool fFloat, const LOGFONT* pLogFont)
 {
+	if (m_hWnd) //Already created.
+		return FALSE;
+
 	m_pLogFontHexView = pLogFont;
 	DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN;
 	if (fFloat) {
@@ -162,6 +165,7 @@ BEGIN_MESSAGE_MAP(CHexView, CScrollView)
 	ON_WM_RBUTTONUP()
 	ON_COMMAND_RANGE(IDC_MENU_POPUP_SEARCH, IDC_MENU_POPUP_ABOUT, &CHexView::OnMenuRange)
 	ON_WM_KEYDOWN()
+	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
 BOOL CHexView::Create(CWnd* pWndParent, const RECT& rc, UINT iId, CCreateContext* pContext, const LOGFONT* pLogFont)
@@ -406,16 +410,13 @@ void CHexView::OnLButtonUp(UINT nFlags, CPoint point)
 	CScrollView::OnLButtonUp(nFlags, point);
 }
 
-void CHexView::OnRButtonUp(UINT nFlags, CPoint point)
-{
-	ClientToScreen(&point);
-	m_menuPopup.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
-
-	CScrollView::OnRButtonUp(nFlags, point);
-}
-
 void CHexView::OnMButtonDown(UINT nFlags, CPoint point)
 {
+}
+
+void CHexView::OnContextMenu(CWnd* pWnd, CPoint point)
+{
+	m_menuPopup.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
 }
 
 void CHexView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)

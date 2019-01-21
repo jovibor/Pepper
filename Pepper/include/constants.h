@@ -115,6 +115,8 @@ constexpr auto IDC_HEX_RIGHT_TR = 0x0201;
 
 constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;
 constexpr auto IDC_SHOW_RESOURCE_RBR = 0x0301;
+
+constexpr auto IDC_MENU_LIST_GOTOOFFSET = 0x1;
 /********************************************************
 * End of IDC.											*
 ********************************************************/

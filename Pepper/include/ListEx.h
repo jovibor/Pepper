@@ -77,6 +77,10 @@ namespace LISTEX {
 		UINT GetFontSize();
 		//To remove tooltip from specific subitem just set it again with empty (L"") string.
 		void SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTooltip, const std::wstring& wstrCaption = { });
+		void SetCellMenu(int iItem, int iSubitem, CMenu* pMenu);
+		void SetListMenu(CMenu* pMenu);
+		void SetCellData(int iItem, int iSubitem, DWORD_PTR dwData);
+		DWORD_PTR GetCellData(int iItem, int iSubitem);
 		void SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk,
 			COLORREF clrTextCellTt = GetSysColor(COLOR_WINDOWTEXT), //Text color of a cell that has tooltip.
 			COLORREF clrBkCellTt = RGB(170, 170, 230)); //Bk color of a cell that has tooltip.
@@ -87,7 +91,8 @@ namespace LISTEX {
 		DECLARE_MESSAGE_MAP()
 	protected:
 		void InitHeader() override;
-		bool HasTooltip(int, int, std::wstring** ppwstrText = nullptr, std::wstring** ppwstrCaption = nullptr);
+		bool HasTooltip(int iItem, int iSubitem, std::wstring** ppwstrText = nullptr, std::wstring** ppwstrCaption = nullptr);
+		bool HasMenu(int iItem, int iSubitem, CMenu** ppMenu = nullptr);
 		void DrawItem(LPDRAWITEMSTRUCT) override;
 		afx_msg void OnPaint();
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -95,6 +100,8 @@ namespace LISTEX {
 		afx_msg void OnKillFocus(CWnd* pNewWnd);
 		afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 		afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+		afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+		virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 		afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 		afx_msg void OnTimer(UINT_PTR nIDEvent);
@@ -108,8 +115,6 @@ namespace LISTEX {
 		CListExHeader m_stListHeader;
 		CFont m_fontList;
 		CPen m_penGrid;
-		//Container for List item's tooltips.
-		std::unordered_map<int, std::unordered_map<int, std::tuple<std::wstring/*tip text*/, std::wstring/*caption text*/>>> m_umapTooltip { };
 		//Flag that indicates that there is at least one tooltip in list.
 		bool m_fTtShown { false };
 		HWND m_hwndTt { };
@@ -127,9 +132,16 @@ namespace LISTEX {
 		COLORREF m_clrTooltipBk { GetSysColor(COLOR_INFOBK) };
 		COLORREF m_clrTextCellTt { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrBkCellTt { RGB(170, 170, 230) };
+		CMenu* m_pListMenu { };
+		//Container for List item's tooltips.
+		std::unordered_map<int, std::unordered_map<int, std::tuple<std::wstring/*tip text*/, std::wstring/*caption text*/>>> m_umapCellTt { };
+		std::unordered_map<int, std::unordered_map<int, CMenu*>> m_umapCellMenu { };
+		std::unordered_map<int, std::unordered_map<int, DWORD_PTR>> m_umapCellData { };
+		NMITEMACTIVATE m_stNMII { };
 	};
 
 	constexpr auto ID_TIMER_TOOLTIP = 0x01;
+	constexpr auto LISTEX_MENU_SELECTED = (LVN_FIRST - 90);
 
 	/*******************Setting the manifest for ComCtl32.dll version 6.***********************/
 #ifdef _UNICODE

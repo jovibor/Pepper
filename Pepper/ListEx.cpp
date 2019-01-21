@@ -74,12 +74,12 @@ LRESULT CListExHeader::OnLayout(WPARAM wParam, LPARAM lParam)
 {
 	CMFCHeaderCtrl::DefWindowProcW(HDM_LAYOUT, 0, lParam);
 
-	LPHDLAYOUT pHL = reinterpret_cast<LPHDLAYOUT>(lParam);
+	LPHDLAYOUT pHDL = reinterpret_cast<LPHDLAYOUT>(lParam);
 
 	//New header height.
-	pHL->pwpos->cy = m_dwHeaderHeight;
-	//Decreasing list's height by the new header's height.
-	pHL->prc->top = m_dwHeaderHeight;
+	pHDL->pwpos->cy = m_dwHeaderHeight;
+	//Decreasing list's height begining by the new header's height.
+	pHDL->prc->top = m_dwHeaderHeight;
 
 	return 0;
 }
@@ -148,6 +148,7 @@ BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
 	ON_NOTIFY(HDN_BEGINTRACKW, 0, &CListEx::OnHdnBegintrack)
 	ON_NOTIFY(HDN_TRACKA, 0, &CListEx::OnHdnTrack)
 	ON_NOTIFY(HDN_TRACKW, 0, &CListEx::OnHdnTrack)
+	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
 BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo)
@@ -260,15 +261,15 @@ UINT CListEx::GetFontSize()
 
 void CListEx::SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTt, const std::wstring& wstrCaption)
 {
-	auto it = m_umapTooltip.find(iItem);
+	auto it = m_umapCellTt.find(iItem);
 
 	//If there is no tooltip for such item/subitem we just set it.
-	if (it == m_umapTooltip.end() && (!wstrTt.empty() || !wstrCaption.empty()))
+	if (it == m_umapCellTt.end() && (!wstrTt.empty() || !wstrCaption.empty()))
 	{
 		//Initializing inner map.
 		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner {
 			{ iSubitem, { wstrTt, wstrCaption } } };
-		m_umapTooltip.insert({ iItem, std::move(umapInner) });
+		m_umapCellTt.insert({ iItem, std::move(umapInner) });
 	}
 	else
 	{
@@ -285,6 +286,71 @@ void CListEx::SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTt
 			else
 				it->second.erase(itInner);
 	}
+}
+
+void CListEx::SetCellMenu(int iItem, int iSubitem, CMenu* pMenu)
+{
+	auto it = m_umapCellMenu.find(iItem);
+
+	//If there is no tooltip for such item/subitem we just set it.
+	if (it == m_umapCellMenu.end())
+	{	//Initializing inner map.
+		std::unordered_map<int, CMenu*> umapInner { { iSubitem, pMenu } };
+		m_umapCellMenu.insert({ iItem, std::move(umapInner) });
+	}
+	else
+	{
+		auto itInner = it->second.find(iSubitem);
+
+		//If there is Item's tooltip but no Subitem's tooltip
+		//inserting new Subitem into inner map.
+		if (itInner == it->second.end())
+			it->second.insert({ iSubitem, pMenu });
+		else //If there is already exist this cell's menu -> changing.
+			itInner->second = pMenu;
+	}
+}
+
+void CListEx::SetListMenu(CMenu* pMenu)
+{
+	m_pListMenu = pMenu;
+}
+
+void CListEx::SetCellData(int iItem, int iSubitem, DWORD_PTR dwData)
+{
+	auto it = m_umapCellData.find(iItem);
+
+	//If there is no data for such item/subitem we just set it.
+	if (it == m_umapCellData.end())
+	{	//Initializing inner map.
+		std::unordered_map<int, DWORD_PTR> umapInner { { iSubitem, dwData } };
+		m_umapCellData.insert({ iItem, std::move(umapInner) });
+	}
+	else
+	{
+		auto itInner = it->second.find(iSubitem);
+
+		if (itInner == it->second.end())
+			it->second.insert({ iSubitem, dwData });
+		else //If there is already exist this cell's data -> changing.
+			itInner->second = dwData;
+	}
+}
+
+DWORD_PTR CListEx::GetCellData(int iItem, int iSubitem)
+{
+	auto it = m_umapCellData.find(iItem);
+
+	if (it != m_umapCellData.end())
+	{
+		auto itInner = it->second.find(iSubitem);
+
+		//If subitem id found and its text is not empty.
+		if (itInner != it->second.end())
+			return itInner->second;
+	}
+
+	return 0;
 }
 
 void CListEx::SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk, COLORREF clrTextCellTt, COLORREF clrBkCellTt)
@@ -447,7 +513,6 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint pt)
 	hi.pt = pt;
 	ListView_SubItemHitTest(m_hWnd, &hi);
 	std::wstring  *pwstrTt { }, *pwstrCaption { };
-
 	bool fHasTooltip = HasTooltip(hi.iItem, hi.iSubItem, &pwstrTt, &pwstrCaption);
 
 	if (fHasTooltip)
@@ -518,6 +583,33 @@ void CListEx::OnRButtonDown(UINT nFlags, CPoint pt)
 	CMFCListCtrl::OnRButtonDown(nFlags, pt);
 }
 
+void CListEx::OnContextMenu(CWnd* pWnd, CPoint pt)
+{
+	LVHITTESTINFO hi { };
+	ScreenToClient(&pt);
+	hi.pt = pt;
+	ListView_SubItemHitTest(m_hWnd, &hi);
+
+	m_stNMII.hdr.code = LISTEX_MENU_SELECTED;
+	m_stNMII.hdr.idFrom = GetDlgCtrlID();
+	m_stNMII.hdr.hwndFrom = m_hWnd;
+	m_stNMII.iItem = hi.iItem;
+	m_stNMII.iSubItem = hi.iSubItem;
+
+	ClientToScreen(&pt);
+	CMenu* pMenu { };
+	if (HasMenu(hi.iItem, hi.iSubItem, &pMenu))
+		pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, pt.x, pt.y, this);
+}
+
+BOOL CListEx::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	m_stNMII.lParam = LOWORD(wParam); //lParam holds uiMenuItemId.
+	GetParent()->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&m_stNMII);
+
+	return CMFCListCtrl::OnCommand(wParam, lParam);
+}
+
 void CListEx::OnTimer(UINT_PTR nIDEvent)
 {
 	//Checking if mouse left list's subitem rc,
@@ -549,7 +641,7 @@ void CListEx::OnTimer(UINT_PTR nIDEvent)
 
 BOOL CListEx::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
-//	SetFocus();
+	//	SetFocus();
 	return CMFCListCtrl::OnSetCursor(pWnd, nHitTest, message);
 }
 
@@ -563,14 +655,14 @@ BOOL CListEx::OnEraseBkgnd(CDC* pDC)
 }
 
 void CListEx::OnPaint()
-{	
+{
 	//To avoid flickering.
 	//Drawing to CMemDC, excluding list header area (rc).
 	CRect rc, rcHdr;
 	GetClientRect(&rc);
 	GetHeaderCtrl().GetClientRect(rcHdr);
 	rc.top += rcHdr.Height();
-	
+
 	CPaintDC dc(this);
 	CMemDC memDC(dc, rc);
 	CDC& rDC = memDC.GetDC();
@@ -614,8 +706,8 @@ bool CListEx::HasTooltip(int nItem, int nSubitem, std::wstring** ppwstrText, std
 {
 	//Can return true/false indicating if subitem has tooltip,
 	//or can return pointers to tooltip text as well, if poiters are not nullptr.
-	auto it = m_umapTooltip.find(nItem);
-	if (it != m_umapTooltip.end())
+	auto it = m_umapCellTt.find(nItem);
+	if (it != m_umapCellTt.end())
 	{
 		auto itInner = it->second.find(nSubitem);
 
@@ -631,6 +723,37 @@ bool CListEx::HasTooltip(int nItem, int nSubitem, std::wstring** ppwstrText, std
 			}
 			return true;
 		}
+	}
+
+	return false;
+}
+
+bool CListEx::HasMenu(int iItem, int iSubitem, CMenu** ppMenu)
+{
+	if (iItem < 0 || iSubitem < 0)
+		return false;
+
+	auto it = m_umapCellMenu.find(iItem);
+
+	if (it != m_umapCellMenu.end())
+	{
+		auto itInner = it->second.find(iSubitem);
+
+		//If subitem id found and its text is not empty.
+		if (itInner != it->second.end())
+		{
+			if (ppMenu)
+				*ppMenu = itInner->second;
+
+			return true;
+		}
+	}
+
+	//If there is no menu for cell, then checking menu for whole list.
+	if (m_pListMenu)
+	{
+		*ppMenu = m_pListMenu;
+		return true;
 	}
 
 	return false;

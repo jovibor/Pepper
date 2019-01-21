@@ -3,8 +3,10 @@
 #include "PepperDoc.h"
 #include "ListEx.h"
 #include "TreeEx.h"
+#include "HexCtrl.h"
 
 using namespace LISTEX;
+using namespace HEXControl;
 
 class CViewRightTL : public CScrollView
 {
@@ -67,6 +69,8 @@ private:
 	//with corresponding Resource index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };
+	CMenu m_menuList;
+	CHexCtrl m_hex;
 
 	int CreateListDOSHeader();
 	int CreateListRichHeader();
