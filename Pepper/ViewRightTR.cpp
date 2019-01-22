@@ -16,7 +16,7 @@ void CViewRightTR::OnInitialUpdate()
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 
 	//Hex control for Resources raw.
-	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_TR);
+	m_stHexEdit.Create(this, IDC_HEX_RIGHT_TR);
 	m_stHexEdit.ShowWindow(SW_HIDE);
 }
 

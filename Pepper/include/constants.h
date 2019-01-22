@@ -110,13 +110,15 @@ constexpr auto IDC_TREE_RESOURCE = 0x0101;
 constexpr auto IDC_TREE_RESOURCE_TOP = 0x0102;
 constexpr auto IDC_TREE_RESOURCE_BOTTOM = 0x0103;
 
-constexpr auto IDC_HEX_RIGHT_BOTTOM_LEFT = 0x0200;
+constexpr auto IDC_HEX_RIGHT_BL = 0x0200;
 constexpr auto IDC_HEX_RIGHT_TR = 0x0201;
+constexpr auto IDC_HEX_FLOAT = 0x0202;
 
 constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;
 constexpr auto IDC_SHOW_RESOURCE_RBR = 0x0301;
 
-constexpr auto IDC_MENU_LIST_GOTOOFFSET = 0x1;
+constexpr auto IDC_LIST_MENU_GOTO_DESCOFFSET = 0x01;
+constexpr auto IDC_LIST_MENU_GOTO_DATAOFFSET = 0x02;
 /********************************************************
 * End of IDC.											*
 ********************************************************/

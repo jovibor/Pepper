@@ -29,7 +29,7 @@ void CViewRightBL::OnInitialUpdate()
 		return;
 
 	//Hex control for SecurityDir and TLSdir.
-	m_stHexEdit.Create(this, CRect(0, 0, 0, 0), IDC_HEX_RIGHT_BOTTOM_LEFT);
+	m_stHexEdit.Create(this, IDC_HEX_RIGHT_BL);
 	m_stHexEdit.ShowWindow(SW_HIDE);
 
 	m_stListInfo.clrTooltipText = RGB(255, 255, 255);
@@ -121,6 +121,7 @@ BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
 	const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
+
 	if (pTree->hdr.idFrom == IDC_TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
 	{
 		PCLIBPE_RESOURCE_ROOT pstResRoot;

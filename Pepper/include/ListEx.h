@@ -30,7 +30,7 @@ namespace LISTEX {
 		const LOGFONT* pListLogFont { }; //List font.
 		COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) }; //List header text color.
 		COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) }; //List header bk color.
-		DWORD dwHeaderHeight { 19 }; //List header height.
+		DWORD dwHeaderHeight { 20 }; //List header height.
 		const LOGFONT* pHeaderLogFont { }; //List header font.
 	} *PLISTEXINFO;
 

@@ -4,6 +4,7 @@
 #include "ListEx.h"
 #include "TreeEx.h"
 #include "HexCtrl.h"
+#include "FileLoader.h"
 
 using namespace LISTEX;
 using namespace HEXControl;
@@ -70,7 +71,8 @@ private:
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };
 	CMenu m_menuList;
-	CHexCtrl m_hex;
+	CHexCtrl* m_pHexFloat { };
+	CFileLoader m_stFileLoader;
 
 	int CreateListDOSHeader();
 	int CreateListRichHeader();

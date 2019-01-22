@@ -150,7 +150,7 @@ BOOL CPepperApp::InitInstance()
 
 	PVOID pOldValue;
 	Wow64DisableWow64FsRedirection(&pOldValue);
-	
+
 	// Dispatch commands specified on the command line. Will return FALSE if
 	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
 	if (!ProcessShellCommand(cmdInfo))
@@ -183,41 +183,28 @@ void CPepperApp::OnAppAbout()
 
 void CPepperApp::OnFileOpen()
 {
-	WCHAR wstrFilePath[2048] { }; //Initial zeroing is needed.
+	CFileDialog stFD(TRUE, NULL, NULL,
+		OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
+		OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, L"All files (*.*)|*.*||");
 
-	OPENFILENAME ofn { };
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = AfxGetMainWnd()->GetSafeHwnd();
-	ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
-	ofn.lpstrFile = wstrFilePath;
-	ofn.nMaxFile = sizeof(wstrFilePath) / sizeof(WCHAR);
-	ofn.lpstrTitle = L"Select one or more PE files";
-	ofn.Flags = OFN_ALLOWMULTISELECT | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
-		OFN_EXPLORER | OFN_ENABLESIZING | OFN_DONTADDTORECENT;
-
-	if (!GetOpenFileNameW(&ofn))
-		return;
-
-	//Checking for multi file selection:
-	//If wstrFilePath at offset [ofn.nFileOffset - 1] equals '\0'
-	//it means that we have multiple file names following path name,
-	//divided with NULLs ('\0'). See OFN_ALLOWMULTISELECT description.
-	if (wstrFilePath[ofn.nFileOffset - 1] == '\0')
+	if (stFD.DoModal() == IDOK)
 	{
-		WCHAR* pwszFileName = ofn.lpstrFile;
-		std::wstring wstrDir = pwszFileName;
-		pwszFileName += (wstrDir.length() + 1);
-		while (*pwszFileName)
-		{
-			std::wstring wstrFileName = pwszFileName;
-			pwszFileName += (wstrFileName.length() + 1);
-			std::wstring wstrFullPath = wstrDir + L"\\" + wstrFileName;
+		CComPtr<IFileOpenDialog> pIFOD = stFD.GetIFileOpenDialog();
+		CComPtr<IShellItemArray> pResults;
+		pIFOD->GetResults(&pResults);
 
-			CWinAppEx::OpenDocumentFile(wstrFullPath.data());
+		DWORD dwCount { };
+		pResults->GetCount(&dwCount);
+		for (unsigned i = 0; i < dwCount; i++)
+		{
+			CComPtr<IShellItem> pItem;
+			pResults->GetItemAt(i, &pItem);
+			CComHeapPtr<wchar_t> pwstrPath;
+			pItem->GetDisplayName(SIGDN_FILESYSPATH, &pwstrPath);
+
+			CWinAppEx::OpenDocumentFile(pwstrPath);
 		}
 	}
-	else
-		CWinAppEx::OpenDocumentFile(ofn.lpstrFile);
 }
 
 void CPepperApp::PreLoadState()

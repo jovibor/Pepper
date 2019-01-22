@@ -25,21 +25,39 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
 	ON_WM_ACTIVATE()
+	ON_WM_DESTROY()
+	ON_WM_ACTIVATEAPP()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::Create(CWnd* pWndParent, const RECT& rc, UINT iCtrlId, bool fFloat, const LOGFONT* pLogFont)
+BOOL CHexCtrl::Create(CWnd* pWndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, const LOGFONT* pLogFont)
 {
 	if (m_hWnd) //Already created.
 		return FALSE;
 
 	m_pLogFontHexView = pLogFont;
+	m_dwCtrlId = uiCtrlId;
+	m_pParentOwner = pWndParent;
 	DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN;
 	if (fFloat) {
 		dwStyle &= ~WS_CHILD;
 		dwStyle |= WS_OVERLAPPEDWINDOW;
 	}
 
-	return CWnd::CreateEx(0, 0, L"HexControl", dwStyle, rc, pWndParent, fFloat ? 0 : iCtrlId);
+	CRect rc;
+	if (pRect)
+		rc = *pRect;
+	else
+	{
+		//If input rect==nullptr then place window at screen center.
+		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
+		int iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
+		int iPosCX = iPosX * 3;
+		int iPosCY = iPosY * 3;
+		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
+	}
+
+	return CWnd::CreateEx(0, 0, L"HexControl", dwStyle, rc, pWndParent, fFloat ? 0 : uiCtrlId);
 }
 
 int CHexCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -81,6 +99,18 @@ BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
 	return FALSE;
 }
 
+void CHexCtrl::OnDestroy()
+{
+	if (m_pParentOwner)
+	{
+		NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
+		m_pParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+		m_pParentOwner->SetForegroundWindow();
+	}
+
+	CWnd::OnDestroy();
+}
+
 void CHexCtrl::SetData(const PBYTE pData, DWORD_PTR dwCount) const
 {
 	if (GetActiveView())
@@ -93,10 +123,10 @@ void CHexCtrl::ClearData()
 		GetActiveView()->ClearData();
 }
 
-void CHexCtrl::SetSelection(DWORD dwOffset)
+void CHexCtrl::SetSelection(DWORD_PTR dwOffset, DWORD dwCount)
 {
 	if (GetActiveView())
-		GetActiveView()->SetSelection(dwOffset);
+		GetActiveView()->SetSelection(dwOffset, dwCount);
 }
 
 void CHexCtrl::SetFont(const LOGFONT* pLogFontNew) const
@@ -115,8 +145,12 @@ void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clr
 	COLORREF clrBk, COLORREF clrBkSelected) const
 {
 	if (GetActiveView())
-		GetActiveView()->SetColor(clrTextHex, clrTextAscii, clrTextCaption,
-			clrBk, clrBkSelected);
+		GetActiveView()->SetColor(clrTextHex, clrTextAscii, clrTextCaption, clrBk, clrBkSelected);
+}
+
+int CHexCtrl::GetDlgCtrlID() const
+{
+	return m_dwCtrlId;
 }
 
 
@@ -233,9 +267,9 @@ void CHexView::ClearData()
 	UpdateInfoText();
 }
 
-void CHexView::SetSelection(DWORD dwOffset)
+void CHexView::SetSelection(DWORD_PTR dwOffset, DWORD dwCount)
 {
-	SetSelection(dwOffset, dwOffset, 1);
+	SetSelection(dwOffset, dwOffset, dwCount);
 }
 
 void CHexView::SetFont(const LOGFONT* pLogFontNew)
@@ -1230,7 +1264,7 @@ End:
 	}
 }
 
-void CHexView::SetSelection(DWORD dwClick, DWORD dwStart, DWORD dwBytes)
+void CHexView::SetSelection(DWORD_PTR dwClick, DWORD_PTR dwStart, DWORD dwBytes)
 {
 	if (dwClick >= m_dwRawDataCount || dwStart >= m_dwRawDataCount || !dwBytes)
 		return;
@@ -1275,7 +1309,7 @@ BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexView* pParentWnd)
 	return CDialog::Create(nIDTemplate, m_pParent);
 }
 
-CHexView* CHexDlgSearch::GetParent()
+CHexView* CHexDlgSearch::GetParent() const
 {
 	return m_pParent;
 }

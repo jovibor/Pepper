@@ -230,6 +230,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="HexCtrl.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
@@ -256,11 +257,13 @@
     <Image Include="res\Toolbar256.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />
+    <ClInclude Include="include\FileLoader.h" />
     <ClInclude Include="include\HexCtrl.h" />
     <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />

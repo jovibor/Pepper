@@ -153,7 +153,7 @@ END_MESSAGE_MAP()
 
 BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo)
 {
-	BOOL fRet = CMFCListCtrl::Create(dwStyle | LVS_OWNERDRAWFIXED | LVS_REPORT, rect, pParentWnd, nID);
+	BOOL ret = CMFCListCtrl::Create(dwStyle | WS_CHILD | LVS_OWNERDRAWFIXED | LVS_REPORT, rect, pParentWnd, nID);
 
 	m_hwndTt = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
 		TTS_BALLOON | TTS_NOANIMATE | TTS_NOFADE | TTS_NOPREFIX | TTS_ALWAYSTIP,
@@ -193,16 +193,17 @@ BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID
 		else
 			m_fontList.CreateFontIndirectW(&ncm.lfMessageFont);
 
-		GetHeaderCtrl().SetColor(pListExInfo->clrHeaderText, pListExInfo->clrHeaderBk);
-		GetHeaderCtrl().SetHeight(pListExInfo->dwHeaderHeight);
-		GetHeaderCtrl().SetFont(pListExInfo->pHeaderLogFont);
+		SetHeaderColor(pListExInfo->clrHeaderText, pListExInfo->clrHeaderBk);
+		SetHeaderHeight(pListExInfo->dwHeaderHeight);
+		SetHeaderFont(pListExInfo->pHeaderLogFont);
 	}
 	else
 		m_fontList.CreateFontIndirectW(&ncm.lfMessageFont);
 
 	m_penGrid.CreatePen(PS_SOLID, m_dwGridWidth, m_clrGrid);
+	Update(0);
 
-	return fRet;
+	return ret;
 }
 
 void CListEx::SetFont(const LOGFONT* pLogFontNew)
@@ -418,17 +419,6 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	COLORREF clrText, clrBk;
 	COLORREF clrBkCurrRow = pDIS->itemID % 2 ? m_clrBkRow2 : m_clrBkRow1;
 
-	if (HasTooltip(pDIS->itemID, 0))
-	{
-		clrText = m_clrTextCellTt;
-		clrBk = m_clrBkCellTt;
-	}
-	else
-	{
-		clrText = m_clrText;
-		clrBk = clrBkCurrRow;
-	}
-
 	switch (pDIS->itemAction)
 	{
 	case ODA_SELECT:
@@ -443,14 +433,28 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 			clrText = m_clrTextSelected;
 			clrBk = m_clrBkSelected;
 		}
+		else
+		{
+			if (HasTooltip(pDIS->itemID, 0))
+			{
+				clrText = m_clrTextCellTt;
+				clrBk = m_clrBkCellTt;
+			}
+			else
+			{
+				clrText = m_clrText;
+				clrBk = clrBkCurrRow;
+			}
+		}
 		pDC->SetTextColor(clrText);
 		pDC->FillSolidRect(&pDIS->rcItem, clrBk);
 
-		rc.left += 3;
-		pDC->DrawTextW(GetItemText(pDIS->itemID, 0), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+		CString strItem = GetItemText(pDIS->itemID, 0);
+		rc.left += 3; //Drawing text +-3 px from rect bounds
+		ExtTextOutW(pDC->m_hDC, rc.left, rc.top, ETO_CLIPPED, rc, strItem, strItem.GetLength(), nullptr);
 		rc.left -= 3;
 
-		//Drawing Item's rc lines. 
+		//Drawing Item's rect lines. 
 		pDC->MoveTo(rc.left, rc.top);
 		pDC->LineTo(rc.right, rc.top);
 		pDC->MoveTo(rc.left, rc.top);
@@ -464,33 +468,35 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 		{
 			GetSubItemRect(pDIS->itemID, i, LVIR_BOUNDS, rc);
 
-			//Here comes Subitems draw routine.
-			//Assigning colors depending on whether subitem has tooltip,
-			//and whether it's selected or not.
-			if (HasTooltip(pDIS->itemID, i))
-			{
-				clrText = m_clrTextCellTt;
-				clrBk = m_clrBkCellTt;
-			}
-			else
-			{
-				clrText = m_clrText;
-				clrBk = clrBkCurrRow;
-			}
+			//Subitem's draw routine. Colors depending on whether subitem selected or not,
+			//and has tooltip or not.
 			if (pDIS->itemState & ODS_SELECTED)
 			{
 				clrText = m_clrTextSelected;
 				clrBk = m_clrBkSelected;
 			}
+			else
+			{
+				if (HasTooltip(pDIS->itemID, i))
+				{
+					clrText = m_clrTextCellTt;
+					clrBk = m_clrBkCellTt;
+				}
+				else
+				{
+					clrText = m_clrText;
+					clrBk = clrBkCurrRow;
+				}
+			}
 			pDC->SetTextColor(clrText);
 			pDC->FillSolidRect(&rc, clrBk);
 
-			CString strItem = GetItemText(pDIS->itemID, i);
+			CString strSubitem = GetItemText(pDIS->itemID, i);
 			rc.left += 3; //Drawing text +-3 px from rc bounds
-			ExtTextOutW(pDC->m_hDC, rc.left, rc.top, ETO_CLIPPED, rc, strItem, strItem.GetLength(), nullptr);
+			ExtTextOutW(pDC->m_hDC, rc.left, rc.top, ETO_CLIPPED, rc, strSubitem, strSubitem.GetLength(), nullptr);
 			rc.left -= 3;
 
-			//Drawing Subitem's rc lines. 
+			//Drawing Subitem's rect lines. 
 			pDC->MoveTo(rc.left, rc.top);
 			pDC->LineTo(rc.right, rc.top);
 			pDC->MoveTo(rc.left, rc.top);

@@ -21,6 +21,7 @@ void CViewRightTL::OnInitialUpdate()
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
+	m_pHexFloat = &m_pMainDoc->m_stHexFloat;
 
 	LOGFONT lf { };
 	StringCchCopyW(lf.lfFaceName, 18, L"Consolas");
@@ -70,7 +71,7 @@ void CViewRightTL::OnInitialUpdate()
 	m_stListInfo.pHeaderLogFont = &m_hdrlf;
 
 	m_menuList.CreatePopupMenu();
-	m_menuList.AppendMenuW(MF_STRING, IDC_MENU_LIST_GOTOOFFSET, L"Go to offset...");
+	m_menuList.AppendMenuW(MF_STRING, IDC_LIST_MENU_GOTO_DESCOFFSET, L"Go to offset...");
 
 	CreateListDOSHeader();
 	CreateListRichHeader();
@@ -431,11 +432,27 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 
 	switch (pNMI->hdr.idFrom)
 	{
+	case IDC_HEX_FLOAT:
+		if (pNMI->hdr.code == HEXCTRL_MSG_DESTROY)
+		{
+		}
+		break;
+
+
 	case IDC_LIST_IMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_ENTRY, pNMI->iItem));
 		else if (pNMI->hdr.code == LISTEX_MENU_SELECTED)
 		{
+			m_pHexFloat->Create(AfxGetMainWnd(), IDC_HEX_FLOAT, nullptr, true);
+			if (pNMI->lParam == IDC_LIST_MENU_GOTO_DESCOFFSET)
+			{
+				if (!m_stFileLoader.IsLoaded())
+					m_stFileLoader.LoadFile(m_pDocument->GetPathName());
+
+				m_pHexFloat->SetData((PBYTE)m_stFileLoader.GetMemoryHandle(), m_stFileLoader.GetBytesCount());
+				m_pHexFloat->SetSelection(17, 3);
+			}
 		}
 		break;
 	case IDC_LIST_SECURITY:
@@ -1996,7 +2013,7 @@ int CViewRightTL::CreateListImport()
 	if (!m_pImport)
 		return -1;
 
-	m_listImport.Create(WS_CHILD | WS_VISIBLE | LVS_OWNERDATA, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT, &m_stListInfo);
+	m_listImport.Create(WS_VISIBLE | LVS_OWNERDATA, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT, &m_stListInfo);
 	m_listImport.ShowWindow(SW_HIDE);
 	m_listImport.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
 	m_listImport.SetHeaderColumnColor(0, g_clrOffset);
@@ -2014,26 +2031,14 @@ int CViewRightTL::CreateListImport()
 
 	for (auto& i : *m_pImport)
 	{
-		DWORD dwOffset;
 		const IMAGE_IMPORT_DESCRIPTOR* pImpDesc = &i.stImportDesc;
-		m_pLibpe->GetOffsetFromRVA(pImpDesc->Name, dwOffset);
-		m_listImport.SetCellData(listindex, 1, dwOffset);
-		m_pLibpe->GetOffsetFromRVA(pImpDesc->OriginalFirstThunk, dwOffset);
-		m_listImport.SetCellData(listindex, 2, dwOffset);
-		m_listImport.SetCellData(listindex, 3, i.dwOffsetImpDesc + offsetof(IMAGE_IMPORT_DESCRIPTOR, TimeDateStamp));
-		m_pLibpe->GetOffsetFromRVA(pImpDesc->ForwarderChain, dwOffset);
-		m_listImport.SetCellData(listindex, 4, dwOffset);
-		m_pLibpe->GetOffsetFromRVA(pImpDesc->Name, dwOffset);
-		m_listImport.SetCellData(listindex, 5, dwOffset);
-		m_pLibpe->GetOffsetFromRVA(pImpDesc->FirstThunk, dwOffset);
-		m_listImport.SetCellData(listindex, 6, dwOffset);
 		if (pImpDesc->TimeDateStamp)
 		{
 			__time64_t time = pImpDesc->TimeDateStamp;
 			_wctime64_s(wstr, MAX_PATH, &time);
 			m_listImport.SetCellTooltip(listindex, 3, wstr, L"Time / Date:");
 		}
-
+		
 		listindex++;
 	}
 
@@ -2226,6 +2231,7 @@ int CViewRightTL::CreateListDebug()
 	m_listDebugDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DEBUG, &m_stListInfo);
 	m_listDebugDir.ShowWindow(SW_HIDE);
 	m_listDebugDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listDebugDir.SetHeaderColumnColor(0, g_clrOffset);
 	m_listDebugDir.InsertColumn(1, L"Characteristics", LVCFMT_CENTER, 115);
 	m_listDebugDir.InsertColumn(2, L"TimeDateStamp", LVCFMT_LEFT, 150);
 	m_listDebugDir.InsertColumn(3, L"MajorVersion", LVCFMT_LEFT, 100);
@@ -2443,7 +2449,7 @@ int CViewRightTL::CreateListTLS()
 		if (iterCharact != mapCharact.end())
 			m_listTLSDir.SetCellTooltip(listindex, 3, iterCharact->second, L"Characteristics:");
 	}
-
+	
 	return 0;
 }
 
@@ -3630,7 +3636,7 @@ int CViewRightTL::CreateListBoundImport()
 
 int CViewRightTL::CreateListDelayImport()
 {
-	PCLIBPE_DELAYIMPORT_VEC pDelayImp { };
+	PCLIBPE_DELAYIMPORT_VEC pDelayImp;
 
 	if (m_pLibpe->GetDelayImport(pDelayImp) != S_OK)
 		return -1;
@@ -3685,7 +3691,7 @@ int CViewRightTL::CreateListDelayImport()
 
 		listindex++;
 	}
-
+	
 	return 0;
 }
 

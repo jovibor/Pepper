@@ -39,20 +39,20 @@ namespace HEXControl
 		CHexDlgSearch(CWnd* m_pParent = nullptr) {}
 		virtual ~CHexDlgSearch() {}
 		BOOL Create(UINT nIDTemplate, CHexView* pParentWnd);
-		CHexView* GetParent();
+		CHexView* GetParent() const;
 	protected:
 		virtual void DoDataExchange(CDataExchange* pDX);
 		virtual BOOL OnInitDialog();
 		afx_msg void OnButtonSearchF();
 		afx_msg void OnButtonSearchB();
 		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
-		virtual BOOL PreTranslateMessage(MSG* pMsg);
 		afx_msg void OnClose();
+		virtual BOOL PreTranslateMessage(MSG* pMsg);
 		HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 		void OnRadioBnRange(UINT nID);
-		DECLARE_MESSAGE_MAP()
 		void SearchCallback();
 		void ClearAll();
+		DECLARE_MESSAGE_MAP()
 	private:
 		CHexView* m_pParent { };
 		HEXSEARCH m_stSearch { };
@@ -99,7 +99,7 @@ namespace HEXControl
 		BOOL Create(CWnd* pWndParent, const RECT& rc, UINT iId, CCreateContext* pContext, const LOGFONT* pLogFont);
 		void SetData(const unsigned char* pData, DWORD_PTR dwCount);
 		void ClearData();
-		void SetSelection(DWORD dwOffset);
+		void SetSelection(DWORD_PTR dwOffset, DWORD dwCount);
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
@@ -126,7 +126,7 @@ namespace HEXControl
 		int HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void CopyToClipboard(UINT nType);
 		void Search(HEXSEARCH& rSearch);
-		void SetSelection(DWORD dwClick, DWORD dwStart, DWORD dwBytes);
+		void SetSelection(DWORD_PTR dwClick, DWORD_PTR dwStart, DWORD dwBytes);
 		void UpdateInfoText();
 		DECLARE_MESSAGE_MAP()
 	private:
@@ -179,11 +179,11 @@ namespace HEXControl
 		DECLARE_DYNAMIC(CHexCtrl)
 		CHexCtrl() {}
 		virtual ~CHexCtrl() {}
-		BOOL Create(CWnd* pWndParent, const RECT& rc, UINT iCtrlId, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
+		BOOL Create(CWnd* pWndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
 		CHexView* GetActiveView() const { return m_pHexView; };
 		void SetData(const PBYTE pData, DWORD_PTR dwCount) const;
 		void ClearData();
-		void SetSelection(DWORD dwOffset);
+		void SetSelection(DWORD_PTR dwOffset, DWORD dwCount = 1);
 		void SetFont(const LOGFONT* pLogFontNew) const;
 		void SetFontSize(UINT nSize) const;
 		void SetColor(COLORREF clrTextHex = GetSysColor(COLOR_WINDOWTEXT),
@@ -191,6 +191,7 @@ namespace HEXControl
 			COLORREF clrTextCaption = RGB(0, 0, 180),
 			COLORREF clrBk = GetSysColor(COLOR_WINDOW),
 			COLORREF clrBkSelected = RGB(200, 200, 255)) const;
+		int GetDlgCtrlID() const;
 	private:
 		DECLARE_MESSAGE_MAP()
 		CHexView* m_pHexView { };
@@ -199,6 +200,10 @@ namespace HEXControl
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 		afx_msg void OnSize(UINT nType, int cx, int cy);
 		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
+		afx_msg void OnDestroy();
+	private:
+		CWnd* m_pParentOwner { };
+		UINT m_dwCtrlId;
 	};
 
 	/****************************
@@ -218,11 +223,12 @@ namespace HEXControl
 	constexpr auto HEXCTRL_SEARCH_HEX = 0x01;
 	constexpr auto HEXCTRL_SEARCH_ASCII = 0x02;
 	constexpr auto HEXCTRL_SEARCH_UNICODE = 0x03;
-
 	constexpr auto HEXCTRL_SEARCH_FORWARD = 1;
 	constexpr auto HEXCTRL_SEARCH_BACKWARD = -1;
 	constexpr auto HEXCTRL_SEARCH_NOTFOUND = 0x00;
 	constexpr auto HEXCTRL_SEARCH_FOUND = 0x01;
 	constexpr auto HEXCTRL_SEARCH_WRAP_BEGINNING = 0x02;
 	constexpr auto HEXCTRL_SEARCH_WRAP_END = 0x03;
+
+	constexpr auto HEXCTRL_MSG_DESTROY = 0xff;
 };
