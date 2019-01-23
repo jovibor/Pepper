@@ -32,7 +32,7 @@ void CViewRightTL::OnInitialUpdate()
 		m_fontSummary.CreateFontIndirectW(&lf);
 	}
 
-	if (m_pLibpe->GetImageUlong(m_dwFileSummary) != S_OK)
+	if (m_pLibpe->GetImageFlags(m_dwFileSummary) != S_OK)
 		return;
 
 	m_wstrFullPath = L"Full path: " + m_pMainDoc->GetPathName();

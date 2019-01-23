@@ -1,10 +1,9 @@
-/*********************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/			 *
-* PE viewer library for x86 (PE32) and x64 (PE32+) binares.			 *
-* This code is provided «AS IS» without any warranty, and			 *
-* can be used without any limitations for non-commercial usage.		 *
-* Additional info can be found at https://github.com/jovibor/libpe	 *
-*********************************************************************/
+/****************************************************************************************
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/			 				*
+* PE viewer library for x86 (PE32) and x64 (PE32+) binares.			 					*
+* This software is available under the MIT License modified with The Commons Clause.	*
+* Additional info can be found at https://github.com/jovibor/libpe	 					*
+****************************************************************************************/
 #pragma once
 #include <vector>
 #include <memory>
@@ -224,7 +223,7 @@ namespace libpe
 	{
 	public:
 		virtual HRESULT LoadPe(LPCWSTR) = 0;
-		virtual HRESULT GetImageUlong(DWORD&) = 0;
+		virtual HRESULT GetImageFlags(DWORD&) = 0;
 		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset) = 0;
 		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&) = 0;
 		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&) = 0;

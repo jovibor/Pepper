@@ -38,7 +38,7 @@ BOOL CHexCtrl::Create(CWnd* pWndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	m_pLogFontHexView = pLogFont;
 	m_dwCtrlId = uiCtrlId;
 	m_pParentOwner = pWndParent;
-	DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN;
+	DWORD dwStyle = WS_CHILD | WS_VISIBLE;
 	if (fFloat) {
 		dwStyle &= ~WS_CHILD;
 		dwStyle |= WS_OVERLAPPEDWINDOW;
@@ -73,7 +73,7 @@ int CHexCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	CRect rc;
 	GetClientRect(rc);
-	m_pHexView->Create(this, rc, 1, &context, m_pLogFontHexView);
+	m_pHexView->Create(this, rc, 0x0010, &context, m_pLogFontHexView);
 	m_pHexView->ShowWindow(SW_SHOW);
 
 	return 0;
@@ -196,8 +196,6 @@ BEGIN_MESSAGE_MAP(CHexView, CScrollView)
 	ON_WM_MBUTTONDOWN()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
-	ON_WM_RBUTTONUP()
-	ON_COMMAND_RANGE(IDC_MENU_POPUP_SEARCH, IDC_MENU_POPUP_ABOUT, &CHexView::OnMenuRange)
 	ON_WM_KEYDOWN()
 	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
@@ -232,13 +230,13 @@ BOOL CHexView::Create(CWnd* pWndParent, const RECT& rc, UINT iId, CCreateContext
 		m_fontRectBottom.CreateFontIndirectW(&ncm.lfMessageFont);
 
 	m_menuPopup.CreatePopupMenu();
-	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_SEARCH, L"Search...	Ctrl+F");
+	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_SEARCH, L"Search...	Ctrl+F");
 	m_menuPopup.AppendMenuW(MF_SEPARATOR);
-	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_HEX, L"Copy as Hex...	Ctrl+C");
-	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_HEX_FORMATTED, L"Copy as Formatted Hex...");
-	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_COPY_AS_ASCII, L"Copy as Ascii...");
+	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_COPYASHEX, L"Copy as Hex...	Ctrl+C");
+	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_COPYASHEXFORMATTED, L"Copy as Formatted Hex...");
+	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_COPYASASCII, L"Copy as Ascii...");
 	m_menuPopup.AppendMenuW(MF_SEPARATOR);
-	m_menuPopup.AppendMenuW(MF_STRING, IDC_MENU_POPUP_ABOUT, L"About");
+	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_ABOUT, L"About");
 
 	m_dlgSearch.Create(IDD_HEXCTRL_DIALOG_SEARCH, this);
 	Recalc();
@@ -269,7 +267,7 @@ void CHexView::ClearData()
 
 void CHexView::SetSelection(DWORD_PTR dwOffset, DWORD dwCount)
 {
-	SetSelection(dwOffset, dwOffset, dwCount);
+	SetSelection(dwOffset, dwOffset, dwCount, true);
 }
 
 void CHexView::SetFont(const LOGFONT* pLogFontNew)
@@ -448,6 +446,32 @@ void CHexView::OnMButtonDown(UINT nFlags, CPoint point)
 {
 }
 
+BOOL CHexView::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	UINT uiId = LOWORD(wParam);
+
+	switch (uiId)
+	{
+	case IDM_POPUP_SEARCH:
+		m_dlgSearch.ShowWindow(SW_SHOW);
+		break;
+	case IDM_POPUP_COPYASHEX:
+		CopyToClipboard(CLIPBOARD_COPY_AS_HEX);
+		break;
+	case IDM_POPUP_COPYASHEXFORMATTED:
+		CopyToClipboard(CLIPBOARD_COPY_AS_HEX_FORMATTED);
+		break;
+	case IDM_POPUP_COPYASASCII:
+		CopyToClipboard(CLIPBOARD_COPY_AS_ASCII);
+		break;
+	case IDM_POPUP_ABOUT:
+		m_dlgAbout.DoModal();
+		break;
+	}
+
+	return CScrollView::OnCommand(wParam, lParam);
+}
+
 void CHexView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	m_menuPopup.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
@@ -459,7 +483,7 @@ void CHexView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{
 	case 'F':
 		if (GetKeyState(VK_CONTROL) < 0)
-			OnMenuRange(IDC_MENU_POPUP_SEARCH);
+			m_dlgSearch.ShowWindow(SW_SHOW);
 		break;
 	case 'C':
 		if (GetKeyState(VK_CONTROL) < 0)
@@ -622,31 +646,8 @@ void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CHexView::OnSize(UINT nType, int cx, int cy)
 {
-	Recalc();
-
 	CScrollView::OnSize(nType, cx, cy);
-}
-
-void CHexView::OnMenuRange(UINT nID)
-{
-	switch (nID)
-	{
-	case IDC_MENU_POPUP_SEARCH:
-		m_dlgSearch.ShowWindow(SW_SHOW);
-		break;
-	case IDC_MENU_POPUP_COPY_AS_HEX:
-		CopyToClipboard(CLIPBOARD_COPY_AS_HEX);
-		break;
-	case IDC_MENU_POPUP_COPY_AS_HEX_FORMATTED:
-		CopyToClipboard(CLIPBOARD_COPY_AS_HEX_FORMATTED);
-		break;
-	case IDC_MENU_POPUP_COPY_AS_ASCII:
-		CopyToClipboard(CLIPBOARD_COPY_AS_ASCII);
-		break;
-	case IDC_MENU_POPUP_ABOUT:
-		m_dlgAbout.DoModal();
-		break;
-	}
+	Recalc();
 }
 
 void CHexView::OnDraw(CDC* pDC)
@@ -867,8 +868,9 @@ BOOL CHexView::OnEraseBkgnd(CDC* pDC)
 int CHexView::HitTest(LPPOINT pPoint)
 {
 	DWORD dwHexChunk;
-	int iScrollV = GetScrollPos(SB_VERT);// GetScrollInfo(SB_VERT, &m_stScrollVert, SIF_POS);
-	int iScrollH = GetScrollPos(SB_HORZ);// GetScrollInfo(SB_HORZ, &m_stScrollHorz, SIF_POS);
+	int iScrollV = GetScrollPos(SB_VERT);
+	int iScrollH = GetScrollPos(SB_HORZ);
+
 	//To compensate horizontal scroll.
 	pPoint->x += iScrollH;
 
@@ -1260,24 +1262,61 @@ End:
 	{
 		m_dlgSearch.SearchCallback();
 		if (rSearch.fFound)
-			SetSelection(rSearch.dwStartAt, rSearch.dwStartAt, dwSizeBytes);
+			SetSelection(rSearch.dwStartAt, rSearch.dwStartAt, dwSizeBytes, true);
 	}
 }
 
-void CHexView::SetSelection(DWORD_PTR dwClick, DWORD_PTR dwStart, DWORD dwBytes)
+void CHexView::SetSelection(DWORD_PTR dwClick, DWORD_PTR dwStart, DWORD dwBytes, bool fHighlight)
 {
 	if (dwClick >= m_dwRawDataCount || dwStart >= m_dwRawDataCount || !dwBytes)
 		return;
 	if ((dwStart + dwBytes) > m_dwRawDataCount)
 		dwBytes = m_dwRawDataCount - dwStart;
 
-	//New scroll depending on selection direction: top<->bottom.
-	int iNewScrollV = dwStart < m_dwSelectionClick ? dwStart / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2) :
-		(dwStart + dwBytes - 1) / m_dwGridCapacity * m_sizeLetter.cy - (m_iHeightWorkArea / 2);
+	//New scroll depending on selection direction: top <-> bottom.
+	//fHighlight means centralize scroll position on the screen (used in Search()).
+	int iNewScrollV;
+	DWORD dwEnd = dwStart + dwBytes - 1;
+
+	int iMaxV = GetScrollPos(SB_VERT) + m_rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
+		((m_rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
+
+	int iNewEndV = dwEnd / m_dwGridCapacity * m_sizeLetter.cy;
+	int iNewStartV = dwStart / m_dwGridCapacity * m_sizeLetter.cy;
+
+	if (fHighlight)
+		iNewScrollV = iNewStartV - (m_iHeightWorkArea / 2);
+	else
+	{
+		if (dwStart == dwClick)
+		{
+			if (iNewEndV >= iMaxV)
+				iNewScrollV = GetScrollPos(SB_VERT) + m_sizeLetter.cy;
+			else
+			{
+				if (iNewEndV >= GetScrollPos(SB_VERT))
+					iNewScrollV = GetScrollPos(SB_VERT);
+				else if (iNewStartV <= GetScrollPos(SB_VERT))
+					iNewScrollV = GetScrollPos(SB_VERT) - m_sizeLetter.cy;
+			}
+		}
+		else
+		{
+			if (iNewStartV < GetScrollPos(SB_VERT))
+				iNewScrollV = GetScrollPos(SB_VERT) - m_sizeLetter.cy;
+			else
+			{
+				if (iNewStartV < iMaxV)
+					iNewScrollV = GetScrollPos(SB_VERT);
+				else
+					iNewScrollV = GetScrollPos(SB_VERT) + m_sizeLetter.cy;
+			}
+		}
+	}
 	m_dwSelectionClick = dwClick;
 	m_dwSelectionStart = dwStart;
-	m_dwSelectionEnd = dwStart + dwBytes - 1;
-	m_dwBytesSelected = m_dwSelectionEnd - m_dwSelectionStart + 1;
+	m_dwSelectionEnd = dwEnd;
+	m_dwBytesSelected = dwEnd - dwStart + 1;
 
 	BOOL fHorz, fVert;
 	CheckScrollBars(fHorz, fVert);

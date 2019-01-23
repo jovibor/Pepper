@@ -257,7 +257,6 @@
     <Image Include="res\Toolbar256.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp.hint" />
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
