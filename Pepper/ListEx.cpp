@@ -149,11 +149,13 @@ BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
 	ON_NOTIFY(HDN_TRACKA, 0, &CListEx::OnHdnTrack)
 	ON_NOTIFY(HDN_TRACKW, 0, &CListEx::OnHdnTrack)
 	ON_WM_CONTEXTMENU()
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo)
 {
-	BOOL ret = CMFCListCtrl::Create(dwStyle | WS_CHILD | LVS_OWNERDRAWFIXED | LVS_REPORT, rect, pParentWnd, nID);
+	if (!CMFCListCtrl::Create(dwStyle | WS_CHILD | LVS_OWNERDRAWFIXED | LVS_REPORT, rect, pParentWnd, nID))
+		return FALSE;
 
 	m_hwndTt = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
 		TTS_BALLOON | TTS_NOANIMATE | TTS_NOFADE | TTS_NOPREFIX | TTS_ALWAYSTIP,
@@ -203,7 +205,7 @@ BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID
 	m_penGrid.CreatePen(PS_SOLID, m_dwGridWidth, m_clrGrid);
 	Update(0);
 
-	return ret;
+	return TRUE;
 }
 
 void CListEx::SetFont(const LOGFONT* pLogFontNew)
@@ -596,7 +598,7 @@ void CListEx::OnContextMenu(CWnd* pWnd, CPoint pt)
 	hi.pt = pt;
 	ListView_SubItemHitTest(m_hWnd, &hi);
 
-	m_stNMII.hdr.code = LISTEX_MENU_SELECTED;
+	m_stNMII.hdr.code = LISTEX_MSG_MENUSELECTED;
 	m_stNMII.hdr.idFrom = GetDlgCtrlID();
 	m_stNMII.hdr.hwndFrom = m_hWnd;
 	m_stNMII.iItem = hi.iItem;
@@ -706,6 +708,13 @@ void CListEx::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	GetHeaderCtrl().RedrawWindow();
 
 	CMFCListCtrl::OnHScroll(nSBCode, nPos, pScrollBar);
+}
+
+void CListEx::OnDestroy()
+{
+	CMFCListCtrl::OnDestroy();
+
+	::DestroyWindow(m_hwndTt);
 }
 
 bool CListEx::HasTooltip(int nItem, int nSubitem, std::wstring** ppwstrText, std::wstring** ppwstrCaption)

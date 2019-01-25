@@ -1,16 +1,14 @@
 #pragma once
 #include "libpe.h"
-#include"HexCtrl.h"
-
+#include "FileLoader.h"
 using namespace libpe;
-using namespace HEXControl;
 
 class CPepperDoc : public CDocument
 {
 public:	
 	DECLARE_DYNCREATE(CPepperDoc)
-	libpe_ptr m_pLibpe { };	
-	CHexCtrl m_stHexFloat;
+	libpe_ptr m_pLibpe { };
+	CFileLoader m_stFileLoader;
 private:
 	CPepperDoc() {}
 	virtual ~CPepperDoc() {}

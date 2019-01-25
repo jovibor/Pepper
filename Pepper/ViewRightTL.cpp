@@ -21,7 +21,7 @@ void CViewRightTL::OnInitialUpdate()
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
-	m_pHexFloat = &m_pMainDoc->m_stHexFloat;
+	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	LOGFONT lf { };
 	StringCchCopyW(lf.lfFaceName, 18, L"Consolas");
@@ -71,7 +71,8 @@ void CViewRightTL::OnInitialUpdate()
 	m_stListInfo.pHeaderLogFont = &m_hdrlf;
 
 	m_menuList.CreatePopupMenu();
-	m_menuList.AppendMenuW(MF_STRING, IDC_LIST_MENU_GOTO_DESCOFFSET, L"Go to offset...");
+	m_menuList.AppendMenuW(MF_STRING, IDM_LIST_GOTODESCOFFSET, L"Go to descriptor offset...");
+	m_menuList.AppendMenuW(MF_STRING, IDM_LIST_GOTODATAOFFSET, L"Go to data offset...");
 
 	CreateListDOSHeader();
 	CreateListRichHeader();
@@ -430,28 +431,40 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	if (pNMI->iItem == -1)
 		return TRUE;
 
+	DWORD dwOffset { };
+	ULONGLONG ullRVA { };
 	switch (pNMI->hdr.idFrom)
 	{
-	case IDC_HEX_FLOAT:
-		if (pNMI->hdr.code == HEXCTRL_MSG_DESTROY)
-		{
-		}
-		break;
-
-
 	case IDC_LIST_IMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_ENTRY, pNMI->iItem));
-		else if (pNMI->hdr.code == LISTEX_MENU_SELECTED)
+		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
-			m_pHexFloat->Create(AfxGetMainWnd(), IDC_HEX_FLOAT, nullptr, true);
-			if (pNMI->lParam == IDC_LIST_MENU_GOTO_DESCOFFSET)
+			switch (pNMI->lParam)
 			{
-				if (!m_stFileLoader.IsLoaded())
-					m_stFileLoader.LoadFile(m_pDocument->GetPathName());
-
-				m_pHexFloat->SetData((PBYTE)m_stFileLoader.GetMemoryHandle(), m_stFileLoader.GetBytesCount());
-				m_pHexFloat->SetSelection(17, 3);
+			case IDM_LIST_GOTODESCOFFSET:
+				dwOffset = m_pImport->at(pNMI->iItem).dwOffsetImpDesc;
+				break;
+			case IDM_LIST_GOTODATAOFFSET:
+				switch (pNMI->iSubItem)
+				{
+				case 1: //Str dll name
+				case 5: //Name
+					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.Name, dwOffset);
+					break;
+				case 2: //OriginalFirstThunk
+					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.OriginalFirstThunk, dwOffset);
+					break;
+				case 3: //TimeDateStamp
+					break;
+				case 4: //ForwarderChain
+					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.ForwarderChain, dwOffset);
+					break;
+				case 6: //FirstThunk
+					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.FirstThunk, dwOffset);
+					break;
+				}
+				break;
 			}
 		}
 		break;
@@ -515,6 +528,10 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DEBUG_ENTRY, pNMI->iItem));
 		break;
 	}
+
+	if (dwOffset)
+		m_pFileLoader->LoadFile(m_pDocument->GetPathName(), dwOffset);
+
 	return TRUE;
 }
 
@@ -1024,7 +1041,7 @@ int CViewRightTL::CreateListFileHeader()
 
 int CViewRightTL::CreateListOptHeader()
 {
-	PCLIBPE_OPTHEADER_VAR pOptHdr { };
+	PCLIBPE_OPTHEADER_VAR pOptHdr;
 	if (m_pLibpe->GetOptionalHeader(pOptHdr) != S_OK)
 		return -1;
 
@@ -2038,7 +2055,7 @@ int CViewRightTL::CreateListImport()
 			_wctime64_s(wstr, MAX_PATH, &time);
 			m_listImport.SetCellTooltip(listindex, 3, wstr, L"Time / Date:");
 		}
-		
+
 		listindex++;
 	}
 
@@ -2449,7 +2466,7 @@ int CViewRightTL::CreateListTLS()
 		if (iterCharact != mapCharact.end())
 			m_listTLSDir.SetCellTooltip(listindex, 3, iterCharact->second, L"Characteristics:");
 	}
-	
+
 	return 0;
 }
 
@@ -3691,7 +3708,7 @@ int CViewRightTL::CreateListDelayImport()
 
 		listindex++;
 	}
-	
+
 	return 0;
 }
 

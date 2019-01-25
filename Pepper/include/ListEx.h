@@ -111,11 +111,11 @@ namespace LISTEX {
 		afx_msg void OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnHdnBegintrack(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult);
+		afx_msg void OnDestroy();
 	private:
 		CListExHeader m_stListHeader;
 		CFont m_fontList;
 		CPen m_penGrid;
-		//Flag that indicates that there is at least one tooltip in list.
 		bool m_fTtShown { false };
 		HWND m_hwndTt { };
 		TOOLINFO m_stToolInfo { };
@@ -138,10 +138,13 @@ namespace LISTEX {
 		std::unordered_map<int, std::unordered_map<int, CMenu*>> m_umapCellMenu { };
 		std::unordered_map<int, std::unordered_map<int, DWORD_PTR>> m_umapCellData { };
 		NMITEMACTIVATE m_stNMII { };
+		const int ID_TIMER_TOOLTIP { 0x01 };
 	};
-
-	constexpr auto ID_TIMER_TOOLTIP = 0x01;
-	constexpr auto LISTEX_MENU_SELECTED = (LVN_FIRST - 90);
+	
+	/****************************************************************************
+	* WM_NOTIFY codes (NMHDR.code values)										*
+	****************************************************************************/
+	constexpr auto LISTEX_MSG_MENUSELECTED = 0x00001000;
 
 	/*******************Setting the manifest for ComCtl32.dll version 6.***********************/
 #ifdef _UNICODE

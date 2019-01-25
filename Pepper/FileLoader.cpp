@@ -1,18 +1,10 @@
 #include "stdafx.h"
 #include "FileLoader.h"
 
-CFileLoader::CFileLoader()
+HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, DWORD_PTR dwGotoOffset)
 {
-}
-
-CFileLoader::~CFileLoader()
-{
-}
-
-HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
-{
-	if (m_hFile)
-		UnloadFile();
+	if (IsLoaded())
+		return ShowOffset(dwGotoOffset);
 
 	m_hFile = CreateFileW(lpszFileName, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (m_hFile == INVALID_HANDLE_VALUE)
@@ -61,57 +53,65 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	{
 		m_fMapViewOfFileWhole = true;
 		m_ullMaxPointerBound = (DWORD_PTR)m_lpBase + m_stFileSize.QuadPart;
+		m_dwFileOffsetToMap = 0;
 	}
 
-	//If file succeeded to fully map,
-	//then just proceed getting all structures.
-	if (m_fMapViewOfFileWhole)
-	{
-	}
-	else //Otherwise mapping each section separately.
-	{
-	}
+	if (!CWnd::CreateEx(0, nullptr, nullptr, 0, CW_USEDEFAULT, CW_USEDEFAULT,
+		CW_USEDEFAULT, CW_USEDEFAULT, AfxGetMainWnd()->m_hWnd, nullptr))
+		return E_ABORT;
+
+	m_Hex.Create(this, IDC_HEX_CTRL, nullptr, true);
+	m_Hex.SetData((PBYTE)m_lpBase, (DWORD_PTR)m_stFileSize.QuadPart);
+	ShowOffset(dwGotoOffset);
 
 	return S_OK;
 }
 
+HRESULT CFileLoader::MapFilePiece(DWORD dwOffset)
+{/*
+	if (dwOffset >= m_dwFileOffsetToMap || dwOffset <= m_ullMaxPointerBound || dwOffset >= m_stFileSize.QuadPart)
+		return S_OK;
 
-HRESULT CFileLoader::MapDirSection(DWORD dwOffset)
-{
-	/*	DWORD dwAlignedOffsetToMap;
-		DWORD_PTR dwSizeToMap;
+	DWORD dwAlignedOffsetToMap;
+	DWORD_PTR dwSizeToMap;
 
-		m_dwFileOffsetToMap = dwOffset;
+	m_dwFileOffsetToMap = (dwOffset <= 0x01900000) ? 0 : dwOffset - 0x01900000; //25MB.
 
-		if (m_dwFileOffsetToMap > m_stFileSize.QuadPart)
-			return E_FILE_SECTION_DATA_CORRUPTED;
+	if (m_dwFileOffsetToMap % m_stSysInfo.dwAllocationGranularity > 0)
+		dwAlignedOffsetToMap = (m_dwFileOffsetToMap < m_stSysInfo.dwAllocationGranularity) ? 0 :
+		(m_dwFileOffsetToMap - (m_dwFileOffsetToMap % m_stSysInfo.dwAllocationGranularity));
+	else
+		dwAlignedOffsetToMap = m_dwFileOffsetToMap;
 
-		if (m_dwFileOffsetToMap % m_stSysInfo.dwAllocationGranularity > 0)
-			dwAlignedOffsetToMap = (m_dwFileOffsetToMap < m_stSysInfo.dwAllocationGranularity) ? 0 :
-			(m_dwFileOffsetToMap - (m_dwFileOffsetToMap % m_stSysInfo.dwAllocationGranularity));
-		else
-			dwAlignedOffsetToMap = m_dwFileOffsetToMap;
+	m_dwDeltaFileOffsetToMap = m_dwFileOffsetToMap - dwAlignedOffsetToMap;
 
-		m_dwDeltaFileOffsetToMap = m_dwFileOffsetToMap - dwAlignedOffsetToMap;
+	dwSizeToMap = 0x01900000; //25MB.
+	if ((LONGLONG)(dwAlignedOffsetToMap + dwSizeToMap) > m_stFileSize.QuadPart)
+		dwSizeToMap = (DWORD_PTR)(m_stFileSize.QuadPart - (LONGLONG)dwAlignedOffsetToMap);
 
-		dwSizeToMap = 10000;
+	if (!(m_lpSectionBase = MapViewOfFile(m_hMapObject, FILE_MAP_READ, 0, dwAlignedOffsetToMap, dwSizeToMap)))
+		return false;
 
-		if (((LONGLONG)dwAlignedOffsetToMap + dwSizeToMap) > m_stFileSize.QuadPart)
-			return false;
-		if (!(m_lpSectionBase = MapViewOfFile(m_hMapObject, FILE_MAP_READ, 0, dwAlignedOffsetToMap, dwSizeToMap)))
-			return false;
-
-		m_ullMaxPointerBound = (DWORD_PTR)m_lpSectionBase + dwSizeToMap;
-		*/
+	m_ullMaxPointerBound = (DWORD_PTR)m_lpSectionBase + dwSizeToMap;
+	*/
 	return 0;
 }
 
-
-LPVOID CFileLoader::GetMemoryHandle()
+HRESULT CFileLoader::ShowOffset(DWORD_PTR dwOffset)
 {
-	return m_lpBase;
-}
+	if (!IsLoaded())
+		return E_ABORT;
 
+	if (m_fMapViewOfFileWhole)
+		m_Hex.SetSelection(dwOffset);
+	else
+	{
+		MapFilePiece(dwOffset);
+		m_Hex.SetSelection(dwOffset);
+	}
+
+	return S_OK;
+}
 
 HRESULT CFileLoader::UnloadFile()
 {
@@ -125,13 +125,33 @@ HRESULT CFileLoader::UnloadFile()
 	return S_OK;
 }
 
-
 bool CFileLoader::IsLoaded()
 {
 	return m_lpBase ? true : false;
 }
 
-DWORD_PTR CFileLoader::GetBytesCount()
+LONGLONG CFileLoader::GetBytesCount()
 {
 	return m_stFileSize.QuadPart;
+}
+
+BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+{
+	LPNMHDR pNM = (LPNMHDR)lParam;
+	if (pNM->idFrom == IDC_HEX_CTRL)
+	{
+		switch (pNM->code)
+		{
+		case HEXCTRL_MSG_DESTROY:
+			UnloadFile();
+			break;
+		case HEXCTRL_MSG_SCROLLING:
+			if (!m_fMapViewOfFileWhole)
+			{
+			}
+			break;
+		}
+	}
+
+	return CWnd::OnNotify(wParam, lParam, pResult);
 }

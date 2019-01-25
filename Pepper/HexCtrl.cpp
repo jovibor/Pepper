@@ -3,7 +3,7 @@
 * This software is available under the "MIT License modified with The Commons Clause".  *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE                                 *
 *                                                                                       *
-* This is a HEX control for MFC apps, implemented as CWnd derived class.			    *
+* This is a SEARCH_HEX control for MFC apps, implemented as CWnd derived class.			    *
 * The usage is quite simple:														    *
 * 1. Construct CHexCtrl object — HEXControl::CHexCtrl myHex;						    *
 * 2. Call myHex.Create member function to create an instance.   					    *
@@ -30,14 +30,16 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::Create(CWnd* pWndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, const LOGFONT* pLogFont)
+BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, const LOGFONT* pLogFont)
 {
-	if (m_hWnd) //Already created.
+	if (m_fCreated) //Already created.
 		return FALSE;
 
 	m_pLogFontHexView = pLogFont;
 	m_dwCtrlId = uiCtrlId;
-	m_pParentOwner = pWndParent;
+	m_pwndParentOwner = pwndParent;
+	m_fFloat = fFloat;
+
 	DWORD dwStyle = WS_CHILD | WS_VISIBLE;
 	if (fFloat) {
 		dwStyle &= ~WS_CHILD;
@@ -57,32 +59,29 @@ BOOL CHexCtrl::Create(CWnd* pWndParent, UINT uiCtrlId, const CRect* pRect, bool 
 		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
 	}
 
-	return CWnd::CreateEx(0, 0, L"HexControl", dwStyle, rc, pWndParent, fFloat ? 0 : uiCtrlId);
-}
-
-int CHexCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
-{
-	if (CWnd::OnCreate(lpCreateStruct) == -1)
-		return -1;
+	if (!CWnd::CreateEx(0, 0, L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
+		return FALSE;
 
 	CRuntimeClass* pNewViewClass = RUNTIME_CLASS(CHexView);
 	CCreateContext context;
 	context.m_pNewViewClass = pNewViewClass;
+	if (!(m_pHexView = (CHexView*)pNewViewClass->CreateObject()))
+		return FALSE;
 
-	m_pHexView = (CHexView*)pNewViewClass->CreateObject();
-
-	CRect rc;
 	GetClientRect(rc);
-	m_pHexView->Create(this, rc, 0x0010, &context, m_pLogFontHexView);
-	m_pHexView->ShowWindow(SW_SHOW);
+	if (!m_pHexView->Create(this, rc, 0xFF, &context, m_pLogFontHexView))
+		return FALSE;
 
-	return 0;
+	m_fCreated = true;
+
+	return TRUE;
 }
 
 void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 {
 	CWnd::OnActivate(nState, pWndOther, bMinimized);
-	if (GetActiveView())
+
+	if (m_fCreated)
 		GetActiveView()->SetFocus();
 }
 
@@ -90,7 +89,7 @@ void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 {
 	CWnd::OnSize(nType, cx, cy);
 
-	if (GetActiveView())
+	if (m_fCreated)
 		GetActiveView()->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
@@ -101,56 +100,63 @@ BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
 
 void CHexCtrl::OnDestroy()
 {
-	if (m_pParentOwner)
+	if (m_pwndParentOwner)
 	{
 		NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
-		m_pParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
-		m_pParentOwner->SetForegroundWindow();
+		m_pwndParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+		m_pwndParentOwner->SetForegroundWindow();
 	}
+	m_fCreated = false;
+	m_pHexView = nullptr;
 
 	CWnd::OnDestroy();
 }
 
 void CHexCtrl::SetData(const PBYTE pData, DWORD_PTR dwCount) const
 {
-	if (GetActiveView())
+	if (m_fCreated)
 		GetActiveView()->SetData(pData, dwCount);
 }
 
 void CHexCtrl::ClearData()
 {
-	if (GetActiveView())
+	if (m_fCreated)
 		GetActiveView()->ClearData();
 }
 
-void CHexCtrl::SetSelection(DWORD_PTR dwOffset, DWORD dwCount)
+void CHexCtrl::SetSelection(DWORD_PTR dwOffset, DWORD dwBytes)
 {
-	if (GetActiveView())
-		GetActiveView()->SetSelection(dwOffset, dwCount);
+	if (m_fCreated)
+		GetActiveView()->SetSelection(dwOffset, dwBytes);
 }
 
 void CHexCtrl::SetFont(const LOGFONT* pLogFontNew) const
 {
-	if (GetActiveView())
+	if (m_fCreated)
 		return GetActiveView()->SetFont(pLogFontNew);
 }
 
 void CHexCtrl::SetFontSize(UINT nSize) const
 {
-	if (GetActiveView())
+	if (m_fCreated)
 		return GetActiveView()->SetFontSize(nSize);
 }
 
 void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
 	COLORREF clrBk, COLORREF clrBkSelected) const
 {
-	if (GetActiveView())
+	if (m_fCreated)
 		GetActiveView()->SetColor(clrTextHex, clrTextAscii, clrTextCaption, clrBk, clrBkSelected);
 }
 
 int CHexCtrl::GetDlgCtrlID() const
 {
 	return m_dwCtrlId;
+}
+
+CWnd * CHexCtrl::GetParent() const
+{
+	return m_pwndParentOwner;
 }
 
 
@@ -200,14 +206,14 @@ BEGIN_MESSAGE_MAP(CHexView, CScrollView)
 	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
-BOOL CHexView::Create(CWnd* pWndParent, const RECT& rc, UINT iId, CCreateContext* pContext, const LOGFONT* pLogFont)
+BOOL CHexView::Create(CHexCtrl* pwndParent, const RECT& rc, UINT uiId, CCreateContext* pContext, const LOGFONT* pLogFont)
 {
-	BOOL ret = CScrollView::Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, rc, pWndParent, iId, pContext);
+	m_pwndParent = pwndParent;
+	m_pwndGrParent = pwndParent->GetParent();
 
-	NONCLIENTMETRICSW ncm { };
-	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
+	NONCLIENTMETRICSW ncm { sizeof(NONCLIENTMETRICSW) };
 	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-	ncm.lfMessageFont.lfHeight = 18; //For some weird reason above func returns this value as MAX_LONG.
+	ncm.lfMessageFont.lfHeight = 18; //For some reason above func returns this value as MAX_LONG.
 
 	LOGFONT lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
@@ -226,8 +232,11 @@ BOOL CHexView::Create(CWnd* pWndParent, const RECT& rc, UINT iId, CCreateContext
 			m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
 
 	lf.lfHeight = 16;
-	if (!m_fontRectBottom.CreateFontIndirectW(&lf))
-		m_fontRectBottom.CreateFontIndirectW(&ncm.lfMessageFont);
+	if (!m_fontBottomRect.CreateFontIndirectW(&lf))
+	{
+		ncm.lfMessageFont.lfHeight = 16;
+		m_fontBottomRect.CreateFontIndirectW(&ncm.lfMessageFont);
+	}
 
 	m_menuPopup.CreatePopupMenu();
 	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_SEARCH, L"Search...	Ctrl+F");
@@ -238,17 +247,20 @@ BOOL CHexView::Create(CWnd* pWndParent, const RECT& rc, UINT iId, CCreateContext
 	m_menuPopup.AppendMenuW(MF_SEPARATOR);
 	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_ABOUT, L"About");
 
+	if (!CScrollView::Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, rc, pwndParent, uiId, pContext))
+		return FALSE;
+
 	m_dlgSearch.Create(IDD_HEXCTRL_DIALOG_SEARCH, this);
 	Recalc();
 
-	return ret;
+	return TRUE;
 }
 
 void CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount)
 {
 	ClearData();
 
-	m_pRawData = pData;
+	m_pData = pData;
 	m_dwRawDataCount = dwCount;
 
 	UpdateInfoText();
@@ -258,16 +270,16 @@ void CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount)
 void CHexView::ClearData()
 {
 	m_dwRawDataCount = 0;
-	m_pRawData = nullptr;
+	m_pData = nullptr;
 	m_dwSelectionClick = m_dwSelectionStart = m_dwSelectionEnd = m_dwBytesSelected = 0;
 	SetScrollSizes(MM_TEXT, CSize(0, 0));
 	m_dlgSearch.ClearAll();
 	UpdateInfoText();
 }
 
-void CHexView::SetSelection(DWORD_PTR dwOffset, DWORD dwCount)
+void CHexView::SetSelection(DWORD_PTR dwOffset, DWORD dwBytes)
 {
-	SetSelection(dwOffset, dwOffset, dwCount, true);
+	SetSelection(dwOffset, dwOffset, dwBytes, true);
 }
 
 void CHexView::SetFont(const LOGFONT* pLogFontNew)
@@ -589,29 +601,33 @@ void CHexView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
 	GetScrollInfo(SB_VERT, &si, SIF_ALL);
 
-	int pos = si.nPos;
+	int iPos = si.nPos;
 	switch (nSBCode)
 	{
-	case SB_TOP: pos = si.nMin; break;
-	case SB_BOTTOM: pos = si.nMax; break;
-	case SB_LINEUP: pos -= m_sizeLetter.cy; break;
-	case SB_LINEDOWN: pos += m_sizeLetter.cy;  break;
-	case SB_PAGEUP: pos -= m_sizeLetter.cy * 16; break;
-	case SB_PAGEDOWN: pos += m_sizeLetter.cy * 16; break;
-	case SB_THUMBPOSITION: pos = si.nTrackPos; break;
-	case SB_THUMBTRACK: pos = si.nTrackPos; break;
+	case SB_TOP: iPos = si.nMin; break;
+	case SB_BOTTOM: iPos = si.nMax; break;
+	case SB_LINEUP: iPos -= m_sizeLetter.cy; break;
+	case SB_LINEDOWN: iPos += m_sizeLetter.cy;  break;
+	case SB_PAGEUP: iPos -= m_sizeLetter.cy * 16; break;
+	case SB_PAGEDOWN: iPos += m_sizeLetter.cy * 16; break;
+	case SB_THUMBPOSITION: iPos = si.nTrackPos; break;
+	case SB_THUMBTRACK: iPos = si.nTrackPos; break;
 	}
 
 	//Make sure the new position is within range.
-	if (pos < si.nMin)
-		pos = si.nMin;
+	if (iPos < si.nMin)
+		iPos = si.nMin;
 	int max = si.nMax - si.nPage + 1;
-	if (pos > max)
-		pos = max;
+	if (iPos > max)
+		iPos = max;
 
-	si.nPos = pos;
+	si.nPos = iPos;
 	SetScrollInfo(SB_VERT, &si);
 	RedrawWindow();
+
+	NMLVSCROLL nmlv { { m_pwndParent->m_hWnd, (UINT)m_pwndParent->GetDlgCtrlID(), HEXCTRL_MSG_SCROLLING }, -1, iPos };
+	if (m_pwndGrParent)
+		m_pwndGrParent->SendMessageW(WM_NOTIFY, nmlv.hdr.idFrom, (LPARAM)&nmlv);
 }
 
 void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
@@ -619,29 +635,33 @@ void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	SCROLLINFO si { sizeof(SCROLLINFO), SIF_ALL };
 	GetScrollInfo(SB_HORZ, &si, SIF_ALL);
 
-	int pos = si.nPos;
+	int iPos = si.nPos;
 	switch (nSBCode)
 	{
-	case SB_LEFT: pos = si.nMin; break;
-	case SB_RIGHT: pos = si.nMax; break;
-	case SB_LINELEFT: pos -= m_sizeLetter.cx; break;
-	case SB_LINERIGHT: pos += m_sizeLetter.cx;  break;
-	case SB_PAGELEFT: pos -= si.nPage; break;
-	case SB_PAGERIGHT: pos += si.nPage; break;
-	case SB_THUMBPOSITION: pos = si.nTrackPos; break;
-	case SB_THUMBTRACK: pos = si.nTrackPos; break;
+	case SB_LEFT: iPos = si.nMin; break;
+	case SB_RIGHT: iPos = si.nMax; break;
+	case SB_LINELEFT: iPos -= m_sizeLetter.cx; break;
+	case SB_LINERIGHT: iPos += m_sizeLetter.cx;  break;
+	case SB_PAGELEFT: iPos -= si.nPage; break;
+	case SB_PAGERIGHT: iPos += si.nPage; break;
+	case SB_THUMBPOSITION: iPos = si.nTrackPos; break;
+	case SB_THUMBTRACK: iPos = si.nTrackPos; break;
 	}
 
 	//Make sure the new position is within range.
-	if (pos < si.nMin)
-		pos = si.nMin;
+	if (iPos < si.nMin)
+		iPos = si.nMin;
 	int max = si.nMax - si.nPage + 1;
-	if (pos > max)
-		pos = max;
+	if (iPos > max)
+		iPos = max;
 
-	si.nPos = pos;
+	si.nPos = iPos;
 	SetScrollInfo(SB_HORZ, &si);
 	RedrawWindow();
+
+	NMLVSCROLL nmlv { { m_pwndParent->m_hWnd, (UINT)m_pwndParent->GetDlgCtrlID(), HEXCTRL_MSG_SCROLLING }, iPos, -1 };
+	if (m_pwndGrParent)
+		m_pwndGrParent->SendMessageW(WM_NOTIFY, nmlv.hdr.idFrom, (LPARAM)&nmlv);
 }
 
 void CHexView::OnSize(UINT nType, int cx, int cy)
@@ -713,7 +733,7 @@ void CHexView::OnDraw(CDC* pDC)
 	rc.bottom = iFourthHorizLine;
 	rDC.FillSolidRect(&rc, m_clrBkBottomRect);
 	rDC.SetTextColor(m_clrTextBottomRect);
-	rDC.SelectObject(&m_fontRectBottom);
+	rDC.SelectObject(&m_fontBottomRect);
 	rc.left = m_iFirstVertLine + 5;
 	DrawTextW(rDC.m_hDC, m_wstrBottomText.data(), m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
@@ -796,12 +816,12 @@ void CHexView::OnDraw(CDC* pDC)
 			const UINT iAsciiPosToPrintX = m_iIndentAscii + iIndentAsciiX;
 			const UINT iAsciiPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine + iScrollV;
 
-			//Index of the next char (in m_pRawData) to draw.
+			//Index of the next char (in m_pData) to draw.
 			const size_t iIndexDataToPrint = iterLines * m_dwGridCapacity + iterChunks;
 
 			if (iIndexDataToPrint < m_dwRawDataCount) //Draw until reaching the end of m_dwRawDataCount.
 			{
-				//Rect of the space between HEX chunks, needed for proper selection drawing.
+				//Rect of the space between Hex chunks, needed for proper selection drawing.
 				rc.left = iHexPosToPrintX + m_sizeLetter.cx * 2;
 				rc.top = iHexPosToPrintY;
 				if (iterChunks == m_dwGridBlockSize - 1) //Space between capacity halves.
@@ -810,17 +830,17 @@ void CHexView::OnDraw(CDC* pDC)
 					rc.right = iHexPosToPrintX + m_sizeLetter.cx * 3;
 				rc.bottom = iHexPosToPrintY + m_sizeLetter.cy;
 
-				//HEX chunk to print.
+				//Hex chunk to print.
 				WCHAR wstrHexToPrint[2];
-				wstrHexToPrint[0] = m_pwszHexMap[((const unsigned char)m_pRawData[iIndexDataToPrint] & 0xF0) >> 4];
-				wstrHexToPrint[1] = m_pwszHexMap[((const unsigned char)m_pRawData[iIndexDataToPrint] & 0x0F)];
+				wstrHexToPrint[0] = m_pwszHexMap[((unsigned char)m_pData[iIndexDataToPrint] & 0xF0) >> 4];
+				wstrHexToPrint[1] = m_pwszHexMap[((unsigned char)m_pData[iIndexDataToPrint] & 0x0F)];
 
 				//Selection draw with different BK color.
 				if (m_dwBytesSelected && iIndexDataToPrint >= m_dwSelectionStart && iIndexDataToPrint <= m_dwSelectionEnd)
 				{
 					rDC.SetBkColor(m_clrBkSelected);
 
-					//To prevent change bk color after last selected HEX in a row, and very last HEX.
+					//To prevent change bk color after last selected Hex in a row, and very last Hex.
 					if (iIndexDataToPrint != m_dwSelectionEnd && (iIndexDataToPrint + 1) % m_dwGridCapacity)
 						FillRect(rDC.m_hDC, &rc, (HBRUSH)m_stBrushBkSelected.m_hObject);
 					else
@@ -832,13 +852,13 @@ void CHexView::OnDraw(CDC* pDC)
 					FillRect(rDC.m_hDC, &rc, (HBRUSH)m_stBrushBk.m_hObject);
 				}
 
-				//HEX chunk printing.
+				//Hex chunk printing.
 				rDC.SetTextColor(m_clrTextHex);
 				ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, &wstrHexToPrint[0], 2, nullptr);
 
 				//Ascii to print.
-				char chAsciiToPrint = m_pRawData[iIndexDataToPrint];
-				//For non printable ASCII, just print a dot.
+				char chAsciiToPrint = m_pData[iIndexDataToPrint];
+				//For non printable SEARCH_ASCII, just print a dot.
 				if (chAsciiToPrint < 32 || chAsciiToPrint == 127)
 					chAsciiToPrint = '.';
 
@@ -874,7 +894,7 @@ int CHexView::HitTest(LPPOINT pPoint)
 	//To compensate horizontal scroll.
 	pPoint->x += iScrollH;
 
-	//Checking if cursor is within HEX chunks area.
+	//Checking if cursor is within SEARCH_HEX chunks area.
 	if ((pPoint->x >= m_iIndentFirstHexChunk) && (pPoint->x < m_iThirdVertLine)
 		&& (pPoint->y >= m_iHeightTopRect) && pPoint->y <= m_iHeightWorkArea)
 	{
@@ -884,7 +904,7 @@ int CHexView::HitTest(LPPOINT pPoint)
 		else
 			tmpBetweenBlocks = 0;
 
-		//Calculate iHit HEX chunk, taking into account scroll position and letter sizes.
+		//Calculate iHit SEARCH_HEX chunk, taking into account scroll position and letter sizes.
 		dwHexChunk = ((pPoint->x - m_iIndentFirstHexChunk - tmpBetweenBlocks) / (m_sizeLetter.cx * 3)) +
 			((pPoint->y - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity +
 			((iScrollV / m_sizeLetter.cy) * m_dwGridCapacity);
@@ -900,7 +920,7 @@ int CHexView::HitTest(LPPOINT pPoint)
 	else
 		dwHexChunk = -1;
 
-	//If cursor is out of end-bound of HEX chunks or Ascii chars.
+	//If cursor is out of end-bound of SEARCH_HEX chunks or Ascii chars.
 	if (dwHexChunk >= m_dwRawDataCount)
 		dwHexChunk = -1;
 
@@ -922,8 +942,8 @@ void CHexView::CopyToClipboard(UINT nType)
 	{
 		for (unsigned i = 0; i < m_dwBytesSelected; i++)
 		{
-			chHexToCopy[0] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0xF0) >> 4];
-			chHexToCopy[1] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0x0F)];
+			chHexToCopy[0] = strHexMap[((unsigned char)m_pData[m_dwSelectionStart + i] & 0xF0) >> 4];
+			chHexToCopy[1] = strHexMap[((unsigned char)m_pData[m_dwSelectionStart + i] & 0x0F)];
 			strToClipboard += chHexToCopy[0];
 			strToClipboard += chHexToCopy[1];
 		}
@@ -947,8 +967,8 @@ void CHexView::CopyToClipboard(UINT nType)
 
 		for (unsigned i = 0; i < m_dwBytesSelected; i++)
 		{
-			chHexToCopy[0] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0xF0) >> 4];
-			chHexToCopy[1] = strHexMap[((const unsigned char)m_pRawData[m_dwSelectionStart + i] & 0x0F)];
+			chHexToCopy[0] = strHexMap[((unsigned char)m_pData[m_dwSelectionStart + i] & 0xF0) >> 4];
+			chHexToCopy[1] = strHexMap[((unsigned char)m_pData[m_dwSelectionStart + i] & 0x0F)];
 			strToClipboard += chHexToCopy[0];
 			strToClipboard += chHexToCopy[1];
 
@@ -970,7 +990,7 @@ void CHexView::CopyToClipboard(UINT nType)
 		char ch;
 		for (unsigned i = 0; i < m_dwBytesSelected; i++)
 		{
-			ch = m_pRawData[m_dwSelectionStart + i];
+			ch = m_pData[m_dwSelectionStart + i];
 			//If next byte is zero —> substitute it with space.
 			if (ch == 0)
 				ch = ' ';
@@ -1072,7 +1092,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 
 	switch (rSearch.dwSearchType)
 	{
-	case HEXCTRL_SEARCH_HEX:
+	case SEARCH_HEX:
 	{
 		DWORD dwIterations = strSearchAscii.size() % 2 ? strSearchAscii.size() / 2 + 1 : strSearchAscii.size() / 2;
 		int iNextChar = 0;
@@ -1104,7 +1124,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 
 		break;
 	}
-	case HEXCTRL_SEARCH_ASCII:
+	case SEARCH_ASCII:
 	{
 		dwSizeBytes = strSearchAscii.size();
 		if (dwSizeBytes > m_dwRawDataCount)
@@ -1113,7 +1133,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 		strSearch = std::move(strSearchAscii);
 		break;
 	}
-	case HEXCTRL_SEARCH_UNICODE:
+	case SEARCH_UNICODE:
 	{
 		dwSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
 		if (dwSizeBytes > m_dwRawDataCount)
@@ -1125,17 +1145,17 @@ void CHexView::Search(HEXSEARCH& rSearch)
 
 	///////////////Actual Search:////////////////////////////////////////////
 	switch (rSearch.dwSearchType) {
-	case HEXCTRL_SEARCH_HEX:
-	case HEXCTRL_SEARCH_ASCII:
+	case SEARCH_HEX:
+	case SEARCH_ASCII:
 	{
-		if (rSearch.iDirection == HEXCTRL_SEARCH_FORWARD)
+		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
 			dwUntil = m_dwRawDataCount - strSearch.size();
 			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
 
 			for (DWORD i = dwStartAt; i <= dwUntil; i++)
 			{
-				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
 					rSearch.fFound = true;
 					rSearch.dwStartAt = i;
@@ -1147,25 +1167,25 @@ void CHexView::Search(HEXSEARCH& rSearch)
 			dwStartAt = 0;
 			for (DWORD i = dwStartAt; i <= dwUntil; i++)
 			{
-				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
 					rSearch.fFound = true;
 					rSearch.dwStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_END;
+					rSearch.iWrap = SEARCH_END;
 					rSearch.fCount = true;
 					goto End;
 				}
 			}
 		}
-		if (rSearch.iDirection == HEXCTRL_SEARCH_BACKWARD)
+		if (rSearch.iDirection == SEARCH_BACKWARD)
 		{
 			if (rSearch.fSecondMatch && dwStartAt > 0)
 			{
 				dwStartAt--;
 				for (int i = (int)dwStartAt; i >= 0; i--)
 				{
-					if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+					if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 					{
 						rSearch.fFound = true;
 						rSearch.dwStartAt = i;
@@ -1178,12 +1198,12 @@ void CHexView::Search(HEXSEARCH& rSearch)
 			dwStartAt = m_dwRawDataCount - strSearch.size();
 			for (int i = (int)dwStartAt; i >= 0; i--)
 			{
-				if (memcmp(m_pRawData + i, strSearch.data(), strSearch.size()) == 0)
+				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
 					rSearch.fFound = true;
 					rSearch.dwStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_BEGINNING;
+					rSearch.iWrap = SEARCH_BEGINNING;
 					rSearch.fCount = false;
 					goto End;
 				}
@@ -1191,16 +1211,16 @@ void CHexView::Search(HEXSEARCH& rSearch)
 		}
 		break;
 	}
-	case HEXCTRL_SEARCH_UNICODE:
+	case SEARCH_UNICODE:
 	{
-		if (rSearch.iDirection == HEXCTRL_SEARCH_FORWARD)
+		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
 			dwUntil = m_dwRawDataCount - dwSizeBytes;
 			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
 
 			for (DWORD i = dwStartAt; i <= dwUntil; i++)
 			{
-				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
+				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
 					rSearch.fFound = true;
 					rSearch.dwStartAt = i;
@@ -1212,25 +1232,25 @@ void CHexView::Search(HEXSEARCH& rSearch)
 			dwStartAt = 0;
 			for (DWORD i = dwStartAt; i <= dwUntil; i++)
 			{
-				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
+				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
 					rSearch.fFound = true;
 					rSearch.dwStartAt = i;
-					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_END;
+					rSearch.iWrap = SEARCH_END;
 					rSearch.fWrap = true;
 					rSearch.fCount = true;
 					goto End;
 				}
 			}
 		}
-		else if (rSearch.iDirection == HEXCTRL_SEARCH_BACKWARD)
+		else if (rSearch.iDirection == SEARCH_BACKWARD)
 		{
 			if (rSearch.fSecondMatch && dwStartAt > 0)
 			{
 				dwStartAt--;
 				for (int i = (int)dwStartAt; i >= 0; i--)
 				{
-					if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
+					if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 					{
 						rSearch.fFound = true;
 						rSearch.dwStartAt = i;
@@ -1243,12 +1263,12 @@ void CHexView::Search(HEXSEARCH& rSearch)
 			dwStartAt = m_dwRawDataCount - dwSizeBytes;
 			for (int i = (int)dwStartAt; i >= 0; i--)
 			{
-				if (wmemcmp((const wchar_t*)(m_pRawData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
+				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
 					rSearch.fFound = true;
 					rSearch.dwStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = HEXCTRL_SEARCH_WRAP_BEGINNING;
+					rSearch.iWrap = SEARCH_BEGINNING;
 					rSearch.fCount = false;
 					goto End;
 				}
@@ -1275,15 +1295,13 @@ void CHexView::SetSelection(DWORD_PTR dwClick, DWORD_PTR dwStart, DWORD dwBytes,
 
 	//New scroll depending on selection direction: top <-> bottom.
 	//fHighlight means centralize scroll position on the screen (used in Search()).
-	int iNewScrollV;
 	DWORD dwEnd = dwStart + dwBytes - 1;
-
 	int iMaxV = GetScrollPos(SB_VERT) + m_rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
 		((m_rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-
 	int iNewEndV = dwEnd / m_dwGridCapacity * m_sizeLetter.cy;
 	int iNewStartV = dwStart / m_dwGridCapacity * m_sizeLetter.cy;
 
+	int iNewScrollV { };
 	if (fHighlight)
 		iNewScrollV = iNewStartV - (m_iHeightWorkArea / 2);
 	else
@@ -1313,6 +1331,7 @@ void CHexView::SetSelection(DWORD_PTR dwClick, DWORD_PTR dwStart, DWORD dwBytes,
 			}
 		}
 	}
+	iNewScrollV -= iNewScrollV % m_sizeLetter.cy;
 	m_dwSelectionClick = dwClick;
 	m_dwSelectionStart = dwStart;
 	m_dwSelectionEnd = dwEnd;
@@ -1341,9 +1360,9 @@ BEGIN_MESSAGE_MAP(CHexDlgSearch, CDialogEx)
 	ON_COMMAND_RANGE(IDC_RADIO_HEX, IDC_RADIO_UNICODE, &CHexDlgSearch::OnRadioBnRange)
 END_MESSAGE_MAP()
 
-BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexView* pParentWnd)
+BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexView* pwndParent)
 {
-	m_pParent = pParentWnd;
+	m_pParent = pwndParent;
 
 	return CDialog::Create(nIDTemplate, m_pParent);
 }
@@ -1378,9 +1397,9 @@ void CHexDlgSearch::SearchCallback()
 		{
 			if (!m_stSearch.fWrap)
 			{
-				if (m_stSearch.iDirection == HEXCTRL_SEARCH_FORWARD)
+				if (m_stSearch.iDirection == CHexView::HEXCTRL_SEARCH::SEARCH_FORWARD)
 					m_dwnOccurrence++;
-				else if (m_stSearch.iDirection == HEXCTRL_SEARCH_BACKWARD)
+				else if (m_stSearch.iDirection == CHexView::HEXCTRL_SEARCH::SEARCH_BACKWARD)
 					m_dwnOccurrence--;
 			}
 			else
@@ -1422,16 +1441,16 @@ void CHexDlgSearch::OnButtonSearchF()
 	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
 	{
 	case IDC_RADIO_HEX:
-		m_stSearch.dwSearchType = HEXCTRL_SEARCH_HEX;
+		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_HEX;
 		break;
 	case IDC_RADIO_ASCII:
-		m_stSearch.dwSearchType = HEXCTRL_SEARCH_ASCII;
+		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_ASCII;
 		break;
 	case IDC_RADIO_UNICODE:
-		m_stSearch.dwSearchType = HEXCTRL_SEARCH_UNICODE;
+		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_UNICODE;
 		break;
 	}
-	m_stSearch.iDirection = HEXCTRL_SEARCH_FORWARD;
+	m_stSearch.iDirection = CHexView::HEXCTRL_SEARCH::SEARCH_FORWARD;
 
 	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
 	GetParent()->Search(m_stSearch);
@@ -1452,16 +1471,16 @@ void CHexDlgSearch::OnButtonSearchB()
 	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
 	{
 	case IDC_RADIO_HEX:
-		m_stSearch.dwSearchType = HEXCTRL_SEARCH_HEX;
+		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_HEX;
 		break;
 	case IDC_RADIO_ASCII:
-		m_stSearch.dwSearchType = HEXCTRL_SEARCH_ASCII;
+		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_ASCII;
 		break;
 	case IDC_RADIO_UNICODE:
-		m_stSearch.dwSearchType = HEXCTRL_SEARCH_UNICODE;
+		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_UNICODE;
 		break;
 	}
-	m_stSearch.iDirection = HEXCTRL_SEARCH_BACKWARD;
+	m_stSearch.iDirection = CHexView::HEXCTRL_SEARCH::SEARCH_BACKWARD;
 
 	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
 	GetParent()->Search(m_stSearch);

@@ -67,7 +67,7 @@ inline const std::map<WORD, std::wstring> g_mapResType {
 struct RESHELPER
 {
 	RESHELPER() {}
-	RESHELPER(WORD type, WORD name, std::vector<std::byte>* data) :IdResType(type), IdResName(name), pData(data) {}
+	RESHELPER(WORD type, WORD name, std::vector<std::byte>* data) : IdResType(type), IdResName(name), pData(data) {}
 	WORD IdResType { };
 	WORD IdResName { };
 	std::vector<std::byte>* pData { };
@@ -112,13 +112,12 @@ constexpr auto IDC_TREE_RESOURCE_BOTTOM = 0x0103;
 
 constexpr auto IDC_HEX_RIGHT_BL = 0x0200;
 constexpr auto IDC_HEX_RIGHT_TR = 0x0201;
-constexpr auto IDC_HEX_FLOAT = 0x0202;
 
 constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;
 constexpr auto IDC_SHOW_RESOURCE_RBR = 0x0301;
 
-constexpr auto IDC_LIST_MENU_GOTO_DESCOFFSET = 0x01;
-constexpr auto IDC_LIST_MENU_GOTO_DATAOFFSET = 0x02;
+constexpr auto IDM_LIST_GOTODESCOFFSET = 0x8001;
+constexpr auto IDM_LIST_GOTODATAOFFSET = 0x8002;
 /********************************************************
 * End of IDC.											*
 ********************************************************/

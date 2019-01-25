@@ -71,8 +71,7 @@ private:
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };
 	CMenu m_menuList;
-	CHexCtrl* m_pHexFloat { };
-	CFileLoader m_stFileLoader;
+	CFileLoader* m_pFileLoader { };
 
 	int CreateListDOSHeader();
 	int CreateListRichHeader();

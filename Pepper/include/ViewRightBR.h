@@ -9,6 +9,52 @@ using namespace LISTEX;
 class CViewRightBR : public CScrollView
 {
 	DECLARE_DYNCREATE(CViewRightBR)
+private:
+/****************************************************************
+* Struct for RT_GROUP_ICON/CURSOR.								*
+****************************************************************/
+#pragma pack( push, 2 )
+	struct GRPICONDIRENTRY
+	{
+		BYTE   bWidth;               // Width, in pixels, of the image
+		BYTE   bHeight;              // Height, in pixels, of the image
+		BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
+		BYTE   bReserved;            // Reserved
+		WORD   wPlanes;              // Color Planes
+		WORD   wBitCount;            // Bits per pixel
+		DWORD  dwBytesInRes;         // how many bytes in this resource?
+		WORD   nID;                  // the ID
+	};
+	struct GRPICONDIR
+	{
+		WORD			  idReserved;   // Reserved (must be 0)
+		WORD			  idType;	    // Resource type (1 for icons)
+		WORD			  idCount;	    // How many images?
+		GRPICONDIRENTRY   idEntries[1]; // The entries for each image
+	};
+	using LPGRPICONDIR = const GRPICONDIR*;
+#pragma pack( pop )
+
+	struct LANGANDCODEPAGE
+	{
+		WORD wLanguage;
+		WORD wCodePage;
+	};
+
+	//Helper struct. Not completed.
+	struct DLGTEMPLATEEX
+	{
+		WORD      dlgVer;
+		WORD      signature;
+		DWORD     helpID;
+		DWORD     exStyle;
+		DWORD     style;
+		WORD      cDlgItems;
+		short     x;
+		short     y;
+		short     cx;
+		short     cy;
+	};
 protected:
 	CViewRightBR() {}
 	virtual ~CViewRightBR() {}
@@ -28,7 +74,7 @@ private:
 	LOGFONT m_lf { }, m_hdrlf { };
 	CImageList m_stImgRes;
 	bool m_fDrawRes { false };
-	COLORREF m_clrBkIcons { RGB(230, 230, 230) }; 
+	COLORREF m_clrBkIcons { RGB(230, 230, 230) };
 	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
 	//HWND for RT_DIALOG.
 	BITMAP m_stBmp { };
@@ -41,9 +87,9 @@ private:
 	CEdit m_stEditResStrings; //Edit control for RT_STRING, RT_VERSION
 	CFont m_fontEditRes; //Font for m_stEditResStrings.
 	SIZE m_sizeLetter { }, m_sizeStrStyles { };
-	int m_iResDlgIndentToDrawX { 10 };
-	int m_iResDlgIndentToDrawY { 2 };
-	std::map<int, std::wstring> m_mapVerInfoStrings {
+	const int m_iResDlgIndentToDrawX { 10 };
+	const int m_iResDlgIndentToDrawY { 2 };
+	const std::map<int, std::wstring> m_mapVerInfoStrings {
 		{ 0, L"FileDescription" },
 	{ 1, L"FileVersion" },
 	{ 2, L"InternalName" },
@@ -92,50 +138,4 @@ private:
 private:
 	int CreateListTLSCallbacks();
 	void ResLoadError();
-};
-
-/****************************************************************
-* Struct for RT_GROUP_ICON/CURSOR.								*
-****************************************************************/
-#pragma pack( push, 2 )
-struct GRPICONDIRENTRY
-{
-	BYTE   bWidth;               // Width, in pixels, of the image
-	BYTE   bHeight;              // Height, in pixels, of the image
-	BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
-	BYTE   bReserved;            // Reserved
-	WORD   wPlanes;              // Color Planes
-	WORD   wBitCount;            // Bits per pixel
-	DWORD  dwBytesInRes;         // how many bytes in this resource?
-	WORD   nID;                  // the ID
-};
-struct GRPICONDIR
-{
-	WORD			  idReserved;   // Reserved (must be 0)
-	WORD			  idType;	    // Resource type (1 for icons)
-	WORD			  idCount;	    // How many images?
-	GRPICONDIRENTRY   idEntries[1]; // The entries for each image
-};
-using LPGRPICONDIR = const GRPICONDIR*;
-#pragma pack( pop )
-
-struct LANGANDCODEPAGE
-{
-	WORD wLanguage;
-	WORD wCodePage;
-};
-
-//Helper struct. Not completed.
-struct DLGTEMPLATEEX
-{
-	WORD      dlgVer;
-	WORD      signature;
-	DWORD     helpID;
-	DWORD     exStyle;
-	DWORD     style;
-	WORD      cDlgItems;
-	short     x;
-	short     y;
-	short     cx;
-	short     cy;
 };
