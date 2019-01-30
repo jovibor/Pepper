@@ -1,7 +1,7 @@
 #pragma once
 #include "HexCtrl.h"
 
-using namespace HEXControl;
+using namespace HEXCTRL;
 
 class CFileLoader : public CWnd
 {

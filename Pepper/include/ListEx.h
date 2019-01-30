@@ -15,7 +15,7 @@ namespace LISTEX {
 	/************************************************
 	* Helper struct for CListEx class.				*
 	************************************************/
-	typedef struct LISTEXINFO {
+	struct LISTEXINFO {
 		COLORREF clrListText { GetSysColor(COLOR_WINDOWTEXT) }; //List text color.
 		COLORREF clrListBkRow1 { GetSysColor(COLOR_WINDOW) }; //List Bk color of the odd rows.
 		COLORREF clrListBkRow2 { GetSysColor(COLOR_WINDOW) }; //List Bk color of the even rows.
@@ -32,7 +32,8 @@ namespace LISTEX {
 		COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) }; //List header bk color.
 		DWORD dwHeaderHeight { 20 }; //List header height.
 		const LOGFONT* pHeaderLogFont { }; //List header font.
-	} *PLISTEXINFO;
+	};
+	using PLISTEXINFO = LISTEXINFO * ;
 
 	/********************************************
 	* CListExHeader class definition.			*
@@ -140,7 +141,7 @@ namespace LISTEX {
 		NMITEMACTIVATE m_stNMII { };
 		const int ID_TIMER_TOOLTIP { 0x01 };
 	};
-	
+
 	/****************************************************************************
 	* WM_NOTIFY codes (NMHDR.code values)										*
 	****************************************************************************/

@@ -7,10 +7,10 @@ IMPLEMENT_DYNCREATE(CViewRightTL, CView)
 BEGIN_MESSAGE_MAP(CViewRightTL, CView)
 	ON_WM_SIZE()
 	ON_WM_MOUSEWHEEL()
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_SECHEADERS, &CViewRightTL::OnListSectionsGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_IMPORT, &CViewRightTL::OnListImportGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_RELOCATIONS, &CViewRightTL::OnListRelocsGetDispInfo)
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST_EXCEPTION, &CViewRightTL::OnListExceptionGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_SECHEADERS, &CViewRightTL::OnListSectionsGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_IMPORT, &CViewRightTL::OnListImportGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_RELOCATIONS, &CViewRightTL::OnListRelocsGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_EXCEPTION, &CViewRightTL::OnListExceptionsGetDispInfo)
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
@@ -265,8 +265,8 @@ void CViewRightTL::OnSize(UINT nType, int cx, int cy)
 
 void CViewRightTL::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 {
-	NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
-	LV_ITEM* pItem = &pDispInfo->item;
+	NMLVDISPINFOW *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	LVITEMW* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -322,9 +322,8 @@ void CViewRightTL::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 
 void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 {
-	NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
-
-	LV_ITEM* pItem = &pDispInfo->item;
+	NMLVDISPINFOW *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	LVITEMW* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -364,7 +363,7 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 
 void CViewRightTL::OnListRelocsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 {
-	NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+	NMLVDISPINFOW *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	LVITEMW* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
@@ -393,10 +392,10 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 	*pResult = 0;
 }
 
-void CViewRightTL::OnListExceptionGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 {
-	NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
-	LV_ITEM* pItem = &pDispInfo->item;
+	NMLVDISPINFOW *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	LVITEMW* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -435,6 +434,47 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	ULONGLONG ullRVA { };
 	switch (pNMI->hdr.idFrom)
 	{
+	case IDC_LIST_DOSHEADER:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_RICHHEADER:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_NTHEADER:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_FILEHEADER:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_OPTIONALHEADER:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_DATADIRECTORIES:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_SECHEADERS:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_EXPORT:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_IAT:
 	case IDC_LIST_IMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_ENTRY, pNMI->iItem));
@@ -466,6 +506,37 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 				}
 				break;
 			}
+		}
+		break;
+
+	case IDC_LIST_EXCEPTION:
+	case IDC_LIST_DEBUG:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DEBUG_ENTRY, pNMI->iItem));
+		break;
+
+	case IDC_LIST_ARCHITECTURE:
+		break;
+	case IDC_LIST_GLOBALPTR:
+		break;
+	case IDC_LIST_TLS:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_LOADCONFIG:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_BOUNDIMPORT:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
+		}
+		break;
+	case IDC_LIST_COMDESCRIPTOR:
+		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		{
 		}
 		break;
 	case IDC_LIST_SECURITY:
@@ -523,10 +594,6 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		}
 	}
 	break;
-	case IDC_LIST_DEBUG:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DEBUG_ENTRY, pNMI->iItem));
-		break;
 	}
 
 	if (dwOffset)

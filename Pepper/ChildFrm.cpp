@@ -23,22 +23,22 @@ BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 
 BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 {
-	CRect rect;
-	::GetClientRect(AfxGetMainWnd()->m_hWnd, &rect);
+	CRect rc;
+	::GetClientRect(AfxGetMainWnd()->m_hWnd, &rc);
 
 	m_stSplitterMain.CreateStatic(this, 1, 2);
-	m_stSplitterMain.CreateView(0, 0, RUNTIME_CLASS(CViewLeft), CSize(rect.Width() / 5, rect.Height()), pContext);
+	m_stSplitterMain.CreateView(0, 0, RUNTIME_CLASS(CViewLeft), CSize(rc.Width() / 5, rc.Height()), pContext);
 	m_stSplitterRight.CreateStatic(&m_stSplitterMain, 2, 1, WS_CHILD | WS_VISIBLE, m_stSplitterMain.IdFromRowCol(0, 1));
 
 	m_stSplitterRightTop.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(0, 0));
-	m_stSplitterRightTop.CreateView(0, 0, RUNTIME_CLASS(CViewRightTL), CSize((rect.Width() - rect.Width() / 5) / 2, rect.Height()), pContext);
-	m_stSplitterRightTop.CreateView(0, 1, RUNTIME_CLASS(CViewRightTR), CSize((rect.Width() - rect.Width() / 5) / 2, rect.Height()), pContext);
+	m_stSplitterRightTop.CreateView(0, 0, RUNTIME_CLASS(CViewRightTL), CSize((rc.Width() - rc.Width() / 5) / 2, rc.Height()), pContext);
+	m_stSplitterRightTop.CreateView(0, 1, RUNTIME_CLASS(CViewRightTR), CSize((rc.Width() - rc.Width() / 5) / 2, rc.Height()), pContext);
 	m_stSplitterRightTop.HideCol(1);
 	m_stSplitterRight.AddNested(0, 0, &m_stSplitterRightTop);
 
 	m_stSplitterRightBottom.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(1, 0));
-	m_stSplitterRightBottom.CreateView(0, 0, RUNTIME_CLASS(CViewRightBL), CSize(rect.Width(), rect.Height()), pContext);
-	m_stSplitterRightBottom.CreateView(0, 1, RUNTIME_CLASS(CViewRightBR), CSize(0, rect.Height() / 2), pContext);
+	m_stSplitterRightBottom.CreateView(0, 0, RUNTIME_CLASS(CViewRightBL), CSize(rc.Width(), rc.Height()), pContext);
+	m_stSplitterRightBottom.CreateView(0, 1, RUNTIME_CLASS(CViewRightBR), CSize(0, rc.Height() / 2), pContext);
 
 	m_stSplitterRightBottom.HideCol(1);
 	m_stSplitterRight.AddNested(1, 0, &m_stSplitterRightBottom);

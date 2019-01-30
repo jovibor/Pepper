@@ -61,7 +61,12 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, DWORD_PTR dwGotoOffset)
 		return E_ABORT;
 
 	m_Hex.Create(this, IDC_HEX_CTRL, nullptr, true);
-	m_Hex.SetData((PBYTE)m_lpBase, (DWORD_PTR)m_stFileSize.QuadPart);
+
+	if (m_fMapViewOfFileWhole)
+		m_Hex.SetData((PBYTE)m_lpBase, (DWORD_PTR)m_stFileSize.QuadPart);
+	else
+		m_Hex.SetData(nullptr, (DWORD_PTR)m_stFileSize.QuadPart, true);
+
 	ShowOffset(dwGotoOffset);
 
 	return S_OK;
@@ -137,18 +142,19 @@ LONGLONG CFileLoader::GetBytesCount()
 
 BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	LPNMHDR pNM = (LPNMHDR)lParam;
-	if (pNM->idFrom == IDC_HEX_CTRL)
+	PHEXNOTIFY pHexNtfy = (PHEXNOTIFY)lParam;
+	if (pHexNtfy->hdr.idFrom == IDC_HEX_CTRL)
 	{
-		switch (pNM->code)
+		switch (pHexNtfy->hdr.code)
 		{
 		case HEXCTRL_MSG_DESTROY:
 			UnloadFile();
 			break;
 		case HEXCTRL_MSG_SCROLLING:
-			if (!m_fMapViewOfFileWhole)
-			{
-			}
+			break;
+		case HEXCTRL_MSG_GETDISPINFO:
+			if (pHexNtfy->dwByteIndex < m_dwMinBytesToMap)
+				pHexNtfy->chByte = *(unsigned char*)((DWORD_PTR)m_lpBase + pHexNtfy->dwByteIndex);
 			break;
 		}
 	}

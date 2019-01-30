@@ -3,7 +3,7 @@
 #include "PepperDoc.h"
 #include "HexCtrl.h"
 
-using namespace HEXControl;
+using namespace HEXCTRL;
 
 class CViewRightTR : public CScrollView
 {

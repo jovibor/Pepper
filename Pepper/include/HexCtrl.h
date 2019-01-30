@@ -3,31 +3,38 @@
 * This software is available under the "MIT License modified with The Commons Clause".  *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE                                 *
 *                                                                                       *
-* This is a SEARCH_HEX control for MFC apps, implemented as CWnd derived class.			    *
+* This is a Hex control for MFC apps, implemented as CWnd derived class.				*
 * The usage is quite simple:														    *
-* 1. Construct CHexCtrl object — HEXControl::CHexCtrl myHex;						    *
+* 1. Construct CHexCtrl object — HEXCTRL::CHexCtrl myHex;							    *
 * 2. Call myHex.Create member function to create an instance.   					    *
 * 3. Call myHex.SetData method to set the data and its size to display as hex.	        *
 ****************************************************************************************/
 #pragma once
 #include <vector>
-#include <tuple>
 #include "HexCtrlRes.h"
 
-namespace HEXControl
+namespace HEXCTRL
 {
 	struct HEXSEARCH
 	{
-		std::wstring wstrSearch { };
-		DWORD dwSearchType { }; //Hex, Ascii, Unicode, etc...
-		DWORD dwStartAt { }; //Offset search should start at.
-		int iDirection { };
-		bool fWrap { }; //Was search wrapped?
-		int iWrap { }; //Wrap direction.
-		bool fSecondMatch { false }; //First or subsequent match. 
-		bool fFound { };
-		bool fCount { true }; //Do we count matches or just print "Found".
+		std::wstring	wstrSearch { };
+		DWORD			dwSearchType { }; //Hex, Ascii, Unicode, etc...
+		DWORD			dwStartAt { }; //Offset search should start at.
+		int				iDirection { };
+		bool			fWrap { }; //Was search wrapped?
+		int				iWrap { }; //Wrap direction.
+		bool			fSecondMatch { false }; //First or subsequent match. 
+		bool			fFound { };
+		bool			fCount { true }; //Do we count matches or just print "Found".
 	};
+
+	struct HEXNOTIFY
+	{
+		NMHDR			hdr;
+		DWORD_PTR		dwByteIndex;
+		unsigned char	chByte;
+	};
+	using PHEXNOTIFY = HEXNOTIFY * ;
 
 	/********************************************
 	* CHexDlgAbout class definition.			*
@@ -98,8 +105,8 @@ namespace HEXControl
 	public:
 		friend class CHexDlgSearch;
 		DECLARE_DYNCREATE(CHexView)
-		BOOL Create(CHexCtrl* pWndParent, const RECT& rc, UINT iId, CCreateContext* pContext, const LOGFONT* pLogFont);
-		void SetData(const unsigned char* pData, DWORD_PTR dwCount);
+		BOOL Create(CHexCtrl* pWndParent, const RECT& rc, UINT uiId, CCreateContext* pContext, const LOGFONT* pLogFont);
+		void SetData(const unsigned char* pData, DWORD_PTR dwCount, bool fVirtual);
 		void ClearData();
 		void SetSelection(DWORD_PTR dwOffset, DWORD dwCount);
 		void SetFont(const LOGFONT* pLogFontNew);
@@ -132,12 +139,13 @@ namespace HEXControl
 		void UpdateInfoText();
 		DECLARE_MESSAGE_MAP()
 	private:
+		bool m_fVirtual { false };
 		const BYTE* m_pData { };
-		DWORD_PTR m_dwRawDataCount { };
+		DWORD_PTR m_dwDataCount { };
 		DWORD m_dwGridCapacity { 16 };
 		DWORD m_dwGridBlockSize { m_dwGridCapacity / 2 }; //Size of block before space delimiter.
 		CHexCtrl* m_pwndParent { };
-		CWnd* m_pwndGrParent { };
+		CWnd* m_pwndGrParent { }; //Parent of CHexCtrl.
 		CRect m_rcClient;
 		SIZE m_sizeLetter { }; //Current font's letter size (width, height).
 		CFont m_fontHexView;
@@ -156,10 +164,10 @@ namespace HEXControl
 		const CBrush m_stBrushBkSelected { m_clrBkSelected };
 		CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
 		int m_iIndentAscii { }; //Indent of Ascii text begining.
-		int m_iIndentFirstHexChunk { }; //First SEARCH_HEX chunk indent.
+		int m_iIndentFirstHexChunk { }; //First hex chunk indent.
 		int m_iIndentTextCapacityY { }; //Caption text (0 1 2... D E F...) vertical offset.
 		int m_iIndentBottomLine { 1 }; //Bottom line indent from window's bottom.
-		int m_iSpaceBetweenHexChunks { }; //Space between begining of two SEARCH_HEX chunks.
+		int m_iSpaceBetweenHexChunks { }; //Space between begining of two hex chunks.
 		int m_iSpaceBetweenAscii { }; //Space between Ascii chars.
 		int m_iSpaceBetweenBlocks { }; //Additional space between hex chunks after half of capacity.
 		int m_iHeightTopRect { }; //Height of the header where offsets (0 1 2... D E F...) reside.
@@ -201,7 +209,7 @@ namespace HEXControl
 		virtual ~CHexCtrl() {}
 		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
 		CHexView* GetActiveView() const { return m_pHexView; };
-		void SetData(const PBYTE pData, DWORD_PTR dwCount) const;
+		void SetData(const PBYTE pData, DWORD_PTR dwCount, bool fVirtual = false) const;
 		void ClearData();
 		void SetSelection(DWORD_PTR dwOffset, DWORD dwBytes = 1);
 		void SetFont(const LOGFONT* pLogFontNew) const;
@@ -234,4 +242,5 @@ namespace HEXControl
 
 	constexpr auto HEXCTRL_MSG_DESTROY = 0x00ff;
 	constexpr auto HEXCTRL_MSG_SCROLLING = 0x0100;
+	constexpr auto HEXCTRL_MSG_GETDISPINFO = 0x0101;
 };

@@ -5,7 +5,7 @@
 #include "ListEx.h"
 #include "TreeEx.h"
 
-using namespace HEXControl;
+using namespace HEXCTRL;
 using namespace LISTEX;
 
 class CViewRightBL : public CScrollView

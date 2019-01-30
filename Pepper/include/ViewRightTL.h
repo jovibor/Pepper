@@ -7,7 +7,7 @@
 #include "FileLoader.h"
 
 using namespace LISTEX;
-using namespace HEXControl;
+using namespace HEXCTRL;
 
 class CViewRightTL : public CScrollView
 {
@@ -24,7 +24,7 @@ protected:
 	afx_msg void OnListSectionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListRelocsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnListExceptionGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListExceptionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe { };

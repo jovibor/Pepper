@@ -3,9 +3,9 @@
 * This software is available under the "MIT License modified with The Commons Clause".  *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE                                 *
 *                                                                                       *
-* This is a SEARCH_HEX control for MFC apps, implemented as CWnd derived class.			    *
+* This is a Hex control for MFC apps, implemented as CWnd derived class.			    *
 * The usage is quite simple:														    *
-* 1. Construct CHexCtrl object — HEXControl::CHexCtrl myHex;						    *
+* 1. Construct CHexCtrl object — HEXCTRL::CHexCtrl myHex;								*
 * 2. Call myHex.Create member function to create an instance.   					    *
 * 3. Call myHex.SetData method to set the data and its size to display as hex.	        *
 ****************************************************************************************/
@@ -13,7 +13,7 @@
 #include "HexCtrl.h"
 #include "strsafe.h"
 
-using namespace HEXControl;
+using namespace HEXCTRL;
 
 /************************************************************************
 * CHexCtrl implementation.												*
@@ -112,10 +112,10 @@ void CHexCtrl::OnDestroy()
 	CWnd::OnDestroy();
 }
 
-void CHexCtrl::SetData(const PBYTE pData, DWORD_PTR dwCount) const
+void CHexCtrl::SetData(const PBYTE pData, DWORD_PTR dwCount, bool fVirtual) const
 {
 	if (m_fCreated)
-		GetActiveView()->SetData(pData, dwCount);
+		GetActiveView()->SetData(pData, dwCount, fVirtual);
 }
 
 void CHexCtrl::ClearData()
@@ -256,12 +256,13 @@ BOOL CHexView::Create(CHexCtrl* pwndParent, const RECT& rc, UINT uiId, CCreateCo
 	return TRUE;
 }
 
-void CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount)
+void CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount, bool fVirtual)
 {
 	ClearData();
 
 	m_pData = pData;
-	m_dwRawDataCount = dwCount;
+	m_dwDataCount = dwCount;
+	m_fVirtual = fVirtual;
 
 	UpdateInfoText();
 	Recalc();
@@ -269,7 +270,7 @@ void CHexView::SetData(const unsigned char* pData, DWORD_PTR dwCount)
 
 void CHexView::ClearData()
 {
-	m_dwRawDataCount = 0;
+	m_dwDataCount = 0;
 	m_pData = nullptr;
 	m_dwSelectionClick = m_dwSelectionStart = m_dwSelectionEnd = m_dwBytesSelected = 0;
 	SetScrollSizes(MM_TEXT, CSize(0, 0));
@@ -624,10 +625,6 @@ void CHexView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	si.nPos = iPos;
 	SetScrollInfo(SB_VERT, &si);
 	RedrawWindow();
-
-	NMLVSCROLL nmlv { { m_pwndParent->m_hWnd, (UINT)m_pwndParent->GetDlgCtrlID(), HEXCTRL_MSG_SCROLLING }, -1, iPos };
-	if (m_pwndGrParent)
-		m_pwndGrParent->SendMessageW(WM_NOTIFY, nmlv.hdr.idFrom, (LPARAM)&nmlv);
 }
 
 void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
@@ -658,10 +655,6 @@ void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	si.nPos = iPos;
 	SetScrollInfo(SB_HORZ, &si);
 	RedrawWindow();
-
-	NMLVSCROLL nmlv { { m_pwndParent->m_hWnd, (UINT)m_pwndParent->GetDlgCtrlID(), HEXCTRL_MSG_SCROLLING }, iPos, -1 };
-	if (m_pwndGrParent)
-		m_pwndGrParent->SendMessageW(WM_NOTIFY, nmlv.hdr.idFrom, (LPARAM)&nmlv);
 }
 
 void CHexView::OnSize(UINT nType, int cx, int cy)
@@ -691,13 +684,18 @@ void CHexView::OnDraw(CDC* pDC)
 	rDC.SelectObject(&m_penLines);
 	rDC.SelectObject(&m_fontHexView);
 
-	//Find the iLineStart and iLineEnd position, draw the visible portion.
-	const UINT iLineStart = iScrollV / m_sizeLetter.cy;
-	UINT iLineEnd = m_dwRawDataCount ?
-		(iLineStart + (m_rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) / m_sizeLetter.cy) : 0;
-	//If m_dwRawDataCount is really small we adjust iLineEnd to not be bigger than maximum allowed.
-	if (iLineEnd > (m_dwRawDataCount / m_dwGridCapacity))
-		iLineEnd = m_dwRawDataCount % m_dwGridCapacity ? m_dwRawDataCount / m_dwGridCapacity + 1 : m_dwRawDataCount / m_dwGridCapacity;
+	//Find the dwLineStart and dwLineEnd position, draw the visible portion.
+	const DWORD_PTR dwLineStart = iScrollV / m_sizeLetter.cy;
+	DWORD_PTR dwLineEndtmp { };
+	if (m_dwDataCount)
+	{
+		dwLineEndtmp = dwLineStart + (m_rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) / m_sizeLetter.cy;
+
+		//If m_dwDataCount is really small we adjust dwLineEnd to be not bigger than maximum allowed.
+		if (dwLineEndtmp > (m_dwDataCount / m_dwGridCapacity))
+			dwLineEndtmp = m_dwDataCount % m_dwGridCapacity ? m_dwDataCount / m_dwGridCapacity + 1 : m_dwDataCount / m_dwGridCapacity;
+	}
+	const DWORD_PTR dwLineEnd = dwLineEndtmp;
 
 	//Horizontal lines depending on scroll.
 	const int iFirstHorizLine = iScrollV;
@@ -741,6 +739,7 @@ void CHexView::OnDraw(CDC* pDC)
 	rDC.SetTextColor(m_clrTextCaption);
 	rDC.SetBkColor(m_clrBk);
 
+	//Loop for printing top capacity numbers.
 	for (unsigned iterCapacity = 0; iterCapacity < m_dwGridCapacity; iterCapacity++)
 	{
 		WCHAR wstrCapacity[4];
@@ -752,7 +751,7 @@ void CHexView::OnDraw(CDC* pDC)
 		else //Top capacity numbers, second block (8 9 A B C D E F...).
 			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iSpaceBetweenHexChunks*iterCapacity) + m_iSpaceBetweenBlocks;
 
-		//If iterCapacity >= 16 two chars needed (10, 11..., 1F) to print as capacity.
+		//If iterCapacity >= 16 two chars needed (10, 11,... 1F) to print as capacity.
 		if (iterCapacity < 16)
 			c = 1;
 		else {
@@ -783,8 +782,9 @@ void CHexView::OnDraw(CDC* pDC)
 	rDC.MoveTo(m_iFourthVertLine, iScrollV);
 	rDC.LineTo(m_iFourthVertLine, iFourthHorizLine);
 
-	int iLine { };
-	for (unsigned iterLines = iLineStart; iterLines < iLineEnd; iterLines++)
+	DWORD_PTR dwLine { };
+	//Loop for printing hex and Ascii line by line.
+	for (size_t iterLines = dwLineStart; iterLines < dwLineEnd; iterLines++)
 	{
 		WCHAR wstrOffset[9];
 		swprintf_s(wstrOffset, 9, L"%08X", iterLines * m_dwGridCapacity);
@@ -798,28 +798,28 @@ void CHexView::OnDraw(CDC* pDC)
 
 		//Left column offset print (00000001...0000FFFF...).
 		rDC.SetTextColor(m_clrTextCaption);
-		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_iHeightTopRect + (m_sizeLetter.cy * iLine + iScrollV),
+		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx, m_iHeightTopRect + (m_sizeLetter.cy * dwLine + iScrollV),
 			NULL, nullptr, wstrOffset, 8, nullptr);
 
 		int iIndentHexX { };
 		int iIndentAsciiX { };
 		int iIndentBetweenBlocks { };
 
-		//Main loop for printing Hex chunks and Ascii chars (right column).
-		for (int iterChunks = 0; iterChunks < (int)m_dwGridCapacity; iterChunks++)
+		//Main loop for printing Hex chunks and Ascii chars.
+		for (unsigned iterChunks = 0; iterChunks < m_dwGridCapacity; iterChunks++)
 		{
-			if (iterChunks >= (int)m_dwGridBlockSize)
+			if (iterChunks >= m_dwGridBlockSize)
 				iIndentBetweenBlocks = m_iSpaceBetweenBlocks;
 
 			const UINT iHexPosToPrintX = m_iIndentFirstHexChunk + iIndentHexX + iIndentBetweenBlocks;
-			const UINT iHexPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine + iScrollV;
+			const UINT iHexPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * dwLine + iScrollV;
 			const UINT iAsciiPosToPrintX = m_iIndentAscii + iIndentAsciiX;
-			const UINT iAsciiPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine + iScrollV;
+			const UINT iAsciiPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * dwLine + iScrollV;
 
 			//Index of the next char (in m_pData) to draw.
-			const size_t iIndexDataToPrint = iterLines * m_dwGridCapacity + iterChunks;
+			const size_t uiIndexDataToPrint = iterLines * m_dwGridCapacity + iterChunks;
 
-			if (iIndexDataToPrint < m_dwRawDataCount) //Draw until reaching the end of m_dwRawDataCount.
+			if (uiIndexDataToPrint < m_dwDataCount) //Draw until reaching the end of m_dwDataCount.
 			{
 				//Rect of the space between Hex chunks, needed for proper selection drawing.
 				rc.left = iHexPosToPrintX + m_sizeLetter.cx * 2;
@@ -831,17 +831,31 @@ void CHexView::OnDraw(CDC* pDC)
 				rc.bottom = iHexPosToPrintY + m_sizeLetter.cy;
 
 				//Hex chunk to print.
+				//If it's virtual data ctrl, we aquire next byte to print from grandparent.
 				WCHAR wstrHexToPrint[2];
-				wstrHexToPrint[0] = m_pwszHexMap[((unsigned char)m_pData[iIndexDataToPrint] & 0xF0) >> 4];
-				wstrHexToPrint[1] = m_pwszHexMap[((unsigned char)m_pData[iIndexDataToPrint] & 0x0F)];
+				unsigned char uByteToPrint { };
+				if (!m_fVirtual)
+					uByteToPrint = (unsigned char)m_pData[uiIndexDataToPrint];
+				else
+				{
+					HEXNOTIFY hexntfy { { m_pwndParent->m_hWnd, (UINT)m_pwndParent->GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
+						uiIndexDataToPrint, 0 };
+					if (m_pwndGrParent)
+					{
+						m_pwndGrParent->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
+						uByteToPrint = hexntfy.chByte;
+					}
+				}
+				wstrHexToPrint[0] = m_pwszHexMap[(uByteToPrint & 0xF0) >> 4];
+				wstrHexToPrint[1] = m_pwszHexMap[(uByteToPrint & 0x0F)];
 
 				//Selection draw with different BK color.
-				if (m_dwBytesSelected && iIndexDataToPrint >= m_dwSelectionStart && iIndexDataToPrint <= m_dwSelectionEnd)
+				if (m_dwBytesSelected && uiIndexDataToPrint >= m_dwSelectionStart && uiIndexDataToPrint <= m_dwSelectionEnd)
 				{
 					rDC.SetBkColor(m_clrBkSelected);
 
 					//To prevent change bk color after last selected Hex in a row, and very last Hex.
-					if (iIndexDataToPrint != m_dwSelectionEnd && (iIndexDataToPrint + 1) % m_dwGridCapacity)
+					if (uiIndexDataToPrint != m_dwSelectionEnd && (uiIndexDataToPrint + 1) % m_dwGridCapacity)
 						FillRect(rDC.m_hDC, &rc, (HBRUSH)m_stBrushBkSelected.m_hObject);
 					else
 						FillRect(rDC.m_hDC, &rc, (HBRUSH)m_stBrushBk.m_hObject);
@@ -857,8 +871,8 @@ void CHexView::OnDraw(CDC* pDC)
 				ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, &wstrHexToPrint[0], 2, nullptr);
 
 				//Ascii to print.
-				char chAsciiToPrint = m_pData[iIndexDataToPrint];
-				//For non printable SEARCH_ASCII, just print a dot.
+				char chAsciiToPrint = uByteToPrint;
+				//For non printable Ascii just print a dot.
 				if (chAsciiToPrint < 32 || chAsciiToPrint == 127)
 					chAsciiToPrint = '.';
 
@@ -876,7 +890,7 @@ void CHexView::OnDraw(CDC* pDC)
 			iIndentHexX += m_iSpaceBetweenHexChunks;
 			iIndentAsciiX += m_iSpaceBetweenAscii;
 		}
-		iLine++;
+		dwLine++;
 	}
 }
 
@@ -894,7 +908,7 @@ int CHexView::HitTest(LPPOINT pPoint)
 	//To compensate horizontal scroll.
 	pPoint->x += iScrollH;
 
-	//Checking if cursor is within SEARCH_HEX chunks area.
+	//Checking if cursor is within hex chunks area.
 	if ((pPoint->x >= m_iIndentFirstHexChunk) && (pPoint->x < m_iThirdVertLine)
 		&& (pPoint->y >= m_iHeightTopRect) && pPoint->y <= m_iHeightWorkArea)
 	{
@@ -904,7 +918,7 @@ int CHexView::HitTest(LPPOINT pPoint)
 		else
 			tmpBetweenBlocks = 0;
 
-		//Calculate iHit SEARCH_HEX chunk, taking into account scroll position and letter sizes.
+		//Calculate iHit hex chunk, taking into account scroll position and letter sizes.
 		dwHexChunk = ((pPoint->x - m_iIndentFirstHexChunk - tmpBetweenBlocks) / (m_sizeLetter.cx * 3)) +
 			((pPoint->y - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity +
 			((iScrollV / m_sizeLetter.cy) * m_dwGridCapacity);
@@ -920,8 +934,8 @@ int CHexView::HitTest(LPPOINT pPoint)
 	else
 		dwHexChunk = -1;
 
-	//If cursor is out of end-bound of SEARCH_HEX chunks or Ascii chars.
-	if (dwHexChunk >= m_dwRawDataCount)
+	//If cursor is out of end-bound of hex chunks or Ascii chars.
+	if (dwHexChunk >= m_dwDataCount)
 		dwHexChunk = -1;
 
 	return dwHexChunk;
@@ -1017,16 +1031,16 @@ void CHexView::CopyToClipboard(UINT nType)
 
 void CHexView::UpdateInfoText()
 {
-	if (!m_dwRawDataCount)
+	if (!m_dwDataCount)
 		m_wstrBottomText.clear();
 	else
 	{
 		m_wstrBottomText.resize(128);
 		if (m_dwBytesSelected)
-			m_wstrBottomText.resize(swprintf_s(m_wstrBottomText.data(), 128, L"Bytes selected: 0x%X(%u); Offset: 0x%X(%u) - 0x%X(%u)",
+			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes selected: 0x%X(%u); Offset: 0x%X(%u) - 0x%X(%u)",
 				m_dwBytesSelected, m_dwBytesSelected, m_dwSelectionStart, m_dwSelectionStart, m_dwSelectionEnd, m_dwSelectionEnd));
 		else
-			m_wstrBottomText.resize(swprintf_s(m_wstrBottomText.data(), 128, L"Bytes total: 0x%X(%u)", m_dwRawDataCount, m_dwRawDataCount));
+			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes total: 0x%X(%u)", m_dwDataCount, m_dwDataCount));
 	}
 	RedrawWindow();
 }
@@ -1063,7 +1077,7 @@ void CHexView::Recalc()
 
 	//Scroll sizes according to current font size.
 	SetScrollSizes(MM_TEXT, CSize(m_iFourthVertLine + 1,
-		m_iHeightTopRect + m_iHeightBottomOffArea + (m_sizeLetter.cy * (m_dwRawDataCount / m_dwGridCapacity + 3))));
+		m_iHeightTopRect + m_iHeightBottomOffArea + (m_sizeLetter.cy * (m_dwDataCount / m_dwGridCapacity + 3))));
 
 	//This m_fSecondLaunch shows that Recalc() was invoked at least once before,
 	//and ScrollSizes have already been set, so we can adjust them.
@@ -1083,7 +1097,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 	DWORD dwUntil;
 	std::string strSearch { };
 
-	if (rSearch.wstrSearch.empty() || m_dwRawDataCount == 0 || rSearch.dwStartAt > (m_dwRawDataCount - 1))
+	if (rSearch.wstrSearch.empty() || m_dwDataCount == 0 || rSearch.dwStartAt > (m_dwDataCount - 1))
 		return m_dlgSearch.SearchCallback();
 
 	int iSizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &rSearch.wstrSearch[0], (int)rSearch.wstrSearch.size(), nullptr, 0, nullptr, nullptr);
@@ -1119,7 +1133,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 		}
 
 		dwSizeBytes = strSearch.size();
-		if (dwSizeBytes > m_dwRawDataCount)
+		if (dwSizeBytes > m_dwDataCount)
 			goto End;
 
 		break;
@@ -1127,7 +1141,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 	case SEARCH_ASCII:
 	{
 		dwSizeBytes = strSearchAscii.size();
-		if (dwSizeBytes > m_dwRawDataCount)
+		if (dwSizeBytes > m_dwDataCount)
 			goto End;
 
 		strSearch = std::move(strSearchAscii);
@@ -1136,7 +1150,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 	case SEARCH_UNICODE:
 	{
 		dwSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
-		if (dwSizeBytes > m_dwRawDataCount)
+		if (dwSizeBytes > m_dwDataCount)
 			goto End;
 
 		break;
@@ -1150,7 +1164,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 	{
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
-			dwUntil = m_dwRawDataCount - strSearch.size();
+			dwUntil = m_dwDataCount - strSearch.size();
 			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
 
 			for (DWORD i = dwStartAt; i <= dwUntil; i++)
@@ -1195,7 +1209,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 				}
 			}
 
-			dwStartAt = m_dwRawDataCount - strSearch.size();
+			dwStartAt = m_dwDataCount - strSearch.size();
 			for (int i = (int)dwStartAt; i >= 0; i--)
 			{
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
@@ -1215,7 +1229,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 	{
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
-			dwUntil = m_dwRawDataCount - dwSizeBytes;
+			dwUntil = m_dwDataCount - dwSizeBytes;
 			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
 
 			for (DWORD i = dwStartAt; i <= dwUntil; i++)
@@ -1260,7 +1274,7 @@ void CHexView::Search(HEXSEARCH& rSearch)
 				}
 			}
 
-			dwStartAt = m_dwRawDataCount - dwSizeBytes;
+			dwStartAt = m_dwDataCount - dwSizeBytes;
 			for (int i = (int)dwStartAt; i >= 0; i--)
 			{
 				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
@@ -1288,10 +1302,10 @@ End:
 
 void CHexView::SetSelection(DWORD_PTR dwClick, DWORD_PTR dwStart, DWORD dwBytes, bool fHighlight)
 {
-	if (dwClick >= m_dwRawDataCount || dwStart >= m_dwRawDataCount || !dwBytes)
+	if (dwClick >= m_dwDataCount || dwStart >= m_dwDataCount || !dwBytes)
 		return;
-	if ((dwStart + dwBytes) > m_dwRawDataCount)
-		dwBytes = m_dwRawDataCount - dwStart;
+	if ((dwStart + dwBytes) > m_dwDataCount)
+		dwBytes = m_dwDataCount - dwStart;
 
 	//New scroll depending on selection direction: top <-> bottom.
 	//fHighlight means centralize scroll position on the screen (used in Search()).
