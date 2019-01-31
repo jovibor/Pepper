@@ -18,20 +18,20 @@ namespace HEXCTRL
 	struct HEXSEARCH
 	{
 		std::wstring	wstrSearch { };
-		DWORD			dwSearchType { }; //Hex, Ascii, Unicode, etc...
-		ULONGLONG		dwStartAt { }; //Offset search should start at.
+		DWORD			dwSearchType { };		//Hex, Ascii, Unicode, etc...
+		ULONGLONG		dwStartAt { };			//An offset, search should start at.
 		int				iDirection { };
-		bool			fWrap { }; //Was search wrapped?
-		int				iWrap { }; //Wrap direction.
+		bool			fWrap { };				//Was search wrapped?
+		int				iWrap { };				//Wrap direction.
 		bool			fSecondMatch { false }; //First or subsequent match. 
 		bool			fFound { };
-		bool			fCount { true }; //Do we count matches or just print "Found".
+		bool			fCount { true };		//Do we count matches or just print "Found".
 	};
 
 	struct HEXNOTIFY
 	{
 		NMHDR			hdr;
-		ULONGLONG		dwByteIndex;
+		ULONGLONG		ullByteIndex;
 		unsigned char	chByte;
 	};
 	using PHEXNOTIFY = HEXNOTIFY * ;

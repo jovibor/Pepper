@@ -153,8 +153,8 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		case HEXCTRL_MSG_SCROLLING:
 			break;
 		case HEXCTRL_MSG_GETDISPINFO:
-			if (pHexNtfy->dwByteIndex < m_dwMinBytesToMap)
-				pHexNtfy->chByte = *(unsigned char*)((DWORD_PTR)m_lpBase + pHexNtfy->dwByteIndex);
+			if (pHexNtfy->ullByteIndex < m_dwMinBytesToMap)
+				pHexNtfy->chByte = *(unsigned char*)((DWORD_PTR)m_lpBase + pHexNtfy->ullByteIndex);
 			break;
 		}
 	}

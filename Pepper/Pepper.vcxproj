@@ -86,6 +86,7 @@
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
+    <IncludePath>res;res\HexCtrl;include;verinfo;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -146,7 +147,8 @@
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>None</DebugInformationFormat>
       <ProgramDataBaseFileName />
-      <AdditionalIncludeDirectories>include;res;verinfo</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -157,7 +159,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>lib\libpe.lib;Mincore.lib</AdditionalDependencies>
+      <AdditionalDependencies>lib\libpe.lib;Mincore.lib;Dwmapi.lib</AdditionalDependencies>
       <ManifestFile />
       <ProfileGuidedDatabase />
       <EnableUAC>false</EnableUAC>
@@ -178,7 +180,6 @@
     </Midl>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories);include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <PostBuildEvent>
       <Command>powershell.exe $(ProjectDir)\verinfo\set_verinfo.ps1 $(TargetDir)$(ProjectName).exe</Command>
@@ -276,11 +277,11 @@
     <ClInclude Include="include\TreeEx.h" />
     <ClInclude Include="include\stdafx.h" />
     <ClInclude Include="include\ViewRightTR.h" />
-    <ClInclude Include="res\HexCtrlRes.h" />
+    <ClInclude Include="res\HexCtrl\HexCtrlRes.h" />
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="res\HexCtrl.rc" />
+    <ResourceCompile Include="res\HexCtrl\HexCtrl.rc" />
     <ResourceCompile Include="res\Pepper.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

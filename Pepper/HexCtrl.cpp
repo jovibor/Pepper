@@ -51,7 +51,7 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 		rc = *pRect;
 	else
 	{
-		//If input rect==nullptr then place window at screen center.
+		//If input pRect==nullptr then place window at screen center.
 		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
 		int iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
 		int iPosCX = iPosX * 3;
@@ -61,6 +61,10 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 
 	if (!CWnd::CreateEx(0, 0, L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
 		return FALSE;
+
+	MARGINS marg { 0, 0, 0, 1 };
+	DwmExtendFrameIntoClientArea(m_hWnd, &marg);
+	SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
 	CRuntimeClass* pNewViewClass = RUNTIME_CLASS(CHexView);
 	CCreateContext context;
@@ -659,8 +663,9 @@ void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CHexView::OnSize(UINT nType, int cx, int cy)
 {
-	CScrollView::OnSize(nType, cx, cy);
 	Recalc();
+
+	CScrollView::OnSize(nType, cx, cy);
 }
 
 void CHexView::OnDraw(CDC* pDC)
@@ -1065,7 +1070,7 @@ void CHexView::Recalc()
 {
 	GetClientRect(&m_rcClient);
 
-	UINT iStartLine { };
+	int iStartLine { };
 	if (m_fSecondLaunch)
 		iStartLine = GetScrollPos(SB_VERT) / GetPixelsLineScrollV();
 
@@ -1331,16 +1336,16 @@ void CHexView::SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBy
 	//New scroll depending on selection direction: top <-> bottom.
 	//fHighlight means centralize scroll position on the screen (used in Search()).
 	ULONGLONG dwEnd = dwStart + dwBytes - 1;
-	int iMaxV = iCurrScrollV + m_rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
-		((m_rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-	int iNewEndV = int(dwEnd / m_dwGridCapacity * m_sizeLetter.cy);
-	int iNewStartV = (int)ullCy;
-	int iOneLineScrollV = GetPixelsLineScrollV();
+	int iPixelsLineScrollV = GetPixelsLineScrollV();
+	int iMaxV = (iCurrScrollV * iPixelsLineScrollV) + (m_rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
+		((m_rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy)) / m_sizeLetter.cy;
+	int iNewEndV = int(dwEnd / m_dwGridCapacity * iPixelsLineScrollV);
+	int iNewStartV = int(dwStart / m_dwGridCapacity * iPixelsLineScrollV);
 
 	int iNewScrollV { }, iNewScrollH { };
 	if (fHighlight)
 	{
-		iNewScrollV = iNewStartV - (m_iHeightWorkArea / 2);
+		iNewScrollV = iNewStartV - ((m_iHeightWorkArea / 2) / m_sizeLetter.cy * iPixelsLineScrollV);
 		iNewScrollH = (dwStart % m_dwGridCapacity) * m_iDistanceBetweenHexChunks;
 	}
 	else
@@ -1348,25 +1353,25 @@ void CHexView::SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBy
 		if (dwStart == dwClick)
 		{
 			if (iNewEndV >= iMaxV)
-				iNewScrollV = iCurrScrollV + iOneLineScrollV;
+				iNewScrollV = iCurrScrollV + iPixelsLineScrollV;
 			else
 			{
 				if (iNewEndV >= iCurrScrollV)
 					iNewScrollV = iCurrScrollV;
 				else if (iNewStartV <= iCurrScrollV)
-					iNewScrollV = iCurrScrollV - iOneLineScrollV;
+					iNewScrollV = iCurrScrollV - iPixelsLineScrollV;
 			}
 		}
 		else
 		{
 			if (iNewStartV < iCurrScrollV)
-				iNewScrollV = iCurrScrollV - iOneLineScrollV;
+				iNewScrollV = iCurrScrollV - iPixelsLineScrollV;
 			else
 			{
 				if (iNewStartV < iMaxV)
 					iNewScrollV = iCurrScrollV;
 				else
-					iNewScrollV = iCurrScrollV + iOneLineScrollV;
+					iNewScrollV = iCurrScrollV + iPixelsLineScrollV;
 			}
 		}
 
@@ -1377,7 +1382,7 @@ void CHexView::SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBy
 		else
 			iNewScrollH = iCurrScrollH;
 	}
-	iNewScrollV -= iNewScrollV % iOneLineScrollV;
+	iNewScrollV -= iNewScrollV % iPixelsLineScrollV;
 	iNewScrollH -= iNewScrollH % m_sizeLetter.cx;
 
 	m_dwSelectionClick = dwClick;
