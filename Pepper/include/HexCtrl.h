@@ -19,7 +19,7 @@ namespace HEXCTRL
 	{
 		std::wstring	wstrSearch { };
 		DWORD			dwSearchType { }; //Hex, Ascii, Unicode, etc...
-		DWORD			dwStartAt { }; //Offset search should start at.
+		ULONGLONG		dwStartAt { }; //Offset search should start at.
 		int				iDirection { };
 		bool			fWrap { }; //Was search wrapped?
 		int				iWrap { }; //Wrap direction.
@@ -31,7 +31,7 @@ namespace HEXCTRL
 	struct HEXNOTIFY
 	{
 		NMHDR			hdr;
-		DWORD_PTR		dwByteIndex;
+		ULONGLONG		dwByteIndex;
 		unsigned char	chByte;
 	};
 	using PHEXNOTIFY = HEXNOTIFY * ;
@@ -106,7 +106,7 @@ namespace HEXCTRL
 		friend class CHexDlgSearch;
 		DECLARE_DYNCREATE(CHexView)
 		BOOL Create(CHexCtrl* pWndParent, const RECT& rc, UINT uiId, CCreateContext* pContext, const LOGFONT* pLogFont);
-		void SetData(const unsigned char* pData, DWORD_PTR dwCount, bool fVirtual);
+		void SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual);
 		void ClearData();
 		void SetSelection(DWORD_PTR dwOffset, DWORD dwCount);
 		void SetFont(const LOGFONT* pLogFontNew);
@@ -133,15 +133,17 @@ namespace HEXCTRL
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 		void Recalc();
 		int HitTest(LPPOINT); //Is any hex chunk withing given point?
+		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);
 		void CopyToClipboard(UINT nType);
 		void Search(HEXSEARCH& rSearch);
-		void SetSelection(DWORD_PTR dwClick, DWORD_PTR dwStart, DWORD dwBytes, bool fHighlight = false);
+		void SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBytes, bool fHighlight = false);
+		int GetPixelsLineScrollV();
 		void UpdateInfoText();
 		DECLARE_MESSAGE_MAP()
 	private:
 		bool m_fVirtual { false };
 		const BYTE* m_pData { };
-		DWORD_PTR m_dwDataCount { };
+		ULONGLONG m_dwDataCount { };
 		DWORD m_dwGridCapacity { 16 };
 		DWORD m_dwGridBlockSize { m_dwGridCapacity / 2 }; //Size of block before space delimiter.
 		CHexCtrl* m_pwndParent { };
@@ -167,7 +169,7 @@ namespace HEXCTRL
 		int m_iIndentFirstHexChunk { }; //First hex chunk indent.
 		int m_iIndentTextCapacityY { }; //Caption text (0 1 2... D E F...) vertical offset.
 		int m_iIndentBottomLine { 1 }; //Bottom line indent from window's bottom.
-		int m_iSpaceBetweenHexChunks { }; //Space between begining of two hex chunks.
+		int m_iDistanceBetweenHexChunks { }; //Space between begining of two hex chunks.
 		int m_iSpaceBetweenAscii { }; //Space between Ascii chars.
 		int m_iSpaceBetweenBlocks { }; //Additional space between hex chunks after half of capacity.
 		int m_iHeightTopRect { }; //Height of the header where offsets (0 1 2... D E F...) reside.
@@ -175,7 +177,7 @@ namespace HEXCTRL
 		int m_iHeightBottomOffArea { m_iHeightBottomRect + m_iIndentBottomLine }; //Height of not visible rect from window's bottom to m_iThirdHorizLine.
 		int m_iHeightWorkArea { }; //Needed for mouse selection point.y calculation.
 		int m_iFirstVertLine { }, m_iSecondVertLine { }, m_iThirdVertLine { }, m_iFourthVertLine { }; //Vertical lines indent.
-		DWORD m_dwSelectionStart { }, m_dwSelectionEnd { }, m_dwSelectionClick { }, m_dwBytesSelected { };
+		ULONGLONG m_dwSelectionStart { }, m_dwSelectionEnd { }, m_dwSelectionClick { }, m_dwBytesSelected { };
 		const wchar_t* const m_pwszHexMap = L"0123456789ABCDEF";
 		std::wstring m_wstrBottomText { };
 		bool m_fSecondLaunch { false };
@@ -209,7 +211,7 @@ namespace HEXCTRL
 		virtual ~CHexCtrl() {}
 		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
 		CHexView* GetActiveView() const { return m_pHexView; };
-		void SetData(const PBYTE pData, DWORD_PTR dwCount, bool fVirtual = false) const;
+		void SetData(const PBYTE pData, ULONGLONG ullCount, bool fVirtual = false) const;
 		void ClearData();
 		void SetSelection(DWORD_PTR dwOffset, DWORD dwBytes = 1);
 		void SetFont(const LOGFONT* pLogFontNew) const;
