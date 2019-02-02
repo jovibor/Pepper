@@ -5,6 +5,7 @@ IMPLEMENT_DYNCREATE(CViewRightBR, CScrollView)
 
 BEGIN_MESSAGE_MAP(CViewRightBR, CScrollView)
 	ON_WM_SIZE()
+	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
 void CViewRightBR::OnInitialUpdate()
@@ -145,7 +146,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 
 			BITMAPINFO* pDIBInfo = (BITMAPINFO*)pRes->pData->data();
 			int iColors = pDIBInfo->bmiHeader.biClrUsed ? pDIBInfo->bmiHeader.biClrUsed : 1 << pDIBInfo->bmiHeader.biBitCount;
-			LPVOID  pDIBBits;
+			LPVOID pDIBBits;
 
 			if (pDIBInfo->bmiHeader.biBitCount > 8)
 				pDIBBits = (LPVOID)((PDWORD)(pDIBInfo->bmiColors + pDIBInfo->bmiHeader.biClrUsed) +
@@ -236,7 +237,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 				HBITMAP hBitmap = CreateCompatibleBitmap(hDC, rcDlg.Width(), rcDlg.Height());
 				::SelectObject(hDCMemory, hBitmap);
 
-				//To avoid window pop-up, removing animation temporarily, then restore back.
+				//To avoid window pop-up removing Windows animation temporarily, then restore back.
 				ANIMATIONINFO aninfo;
 				aninfo.cbSize = sizeof(ANIMATIONINFO);
 				SystemParametersInfo(SPI_GETANIMATION, aninfo.cbSize, &aninfo, 0);

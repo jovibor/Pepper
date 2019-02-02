@@ -7,8 +7,8 @@
 #define IDC_RADIO_ASCII                 1007
 #define IDC_RADIO_UNICODE               1008
 #define IDC_STATIC_BOTTOM_TEXT          1009
-#define IDD_HEXCTRL_DIALOG_SEARCH       5101
-#define IDD_HEXCTRL_DIALOG_ABOUT        5102
+#define IDD_HEXCTRL_SEARCH              5101
+#define IDD_HEXCTRL_ABOUT               5102
 #define IDC_BUTTON_SEARCH_F             6001
 #define IDC_BUTTON_SEARCH_B             6002
 #define IDC_EDIT_SEARCH                 6003
@@ -17,7 +17,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        108
+#define _APS_NEXT_RESOURCE_VALUE        109
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           101

@@ -10,8 +10,10 @@
 * 3. Call myHex.SetData method to set the data and its size to display as hex.	        *
 ****************************************************************************************/
 #pragma once
+#pragma comment(lib, "Dwmapi.lib")
 #include <vector>
 #include "HexCtrlRes.h"
+#include "ScrollEx.h"
 
 namespace HEXCTRL
 {
@@ -42,7 +44,7 @@ namespace HEXCTRL
 	class CHexDlgAbout : public CDialogEx
 	{
 	public:
-		CHexDlgAbout(CWnd* m_pParent = nullptr) : CDialogEx(IDD_HEXCTRL_DIALOG_ABOUT) {}
+		CHexDlgAbout(CWnd* m_pParent = nullptr) : CDialogEx(IDD_HEXCTRL_ABOUT) {}
 		virtual ~CHexDlgAbout() {}
 	protected:
 		virtual BOOL OnInitDialog() override;
@@ -100,7 +102,7 @@ namespace HEXCTRL
 	* CHexView class definition.				*
 	********************************************/
 	class CHexCtrl;
-	class CHexView : public CScrollView
+	class CHexView : public CView
 	{
 	public:
 		friend class CHexDlgSearch;
@@ -108,7 +110,7 @@ namespace HEXCTRL
 		BOOL Create(CHexCtrl* pWndParent, const RECT& rc, UINT uiId, CCreateContext* pContext, const LOGFONT* pLogFont);
 		void SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual);
 		void ClearData();
-		void SetSelection(DWORD_PTR dwOffset, DWORD dwCount);
+		void SetSelection(ULONGLONG dwOffset, ULONGLONG dwCount);
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
@@ -119,10 +121,10 @@ namespace HEXCTRL
 		CHexView() {}
 		virtual ~CHexView() {}
 		void OnDraw(CDC* pDC) override;
-		afx_msg void OnSize(UINT nType, int cx, int cy);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 		afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
 		afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+		afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 		afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 		afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 		virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
@@ -131,8 +133,12 @@ namespace HEXCTRL
 		afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 		afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+		afx_msg void OnPaint();
+		afx_msg BOOL OnNcActivate(BOOL bActive);
+		afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
+		afx_msg void OnNcPaint();
 		void Recalc();
-		int HitTest(LPPOINT); //Is any hex chunk withing given point?
+		ULONGLONG HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);
 		void CopyToClipboard(UINT nType);
 		void Search(HEXSEARCH& rSearch);
@@ -148,12 +154,13 @@ namespace HEXCTRL
 		DWORD m_dwGridBlockSize { m_dwGridCapacity / 2 }; //Size of block before space delimiter.
 		CHexCtrl* m_pwndParent { };
 		CWnd* m_pwndGrParent { }; //Parent of CHexCtrl.
-		CRect m_rcClient;
-		SIZE m_sizeLetter { }; //Current font's letter size (width, height).
+		SIZE m_sizeLetter { 1, 1 }; //Current font's letter size (width, height).
 		CFont m_fontHexView;
 		CFont m_fontBottomRect;
 		CHexDlgSearch m_dlgSearch;
 		CHexDlgAbout m_dlgAbout;
+		CScrollEx m_stScrollV;
+		CScrollEx m_stScrollH;
 		CMenu m_menuPopup;
 		COLORREF m_clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };
@@ -177,10 +184,9 @@ namespace HEXCTRL
 		int m_iHeightBottomOffArea { m_iHeightBottomRect + m_iIndentBottomLine }; //Height of not visible rect from window's bottom to m_iThirdHorizLine.
 		int m_iHeightWorkArea { }; //Needed for mouse selection point.y calculation.
 		int m_iFirstVertLine { }, m_iSecondVertLine { }, m_iThirdVertLine { }, m_iFourthVertLine { }; //Vertical lines indent.
-		ULONGLONG m_dwSelectionStart { }, m_dwSelectionEnd { }, m_dwSelectionClick { }, m_dwBytesSelected { };
+		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullBytesSelected { };
 		const wchar_t* const m_pwszHexMap = L"0123456789ABCDEF";
 		std::wstring m_wstrBottomText { };
-		bool m_fSecondLaunch { false };
 		bool m_fLMousePressed { false };
 		enum HEXCTRL_SEARCH
 		{
@@ -198,7 +204,7 @@ namespace HEXCTRL
 		static constexpr auto IDM_POPUP_COPYASHEXFORMATTED = 0x8003;
 		static constexpr auto IDM_POPUP_COPYASASCII = 0x8004;
 		static constexpr auto IDM_POPUP_ABOUT = 0x8005;
-	};
+};
 
 	/********************************************
 	* CHexCtrl class definition.				*

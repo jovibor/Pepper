@@ -22,4 +22,5 @@ private:
 	CHexCtrl m_stHexEdit;
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 };

@@ -86,7 +86,7 @@
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
-    <IncludePath>res;res\HexCtrl;include;verinfo;$(IncludePath)</IncludePath>
+    <IncludePath>res;res\HexCtrl;res\ScrollEx;include;verinfo;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -159,7 +159,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>lib\libpe.lib;Mincore.lib;Dwmapi.lib</AdditionalDependencies>
+      <AdditionalDependencies>Mincore.lib;</AdditionalDependencies>
       <ManifestFile />
       <ProfileGuidedDatabase />
       <EnableUAC>false</EnableUAC>
@@ -172,6 +172,7 @@
       <DelayLoadDLLs>
       </DelayLoadDLLs>
       <AdditionalOptions>/NOCOFFGRPINFO %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -233,6 +234,7 @@
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="HexCtrl.cpp" />
+    <ClCompile Include="ScrollEx.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
@@ -252,6 +254,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\ScrollEx\scrollH.bmp" />
+    <Image Include="res\ScrollEx\scrollV.bmp" />
     <Image Include="res\TreeMain_Dirs.ico" />
     <Image Include="res\TreeMain_Header.ico" />
     <Image Include="res\Pepper.ico" />
@@ -265,6 +269,7 @@
     <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\FileLoader.h" />
     <ClInclude Include="include\HexCtrl.h" />
+    <ClInclude Include="include\ScrollEx.h" />
     <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />
     <ClInclude Include="include\MainFrm.h" />
@@ -279,10 +284,12 @@
     <ClInclude Include="include\ViewRightTR.h" />
     <ClInclude Include="res\HexCtrl\HexCtrlRes.h" />
     <ClInclude Include="res\resource.h" />
+    <ClInclude Include="res\ScrollEx\ScrollExRes.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\HexCtrl\HexCtrl.rc" />
     <ResourceCompile Include="res\Pepper.rc" />
+    <ResourceCompile Include="res\ScrollEx\ScrollEx.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

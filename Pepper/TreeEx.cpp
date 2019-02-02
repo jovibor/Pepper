@@ -14,9 +14,11 @@ void CTreeEx::OnPaint()
 {
 	//To avoid flickering.
 	CPaintDC dc(this);
-	CMemDC memDC(dc, this);
-	CDC& rDC = memDC.GetDC();
+
 	CRect rc;
+	dc.GetClipBox(&rc);
+	CMemDC memDC(dc, rc);
+	CDC& rDC = memDC.GetDC();
 	rDC.GetClipBox(&rc);
 	rDC.FillSolidRect(rc, RGB(255,255,255));
 

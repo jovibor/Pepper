@@ -7,7 +7,6 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include <variant>
 #include <ImageHlp.h>
 
 #ifndef __cpp_lib_byte
@@ -315,8 +314,9 @@ namespace libpe
 
 #if defined(ILIBPE_EXPORT)
 #define ILIBPEAPI __declspec(dllexport) __cdecl
-#else 
+#else
 #define ILIBPEAPI __declspec(dllimport) __cdecl
+#pragma comment(lib, "libpe.lib")
 #endif
 
 extern "C" HRESULT ILIBPEAPI Getlibpe(libpe::libpe_ptr& libpe_ptr);
