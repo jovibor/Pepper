@@ -18,16 +18,24 @@ using namespace HEXCTRL;
 /************************************************************************
 * CHexCtrl implementation.												*
 ************************************************************************/
-IMPLEMENT_DYNAMIC(CHexCtrl, CWnd)
-
 BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
-	ON_WM_CREATE()
-	ON_WM_ERASEBKGND()
-	ON_WM_SIZE()
-	ON_WM_ACTIVATE()
 	ON_WM_DESTROY()
-	ON_WM_ACTIVATEAPP()
 	ON_WM_CLOSE()
+	ON_WM_ERASEBKGND()
+	ON_WM_PAINT()
+	ON_WM_VSCROLL()
+	ON_WM_HSCROLL()
+	ON_WM_SETCURSOR()
+	ON_WM_MOUSEWHEEL()
+	ON_WM_MOUSEMOVE()
+	ON_WM_MBUTTONDOWN()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_KEYDOWN()
+	ON_WM_CONTEXTMENU()
+	ON_WM_NCACTIVATE()
+	ON_WM_NCCALCSIZE()
+	ON_WM_NCPAINT()
 END_MESSAGE_MAP()
 
 BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, const LOGFONT* pLogFont)
@@ -35,7 +43,6 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	if (m_fCreated) //Already created.
 		return FALSE;
 
-	m_pLogFontHexView = pLogFont;
 	m_dwCtrlId = uiCtrlId;
 	m_pwndParentOwner = pwndParent;
 	m_fFloat = fFloat;
@@ -66,161 +73,7 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	DwmExtendFrameIntoClientArea(m_hWnd, &marg);
 	SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
-	CRuntimeClass* pNewViewClass = RUNTIME_CLASS(CHexView);
-	CCreateContext context;
-	context.m_pNewViewClass = pNewViewClass;
-	if (!(m_pHexView = (CHexView*)pNewViewClass->CreateObject()))
-		return FALSE;
-
-	GetClientRect(rc);
-	if (!m_pHexView->Create(this, rc, 0xFF, &context, m_pLogFontHexView))
-		return FALSE;
-
-	m_fCreated = true;
-
-	return TRUE;
-}
-
-void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
-{
-	CWnd::OnActivate(nState, pWndOther, bMinimized);
-
-	if (m_fCreated)
-		GetActiveView()->SetFocus();
-}
-
-void CHexCtrl::OnSize(UINT nType, int cx, int cy)
-{
-	CWnd::OnSize(nType, cx, cy);
-
-	if (m_fCreated)
-		GetActiveView()->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
-}
-
-BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
-{
-	return FALSE;
-}
-
-void CHexCtrl::OnDestroy()
-{
-	if (m_pwndParentOwner)
-	{
-		NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
-		m_pwndParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
-		m_pwndParentOwner->SetForegroundWindow();
-	}
-	m_fCreated = false;
-	m_pHexView = nullptr;
-
-	CWnd::OnDestroy();
-}
-
-void CHexCtrl::SetData(const PBYTE pData, ULONGLONG ullCount, bool fVirtual) const
-{
-	if (m_fCreated)
-		GetActiveView()->SetData(pData, ullCount, fVirtual);
-}
-
-void CHexCtrl::ClearData()
-{
-	if (m_fCreated)
-		GetActiveView()->ClearData();
-}
-
-void CHexCtrl::SetSelection(DWORD_PTR dwOffset, DWORD dwBytes)
-{
-	if (m_fCreated)
-		GetActiveView()->SetSelection(dwOffset, dwBytes);
-}
-
-void CHexCtrl::SetFont(const LOGFONT* pLogFontNew) const
-{
-	if (m_fCreated)
-		return GetActiveView()->SetFont(pLogFontNew);
-}
-
-void CHexCtrl::SetFontSize(UINT nSize) const
-{
-	if (m_fCreated)
-		return GetActiveView()->SetFontSize(nSize);
-}
-
-void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
-	COLORREF clrBk, COLORREF clrBkSelected) const
-{
-	if (m_fCreated)
-		GetActiveView()->SetColor(clrTextHex, clrTextAscii, clrTextCaption, clrBk, clrBkSelected);
-}
-
-int CHexCtrl::GetDlgCtrlID() const
-{
-	return m_dwCtrlId;
-}
-
-CWnd * CHexCtrl::GetParent() const
-{
-	return m_pwndParentOwner;
-}
-
-
-/************************************************************************
-* CHexView implementation.												*
-************************************************************************/
-
-/********************************************************************
-* Below is the custom implementation of MFC IMPLEMENT_DYNCREATE()	*
-* macro, which doesn't work with nested classes by default.			*
-********************************************************************/
-CObject* PASCAL CHexView::CreateObject()
-{
-	return new CHexView;
-}
-
-CRuntimeClass* PASCAL CHexView::_GetBaseClass()
-{
-	return RUNTIME_CLASS(CView);
-}
-
-AFX_COMDAT const CRuntimeClass CHexView::classCHexView {
-	"CHexView", sizeof(class CHexView), 0xFFFF, CHexView::CreateObject,
-	&CHexView::_GetBaseClass, NULL, NULL };
-
-CRuntimeClass* PASCAL CHexView::GetThisClass()
-{
-	return (CRuntimeClass*)(&CHexView::classCHexView);
-}
-
-CRuntimeClass* CHexView::GetRuntimeClass() const
-{
-	return (CRuntimeClass*)(&CHexView::classCHexView);
-}
-
-BEGIN_MESSAGE_MAP(CHexView, CView)
-	ON_WM_SIZE()
-	ON_WM_ERASEBKGND()
-	ON_WM_VSCROLL()
-	ON_WM_HSCROLL()
-	ON_WM_MOUSEWHEEL()
-	ON_WM_MOUSEMOVE()
-	ON_WM_MBUTTONDOWN()
-	ON_WM_LBUTTONDOWN()
-	ON_WM_LBUTTONUP()
-	ON_WM_KEYDOWN()
-	ON_WM_CONTEXTMENU()
-	ON_WM_NCACTIVATE()
-	ON_WM_NCCALCSIZE()
-	ON_WM_NCPAINT()
-	ON_WM_PAINT()
-	ON_WM_SETCURSOR()
-	ON_WM_EXITSIZEMOVE()
-	ON_WM_SHOWWINDOW()
-END_MESSAGE_MAP()
-
-BOOL CHexView::Create(CHexCtrl* pwndParent, const RECT& rc, UINT uiId, CCreateContext* pContext, const LOGFONT* pLogFont)
-{
 	m_pwndParent = pwndParent;
-	m_pwndGrParent = pwndParent->GetParent();
 
 	NONCLIENTMETRICSW ncm { sizeof(NONCLIENTMETRICSW) };
 	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
@@ -263,15 +116,37 @@ BOOL CHexView::Create(CHexCtrl* pwndParent, const RECT& rc, UINT uiId, CCreateCo
 
 	m_dlgSearch.Create(IDD_HEXCTRL_SEARCH, this);
 
-	if (!CView::Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, rc, pwndParent, uiId, pContext))
-		return FALSE;
-
 	Recalc();
+	   	  
+	m_fCreated = true;
 
 	return TRUE;
 }
 
-void CHexView::SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual)
+void CHexCtrl::OnDestroy()
+{
+	if (m_pwndParentOwner)
+	{
+		NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
+		m_pwndParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+		m_pwndParentOwner->SetForegroundWindow();
+	}
+	m_fCreated = false;
+
+	CWnd::OnDestroy();
+}
+
+int CHexCtrl::GetDlgCtrlID() const
+{
+	return m_dwCtrlId;
+}
+
+CWnd * CHexCtrl::GetParent() const
+{
+	return m_pwndParentOwner;
+}
+
+void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual)
 {
 	ClearData();
 
@@ -283,7 +158,7 @@ void CHexView::SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirt
 	Recalc();
 }
 
-void CHexView::ClearData()
+void CHexCtrl::ClearData()
 {
 	m_dwDataCount = 0;
 	m_pData = nullptr;
@@ -293,12 +168,12 @@ void CHexView::ClearData()
 	UpdateInfoText();
 }
 
-void CHexView::SetSelection(ULONGLONG ullOffset, ULONGLONG ullBytes)
+void CHexCtrl::SetSelection(ULONGLONG ullOffset, ULONGLONG ullBytes)
 {
 	SetSelection(ullOffset, ullOffset, ullBytes, true);
 }
 
-void CHexView::SetFont(const LOGFONT* pLogFontNew)
+void CHexCtrl::SetFont(const LOGFONT* pLogFontNew)
 {
 	if (!pLogFontNew)
 		return;
@@ -309,7 +184,7 @@ void CHexView::SetFont(const LOGFONT* pLogFontNew)
 	Recalc();
 }
 
-void CHexView::SetFontSize(UINT uiSize)
+void CHexCtrl::SetFontSize(UINT uiSize)
 {
 	//Prevent font size from being too small or too big.
 	if (uiSize < 9 || uiSize > 75)
@@ -324,7 +199,7 @@ void CHexView::SetFontSize(UINT uiSize)
 	Recalc();
 }
 
-UINT CHexView::GetFontSize()
+UINT CHexCtrl::GetFontSize()
 {
 	LOGFONT lf;
 	m_fontHexView.GetLogFont(&lf);
@@ -332,7 +207,7 @@ UINT CHexView::GetFontSize()
 	return lf.lfHeight;
 }
 
-void CHexView::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
+void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
 	COLORREF clrBk, COLORREF clrBkSelected)
 {
 	m_clrTextHex = clrTextHex;
@@ -344,7 +219,7 @@ void CHexView::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clr
 	RedrawWindow();
 }
 
-void CHexView::SetCapacity(DWORD dwCapacity)
+void CHexCtrl::SetCapacity(DWORD dwCapacity)
 {
 	if (dwCapacity < 1 || dwCapacity > 64)
 		return;
@@ -354,7 +229,7 @@ void CHexView::SetCapacity(DWORD dwCapacity)
 	Recalc();
 }
 
-void CHexView::OnMouseMove(UINT nFlags, CPoint point)
+void CHexCtrl::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (m_fLMousePressed)
 	{
@@ -418,7 +293,7 @@ void CHexView::OnMouseMove(UINT nFlags, CPoint point)
 	}
 }
 
-BOOL CHexView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+BOOL CHexCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	if (nFlags == MK_CONTROL)
 	{
@@ -441,10 +316,10 @@ BOOL CHexView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 	m_stScrollV.SetScrollPos(ullNewPos);
 
-	return CView::OnMouseWheel(nFlags, zDelta, pt);
+	return CWnd::OnMouseWheel(nFlags, zDelta, pt);
 }
 
-void CHexView::OnLButtonDown(UINT nFlags, CPoint point)
+void CHexCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	const ULONGLONG ullHit = HitTest(&point);
 	if (ullHit != -1)
@@ -476,7 +351,7 @@ void CHexView::OnLButtonDown(UINT nFlags, CPoint point)
 	}
 }
 
-void CHexView::OnLButtonUp(UINT nFlags, CPoint point)
+void CHexCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	m_fLMousePressed = false;
 	ReleaseCapture();
@@ -484,14 +359,14 @@ void CHexView::OnLButtonUp(UINT nFlags, CPoint point)
 	m_stScrollV.OnLButtonUp(nFlags, point);
 	m_stScrollH.OnLButtonUp(nFlags, point);
 
-	CView::OnLButtonUp(nFlags, point);
+	CWnd::OnLButtonUp(nFlags, point);
 }
 
-void CHexView::OnMButtonDown(UINT nFlags, CPoint point)
+void CHexCtrl::OnMButtonDown(UINT nFlags, CPoint point)
 {
 }
 
-BOOL CHexView::OnCommand(WPARAM wParam, LPARAM lParam)
+BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	UINT uiId = LOWORD(wParam);
 
@@ -526,15 +401,15 @@ BOOL CHexView::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-	return CView::OnCommand(wParam, lParam);
+	return CWnd::OnCommand(wParam, lParam);
 }
 
-void CHexView::OnContextMenu(CWnd* pWnd, CPoint point)
+void CHexCtrl::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	m_menuPopup.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
 }
 
-void CHexView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	switch (nChar)
 	{
@@ -629,20 +504,20 @@ void CHexView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		break;
 	}
 
-	CView::OnKeyDown(nChar, nRepCnt, nFlags);
+	CWnd::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
-void CHexView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CHexCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	RedrawWindow();
 }
 
-void CHexView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CHexCtrl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	RedrawWindow();
 }
 
-void CHexView::OnPaint()
+void CHexCtrl::OnPaint()
 {
 	CPaintDC dc(this);
 
@@ -816,9 +691,9 @@ void CHexView::OnPaint()
 				{
 					HEXNOTIFY hexntfy { { m_pwndParent->m_hWnd, (UINT)m_pwndParent->GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
 						ullIndexDataToPrint, 0 };
-					if (m_pwndGrParent)
+					if (m_pwndParent)
 					{
-						m_pwndGrParent->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
+						m_pwndParent->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
 						uByteToPrint = hexntfy.chByte;
 					}
 				}
@@ -870,47 +745,47 @@ void CHexView::OnPaint()
 	}
 }
 
-void CHexView::OnDraw(CDC * pDC)
+void CHexCtrl::OnDraw(CDC * pDC)
 {
 }
 
-BOOL CHexView::OnEraseBkgnd(CDC* pDC)
+BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
 {
 	return FALSE;
 }
 
-BOOL CHexView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+BOOL CHexCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
 	m_stScrollV.OnSetCursor(pWnd, nHitTest, message);
 	m_stScrollH.OnSetCursor(pWnd, nHitTest, message);
 
-	return CView::OnSetCursor(pWnd, nHitTest, message);
+	return CWnd::OnSetCursor(pWnd, nHitTest, message);
 }
 
-BOOL CHexView::OnNcActivate(BOOL bActive)
+BOOL CHexCtrl::OnNcActivate(BOOL bActive)
 {
 	m_stScrollV.OnNcActivate(bActive);
 	m_stScrollH.OnNcActivate(bActive);
 
-	return CView::OnNcActivate(bActive);
+	return CWnd::OnNcActivate(bActive);
 }
 
-void CHexView::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
+void CHexCtrl::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 {
 	m_stScrollV.OnNcCalcSize(bCalcValidRects, lpncsp);
 	m_stScrollH.OnNcCalcSize(bCalcValidRects, lpncsp);
 
-	CView::OnNcCalcSize(bCalcValidRects, lpncsp);
+	CWnd::OnNcCalcSize(bCalcValidRects, lpncsp);
 }
 
-void CHexView::OnNcPaint()
+void CHexCtrl::OnNcPaint()
 {
 	Default();
 	m_stScrollV.OnNcPaint();
 	m_stScrollH.OnNcPaint();
 }
 
-ULONGLONG CHexView::HitTest(LPPOINT pPoint)
+ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 {
 	ULONGLONG dwHexChunk;
 	ULONGLONG iScrollV = m_stScrollV.GetScrollPos();
@@ -952,7 +827,7 @@ ULONGLONG CHexView::HitTest(LPPOINT pPoint)
 	return dwHexChunk;
 }
 
-void CHexView::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
+void CHexCtrl::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
 {
 	int itmpBetweenBlocks;
 	if (ullChunk % m_dwGridCapacity > m_dwGridBlockSize)
@@ -968,7 +843,7 @@ void CHexView::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
 		ullCy = (ullChunk / m_dwGridCapacity) * m_sizeLetter.cy;
 }
 
-void CHexView::CopyToClipboard(UINT nType)
+void CHexCtrl::CopyToClipboard(UINT nType)
 {
 	if (!m_ullBytesSelected)
 		return;
@@ -1056,7 +931,7 @@ void CHexView::CopyToClipboard(UINT nType)
 	CloseClipboard();
 }
 
-void CHexView::UpdateInfoText()
+void CHexCtrl::UpdateInfoText()
 {
 	if (!m_dwDataCount)
 		m_wstrBottomText.clear();
@@ -1072,7 +947,7 @@ void CHexView::UpdateInfoText()
 	RedrawWindow();
 }
 
-void CHexView::Recalc()
+void CHexCtrl::Recalc()
 {
 	CRect rcClient;	GetClientRect(&rcClient);
 	ULONGLONG ullStartLineV = m_stScrollV.GetScrollPos() / GetPixelsLineScrollV();
@@ -1111,7 +986,7 @@ void CHexView::Recalc()
 	RedrawWindow();
 }
 
-void CHexView::Search(HEXSEARCH& rSearch)
+void CHexCtrl::Search(HEXSEARCH& rSearch)
 {
 	rSearch.fFound = false;
 	ULONGLONG dwStartAt = rSearch.dwStartAt;
@@ -1322,7 +1197,7 @@ End:
 	}
 }
 
-void CHexView::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullBytes, bool fHighlight)
+void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullBytes, bool fHighlight)
 {
 	if (ullClick >= m_dwDataCount || ullStart >= m_dwDataCount || !ullBytes)
 		return;
@@ -1401,10 +1276,11 @@ void CHexView::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	UpdateInfoText();
 }
 
-int CHexView::GetPixelsLineScrollV()
+int CHexCtrl::GetPixelsLineScrollV()
 {
 	return m_sizeLetter.cy;
 }
+
 
 /****************************************************
 * CHexDlgSearch class implementation.				*
@@ -1418,14 +1294,14 @@ BEGIN_MESSAGE_MAP(CHexDlgSearch, CDialogEx)
 	ON_COMMAND_RANGE(IDC_RADIO_HEX, IDC_RADIO_UNICODE, &CHexDlgSearch::OnRadioBnRange)
 END_MESSAGE_MAP()
 
-BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexView* pwndParent)
+BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexCtrl* pwndParent)
 {
 	m_pParent = pwndParent;
 
 	return CDialog::Create(nIDTemplate, m_pParent);
 }
 
-CHexView* CHexDlgSearch::GetParent() const
+CHexCtrl* CHexDlgSearch::GetParent() const
 {
 	return m_pParent;
 }
@@ -1455,9 +1331,9 @@ void CHexDlgSearch::SearchCallback()
 		{
 			if (!m_stSearch.fWrap)
 			{
-				if (m_stSearch.iDirection == CHexView::HEXCTRL_SEARCH::SEARCH_FORWARD)
+				if (m_stSearch.iDirection == CHexCtrl::HEXCTRL_SEARCH::SEARCH_FORWARD)
 					m_dwnOccurrence++;
-				else if (m_stSearch.iDirection == CHexView::HEXCTRL_SEARCH::SEARCH_BACKWARD)
+				else if (m_stSearch.iDirection == CHexCtrl::HEXCTRL_SEARCH::SEARCH_BACKWARD)
 					m_dwnOccurrence--;
 			}
 			else
@@ -1499,16 +1375,16 @@ void CHexDlgSearch::OnButtonSearchF()
 	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
 	{
 	case IDC_RADIO_HEX:
-		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_HEX;
+		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_HEX;
 		break;
 	case IDC_RADIO_ASCII:
-		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_ASCII;
+		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_ASCII;
 		break;
 	case IDC_RADIO_UNICODE:
-		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_UNICODE;
+		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_UNICODE;
 		break;
 	}
-	m_stSearch.iDirection = CHexView::HEXCTRL_SEARCH::SEARCH_FORWARD;
+	m_stSearch.iDirection = CHexCtrl::HEXCTRL_SEARCH::SEARCH_FORWARD;
 
 	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
 	GetParent()->Search(m_stSearch);
@@ -1529,16 +1405,16 @@ void CHexDlgSearch::OnButtonSearchB()
 	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
 	{
 	case IDC_RADIO_HEX:
-		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_HEX;
+		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_HEX;
 		break;
 	case IDC_RADIO_ASCII:
-		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_ASCII;
+		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_ASCII;
 		break;
 	case IDC_RADIO_UNICODE:
-		m_stSearch.dwSearchType = CHexView::HEXCTRL_SEARCH::SEARCH_UNICODE;
+		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_UNICODE;
 		break;
 	}
-	m_stSearch.iDirection = CHexView::HEXCTRL_SEARCH::SEARCH_BACKWARD;
+	m_stSearch.iDirection = CHexCtrl::HEXCTRL_SEARCH::SEARCH_BACKWARD;
 
 	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
 	GetParent()->Search(m_stSearch);

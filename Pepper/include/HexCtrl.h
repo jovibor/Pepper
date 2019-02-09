@@ -65,15 +65,15 @@ namespace HEXCTRL
 	/********************************************
 	* CHexDlgSearch class definition.			*
 	********************************************/
-	class CHexView;
+	class CHexCtrl;
 	class CHexDlgSearch : public CDialogEx
 	{
 	public:
-		friend class CHexView;
+		friend class CHexCtrl;
 		CHexDlgSearch(CWnd* m_pParent = nullptr) {}
 		virtual ~CHexDlgSearch() {}
-		BOOL Create(UINT nIDTemplate, CHexView* pParentWnd);
-		CHexView* GetParent() const;
+		BOOL Create(UINT nIDTemplate, CHexCtrl* pParentWnd);
+		CHexCtrl* GetParent() const;
 	protected:
 		virtual void DoDataExchange(CDataExchange* pDX);
 		virtual BOOL OnInitDialog();
@@ -88,7 +88,7 @@ namespace HEXCTRL
 		void ClearAll();
 		DECLARE_MESSAGE_MAP()
 	private:
-		CHexView* m_pParent { };
+		CHexCtrl* m_pParent { };
 		HEXSEARCH m_stSearch { };
 		DWORD m_dwnOccurrence { };
 		int m_iRadioCurrent { };
@@ -99,28 +99,28 @@ namespace HEXCTRL
 	};
 
 	/********************************************
-	* CHexView class definition.				*
+	* CHexCtrl class definition.				*
 	********************************************/
-	class CHexCtrl;
-	class CHexView : public CView
+	class CHexCtrl : public CWnd
 	{
 	public:
 		friend class CHexDlgSearch;
-		DECLARE_DYNCREATE(CHexView)
-		BOOL Create(CHexCtrl* pWndParent, const RECT& rc, UINT uiId, CCreateContext* pContext, const LOGFONT* pLogFont);
-		void SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual);
+		CHexCtrl() {}
+		virtual ~CHexCtrl() {}
+		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
+		void SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual = false);
 		void ClearData();
-		void SetSelection(ULONGLONG dwOffset, ULONGLONG dwCount);
+		void SetSelection(ULONGLONG dwOffset, ULONGLONG dwCount = 1);
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
 		void SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
 			COLORREF clrBk, COLORREF clrBkSelected);
 		void SetCapacity(DWORD dwCapacity);
+		int GetDlgCtrlID() const;
+		CWnd* GetParent() const;
 	protected:
-		CHexView() {}
-		virtual ~CHexView() {}
-		void OnDraw(CDC* pDC) override;
+		void OnDraw(CDC* pDC);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 		afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
 		afx_msg void OnMouseMove(UINT nFlags, CPoint point);
@@ -137,6 +137,7 @@ namespace HEXCTRL
 		afx_msg BOOL OnNcActivate(BOOL bActive);
 		afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 		afx_msg void OnNcPaint();
+		afx_msg void OnDestroy();
 		void Recalc();
 		ULONGLONG HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);
@@ -147,13 +148,14 @@ namespace HEXCTRL
 		void UpdateInfoText();
 		DECLARE_MESSAGE_MAP()
 	private:
+		bool m_fCreated { false };
+		bool m_fFloat { false };
 		bool m_fVirtual { false };
 		const BYTE* m_pData { };
 		ULONGLONG m_dwDataCount { };
 		DWORD m_dwGridCapacity { 16 };
 		DWORD m_dwGridBlockSize { m_dwGridCapacity / 2 }; //Size of block before space delimiter.
-		CHexCtrl* m_pwndParent { };
-		CWnd* m_pwndGrParent { }; //Parent of CHexCtrl.
+		CWnd* m_pwndParent { };
 		SIZE m_sizeLetter { 1, 1 }; //Current font's letter size (width, height).
 		CFont m_fontHexView;
 		CFont m_fontBottomRect;
@@ -188,14 +190,8 @@ namespace HEXCTRL
 		const wchar_t* const m_pwszHexMap = L"0123456789ABCDEF";
 		std::wstring m_wstrBottomText { };
 		bool m_fLMousePressed { false };
-		enum HEXCTRL_SEARCH
-		{
-			SEARCH_HEX = 0x01, SEARCH_ASCII = 0x02,
-			SEARCH_UNICODE = 0x03, SEARCH_FORWARD = 1,
-			SEARCH_BACKWARD = -1, SEARCH_NOTFOUND = 0,
-			SEARCH_FOUND = 0x01, SEARCH_BEGINNING = 0x02,
-			SEARCH_END = 0x03,
-		};
+		CWnd* m_pwndParentOwner { };
+		UINT m_dwCtrlId { };
 		static constexpr auto CLIPBOARD_COPY_AS_HEX { 0x01 };
 		static constexpr auto CLIPBOARD_COPY_AS_HEX_FORMATTED { 0x02 };
 		static constexpr auto CLIPBOARD_COPY_AS_ASCII { 0x03 };
@@ -204,44 +200,14 @@ namespace HEXCTRL
 		static constexpr auto IDM_POPUP_COPYASHEXFORMATTED = 0x8003;
 		static constexpr auto IDM_POPUP_COPYASASCII = 0x8004;
 		static constexpr auto IDM_POPUP_ABOUT = 0x8005;
-};
-
-	/********************************************
-	* CHexCtrl class definition.				*
-	********************************************/
-	class CHexCtrl : public CWnd
-	{
-	public:
-		DECLARE_DYNAMIC(CHexCtrl)
-		CHexCtrl() {}
-		virtual ~CHexCtrl() {}
-		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
-		CHexView* GetActiveView() const { return m_pHexView; };
-		void SetData(const PBYTE pData, ULONGLONG ullCount, bool fVirtual = false) const;
-		void ClearData();
-		void SetSelection(DWORD_PTR dwOffset, DWORD dwBytes = 1);
-		void SetFont(const LOGFONT* pLogFontNew) const;
-		void SetFontSize(UINT nSize) const;
-		void SetColor(COLORREF clrTextHex = GetSysColor(COLOR_WINDOWTEXT),
-			COLORREF clrTextAscii = GetSysColor(COLOR_WINDOWTEXT),
-			COLORREF clrTextCaption = RGB(0, 0, 180),
-			COLORREF clrBk = GetSysColor(COLOR_WINDOW),
-			COLORREF clrBkSelected = RGB(200, 200, 255)) const;
-		int GetDlgCtrlID() const;
-		CWnd* GetParent() const;
-	private:
-		DECLARE_MESSAGE_MAP()
-		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-		afx_msg void OnSize(UINT nType, int cx, int cy);
-		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
-		afx_msg void OnDestroy();
-	private:
-		CHexView* m_pHexView { };
-		CWnd* m_pwndParentOwner { };
-		const LOGFONT* m_pLogFontHexView { };
-		UINT m_dwCtrlId { };
-		bool m_fFloat { false };
-		bool m_fCreated { false };
+		enum HEXCTRL_SEARCH
+		{
+			SEARCH_HEX = 0x01, SEARCH_ASCII = 0x02,
+			SEARCH_UNICODE = 0x03, SEARCH_FORWARD = 1,
+			SEARCH_BACKWARD = -1, SEARCH_NOTFOUND = 0,
+			SEARCH_FOUND = 0x01, SEARCH_BEGINNING = 0x02,
+			SEARCH_END = 0x03,
+		};
 	};
 
 	/************************************************
