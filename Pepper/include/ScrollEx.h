@@ -36,28 +36,28 @@ namespace HEXCTRL {
 		void OnLButtonUp(UINT nFlags, CPoint point);
 	protected:
 		DECLARE_MESSAGE_MAP()
-		void SendParentScrollMsg();
 		void DrawScrollBar();
 		void DrawArrows(CDC* pDC);
 		void DrawThumb(CDC* pDC);
 		CRect GetScrollRect(bool fWithNCArea = false);
-		CRect GetScrollWorkAreaRect();
-		CRect GetThumbRect();
+		CRect GetScrollWorkAreaRect(bool fClientCoord = false);
+		UINT GetScrollSizeWH();
+		UINT GetScrollWorkAreaSizeWH(); //Scroll area size (WH) without arrow buttons.
+		CRect GetThumbRect(bool fClientCoord = false);
 		UINT GetThumbSizeWH();
 		UINT GetThumbPos();
 		long double GetThumbScrollingSize();
 		void SetThumbPos(int uiPos);
-		CRect GetFirstArrowRect();
-		CRect GetLastArrowRect();
-		CRect GetFirstChannelRect();
-		CRect GetLastChannelRect();
-		UINT GetScrollSizeWH();
-		UINT GetScrollWorkAreaSizeWH(); //Scroll area size (WH) without arrow buttons.
+		CRect GetFirstArrowRect(bool fClientCoord = false);
+		CRect GetLastArrowRect(bool fClientCoord = false);
+		CRect GetFirstChannelRect(bool fClientCoord = false);
+		CRect GetLastChannelRect(bool fClientCoord = false);
 		CRect GetParentRect();
 		bool IsVert();
 		bool IsThumbDragging();
 		void ResetTimers();
 		afx_msg void OnTimer(UINT_PTR nIDEvent);
+		void SendParentScrollMsg();
 		enum SCROLLSTATE
 		{
 			FIRSTBUTTON_HOVER = 1,
@@ -83,7 +83,12 @@ namespace HEXCTRL {
 		ULONGLONG m_ullScrollLine { };
 		ULONGLONG m_ullScrollPage { };
 		ULONGLONG m_ullScrollSizeMax { };
-		const unsigned m_uiThumbSizeMin = 10;
+		const unsigned m_uiThumbSizeMin = 15;
+
+		//Difference between parent window's Window and Client area.
+		//Needed and very important in hit testing.
+		int m_iTopDelta { };
+		int m_iLeftDelta { };
 
 		//Timers:
 		static constexpr auto IDT_FIRSTCLICK = 0x7ff0;
