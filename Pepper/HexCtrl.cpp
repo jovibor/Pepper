@@ -430,7 +430,16 @@ BOOL CHexView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		SetCapacity(m_dwGridCapacity + zDelta / WHEEL_DELTA);
 		return TRUE;
 	}
-	Invalidate();
+
+	ULONGLONG ullCurPos = m_stScrollV.GetScrollPos();
+	ULONGLONG ullPage = m_stScrollV.GetScrollPageSize();
+	ULONGLONG ullNewPos;
+	if (zDelta > 0) //Scrolling Up.
+		ullNewPos = ullCurPos < ullPage ? 0 : ullCurPos - ullPage;
+	else
+		ullNewPos = ullCurPos + ullPage;
+
+	m_stScrollV.SetScrollPos(ullNewPos);
 
 	return CView::OnMouseWheel(nFlags, zDelta, pt);
 }

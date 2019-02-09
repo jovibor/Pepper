@@ -80,25 +80,6 @@ ULONGLONG CScrollEx::SetScrollPos(ULONGLONG ullNewPos)
 	return m_ullScrollPosPrev;
 }
 
-ULONGLONG CScrollEx::GetScrollPos()
-{
-	if (!m_fCreated)
-		return 0;
-
-	return m_ullScrollPosCur;
-}
-
-LONGLONG CScrollEx::GetScrollPosDelta(ULONGLONG & ullPosCurr, ULONGLONG & ullPosPrev)
-{
-	if (!m_fCreated)
-		return 0;
-
-	ullPosCurr = m_ullScrollPosCur;
-	ullPosPrev = m_ullScrollPosPrev;
-
-	return LONGLONG(m_ullScrollPosCur - m_ullScrollPosPrev);
-}
-
 void CScrollEx::ScrollLineDown()
 {
 	ULONGLONG ullCur = GetScrollPos();
@@ -143,6 +124,16 @@ void CScrollEx::ScrollPageDown()
 
 }
 
+void CScrollEx::ScrollPageLeft()
+{
+	ScrollPageUp();
+}
+
+void CScrollEx::ScrollPageRight()
+{
+	ScrollPageDown();
+}
+
 void CScrollEx::ScrollPageUp()
 {
 	ULONGLONG ullCur = GetScrollPos();
@@ -164,41 +155,200 @@ void CScrollEx::ScrollEnd()
 	SetScrollPos(m_ullScrollSizeMax);
 }
 
-void CScrollEx::SetThumbPos(int iPos)
+ULONGLONG CScrollEx::GetScrollPos()
 {
-	CRect rcWorkArea = GetScrollWorkAreaRect();
-	UINT uiThumbSize = GetThumbSizeWH();
-	ULONGLONG ullNewScrollPos;
+	if (!m_fCreated)
+		return 0;
 
-	if (iPos < 0)
-		ullNewScrollPos = 0;
-	else if (iPos == 0x7FFFFFFF)
-		ullNewScrollPos = m_ullScrollSizeMax;
-	else
+	return m_ullScrollPosCur;
+}
+
+LONGLONG CScrollEx::GetScrollPosDelta(ULONGLONG & ullPosCurr, ULONGLONG & ullPosPrev)
+{
+	if (!m_fCreated)
+		return 0;
+
+	ullPosCurr = m_ullScrollPosCur;
+	ullPosPrev = m_ullScrollPosPrev;
+
+	return LONGLONG(m_ullScrollPosCur - m_ullScrollPosPrev);
+}
+
+ULONGLONG CScrollEx::GetScrollLineSize()
+{
+	return m_ullScrollLine;
+}
+
+ULONGLONG CScrollEx::GetScrollPageSize()
+{
+	return m_ullScrollPage;
+}
+
+BOOL CScrollEx::OnNcActivate(BOOL bActive)
+{
+	if (!m_fCreated)
+		return FALSE;
+
+	GetParent()->SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+
+	return TRUE;
+}
+
+void CScrollEx::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
+{
+	if (!m_fCreated)
+		return;
+
+	CRect rc = lpncsp->rgrc[0];
+	ULONGLONG ullCurPos = GetScrollPos();
+	if (IsVert())
 	{
-		if (IsVert())
+		if (rc.Height() < m_ullScrollSizeMax)
 		{
-			if (iPos + (int)uiThumbSize > rcWorkArea.Height())
-				iPos = rcWorkArea.Height() - uiThumbSize;
+			m_fVisible = true;
+			if (ullCurPos + rc.Height() > m_ullScrollSizeMax)
+				SetScrollPos(m_ullScrollSizeMax - rc.Height());
+			else
+				DrawScrollBar();
+			lpncsp->rgrc[0].right -= m_uiScrollBarSizeWH;
 		}
 		else
 		{
-			if (iPos + (int)uiThumbSize > rcWorkArea.Width())
-				iPos = rcWorkArea.Width() - uiThumbSize;
+			SetScrollPos(0);
+			m_fVisible = false;
 		}
-		ullNewScrollPos = (ULONGLONG)std::llroundl(iPos * GetThumbScrollingSize());
 	}
-	SetScrollPos(ullNewScrollPos);
+	else
+	{
+		if (rc.Width() < m_ullScrollSizeMax)
+		{
+			m_fVisible = true;
+			if (ullCurPos + rc.Width() > m_ullScrollSizeMax)
+				SetScrollPos(m_ullScrollSizeMax - rc.Width());
+			else
+				DrawScrollBar();
+			lpncsp->rgrc[0].bottom -= m_uiScrollBarSizeWH;
+		}
+		else
+		{
+			SetScrollPos(0);
+			m_fVisible = false;
+		}
+	}
 }
 
-bool CScrollEx::IsVert()
+void CScrollEx::OnNcPaint()
 {
-	return m_iScrollType == SB_VERT ? true : false;
+	if (!m_fCreated)
+		return;
+
+	DrawScrollBar();
 }
 
-bool CScrollEx::IsThumbDragging()
+void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 {
-	return m_iScrollBarState == SCROLLSTATE::THUMB_CLICK ? true : false;
+	if (!m_fCreated || nHitTest == HTTOPLEFT || nHitTest == HTLEFT || nHitTest == HTTOPRIGHT || nHitTest == HTSIZE
+		|| nHitTest == HTBOTTOMLEFT || nHitTest == HTRIGHT || nHitTest == HTBOTTOM || nHitTest == HTBOTTOMRIGHT)
+		return;
+
+	switch (message)
+	{
+	case WM_LBUTTONDOWN:
+	{
+		POINT pt;
+		GetCursorPos(&pt);
+		GetParent()->ScreenToClient(&pt);
+
+		if (IsVisible())
+		{
+			if (GetThumbRect().PtInRect(pt))
+			{
+				m_ptCursorCur = pt;
+				m_iScrollBarState = SCROLLSTATE::THUMB_CLICK;
+				GetParent()->SetCapture();
+			}
+			else if (GetFirstArrowRect().PtInRect(pt))
+			{
+				ScrollLineUp();
+				m_iScrollBarState = SCROLLSTATE::FIRSTBUTTON_CLICK;
+				GetParent()->SetCapture();
+				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
+			}
+			else if (GetLastArrowRect().PtInRect(pt))
+			{
+				ScrollLineDown();
+				m_iScrollBarState = SCROLLSTATE::LASTBUTTON_CLICK;
+				GetParent()->SetCapture();
+				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
+			}
+			else if (GetFirstChannelRect().PtInRect(pt))
+			{
+				ScrollPageUp();
+				m_iScrollBarState = SCROLLSTATE::FIRSTCHANNEL_CLICK;
+				GetParent()->SetCapture();
+				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
+			}
+			else if (GetLastChannelRect().PtInRect(pt))
+			{
+				ScrollPageDown();
+				m_iScrollBarState = SCROLLSTATE::LASTCHANNEL_CLICK;
+				GetParent()->SetCapture();
+				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
+			}
+		}
+	}
+	break;
+	}
+}
+
+void CScrollEx::OnMouseMove(UINT nFlags, CPoint point)
+{
+	if (!m_fCreated)
+		return;
+
+	if (IsThumbDragging())
+	{
+		CRect rc = GetScrollWorkAreaRect();
+		int iNewPos;
+
+		if (IsVert())
+		{
+			if (point.y < rc.top)
+				iNewPos = 0;
+			else if (point.y > rc.bottom)
+				iNewPos = 0x7FFFFFFF;
+			else
+				iNewPos = GetThumbPos() + (point.y - m_ptCursorCur.y);
+		}
+		else
+		{
+			if (point.x < rc.left)
+				iNewPos = 0;
+			else if (point.x > rc.right)
+				iNewPos = 0x7FFFFFFF;
+			else
+				iNewPos = GetThumbPos() + (point.x - m_ptCursorCur.x);
+		}
+
+		m_ptCursorCur = point;
+		SetThumbPos(iNewPos);
+		SendParentScrollMsg();
+	}
+}
+
+void CScrollEx::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	if (!m_fCreated)
+		return;
+
+	if (m_iScrollBarState > 0)
+	{
+		m_iScrollBarState = 0;
+		KillTimer(IDT_FIRSTCLICK);
+		KillTimer(IDT_CLICKREPEAT);
+		ReleaseCapture();
+		DrawScrollBar();
+	}
 }
 
 void CScrollEx::DrawScrollBar()
@@ -238,7 +388,7 @@ void CScrollEx::DrawArrows(CDC * pDC)
 		iFirstBtnWH = rcScroll.Width();
 
 		iLastBtnBmpOffsetX = 0;
-		iLastBtnBmpOffsetY = m_iLastBtnOffset;
+		iLastBtnBmpOffsetY = m_uiLastBtnOffset;
 		iLastBtnOffsetDrawX = rcScroll.left;
 		iLastBtnOffsetDrawY = rcScroll.bottom - rcScroll.Width();
 		iLastBtnWH = rcScroll.Width();
@@ -251,7 +401,7 @@ void CScrollEx::DrawArrows(CDC * pDC)
 		iFirstBtnOffsetDrawY = rcScroll.top;
 		iFirstBtnWH = rcScroll.Height();
 
-		iLastBtnBmpOffsetX = m_iLastBtnOffset;
+		iLastBtnBmpOffsetX = m_uiLastBtnOffset;
 		iLastBtnBmpOffsetY = 0;
 		iLastBtnOffsetDrawX = rcScroll.right - rcScroll.Height();
 		iLastBtnOffsetDrawY = rcScroll.top;
@@ -259,46 +409,18 @@ void CScrollEx::DrawArrows(CDC * pDC)
 	}
 	//First arrow button.
 	pDC->StretchBlt(iFirstBtnOffsetDrawX, iFirstBtnOffsetDrawY, iFirstBtnWH, iFirstBtnWH,
-		&compatDC, iFirstBtnBmpOffsetX, iFirstBtnBmpOffsetY, m_iFirstBtnSize, m_iFirstBtnSize, SRCCOPY);
+		&compatDC, iFirstBtnBmpOffsetX, iFirstBtnBmpOffsetY, m_uiFirstBtnSize, m_uiFirstBtnSize, SRCCOPY);
 
 	//Last arrow button.
 	pDC->StretchBlt(iLastBtnOffsetDrawX, iLastBtnOffsetDrawY, iLastBtnWH, iLastBtnWH,
-		&compatDC, iLastBtnBmpOffsetX, iLastBtnBmpOffsetY, m_iLastBtnSize, m_iLastBtnSize, SRCCOPY);
+		&compatDC, iLastBtnBmpOffsetX, iLastBtnBmpOffsetY, m_uiLastBtnSize, m_uiLastBtnSize, SRCCOPY);
 }
 
 void CScrollEx::DrawThumb(CDC* pDC)
 {
 	CRect rcThumb = GetThumbRect();
 	if (!rcThumb.IsRectEmpty())
-	{
-		int iThumbBmpOffsetX, iThumbBmpOffsetY, iThumbBmpSizeX, iThumbBmpSizeY;
-
-		if (IsVert())
-		{
-			iThumbBmpOffsetX = 0;
-			iThumbBmpOffsetY = m_iThumbOffset;
-			iThumbBmpSizeX = m_iFirstBtnSize; //Scroll width.
-			iThumbBmpSizeY = m_iThumbSize;
-		}
-		else
-		{
-			iThumbBmpOffsetX = m_iThumbOffset;
-			iThumbBmpOffsetY = 0;
-			iThumbBmpSizeX = m_iThumbSize;
-			iThumbBmpSizeY = m_iFirstBtnSize; //Scroll height.
-		}
-
-		switch (m_iScrollBarState)
-		{
-		case SCROLLSTATE::THUMB_HOVER:
-			pDC->FillSolidRect(rcThumb, RGB(255, 0, 0));
-			break;
-		default:
-			pDC->FillSolidRect(rcThumb, m_clrThumb);
-		}
-		//	pDC->StretchBlt(rcThumb.left, rcThumb.top, rcThumb.Width(), rcThumb.Height(),
-		//		compatDC, iThumbBmpOffsetX, iThumbBmpOffsetY, iThumbBmpSizeX, iThumbBmpSizeY, SRCCOPY);
-	}
+		pDC->FillSolidRect(rcThumb, m_clrThumb);
 }
 
 void CScrollEx::SendParentScrollMsg()
@@ -308,41 +430,6 @@ void CScrollEx::SendParentScrollMsg()
 
 	UINT uiMsg = IsVert() ? WM_VSCROLL : WM_HSCROLL;
 	GetParent()->SendMessageW(uiMsg);
-}
-
-long double CScrollEx::GetThumbScrollingSize()
-{
-	if (!m_fCreated)
-		return -1;
-
-	long double uiWAWOThumb = GetScrollWorkAreaSizeWH() - GetThumbSizeWH(); //Work area without thumb.
-	int iPage;
-	if (IsVert())
-		iPage = GetParentRect().Height();
-	else
-		iPage = GetParentRect().Width();
-
-	return (m_ullScrollSizeMax - iPage) / uiWAWOThumb;
-}
-
-UINT CScrollEx::GetThumbSizeWH()
-{
-	UINT uiScrollWorkAreaSizeWH = GetScrollWorkAreaSizeWH();
-	CRect rcParent = GetParentRect();
-	long double dDelta;
-
-	UINT uiThumbSize;
-	if (IsVert())
-		dDelta = (long double)rcParent.Height() / m_ullScrollSizeMax;
-	else
-		dDelta = (long double)rcParent.Width() / m_ullScrollSizeMax;
-
-	uiThumbSize = (UINT)std::lroundl((long double)uiScrollWorkAreaSizeWH * dDelta);
-
-	if (uiThumbSize < m_iThumbSize)
-		uiThumbSize = m_iThumbSize;
-
-	return uiThumbSize;
 }
 
 CRect CScrollEx::GetThumbRect()
@@ -371,13 +458,89 @@ CRect CScrollEx::GetThumbRect()
 	return rcThumb;
 }
 
+UINT CScrollEx::GetThumbSizeWH()
+{
+	UINT uiScrollWorkAreaSizeWH = GetScrollWorkAreaSizeWH();
+	CRect rcParent = GetParentRect();
+	long double dDelta;
+
+	UINT uiThumbSize;
+	if (IsVert())
+		dDelta = (long double)rcParent.Height() / m_ullScrollSizeMax;
+	else
+		dDelta = (long double)rcParent.Width() / m_ullScrollSizeMax;
+
+	uiThumbSize = (UINT)std::lroundl((long double)uiScrollWorkAreaSizeWH * dDelta);
+
+	if (uiThumbSize < m_uiThumbSizeMin)
+		uiThumbSize = m_uiThumbSizeMin;
+
+	return uiThumbSize;
+}
+
+UINT CScrollEx::GetThumbPos()
+{
+	ULONGLONG ullScrollPos = GetScrollPos();
+	long double dThumbScrollingSize = GetThumbScrollingSize();
+
+	UINT uiThumbPos;
+	if (ullScrollPos <= dThumbScrollingSize)
+		uiThumbPos = 0;
+	else
+		uiThumbPos = (UINT)std::lroundl(ullScrollPos / dThumbScrollingSize);
+
+	return uiThumbPos;
+}
+
+long double CScrollEx::GetThumbScrollingSize()
+{
+	if (!m_fCreated)
+		return -1;
+
+	long double uiWAWOThumb = GetScrollWorkAreaSizeWH() - GetThumbSizeWH(); //Work area without thumb.
+	int iPage;
+	if (IsVert())
+		iPage = GetParentRect().Height();
+	else
+		iPage = GetParentRect().Width();
+
+	return (m_ullScrollSizeMax - iPage) / uiWAWOThumb;
+}
+
+void CScrollEx::SetThumbPos(int iPos)
+{
+	CRect rcWorkArea = GetScrollWorkAreaRect();
+	UINT uiThumbSize = GetThumbSizeWH();
+	ULONGLONG ullNewScrollPos;
+
+	if (iPos < 0)
+		ullNewScrollPos = 0;
+	else if (iPos == 0x7FFFFFFF)
+		ullNewScrollPos = m_ullScrollSizeMax;
+	else
+	{
+		if (IsVert())
+		{
+			if (iPos + (int)uiThumbSize > rcWorkArea.Height())
+				iPos = rcWorkArea.Height() - uiThumbSize;
+		}
+		else
+		{
+			if (iPos + (int)uiThumbSize > rcWorkArea.Width())
+				iPos = rcWorkArea.Width() - uiThumbSize;
+		}
+		ullNewScrollPos = (ULONGLONG)std::llroundl(iPos * GetThumbScrollingSize());
+	}
+	SetScrollPos(ullNewScrollPos);
+}
+
 CRect CScrollEx::GetFirstArrowRect()
 {
 	CRect rc = GetScrollRect();
 	if (IsVert())
-		rc.bottom = rc.top + m_iFirstBtnSize;
+		rc.bottom = rc.top + m_uiFirstBtnSize;
 	else
-		rc.right = rc.left + m_iFirstBtnSize;
+		rc.right = rc.left + m_uiFirstBtnSize;
 
 	return rc;
 }
@@ -386,9 +549,9 @@ CRect CScrollEx::GetLastArrowRect()
 {
 	CRect rc = GetScrollRect();
 	if (IsVert())
-		rc.top = rc.bottom - m_iFirstBtnSize;
+		rc.top = rc.bottom - m_uiFirstBtnSize;
 	else
-		rc.left = rc.right - m_iFirstBtnSize;
+		rc.left = rc.right - m_uiFirstBtnSize;
 
 	return rc;
 }
@@ -472,14 +635,6 @@ CRect CScrollEx::GetScrollWorkAreaRect()
 	return rc;
 }
 
-CRect CScrollEx::GetParentRect()
-{
-	CRect rc;
-	GetParent()->GetClientRect(&rc);
-
-	return rc;
-}
-
 UINT CScrollEx::GetScrollSizeWH()
 {
 	UINT uiSizeInPixels;
@@ -505,18 +660,22 @@ UINT CScrollEx::GetScrollWorkAreaSizeWH()
 	return uiScrollWorkArea;
 }
 
-UINT CScrollEx::GetThumbPos()
+CRect CScrollEx::GetParentRect()
 {
-	ULONGLONG ullScrollPos = GetScrollPos();
-	long double dThumbScrollingSize = GetThumbScrollingSize();
+	CRect rc;
+	GetParent()->GetClientRect(&rc);
 
-	UINT uiThumbPos;
-	if (ullScrollPos <= dThumbScrollingSize)
-		uiThumbPos = 0;
-	else
-		uiThumbPos = (UINT)std::lroundl(ullScrollPos / dThumbScrollingSize);
+	return rc;
+}
 
-	return uiThumbPos;
+bool CScrollEx::IsVert()
+{
+	return m_iScrollType == SB_VERT ? true : false;
+}
+
+bool CScrollEx::IsThumbDragging()
+{
+	return m_iScrollBarState == SCROLLSTATE::THUMB_CLICK ? true : false;
 }
 
 void CScrollEx::ResetTimers()
@@ -526,173 +685,6 @@ void CScrollEx::ResetTimers()
 		m_iScrollBarState = 0;
 		KillTimer(IDT_FIRSTCLICK);
 		KillTimer(IDT_CLICKREPEAT);
-	}
-}
-
-void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
-{
-	if (!m_fCreated || nHitTest == HTTOPLEFT || nHitTest == HTLEFT || nHitTest == HTTOPRIGHT || nHitTest == HTSIZE
-		|| nHitTest == HTBOTTOMLEFT || nHitTest == HTRIGHT || nHitTest == HTBOTTOM || nHitTest == HTBOTTOMRIGHT)
-		return;
-
-	switch (message)
-	{
-	case WM_LBUTTONDOWN:
-	{
-		POINT pt;
-		GetCursorPos(&pt);
-		GetParent()->ScreenToClient(&pt);
-
-		if (IsVisible())
-		{
-			if (GetThumbRect().PtInRect(pt))
-			{
-				m_ptCursorCur = pt;
-				m_iScrollBarState = SCROLLSTATE::THUMB_CLICK;
-				GetParent()->SetCapture();
-			}
-			else if (GetFirstArrowRect().PtInRect(pt))
-			{
-				ScrollLineUp();
-				m_iScrollBarState = SCROLLSTATE::FIRSTBUTTON_CLICK;
-				GetParent()->SetCapture();
-				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
-			}
-			else if (GetLastArrowRect().PtInRect(pt))
-			{
-				ScrollLineDown();
-				m_iScrollBarState = SCROLLSTATE::LASTBUTTON_CLICK;
-				GetParent()->SetCapture();
-				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
-			}
-			else if (GetFirstChannelRect().PtInRect(pt))
-			{
-				ScrollPageUp();
-				m_iScrollBarState = SCROLLSTATE::FIRSTCHANNEL_CLICK;
-				GetParent()->SetCapture();
-				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
-			}
-			else if (GetLastChannelRect().PtInRect(pt))
-			{
-				ScrollPageDown();
-				m_iScrollBarState = SCROLLSTATE::LASTCHANNEL_CLICK;
-				GetParent()->SetCapture();
-				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
-			}
-		}
-	}
-	break;
-	}
-}
-
-void CScrollEx::OnLButtonUp(UINT nFlags, CPoint point)
-{
-	if (!m_fCreated)
-		return;
-
-	if (m_iScrollBarState > 0)
-	{
-		m_iScrollBarState = 0;
-		KillTimer(IDT_FIRSTCLICK);
-		KillTimer(IDT_CLICKREPEAT);
-		ReleaseCapture();
-		DrawScrollBar();
-	}
-}
-
-void CScrollEx::OnMouseMove(UINT nFlags, CPoint point)
-{
-	if (!m_fCreated)
-		return;
-
-	if (IsThumbDragging())
-	{
-		CRect rc = GetScrollWorkAreaRect();
-		int iNewPos;
-
-		if (IsVert())
-		{
-			if (point.y < rc.top)
-				iNewPos = 0;
-			else if (point.y > rc.bottom)
-				iNewPos = 0x7FFFFFFF;
-			else
-				iNewPos = GetThumbPos() + (point.y - m_ptCursorCur.y);
-		}
-		else
-		{
-			if (point.x < rc.left)
-				iNewPos = 0;
-			else if (point.x > rc.right)
-				iNewPos = 0x7FFFFFFF;
-			else
-				iNewPos = GetThumbPos() + (point.x - m_ptCursorCur.x);
-		}
-
-		m_ptCursorCur = point;
-		SetThumbPos(iNewPos);
-		SendParentScrollMsg();
-	}
-}
-
-void CScrollEx::OnNcPaint()
-{
-	if (!m_fCreated)
-		return;
-
-	DrawScrollBar();
-}
-
-BOOL CScrollEx::OnNcActivate(BOOL bActive)
-{
-	if (!m_fCreated)
-		return FALSE;
-
-	GetParent()->SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-
-	return TRUE;
-}
-
-void CScrollEx::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
-{
-	if (!m_fCreated)
-		return;
-
-	CRect rc = lpncsp->rgrc[0];
-	ULONGLONG ullCurPos = GetScrollPos();
-	if (IsVert())
-	{
-		if (rc.Height() < m_ullScrollSizeMax)
-		{
-			m_fVisible = true;
-			if (ullCurPos + rc.Height() > m_ullScrollSizeMax)
-				SetScrollPos(m_ullScrollSizeMax - rc.Height());
-			else
-				DrawScrollBar();
-			lpncsp->rgrc[0].right -= m_uiScrollBarSizeWH;
-		}
-		else
-		{
-			SetScrollPos(0);
-			m_fVisible = false;
-		}
-	}
-	else
-	{
-		if (rc.Width() < m_ullScrollSizeMax)
-		{
-			m_fVisible = true;
-			if (ullCurPos + rc.Width() > m_ullScrollSizeMax)
-				SetScrollPos(m_ullScrollSizeMax - rc.Width());
-			else
-				DrawScrollBar();
-			lpncsp->rgrc[0].bottom -= m_uiScrollBarSizeWH;
-		}
-		else
-		{
-			SetScrollPos(0);
-			m_fVisible = false;
-		}
 	}
 }
 

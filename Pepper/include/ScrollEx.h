@@ -11,47 +11,51 @@ namespace HEXCTRL {
 		~CScrollEx() {}
 		bool Create(CWnd* pWnd, int iScrollType, ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax);
 		CWnd* GetParent() { return m_pwndParent; }
+		void SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax);
 		ULONGLONG SetScrollPos(ULONGLONG);
-		void ScrollLineDown();
-		void ScrollLineRight();
 		void ScrollLineUp();
+		void ScrollLineDown();
 		void ScrollLineLeft();
-		void ScrollPageDown();
+		void ScrollLineRight();
 		void ScrollPageUp();
+		void ScrollPageDown();
+		void ScrollPageLeft();
+		void ScrollPageRight();
 		void ScrollHome();
 		void ScrollEnd();
-		void SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax);
 		ULONGLONG GetScrollPos();
 		LONGLONG GetScrollPosDelta(ULONGLONG& ullCurrPos, ULONGLONG& ullPrevPos);
+		ULONGLONG GetScrollLineSize();
+		ULONGLONG GetScrollPageSize();
 		bool IsVisible() { return m_fVisible; }
 		BOOL OnNcActivate(BOOL bActive);
 		void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 		void OnNcPaint();
 		void OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
-		void OnLButtonUp(UINT nFlags, CPoint point);
 		void OnMouseMove(UINT nFlags, CPoint point);
+		void OnLButtonUp(UINT nFlags, CPoint point);
 	protected:
 		DECLARE_MESSAGE_MAP()
 		void SendParentScrollMsg();
 		void DrawScrollBar();
 		void DrawArrows(CDC* pDC);
 		void DrawThumb(CDC* pDC);
-		long double GetThumbScrollingSize();
+		CRect GetScrollRect(bool fWithNCArea = false);
+		CRect GetScrollWorkAreaRect();
 		CRect GetThumbRect();
+		UINT GetThumbSizeWH();
+		UINT GetThumbPos();
+		long double GetThumbScrollingSize();
+		void SetThumbPos(int uiPos);
 		CRect GetFirstArrowRect();
 		CRect GetLastArrowRect();
 		CRect GetFirstChannelRect();
 		CRect GetLastChannelRect();
-		CRect GetScrollRect(bool fWithNCArea = false);
-		CRect GetScrollWorkAreaRect();
 		UINT GetScrollSizeWH();
-		CRect GetParentRect();
 		UINT GetScrollWorkAreaSizeWH(); //Scroll area size (WH) without arrow buttons.
-		UINT GetThumbSizeWH();
+		CRect GetParentRect();
 		bool IsVert();
 		bool IsThumbDragging();
-		void SetThumbPos(int uiPos);
-		UINT GetThumbPos();
 		void ResetTimers();
 		afx_msg void OnTimer(UINT_PTR nIDEvent);
 		enum SCROLLSTATE
@@ -71,7 +75,6 @@ namespace HEXCTRL {
 		int m_iScrollType { };
 		int m_iScrollBarState { };
 		COLORREF m_clrBkNC { GetSysColor(COLOR_3DFACE) };
-		//COLORREF m_clrBkNC { RGB(0, 250, 0) };
 		COLORREF m_clrBkScrollBar { RGB(241, 241, 241) };
 		COLORREF m_clrThumb { RGB(192, 192, 192) };
 		CPoint m_ptCursorCur { };
@@ -80,25 +83,20 @@ namespace HEXCTRL {
 		ULONGLONG m_ullScrollLine { };
 		ULONGLONG m_ullScrollPage { };
 		ULONGLONG m_ullScrollSizeMax { };
+		const unsigned m_uiThumbSizeMin = 10;
 
 		//Timers:
 		static constexpr auto IDT_FIRSTCLICK = 0x7ff0;
-		const int TIMER_TIME_FIRSTCLICK = 200;
 		static constexpr auto IDT_CLICKREPEAT = 0x7ff1;
+		const int TIMER_TIME_FIRSTCLICK = 200;
 		const int TIMER_TIME_REPEAT = 50;
 
 		//Bitmap related:
 		CBitmap m_bmpScroll;
-		const unsigned m_iFirstBtnOffset { 0 };
-		const unsigned m_iFirstChannelOffset { 17 };
-		const unsigned m_iThumbOffset { 27 };
-		const unsigned m_iLastChannelOffset { 51 };
-		const unsigned m_iLastBtnOffset { 61 };
-		const unsigned m_iFirstBtnSize { 17 };
-		const unsigned m_iFirstChannelSize { 10 };
-		const unsigned m_iThumbSize { 24 };
-		const unsigned m_iLastChannelSize { 10 };
-		const unsigned m_iLastBtnSize { 17 };
+		const unsigned m_uiFirstBtnOffset { 0 };
+		const unsigned m_uiLastBtnOffset { 61 };
+		const unsigned m_uiFirstBtnSize { 17 };
+		const unsigned m_uiLastBtnSize { 17 };
 		bool m_fCreated { false };
 		bool m_fVisible { false };
 	};
