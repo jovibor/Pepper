@@ -36,6 +36,7 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_NCACTIVATE()
 	ON_WM_NCCALCSIZE()
 	ON_WM_NCPAINT()
+	ON_WM_ACTIVATE()
 END_MESSAGE_MAP()
 
 BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, const LOGFONT* pLogFont)
@@ -117,10 +118,17 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	m_dlgSearch.Create(IDD_HEXCTRL_SEARCH, this);
 
 	Recalc();
-	   	  
+
 	m_fCreated = true;
 
 	return TRUE;
+}
+
+void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+{
+	SetFocus();
+
+	CWnd::OnActivate(nState, pWndOther, bMinimized);
 }
 
 void CHexCtrl::OnDestroy()
@@ -321,6 +329,8 @@ BOOL CHexCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 void CHexCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
+	SetFocus();
+
 	const ULONGLONG ullHit = HitTest(&point);
 	if (ullHit != -1)
 	{
@@ -772,15 +782,17 @@ BOOL CHexCtrl::OnNcActivate(BOOL bActive)
 
 void CHexCtrl::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 {
-	m_stScrollV.OnNcCalcSize(bCalcValidRects, lpncsp);
-	m_stScrollH.OnNcCalcSize(bCalcValidRects, lpncsp);
-
 	CWnd::OnNcCalcSize(bCalcValidRects, lpncsp);
+
+	//Sequince is important - H->V.
+	m_stScrollH.OnNcCalcSize(bCalcValidRects, lpncsp);
+	m_stScrollV.OnNcCalcSize(bCalcValidRects, lpncsp);
 }
 
 void CHexCtrl::OnNcPaint()
 {
 	Default();
+
 	m_stScrollV.OnNcPaint();
 	m_stScrollH.OnNcPaint();
 }

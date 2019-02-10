@@ -254,12 +254,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\ScrollEx\scrollH.bmp" />
-    <Image Include="res\ScrollEx\scrollV.bmp" />
     <Image Include="res\TreeMain_Dirs.ico" />
     <Image Include="res\TreeMain_Header.ico" />
     <Image Include="res\Pepper.ico" />
     <Image Include="res\Toolbar256.bmp" />
+    <Image Include="ScrollExH.bmp" />
+    <Image Include="ScrollExV.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\Pepper.rc2" />
@@ -284,12 +284,10 @@
     <ClInclude Include="include\ViewRightTR.h" />
     <ClInclude Include="res\HexCtrl\HexCtrlRes.h" />
     <ClInclude Include="res\resource.h" />
-    <ClInclude Include="res\ScrollEx\ScrollExRes.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\HexCtrl\HexCtrl.rc" />
     <ResourceCompile Include="res\Pepper.rc" />
-    <ResourceCompile Include="res\ScrollEx\ScrollEx.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

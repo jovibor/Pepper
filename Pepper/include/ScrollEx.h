@@ -1,6 +1,6 @@
 #pragma once
 #include <afxwin.h>
-#include "ScrollExRes.h"
+#include "HexCtrlRes.h"
 
 namespace HEXCTRL {
 
@@ -52,7 +52,7 @@ namespace HEXCTRL {
 		CRect GetLastArrowRect(bool fClientCoord = false);
 		CRect GetFirstChannelRect(bool fClientCoord = false);
 		CRect GetLastChannelRect(bool fClientCoord = false);
-		CRect GetParentRect();
+		CRect GetParentRect(bool fClient = true);
 		bool IsVert();
 		bool IsThumbDragging();
 		void ResetTimers();
@@ -97,11 +97,10 @@ namespace HEXCTRL {
 		const int TIMER_TIME_REPEAT = 50;
 
 		//Bitmap related:
-		CBitmap m_bmpScroll;
-		const unsigned m_uiFirstBtnOffset { 0 };
-		const unsigned m_uiLastBtnOffset { 61 };
-		const unsigned m_uiFirstBtnSize { 17 };
-		const unsigned m_uiLastBtnSize { 17 };
+		CBitmap m_bmpArrows;
+		const unsigned m_uiFirstArrowOffset { 0 };
+		const unsigned m_uiLastArrowOffset { 18 };
+		const unsigned m_uiArrowSize { 17 };
 		bool m_fCreated { false };
 		bool m_fVisible { false };
 	};

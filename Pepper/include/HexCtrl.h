@@ -121,6 +121,7 @@ namespace HEXCTRL
 		CWnd* GetParent() const;
 	protected:
 		void OnDraw(CDC* pDC);
+		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 		afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
 		afx_msg void OnMouseMove(UINT nFlags, CPoint point);
@@ -208,7 +209,7 @@ namespace HEXCTRL
 			SEARCH_FOUND = 0x01, SEARCH_BEGINNING = 0x02,
 			SEARCH_END = 0x03,
 		};
-	};
+};
 
 	/************************************************
 	* WM_NOTIFY message codes (NMHDR.code values)	*

@@ -105,9 +105,6 @@
     <ClInclude Include="res\HexCtrl\HexCtrlRes.h">
       <Filter>Resource Files\HexCtrl</Filter>
     </ClInclude>
-    <ClInclude Include="res\ScrollEx\ScrollExRes.h">
-      <Filter>Resource Files\ScrollEx</Filter>
-    </ClInclude>
     <ClInclude Include="include\ScrollEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -118,9 +115,6 @@
     </ResourceCompile>
     <ResourceCompile Include="res\HexCtrl\HexCtrl.rc">
       <Filter>Resource Files\HexCtrl</Filter>
-    </ResourceCompile>
-    <ResourceCompile Include="res\ScrollEx\ScrollEx.rc">
-      <Filter>Resource Files\ScrollEx</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
@@ -136,11 +130,11 @@
     <Image Include="res\TreeMain_Header.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="res\ScrollEx\scrollH.bmp">
-      <Filter>Resource Files\ScrollEx</Filter>
+    <Image Include="ScrollExH.bmp">
+      <Filter>Resource Files\HexCtrl</Filter>
     </Image>
-    <Image Include="res\ScrollEx\scrollV.bmp">
-      <Filter>Resource Files\ScrollEx</Filter>
+    <Image Include="ScrollExV.bmp">
+      <Filter>Resource Files\HexCtrl</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -155,9 +149,6 @@
     </Filter>
     <Filter Include="Resource Files\HexCtrl">
       <UniqueIdentifier>{7a123d79-a104-4209-82e8-420d65c487b1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\ScrollEx">
-      <UniqueIdentifier>{42857fec-1768-4791-a6e8-2bdfa52c30e7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
