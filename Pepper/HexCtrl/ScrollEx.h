@@ -1,6 +1,6 @@
 /****************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
-* This code is lisenced under the "MIT License modified with The Commons Clause"		*
+* This code is available under the "MIT License modified with The Commons Clause"		*
 * Scroll bar control class for MFC apps.												*
 * The main creation purpose of this control is the innate 32-bit range limitation		*
 * of the standard Windows's scrollbar control.											*

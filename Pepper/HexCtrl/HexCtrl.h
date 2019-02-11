@@ -10,6 +10,7 @@
 ****************************************************************************************/
 #pragma once
 #pragma comment(lib, "Dwmapi.lib")
+#include <afxcontrolbars.h>
 #include <vector>
 #include "HexCtrlRes.h"
 #include "ScrollEx.h"
@@ -107,7 +108,7 @@ namespace HEXCTRL
 		CHexCtrl() {}
 		virtual ~CHexCtrl() {}
 		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
-		void SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual = false);
+		void SetData(const unsigned char* pData, ULONGLONG ullCount, bool fVirtual = false);
 		void ClearData();
 		void SetSelection(ULONGLONG ullOffset, ULONGLONG ullCount = 1);
 		void SetFont(const LOGFONT* pLogFontNew);
@@ -152,7 +153,7 @@ namespace HEXCTRL
 		bool m_fFloat { false };
 		bool m_fVirtual { false };
 		const unsigned char* m_pData { };
-		ULONGLONG m_dwDataCount { };
+		ULONGLONG m_ullDataCount { };
 		DWORD m_dwGridCapacity { 16 };
 		DWORD m_dwGridBlockSize { m_dwGridCapacity / 2 }; //Size of block before space delimiter.
 		CWnd* m_pwndParentOwner { };
@@ -207,7 +208,7 @@ namespace HEXCTRL
 			SEARCH_FOUND = 0x01, SEARCH_BEGINNING = 0x02,
 			SEARCH_END = 0x03,
 		};
-};
+	};
 
 	/************************************************
 	* WM_NOTIFY message codes (NMHDR.code values)	*

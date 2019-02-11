@@ -233,9 +233,10 @@ void CViewRightTL::OnDraw(CDC* pDC)
 		rDC.FillSolidRect(rc, RGB(255, 255, 255));
 		rDC.SelectObject(m_fontSummary);
 		GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), m_wstrFullPath.length(), &m_sizeTextToDraw);
-		rc.SetRect(20, 20, 400, m_sizeTextToDraw.cy * 6);
-		if (m_sizeTextToDraw.cx > rc.Width())
-			rc.right = m_sizeTextToDraw.cx + rc.left + 50;
+		rc.left = 20;
+		rc.top = 20;
+		rc.right = rc.left + m_sizeTextToDraw.cx + 40;
+		rc.bottom = m_sizeTextToDraw.cy * 6;
 		rDC.Rectangle(&rc);
 
 		rDC.SetTextColor(RGB(200, 50, 30));

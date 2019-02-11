@@ -47,11 +47,11 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	m_fFloat = fFloat;
 	m_pwndParentOwner = pwndParent;
 
-	DWORD dwStyle = WS_CHILD | WS_VISIBLE;
-	if (fFloat) {
-		dwStyle &= ~WS_CHILD;
-		dwStyle |= WS_OVERLAPPEDWINDOW;
-	}
+	DWORD dwStyle;
+	if (fFloat)
+		dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
+	else
+		dwStyle = WS_CHILD | WS_VISIBLE;
 
 	CRect rc;
 	if (pRect)
@@ -124,37 +124,6 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	return TRUE;
 }
 
-void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
-{
-	SetFocus();
-
-	CWnd::OnActivate(nState, pWndOther, bMinimized);
-}
-
-void CHexCtrl::OnDestroy()
-{
-	if (m_pwndParentOwner)
-	{
-		NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
-		m_pwndParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
-		m_pwndParentOwner->SetForegroundWindow();
-	}
-	m_fCreated = false;
-
-	ClearData();
-	CWnd::OnDestroy();
-}
-
-int CHexCtrl::GetDlgCtrlID() const
-{
-	return m_dwCtrlId;
-}
-
-CWnd * CHexCtrl::GetParent() const
-{
-	return m_pwndParentOwner;
-}
-
 void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullCount, bool fVirtual)
 {
 	ClearData();
@@ -165,7 +134,7 @@ void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullCount, bool fVir
 		return;
 
 	m_pData = pData;
-	m_dwDataCount = ullCount;
+	m_ullDataCount = ullCount;
 	m_fVirtual = fVirtual;
 
 	UpdateInfoText();
@@ -174,7 +143,7 @@ void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullCount, bool fVir
 
 void CHexCtrl::ClearData()
 {
-	m_dwDataCount = 0;
+	m_ullDataCount = 0;
 	m_pData = nullptr;
 	m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullBytesSelected = 0;
 
@@ -242,6 +211,37 @@ void CHexCtrl::SetCapacity(DWORD dwCapacity)
 	m_dwGridCapacity = dwCapacity;
 	m_dwGridBlockSize = m_dwGridCapacity / 2;
 	Recalc();
+}
+
+int CHexCtrl::GetDlgCtrlID() const
+{
+	return m_dwCtrlId;
+}
+
+CWnd * CHexCtrl::GetParent() const
+{
+	return m_pwndParentOwner;
+}
+
+void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+{
+	SetFocus();
+
+	CWnd::OnActivate(nState, pWndOther, bMinimized);
+}
+
+void CHexCtrl::OnDestroy()
+{
+	if (m_pwndParentOwner)
+	{
+		NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
+		m_pwndParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+		m_pwndParentOwner->SetForegroundWindow();
+	}
+	m_fCreated = false;
+	ClearData();
+
+	CWnd::OnDestroy();
 }
 
 void CHexCtrl::OnMouseMove(UINT nFlags, CPoint point)
@@ -556,13 +556,13 @@ void CHexCtrl::OnPaint()
 	//Find the dwLineStart and dwLineEnd position, draw the visible portion.
 	const ULONGLONG ullLineStart = iScrollV / GetPixelsLineScrollV();
 	ULONGLONG ullLineEndtmp { };
-	if (m_dwDataCount)
+	if (m_ullDataCount)
 	{
 		ullLineEndtmp = ullLineStart + (rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) / m_sizeLetter.cy;
 
 		//If m_dwDataCount is really small we adjust dwLineEnd to be not bigger than maximum allowed.
-		if (ullLineEndtmp > (m_dwDataCount / m_dwGridCapacity))
-			ullLineEndtmp = m_dwDataCount % m_dwGridCapacity ? m_dwDataCount / m_dwGridCapacity + 1 : m_dwDataCount / m_dwGridCapacity;
+		if (ullLineEndtmp > (m_ullDataCount / m_dwGridCapacity))
+			ullLineEndtmp = m_ullDataCount % m_dwGridCapacity ? m_ullDataCount / m_dwGridCapacity + 1 : m_ullDataCount / m_dwGridCapacity;
 	}
 	const ULONGLONG ullLineEnd = ullLineEndtmp;
 
@@ -652,6 +652,7 @@ void CHexCtrl::OnPaint()
 	//Current line to print.
 	int iLine { };
 	//Loop for printing hex and Ascii line by line.
+
 	for (ULONGLONG iterLines = ullLineStart; iterLines < ullLineEnd; iterLines++)
 	{
 		WCHAR wstrOffset[9];
@@ -687,7 +688,7 @@ void CHexCtrl::OnPaint()
 			//Index of the next char (in m_pData) to draw.
 			const ULONGLONG ullIndexDataToPrint = iterLines * m_dwGridCapacity + iterChunks;
 
-			if (ullIndexDataToPrint < m_dwDataCount) //Draw until reaching the end of m_dwDataCount.
+			if (ullIndexDataToPrint < m_ullDataCount) //Draw until reaching the end of m_dwDataCount.
 			{
 				//Rect of the space between Hex chunks, needed for proper selection drawing.
 				rc.left = iHexPosToPrintX + m_sizeLetter.cx * 2;
@@ -699,18 +700,18 @@ void CHexCtrl::OnPaint()
 				rc.bottom = iHexPosToPrintY + m_sizeLetter.cy;
 
 				//Hex chunk to print.
-				//If it's virtual data ctrl, we aquire next byte to print from grandparent.
+				//If it's virtual data control, we aquire next byte to print from parent window.
 				WCHAR wstrHexToPrint[2];
 				unsigned char chByteToPrint { };
 				if (m_fVirtual && m_pwndParentOwner)
 				{
-					HEXNOTIFY hexntfy { { m_pwndParentOwner->m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
+					HEXNOTIFY hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
 						ullIndexDataToPrint, 0 };
 					m_pwndParentOwner->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
 					chByteToPrint = hexntfy.chByte;
 				}
 				else
-					chByteToPrint = (unsigned char)m_pData[ullIndexDataToPrint];
+					chByteToPrint = m_pData[ullIndexDataToPrint];
 
 				wstrHexToPrint[0] = m_pwszHexMap[(chByteToPrint & 0xF0) >> 4];
 				wstrHexToPrint[1] = m_pwszHexMap[(chByteToPrint & 0x0F)];
@@ -838,7 +839,7 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 		dwHexChunk = -1;
 
 	//If cursor is out of end-bound of hex chunks or Ascii chars.
-	if (dwHexChunk >= m_dwDataCount)
+	if (dwHexChunk >= m_ullDataCount)
 		dwHexChunk = -1;
 
 	return dwHexChunk;
@@ -950,7 +951,7 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 
 void CHexCtrl::UpdateInfoText()
 {
-	if (!m_dwDataCount)
+	if (!m_ullDataCount)
 		m_wstrBottomText.clear();
 	else
 	{
@@ -959,7 +960,7 @@ void CHexCtrl::UpdateInfoText()
 			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes selected: 0x%llX(%llu); Offset: 0x%llX(%llu) - 0x%llX(%llu)",
 				m_ullBytesSelected, m_ullBytesSelected, m_ullSelectionStart, m_ullSelectionStart, m_ullSelectionEnd, m_ullSelectionEnd));
 		else
-			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes total: 0x%llX(%llu)", m_dwDataCount, m_dwDataCount));
+			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes total: 0x%llX(%llu)", m_ullDataCount, m_ullDataCount));
 	}
 	RedrawWindow();
 }
@@ -994,7 +995,7 @@ void CHexCtrl::Recalc()
 	//Scroll sizes according to current font size.
 	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
 	m_stScrollV.SetScrollSizes(GetPixelsLineScrollV(), uiPage,
-		m_iHeightTopRect + m_iHeightBottomOffArea + (GetPixelsLineScrollV() * (m_dwDataCount / m_dwGridCapacity + 2)));
+		m_iHeightTopRect + m_iHeightBottomOffArea + (GetPixelsLineScrollV() * (m_ullDataCount / m_dwGridCapacity + 2)));
 	m_stScrollV.SetScrollPos(ullStartLineV * GetPixelsLineScrollV());
 	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, rcClient.Width(), m_iFourthVertLine + 1);
 
@@ -1009,7 +1010,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 	ULONGLONG dwUntil;
 	std::string strSearch { };
 
-	if (rSearch.wstrSearch.empty() || m_dwDataCount == 0 || rSearch.dwStartAt > (m_dwDataCount - 1))
+	if (rSearch.wstrSearch.empty() || m_ullDataCount == 0 || rSearch.dwStartAt > (m_ullDataCount - 1))
 		return m_dlgSearch.SearchCallback();
 
 	int iSizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &rSearch.wstrSearch[0], (int)rSearch.wstrSearch.size(), nullptr, 0, nullptr, nullptr);
@@ -1045,7 +1046,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 		}
 
 		dwSizeBytes = strSearch.size();
-		if (dwSizeBytes > m_dwDataCount)
+		if (dwSizeBytes > m_ullDataCount)
 			goto End;
 
 		break;
@@ -1053,7 +1054,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 	case SEARCH_ASCII:
 	{
 		dwSizeBytes = strSearchAscii.size();
-		if (dwSizeBytes > m_dwDataCount)
+		if (dwSizeBytes > m_ullDataCount)
 			goto End;
 
 		strSearch = std::move(strSearchAscii);
@@ -1062,7 +1063,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 	case SEARCH_UNICODE:
 	{
 		dwSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
-		if (dwSizeBytes > m_dwDataCount)
+		if (dwSizeBytes > m_ullDataCount)
 			goto End;
 
 		break;
@@ -1076,7 +1077,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 	{
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
-			dwUntil = m_dwDataCount - strSearch.size();
+			dwUntil = m_ullDataCount - strSearch.size();
 			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
 
 			for (ULONGLONG i = dwStartAt; i <= dwUntil; i++)
@@ -1121,7 +1122,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 				}
 			}
 
-			dwStartAt = m_dwDataCount - strSearch.size();
+			dwStartAt = m_ullDataCount - strSearch.size();
 			for (int i = (int)dwStartAt; i >= 0; i--)
 			{
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
@@ -1141,7 +1142,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 	{
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
-			dwUntil = m_dwDataCount - dwSizeBytes;
+			dwUntil = m_ullDataCount - dwSizeBytes;
 			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
 
 			for (ULONGLONG i = dwStartAt; i <= dwUntil; i++)
@@ -1186,7 +1187,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 				}
 			}
 
-			dwStartAt = m_dwDataCount - dwSizeBytes;
+			dwStartAt = m_ullDataCount - dwSizeBytes;
 			for (int i = (int)dwStartAt; i >= 0; i--)
 			{
 				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
@@ -1214,10 +1215,13 @@ End:
 
 void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullBytes, bool fHighlight)
 {
-	if (ullClick >= m_dwDataCount || ullStart >= m_dwDataCount || !ullBytes)
-		return;
-	if ((ullStart + ullBytes) > m_dwDataCount)
-		ullBytes = m_dwDataCount - ullStart;
+	if (!m_fVirtual)
+	{
+		if (ullClick >= m_ullDataCount || ullStart >= m_ullDataCount || !ullBytes)
+			return;
+		if ((ullStart + ullBytes) > m_ullDataCount)
+			ullBytes = m_ullDataCount - ullStart;
+	}
 
 	ULONGLONG ullCurrScrollV = m_stScrollV.GetScrollPos();
 	ULONGLONG ullCurrScrollH = m_stScrollH.GetScrollPos();
@@ -1297,9 +1301,10 @@ int CHexCtrl::GetPixelsLineScrollV()
 }
 
 
-/****************************************************
-* CHexDlgSearch class implementation.				*
-****************************************************/
+/************************************************************
+* CHexDlgSearch class implementation.						*
+* This class implements search routines within HexControl.	*
+************************************************************/
 BEGIN_MESSAGE_MAP(CHexDlgSearch, CDialogEx)
 	ON_WM_ACTIVATE()
 	ON_WM_CLOSE()

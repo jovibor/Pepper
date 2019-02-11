@@ -44,10 +44,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HexCtrl\HexCtrl.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Resource Files\HexCtrl</Filter>
     </ClCompile>
     <ClCompile Include="HexCtrl\ScrollEx.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Resource Files\HexCtrl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -99,14 +99,14 @@
     <ClInclude Include="include\FileLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HexCtrl\res\HexCtrlRes.h">
+    <ClInclude Include="HexCtrl\HexCtrl.h">
       <Filter>Resource Files\HexCtrl</Filter>
     </ClInclude>
-    <ClInclude Include="HexCtrl\HexCtrl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="HexCtrl\ScrollEx.h">
-      <Filter>Header Files</Filter>
+      <Filter>Resource Files\HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="HexCtrl\res\HexCtrlRes.h">
+      <Filter>Resource Files\HexCtrl\res</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -114,7 +114,7 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
     <ResourceCompile Include="HexCtrl\res\HexCtrl.rc">
-      <Filter>Resource Files\HexCtrl</Filter>
+      <Filter>Resource Files\HexCtrl\res</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
@@ -131,10 +131,10 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="HexCtrl\res\ScrollExH.bmp">
-      <Filter>Resource Files\HexCtrl</Filter>
+      <Filter>Resource Files\HexCtrl\res</Filter>
     </Image>
     <Image Include="HexCtrl\res\ScrollExV.bmp">
-      <Filter>Resource Files\HexCtrl</Filter>
+      <Filter>Resource Files\HexCtrl\res</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -149,6 +149,9 @@
     </Filter>
     <Filter Include="Resource Files\HexCtrl">
       <UniqueIdentifier>{7a123d79-a104-4209-82e8-420d65c487b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\HexCtrl\res">
+      <UniqueIdentifier>{ac287bfa-b9c0-4aae-9da1-dbbf4d373ee1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
