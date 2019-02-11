@@ -86,7 +86,7 @@
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
-    <IncludePath>res;res\HexCtrl;res\ScrollEx;include;verinfo;$(IncludePath)</IncludePath>
+    <IncludePath>HexCtrl;HexCtrl\res;res;include;verinfo;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -233,8 +233,8 @@
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="FileLoader.cpp" />
-    <ClCompile Include="HexCtrl.cpp" />
-    <ClCompile Include="ScrollEx.cpp" />
+    <ClCompile Include="HexCtrl\HexCtrl.cpp" />
+    <ClCompile Include="HexCtrl\ScrollEx.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
@@ -254,22 +254,23 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="HexCtrl\res\ScrollExH.bmp" />
+    <Image Include="HexCtrl\res\ScrollExV.bmp" />
     <Image Include="res\TreeMain_Dirs.ico" />
     <Image Include="res\TreeMain_Header.ico" />
     <Image Include="res\Pepper.ico" />
     <Image Include="res\Toolbar256.bmp" />
-    <Image Include="ScrollExH.bmp" />
-    <Image Include="ScrollExV.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HexCtrl\HexCtrl.h" />
+    <ClInclude Include="HexCtrl\res\HexCtrlRes.h" />
+    <ClInclude Include="HexCtrl\ScrollEx.h" />
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\FileLoader.h" />
-    <ClInclude Include="include\HexCtrl.h" />
-    <ClInclude Include="include\ScrollEx.h" />
     <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />
     <ClInclude Include="include\MainFrm.h" />
@@ -282,11 +283,10 @@
     <ClInclude Include="include\TreeEx.h" />
     <ClInclude Include="include\stdafx.h" />
     <ClInclude Include="include\ViewRightTR.h" />
-    <ClInclude Include="res\HexCtrl\HexCtrlRes.h" />
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="res\HexCtrl\HexCtrl.rc" />
+    <ResourceCompile Include="HexCtrl\res\HexCtrl.rc" />
     <ResourceCompile Include="res\Pepper.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

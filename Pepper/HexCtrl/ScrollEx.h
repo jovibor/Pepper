@@ -1,3 +1,12 @@
+/****************************************************************************************
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
+* This code is lisenced under the "MIT License modified with The Commons Clause"		*
+* Scroll bar control class for MFC apps.												*
+* The main creation purpose of this control is the innate 32-bit range limitation		*
+* of the standard Windows's scrollbar control.											*
+* This control works with unsigned long long data representation and thus can operate	*
+* with numbers in full 64-bit range.													*
+****************************************************************************************/
 #pragma once
 #include <afxwin.h>
 #include "HexCtrlRes.h"
@@ -10,6 +19,7 @@ namespace HEXCTRL {
 		CScrollEx() {}
 		~CScrollEx() {}
 		bool Create(CWnd* pWnd, int iScrollType, ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax);
+		bool IsVisible() { return m_fVisible; }
 		CWnd* GetParent() { return m_pwndParent; }
 		void SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax);
 		ULONGLONG SetScrollPos(ULONGLONG);
@@ -27,7 +37,6 @@ namespace HEXCTRL {
 		LONGLONG GetScrollPosDelta(ULONGLONG& ullCurrPos, ULONGLONG& ullPrevPos);
 		ULONGLONG GetScrollLineSize();
 		ULONGLONG GetScrollPageSize();
-		bool IsVisible() { return m_fVisible; }
 		BOOL OnNcActivate(BOOL bActive);
 		void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 		void OnNcPaint();

@@ -2,7 +2,6 @@
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
 * This software is available under the "MIT License modified with The Commons Clause".  *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE                                 *
-*                                                                                       *
 * This is a Hex control for MFC apps, implemented as CWnd derived class.				*
 * The usage is quite simple:														    *
 * 1. Construct CHexCtrl object — HEXCTRL::CHexCtrl myHex;							    *
@@ -110,7 +109,7 @@ namespace HEXCTRL
 		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
 		void SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual = false);
 		void ClearData();
-		void SetSelection(ULONGLONG dwOffset, ULONGLONG dwCount = 1);
+		void SetSelection(ULONGLONG ullOffset, ULONGLONG ullCount = 1);
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
@@ -152,11 +151,11 @@ namespace HEXCTRL
 		bool m_fCreated { false };
 		bool m_fFloat { false };
 		bool m_fVirtual { false };
-		const BYTE* m_pData { };
+		const unsigned char* m_pData { };
 		ULONGLONG m_dwDataCount { };
 		DWORD m_dwGridCapacity { 16 };
 		DWORD m_dwGridBlockSize { m_dwGridCapacity / 2 }; //Size of block before space delimiter.
-		CWnd* m_pwndParent { };
+		CWnd* m_pwndParentOwner { };
 		SIZE m_sizeLetter { 1, 1 }; //Current font's letter size (width, height).
 		CFont m_fontHexView;
 		CFont m_fontBottomRect;
@@ -191,7 +190,6 @@ namespace HEXCTRL
 		const wchar_t* const m_pwszHexMap = L"0123456789ABCDEF";
 		std::wstring m_wstrBottomText { };
 		bool m_fLMousePressed { false };
-		CWnd* m_pwndParentOwner { };
 		UINT m_dwCtrlId { };
 		static constexpr auto CLIPBOARD_COPY_AS_HEX { 0x01 };
 		static constexpr auto CLIPBOARD_COPY_AS_HEX_FORMATTED { 0x02 };
@@ -216,6 +214,5 @@ namespace HEXCTRL
 	************************************************/
 
 	constexpr auto HEXCTRL_MSG_DESTROY = 0x00ff;
-	constexpr auto HEXCTRL_MSG_SCROLLING = 0x0100;
-	constexpr auto HEXCTRL_MSG_GETDISPINFO = 0x0101;
+	constexpr auto HEXCTRL_MSG_GETDISPINFO = 0x0100;
 };

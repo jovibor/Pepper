@@ -2,7 +2,6 @@
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
 * This software is available under the "MIT License modified with The Commons Clause".  *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE                                 *
-*                                                                                       *
 * This is a Hex control for MFC apps, implemented as CWnd derived class.			    *
 * The usage is quite simple:														    *
 * 1. Construct CHexCtrl object — HEXCTRL::CHexCtrl myHex;								*
@@ -45,8 +44,8 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 		return FALSE;
 
 	m_dwCtrlId = uiCtrlId;
-	m_pwndParentOwner = pwndParent;
 	m_fFloat = fFloat;
+	m_pwndParentOwner = pwndParent;
 
 	DWORD dwStyle = WS_CHILD | WS_VISIBLE;
 	if (fFloat) {
@@ -67,14 +66,16 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
 	}
 
-	if (!CWnd::CreateEx(0, 0, L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
+	HCURSOR hCur;
+	if (!(hCur = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED)))
+		return FALSE;
+	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0, hCur), L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
 		return FALSE;
 
+	//Removing window's border frame.
 	MARGINS marg { 0, 0, 0, 1 };
 	DwmExtendFrameIntoClientArea(m_hWnd, &marg);
 	SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-
-	m_pwndParent = pwndParent;
 
 	NONCLIENTMETRICSW ncm { sizeof(NONCLIENTMETRICSW) };
 	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
@@ -118,7 +119,6 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	m_dlgSearch.Create(IDD_HEXCTRL_SEARCH, this);
 
 	Recalc();
-
 	m_fCreated = true;
 
 	return TRUE;
@@ -141,6 +141,7 @@ void CHexCtrl::OnDestroy()
 	}
 	m_fCreated = false;
 
+	ClearData();
 	CWnd::OnDestroy();
 }
 
@@ -154,12 +155,17 @@ CWnd * CHexCtrl::GetParent() const
 	return m_pwndParentOwner;
 }
 
-void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG dwCount, bool fVirtual)
+void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullCount, bool fVirtual)
 {
 	ClearData();
 
+	//Virtual mode is possible only when there is a parent window
+	//to which data requests will be sent.
+	if (fVirtual && m_pwndParentOwner == nullptr)
+		return;
+
 	m_pData = pData;
-	m_dwDataCount = dwCount;
+	m_dwDataCount = ullCount;
 	m_fVirtual = fVirtual;
 
 	UpdateInfoText();
@@ -171,8 +177,9 @@ void CHexCtrl::ClearData()
 	m_dwDataCount = 0;
 	m_pData = nullptr;
 	m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullBytesSelected = 0;
-	m_dlgSearch.ClearAll();
-	Recalc();
+
+	m_stScrollV.SetScrollPos(0);
+	m_stScrollH.SetScrollPos(0);
 	UpdateInfoText();
 }
 
@@ -540,8 +547,9 @@ void CHexCtrl::OnPaint()
 	CMemDC memDC(dc, rcClient);
 	CDC& rDC = memDC.GetDC();
 
-	//	rDC.GetClipBox(&rc);
-	rDC.FillSolidRect(&rcClient, m_clrBk);
+	RECT rc; //Used for all local rc related drawing.
+	rDC.GetClipBox(&rc);
+	rDC.FillSolidRect(&rc, m_clrBk);
 	rDC.SelectObject(&m_penLines);
 	rDC.SelectObject(&m_fontHexView);
 
@@ -579,7 +587,6 @@ void CHexCtrl::OnPaint()
 	rDC.MoveTo(0, iFourthHorizLine);
 	rDC.LineTo(m_iFourthVertLine, iFourthHorizLine);
 
-	RECT rc; //Used for all local rc related drawing.
 	//«Offset» text.
 	rc.left = m_iFirstVertLine - iScrollH; rc.top = iFirstHorizLine;
 	rc.right = m_iSecondVertLine - iScrollH; rc.bottom = iSecondHorizLine;
@@ -694,21 +701,19 @@ void CHexCtrl::OnPaint()
 				//Hex chunk to print.
 				//If it's virtual data ctrl, we aquire next byte to print from grandparent.
 				WCHAR wstrHexToPrint[2];
-				unsigned char uByteToPrint { };
-				if (!m_fVirtual)
-					uByteToPrint = (unsigned char)m_pData[ullIndexDataToPrint];
-				else
+				unsigned char chByteToPrint { };
+				if (m_fVirtual && m_pwndParentOwner)
 				{
-					HEXNOTIFY hexntfy { { m_pwndParent->m_hWnd, (UINT)m_pwndParent->GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
+					HEXNOTIFY hexntfy { { m_pwndParentOwner->m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
 						ullIndexDataToPrint, 0 };
-					if (m_pwndParent)
-					{
-						m_pwndParent->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
-						uByteToPrint = hexntfy.chByte;
-					}
+					m_pwndParentOwner->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
+					chByteToPrint = hexntfy.chByte;
 				}
-				wstrHexToPrint[0] = m_pwszHexMap[(uByteToPrint & 0xF0) >> 4];
-				wstrHexToPrint[1] = m_pwszHexMap[(uByteToPrint & 0x0F)];
+				else
+					chByteToPrint = (unsigned char)m_pData[ullIndexDataToPrint];
+
+				wstrHexToPrint[0] = m_pwszHexMap[(chByteToPrint & 0xF0) >> 4];
+				wstrHexToPrint[1] = m_pwszHexMap[(chByteToPrint & 0x0F)];
 
 				//Selection draw with different BK color.
 				if (m_ullBytesSelected && ullIndexDataToPrint >= m_ullSelectionStart && ullIndexDataToPrint <= m_ullSelectionEnd)
@@ -732,7 +737,7 @@ void CHexCtrl::OnPaint()
 				ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, &wstrHexToPrint[0], 2, nullptr);
 
 				//Ascii to print.
-				char chAsciiToPrint = uByteToPrint;
+				char chAsciiToPrint = chByteToPrint;
 				//For non printable Ascii just print a dot.
 				if (chAsciiToPrint < 32 || chAsciiToPrint == 127)
 					chAsciiToPrint = '.';
@@ -961,7 +966,8 @@ void CHexCtrl::UpdateInfoText()
 
 void CHexCtrl::Recalc()
 {
-	CRect rcClient;	GetClientRect(&rcClient);
+	CRect rcClient;
+	GetClientRect(&rcClient);
 	ULONGLONG ullStartLineV = m_stScrollV.GetScrollPos() / GetPixelsLineScrollV();
 	HDC hDC = ::GetDC(m_hWnd);
 	SelectObject(hDC, m_fontHexView.m_hObject);
@@ -986,13 +992,10 @@ void CHexCtrl::Recalc()
 	m_iIndentTextCapacityY = (m_iHeightTopRect / 2) - (m_sizeLetter.cy / 2);
 
 	//Scroll sizes according to current font size.
-	//SetScrollSizes(MM_TEXT, CSize(m_iFourthVertLine + 1, int(m_iHeightTopRect + m_iHeightBottomOffArea + (m_sizeLetter.cy * (m_dwDataCount / m_dwGridCapacity + 3)))));
-
 	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
 	m_stScrollV.SetScrollSizes(GetPixelsLineScrollV(), uiPage,
 		m_iHeightTopRect + m_iHeightBottomOffArea + (GetPixelsLineScrollV() * (m_dwDataCount / m_dwGridCapacity + 2)));
 	m_stScrollV.SetScrollPos(ullStartLineV * GetPixelsLineScrollV());
-
 	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, rcClient.Width(), m_iFourthVertLine + 1);
 
 	RedrawWindow();

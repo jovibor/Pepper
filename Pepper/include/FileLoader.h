@@ -8,11 +8,8 @@ class CFileLoader : public CWnd
 public:
 	CFileLoader() {};
 	~CFileLoader() {};
-	HRESULT LoadFile(LPCWSTR lpszFileName, DWORD_PTR dwGotoOffset = 0);
+	HRESULT LoadFile(LPCWSTR lpszFileName, ULONGLONG ullGotoOffset = 0);
 	HRESULT UnloadFile();
-	bool IsLoaded();
-	HRESULT ShowOffset(DWORD_PTR);
-	LONGLONG GetBytesCount();
 private:
 	CHexCtrl m_Hex;
 	//Size of the loaded PE file.
@@ -44,7 +41,11 @@ private:
 
 	const int IDC_HEX_CTRL = 0xFF;
 private:
-	HRESULT MapFilePiece(DWORD dwOffset);
+	unsigned char GetByte(ULONGLONG ullOffset);
+	LONGLONG GetBytesCount();
+	bool IsLoaded();
+	HRESULT ShowOffset(ULONGLONG);
+	HRESULT MapFileOffset(ULONGLONG dwOffset);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };
 

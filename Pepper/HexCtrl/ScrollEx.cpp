@@ -1,3 +1,12 @@
+/****************************************************************************************
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
+* This code is lisenced under the "MIT License modified with The Commons Clause"		*
+* Scroll bar control class for MFC apps.												*
+* The main creation purpose of this control is the innate 32-bit range limitation		*
+* of the standard Windows's scrollbar control.											*
+* This control works with unsigned long long data representation and thus can operate	*
+* with numbers in full 64-bit range.													*
+****************************************************************************************/
 #include "stdafx.h"
 #include "ScrollEx.h"
 #include <cmath>
@@ -11,7 +20,7 @@ END_MESSAGE_MAP()
 bool CScrollEx::Create(CWnd * pWndParent, int iScrollType,
 	ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax)
 {
-	if (!pWndParent || (iScrollType != SB_VERT && iScrollType != SB_HORZ))
+	if (m_fCreated || !pWndParent || (iScrollType != SB_VERT && iScrollType != SB_HORZ))
 		return false;
 
 	if (!CWnd::CreateEx(0, nullptr, nullptr, 0, 0, 0, 0, 0, nullptr, 0))

@@ -4,9 +4,6 @@
     <ClCompile Include="ChildFrm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HexCtrl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MainFrm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -46,7 +43,10 @@
     <ClCompile Include="FileLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ScrollEx.cpp">
+    <ClCompile Include="HexCtrl\HexCtrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HexCtrl\ScrollEx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -55,9 +55,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\HexCtrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ListEx.h">
@@ -102,10 +99,13 @@
     <ClInclude Include="include\FileLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="res\HexCtrl\HexCtrlRes.h">
+    <ClInclude Include="HexCtrl\res\HexCtrlRes.h">
       <Filter>Resource Files\HexCtrl</Filter>
     </ClInclude>
-    <ClInclude Include="include\ScrollEx.h">
+    <ClInclude Include="HexCtrl\HexCtrl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HexCtrl\ScrollEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -113,7 +113,7 @@
     <ResourceCompile Include="res\Pepper.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-    <ResourceCompile Include="res\HexCtrl\HexCtrl.rc">
+    <ResourceCompile Include="HexCtrl\res\HexCtrl.rc">
       <Filter>Resource Files\HexCtrl</Filter>
     </ResourceCompile>
   </ItemGroup>
@@ -130,10 +130,10 @@
     <Image Include="res\TreeMain_Header.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="ScrollExH.bmp">
+    <Image Include="HexCtrl\res\ScrollExH.bmp">
       <Filter>Resource Files\HexCtrl</Filter>
     </Image>
-    <Image Include="ScrollExV.bmp">
+    <Image Include="HexCtrl\res\ScrollExV.bmp">
       <Filter>Resource Files\HexCtrl</Filter>
     </Image>
   </ItemGroup>
