@@ -1005,12 +1005,12 @@ void CHexCtrl::Recalc()
 void CHexCtrl::Search(HEXSEARCH& rSearch)
 {
 	rSearch.fFound = false;
-	ULONGLONG dwStartAt = rSearch.dwStartAt;
+	ULONGLONG dwStartAt = rSearch.ullStartAt;
 	ULONGLONG dwSizeBytes;
 	ULONGLONG dwUntil;
 	std::string strSearch { };
 
-	if (rSearch.wstrSearch.empty() || m_ullDataCount == 0 || rSearch.dwStartAt > (m_ullDataCount - 1))
+	if (rSearch.wstrSearch.empty() || m_ullDataCount == 0 || rSearch.ullStartAt > (m_ullDataCount - 1))
 		return m_dlgSearch.SearchCallback();
 
 	int iSizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &rSearch.wstrSearch[0], (int)rSearch.wstrSearch.size(), nullptr, 0, nullptr, nullptr);
@@ -1078,14 +1078,14 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
 			dwUntil = m_ullDataCount - strSearch.size();
-			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
+			dwStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
 
 			for (ULONGLONG i = dwStartAt; i <= dwUntil; i++)
 			{
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
 					rSearch.fFound = true;
-					rSearch.dwStartAt = i;
+					rSearch.ullStartAt = i;
 					rSearch.fWrap = false;
 					goto End;
 				}
@@ -1097,7 +1097,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
 					rSearch.fFound = true;
-					rSearch.dwStartAt = i;
+					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
 					rSearch.iWrap = SEARCH_END;
 					rSearch.fCount = true;
@@ -1115,7 +1115,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 					if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 					{
 						rSearch.fFound = true;
-						rSearch.dwStartAt = i;
+						rSearch.ullStartAt = i;
 						rSearch.fWrap = false;
 						goto End;
 					}
@@ -1128,7 +1128,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
 					rSearch.fFound = true;
-					rSearch.dwStartAt = i;
+					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
 					rSearch.iWrap = SEARCH_BEGINNING;
 					rSearch.fCount = false;
@@ -1143,14 +1143,14 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
 			dwUntil = m_ullDataCount - dwSizeBytes;
-			dwStartAt = rSearch.fSecondMatch ? rSearch.dwStartAt + 1 : 0;
+			dwStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
 
 			for (ULONGLONG i = dwStartAt; i <= dwUntil; i++)
 			{
 				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
 					rSearch.fFound = true;
-					rSearch.dwStartAt = i;
+					rSearch.ullStartAt = i;
 					rSearch.fWrap = false;
 					goto End;
 				}
@@ -1162,7 +1162,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
 					rSearch.fFound = true;
-					rSearch.dwStartAt = i;
+					rSearch.ullStartAt = i;
 					rSearch.iWrap = SEARCH_END;
 					rSearch.fWrap = true;
 					rSearch.fCount = true;
@@ -1180,7 +1180,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 					if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 					{
 						rSearch.fFound = true;
-						rSearch.dwStartAt = i;
+						rSearch.ullStartAt = i;
 						rSearch.fWrap = false;
 						goto End;
 					}
@@ -1193,7 +1193,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
 					rSearch.fFound = true;
-					rSearch.dwStartAt = i;
+					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
 					rSearch.iWrap = SEARCH_BEGINNING;
 					rSearch.fCount = false;
@@ -1209,7 +1209,7 @@ End:
 	{
 		m_dlgSearch.SearchCallback();
 		if (rSearch.fFound)
-			SetSelection(rSearch.dwStartAt, rSearch.dwStartAt, dwSizeBytes, true);
+			SetSelection(rSearch.ullStartAt, rSearch.ullStartAt, dwSizeBytes, true);
 	}
 }
 
@@ -1492,7 +1492,7 @@ void CHexDlgSearch::OnRadioBnRange(UINT nID)
 void CHexDlgSearch::ClearAll()
 {
 	m_dwnOccurrence = 0;
-	m_stSearch.dwStartAt = 0;
+	m_stSearch.ullStartAt = 0;
 	m_stSearch.fSecondMatch = false;
 	m_stSearch.wstrSearch = { };
 	m_stSearch.fWrap = false;

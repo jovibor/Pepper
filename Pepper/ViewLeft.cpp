@@ -76,7 +76,7 @@ void CViewLeft::OnInitialUpdate()
 
 	if (ImageHasFlag(dwFileSummary, IMAGE_FLAG_SECTIONS))
 	{
-		const HTREEITEM hTreeSecHeaders = m_stTreeMain.InsertItem(L"Section Headers [IMAGE_SECTION_HEADER]", iconHdr, iconHdr, hTreeRoot);
+		const HTREEITEM hTreeSecHeaders = m_stTreeMain.InsertItem(L"Sections Headers [IMAGE_SECTION_HEADER]", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeSecHeaders, IDC_LIST_SECHEADERS);
 	}
 

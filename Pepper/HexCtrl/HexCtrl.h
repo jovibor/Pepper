@@ -21,7 +21,7 @@ namespace HEXCTRL
 	{
 		std::wstring	wstrSearch { };
 		DWORD			dwSearchType { };		//Hex, Ascii, Unicode, etc...
-		ULONGLONG		dwStartAt { };			//An offset, search should start at.
+		ULONGLONG		ullStartAt { };			//An offset, search should start at.
 		int				iDirection { };
 		bool			fWrap { };				//Was search wrapped?
 		int				iWrap { };				//Wrap direction.

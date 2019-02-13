@@ -19,7 +19,6 @@ public:
 	HRESULT UnloadFile();
 private:
 	CHexCtrl m_stHex;
-	
 	//Size of the loaded PE file.
 	LARGE_INTEGER m_stFileSize { };
 	HANDLE m_hFile { };
@@ -50,7 +49,7 @@ private:
 	const int IDC_HEX_CTRL = 0xFF;
 private:
 	unsigned char GetByte(ULONGLONG ullOffset); //For Virtual HexCtrl retrives next byte on demand.
-	HRESULT ShowOffset(ULONGLONG);
-	HRESULT MapFileOffset(ULONGLONG dwOffset); //Main routine for mapping big file's parts.
+	HRESULT ShowOffset(ULONGLONG ullOffset);
+	HRESULT MapFileOffset(ULONGLONG ullOffset); //Main routine for mapping big file's parts.
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };

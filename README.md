@@ -3,7 +3,7 @@
 * All inner pe file's layouts viewer.
 * Resource viewer.  
 
-#### Build with Microsoft Visual Studio 2017, C++17, MFC.  
+#### Built with Microsoft Visual Studio 2017, C++17, MFC.  
 
 ![](docs/img/Pepper_Dos.JPG)
 ![](docs/img/Pepper_Imp.JPG)

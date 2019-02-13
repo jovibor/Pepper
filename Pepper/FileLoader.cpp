@@ -52,15 +52,15 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, ULONGLONG ullGotoOffset)
 	return S_OK;
 }
 
-HRESULT CFileLoader::MapFileOffset(ULONGLONG dwOffset)
+HRESULT CFileLoader::MapFileOffset(ULONGLONG ullOffset)
 {
 	if (m_lpSectionBase)
 		UnmapViewOfFile(m_lpSectionBase);
 
 	DWORD_PTR dwSizeToMap = 0x01900000; //25MB.
 
-	if (dwOffset > (ULONGLONG)dwSizeToMap)
-		m_ullStartOffsetMapped = dwOffset - (dwSizeToMap / 2);
+	if (ullOffset > (ULONGLONG)dwSizeToMap)
+		m_ullStartOffsetMapped = ullOffset - (dwSizeToMap / 2);
 	else
 		m_ullStartOffsetMapped = 0;
 
