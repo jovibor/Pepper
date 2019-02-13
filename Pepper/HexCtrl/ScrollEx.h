@@ -67,7 +67,8 @@ namespace HEXCTRL {
 		void ResetTimers();
 		afx_msg void OnTimer(UINT_PTR nIDEvent);
 		void SendParentScrollMsg();
-		enum SCROLLSTATE
+	protected:
+		enum SCROLLEX_STATE
 		{
 			FIRSTBUTTON_HOVER = 1,
 			FIRSTBUTTON_CLICK = 2,
@@ -78,7 +79,6 @@ namespace HEXCTRL {
 			LASTBUTTON_CLICK = 7,
 			LASTBUTTON_HOVER = 8
 		};
-	protected:
 		CWnd* m_pwndParent { };
 		UINT m_uiScrollBarSizeWH { };
 		int m_iScrollType { };
@@ -99,11 +99,13 @@ namespace HEXCTRL {
 		int m_iTopDelta { };
 		int m_iLeftDelta { };
 
-		//Timers:
-		static constexpr auto IDT_FIRSTCLICK = 0x7ff0;
-		static constexpr auto IDT_CLICKREPEAT = 0x7ff1;
-		const int TIMER_TIME_FIRSTCLICK = 200;
-		const int TIMER_TIME_REPEAT = 50;
+		//Timers.
+		enum SCROLLEX_TIMERS {
+			IDT_FIRSTCLICK = 0x7ff0,
+			IDT_CLICKREPEAT = 0x7ff1
+		};
+		const int m_iTimerFirstClick { 200 };
+		const int m_iTimerRepeat { 50 };
 
 		//Bitmap related:
 		CBitmap m_bmpArrows;

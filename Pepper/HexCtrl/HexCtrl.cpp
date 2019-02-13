@@ -51,14 +51,14 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	if (fFloat)
 		dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
 	else
-		dwStyle = WS_CHILD | WS_VISIBLE;
+		dwStyle = WS_VISIBLE | WS_CHILD;
 
 	CRect rc;
 	if (pRect)
 		rc = *pRect;
-	else
-	{
-		//If input pRect==nullptr then place window at screen center.
+	else if (fFloat)
+	{	//If pRect == nullptr and it's a float window then place it at screen center.
+
 		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
 		int iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
 		int iPosCX = iPosX * 3;
@@ -399,19 +399,19 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (m_fVirtual)
 			MessageBoxW(L"This function isn't supported in Virtual mode", L"Error", MB_ICONEXCLAMATION);
 		else
-			CopyToClipboard(CLIPBOARD_COPY_AS_HEX);
+			CopyToClipboard(COPY_AS_HEX);
 		break;
 	case IDM_POPUP_COPYASHEXFORMATTED:
 		if (m_fVirtual)
 			MessageBoxW(L"This function isn't supported in Virtual mode", L"Error", MB_ICONEXCLAMATION);
 		else
-			CopyToClipboard(CLIPBOARD_COPY_AS_HEX_FORMATTED);
+			CopyToClipboard(COPY_AS_HEX_FORMATTED);
 		break;
 	case IDM_POPUP_COPYASASCII:
 		if (m_fVirtual)
 			MessageBoxW(L"This function isn't supported in Virtual mode", L"Error", MB_ICONEXCLAMATION);
 		else
-			CopyToClipboard(CLIPBOARD_COPY_AS_ASCII);
+			CopyToClipboard(COPY_AS_ASCII);
 		break;
 	case IDM_POPUP_ABOUT:
 		m_dlgAbout.DoModal();
@@ -436,7 +436,7 @@ void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		break;
 	case 'C':
 		if (GetKeyState(VK_CONTROL) < 0)
-			CopyToClipboard(CLIPBOARD_COPY_AS_HEX);
+			CopyToClipboard(COPY_AS_HEX);
 		break;
 	case VK_RIGHT:
 		if (m_ullBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
@@ -872,7 +872,7 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 
 	switch (nType)
 	{
-	case CLIPBOARD_COPY_AS_HEX:
+	case COPY_AS_HEX:
 	{
 		for (unsigned i = 0; i < m_ullBytesSelected; i++)
 		{
@@ -883,7 +883,7 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 		}
 		break;
 	}
-	case CLIPBOARD_COPY_AS_HEX_FORMATTED:
+	case COPY_AS_HEX_FORMATTED:
 	{
 		//How many spaces are needed to be inserted at the beginnig.
 		DWORD dwModStart = m_ullSelectionStart % m_dwGridCapacity;
@@ -919,7 +919,7 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 		}
 		break;
 	}
-	case CLIPBOARD_COPY_AS_ASCII:
+	case COPY_AS_ASCII:
 	{
 		char ch;
 		for (unsigned i = 0; i < m_ullBytesSelected; i++)

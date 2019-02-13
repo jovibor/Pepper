@@ -192,21 +192,25 @@ namespace HEXCTRL
 		std::wstring m_wstrBottomText { };
 		bool m_fLMousePressed { false };
 		UINT m_dwCtrlId { };
-		static constexpr auto CLIPBOARD_COPY_AS_HEX { 0x01 };
-		static constexpr auto CLIPBOARD_COPY_AS_HEX_FORMATTED { 0x02 };
-		static constexpr auto CLIPBOARD_COPY_AS_ASCII { 0x03 };
-		static constexpr auto IDM_POPUP_SEARCH = 0x8001;
-		static constexpr auto IDM_POPUP_COPYASHEX = 0x8002;
-		static constexpr auto IDM_POPUP_COPYASHEXFORMATTED = 0x8003;
-		static constexpr auto IDM_POPUP_COPYASASCII = 0x8004;
-		static constexpr auto IDM_POPUP_ABOUT = 0x8005;
-		enum HEXCTRL_SEARCH
-		{
-			SEARCH_HEX = 0x01, SEARCH_ASCII = 0x02,
-			SEARCH_UNICODE = 0x03, SEARCH_FORWARD = 1,
-			SEARCH_BACKWARD = -1, SEARCH_NOTFOUND = 0,
-			SEARCH_FOUND = 0x01, SEARCH_BEGINNING = 0x02,
-			SEARCH_END = 0x03,
+
+		//Enums.
+		enum HEXCTRL_CLIPBOARD {
+			COPY_AS_HEX = 0x01,
+			COPY_AS_HEX_FORMATTED = 0x02,
+			COPY_AS_ASCII = 0x03
+		};
+		enum HEXCTRL_MENU {
+			IDM_POPUP_SEARCH = 0x8001,
+			IDM_POPUP_COPYASHEX = 0x8002,
+			IDM_POPUP_COPYASHEXFORMATTED = 0x8003,
+			IDM_POPUP_COPYASASCII = 0x8004,
+			IDM_POPUP_ABOUT = 0x8005
+		};
+		enum HEXCTRL_SEARCH {
+			SEARCH_HEX = 0x10, SEARCH_ASCII = 0x20, SEARCH_UNICODE = 0x30,
+			SEARCH_FORWARD = 1, SEARCH_BACKWARD = -1,
+			SEARCH_NOTFOUND = 0, SEARCH_FOUND = 0xF,
+			SEARCH_BEGINNING = 0xA, SEARCH_END = 0xB,
 		};
 	};
 
@@ -214,6 +218,6 @@ namespace HEXCTRL
 	* WM_NOTIFY message codes (NMHDR.code values)	*
 	************************************************/
 
-	constexpr auto HEXCTRL_MSG_DESTROY = 0x00ff;
+	constexpr auto HEXCTRL_MSG_DESTROY = 0x00FF;
 	constexpr auto HEXCTRL_MSG_GETDISPINFO = 0x0100;
 };

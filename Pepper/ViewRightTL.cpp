@@ -900,9 +900,9 @@ int CViewRightTL::CreateListRichHeader()
 		m_listRichHdr.SetItemText(listindex, 1, wstr);
 		swprintf_s(wstr, MAX_PATH, L"%04X", i.wId);
 		m_listRichHdr.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%i", i.wVersion);
+		swprintf_s(wstr, MAX_PATH, L"%u", i.wVersion);
 		m_listRichHdr.SetItemText(listindex, 3, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%i", i.dwCount);
+		swprintf_s(wstr, MAX_PATH, L"%u", i.dwCount);
 		m_listRichHdr.SetItemText(listindex, 4, wstr);
 
 		listindex++;

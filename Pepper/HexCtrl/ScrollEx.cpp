@@ -288,36 +288,36 @@ void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 			if (GetThumbRect(true).PtInRect(pt))
 			{
 				m_ptCursorCur = pt;
-				m_iScrollBarState = SCROLLSTATE::THUMB_CLICK;
+				m_iScrollBarState = THUMB_CLICK;
 				GetParent()->SetCapture();
 			}
 			else if (GetFirstArrowRect(true).PtInRect(pt))
 			{
 				ScrollLineUp();
-				m_iScrollBarState = SCROLLSTATE::FIRSTBUTTON_CLICK;
+				m_iScrollBarState = FIRSTBUTTON_CLICK;
 				GetParent()->SetCapture();
-				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
+				SetTimer(IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetLastArrowRect(true).PtInRect(pt))
 			{
 				ScrollLineDown();
-				m_iScrollBarState = SCROLLSTATE::LASTBUTTON_CLICK;
+				m_iScrollBarState = LASTBUTTON_CLICK;
 				GetParent()->SetCapture();
-				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
+				SetTimer(IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetFirstChannelRect(true).PtInRect(pt))
 			{
 				ScrollPageUp();
-				m_iScrollBarState = SCROLLSTATE::FIRSTCHANNEL_CLICK;
+				m_iScrollBarState = FIRSTCHANNEL_CLICK;
 				GetParent()->SetCapture();
-				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
+				SetTimer(IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetLastChannelRect(true).PtInRect(pt))
 			{
 				ScrollPageDown();
-				m_iScrollBarState = SCROLLSTATE::LASTCHANNEL_CLICK;
+				m_iScrollBarState = LASTCHANNEL_CLICK;
 				GetParent()->SetCapture();
-				SetTimer(IDT_FIRSTCLICK, TIMER_TIME_FIRSTCLICK, nullptr);
+				SetTimer(IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 		}
 	}
@@ -717,7 +717,7 @@ bool CScrollEx::IsVert()
 
 bool CScrollEx::IsThumbDragging()
 {
-	return m_iScrollBarState == SCROLLSTATE::THUMB_CLICK ? true : false;
+	return m_iScrollBarState == THUMB_CLICK ? true : false;
 }
 
 void CScrollEx::ResetTimers()
@@ -736,19 +736,19 @@ void CScrollEx::OnTimer(UINT_PTR nIDEvent)
 	{
 	case IDT_FIRSTCLICK:
 		KillTimer(IDT_FIRSTCLICK);
-		SetTimer(IDT_CLICKREPEAT, TIMER_TIME_REPEAT, nullptr);
+		SetTimer(IDT_CLICKREPEAT, m_iTimerRepeat, nullptr);
 		break;
 	case IDT_CLICKREPEAT:
 	{
 		switch (m_iScrollBarState)
 		{
-		case SCROLLSTATE::FIRSTBUTTON_CLICK:
+		case FIRSTBUTTON_CLICK:
 			ScrollLineUp();
 			break;
-		case SCROLLSTATE::LASTBUTTON_CLICK:
+		case LASTBUTTON_CLICK:
 			ScrollLineDown();
 			break;
-		case SCROLLSTATE::FIRSTCHANNEL_CLICK:
+		case FIRSTCHANNEL_CLICK:
 		{
 			CPoint pt;	GetCursorPos(&pt);
 			CRect rc = GetThumbRect(true);
@@ -763,7 +763,7 @@ void CScrollEx::OnTimer(UINT_PTR nIDEvent)
 			}
 		}
 		break;
-		case SCROLLSTATE::LASTCHANNEL_CLICK:
+		case LASTCHANNEL_CLICK:
 			CPoint pt;	GetCursorPos(&pt);
 			CRect rc = GetThumbRect(true);
 			GetParent()->ClientToScreen(rc);

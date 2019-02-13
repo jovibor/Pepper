@@ -1,10 +1,15 @@
 ## **Pepper** 
 #### PE (x86) and PE+ (x64) files viewer, based on libpe.
-* All inner file's layouts viewer.
+* All inner pe file's layouts viewer.
 * Resource viewer.  
 
-Microsoft Visual Studio 2017, C++17, MFC.  
-[Microsoft Visual C++ Redistributable for Visual Studio 2017 required.](https://aka.ms/vs/15/release/VC_redist.x86.exe)
+#### Build with Microsoft Visual Studio 2017, C++17, MFC.  
+
+![](docs/img/Pepper_Dos.JPG)
+![](docs/img/Pepper_Imp.JPG)
+![](docs/img/Pepper_Resources.JPG)
 
 ## **License**
-This software is available under the conditions stated in the LICENSE file.
+This software is available under the "MIT License modified with The Commons Clause". 
+
+### [Latest release page](https://github.com/jovibor/Pepper/releases/latest)
