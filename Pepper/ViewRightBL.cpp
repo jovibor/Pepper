@@ -32,7 +32,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
-//	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
+	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	if (m_pLibpe->GetImageFlags(m_dwFileSummary) != S_OK)
 		return;
@@ -474,11 +474,11 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	if (m_pLibpe->GetDebug(pDebug) != S_OK)
 		return -1;
 
-	m_vecDebug.clear();
-	m_stFileLoader.LoadFile(m_pDocument->GetPathName());
-	m_stFileLoader.FillVecData(m_vecDebug, pDebug->at(dwEntry).stDebugDir.PointerToRawData, pDebug->at(dwEntry).stDebugDir.SizeOfData);
-	m_stFileLoader.UnloadFile();
-	m_stHexEdit.SetData((PBYTE)m_vecDebug.data(), m_vecDebug.size());
+//	m_vecDebug.clear();
+	auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
+//	m_stFileLoader.FillVecData(m_vecDebug, rDebugDir.PointerToRawData, rDebugDir.SizeOfData);
+//	m_stHexEdit.SetData((PBYTE)m_vecDebug.data(), m_vecDebug.size());
+	m_pFileLoader->ShowFilePiece(rDebugDir.PointerToRawData, rDebugDir.SizeOfData, &m_stHexEdit);
 
 	CRect rect;
 	GetClientRect(&rect);

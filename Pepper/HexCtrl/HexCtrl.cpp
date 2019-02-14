@@ -36,6 +36,8 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_NCCALCSIZE()
 	ON_WM_NCPAINT()
 	ON_WM_ACTIVATE()
+	ON_WM_SIZE()
+	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
 BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, const LOGFONT* pLogFont)
@@ -49,7 +51,7 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 
 	DWORD dwStyle;
 	if (fFloat)
-		dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
+		dwStyle = WS_VISIBLE | WS_OVERLAPPED | WS_CAPTION | WS_THICKFRAME | WS_SYSMENU | WS_MAXIMIZEBOX;
 	else
 		dwStyle = WS_VISIBLE | WS_CHILD;
 
@@ -124,7 +126,7 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	return TRUE;
 }
 
-void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullCount, bool fVirtual)
+void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual, ULONGLONG ullGotoOffset)
 {
 	ClearData();
 
@@ -134,9 +136,11 @@ void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullCount, bool fVir
 		return;
 
 	m_pData = pData;
-	m_ullDataCount = ullCount;
+	m_ullDataCount = ullSize;
 	m_fVirtual = fVirtual;
 
+	if (ullGotoOffset)
+		SetSelection(ullGotoOffset);
 	UpdateInfoText();
 	Recalc();
 }
@@ -148,13 +152,14 @@ void CHexCtrl::ClearData()
 	m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullBytesSelected = 0;
 
 	m_stScrollV.SetScrollPos(0);
+	m_stScrollV.SetScrollSizes(0, 0, 0);
 	m_stScrollH.SetScrollPos(0);
 	UpdateInfoText();
 }
 
-void CHexCtrl::SetSelection(ULONGLONG ullOffset, ULONGLONG ullBytes)
+void CHexCtrl::SetSelection(ULONGLONG ullOffset, ULONGLONG ullSize)
 {
-	SetSelection(ullOffset, ullOffset, ullBytes, true);
+	SetSelection(ullOffset, ullOffset, ullSize, true);
 }
 
 void CHexCtrl::SetFont(const LOGFONT* pLogFontNew)
@@ -553,7 +558,11 @@ void CHexCtrl::OnPaint()
 	rDC.SelectObject(&m_penLines);
 	rDC.SelectObject(&m_fontHexView);
 
-	//Find the dwLineStart and dwLineEnd position, draw the visible portion.
+	//To prevent drawing in too small window (can cause hangs).
+	if (rcClient.Height() < m_iHeightTopRect + m_iHeightBottomOffArea)
+		return;
+
+	//Find the ullLineStart and ullLineEnd position, draw the visible portion.
 	const ULONGLONG ullLineStart = iScrollV / GetPixelsLineScrollV();
 	ULONGLONG ullLineEndtmp { };
 	if (m_ullDataCount)
@@ -1213,15 +1222,12 @@ End:
 	}
 }
 
-void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullBytes, bool fHighlight)
+void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullSize, bool fHighlight)
 {
-	if (!m_fVirtual)
-	{
-		if (ullClick >= m_ullDataCount || ullStart >= m_ullDataCount || !ullBytes)
-			return;
-		if ((ullStart + ullBytes) > m_ullDataCount)
-			ullBytes = m_ullDataCount - ullStart;
-	}
+	if (ullClick >= m_ullDataCount || ullStart >= m_ullDataCount || !ullSize)
+		return;
+	if ((ullStart + ullSize) > m_ullDataCount)
+		ullSize = m_ullDataCount - ullStart;
 
 	ULONGLONG ullCurrScrollV = m_stScrollV.GetScrollPos();
 	ULONGLONG ullCurrScrollH = m_stScrollH.GetScrollPos();
@@ -1232,12 +1238,12 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 
 	//New scroll depending on selection direction: top <-> bottom.
 	//fHighlight means centralize scroll position on the screen (used in Search()).
-	ULONGLONG ullEnd = ullStart + ullBytes - 1;
+	ULONGLONG ullEnd = ullStart + ullSize - 1;
 	ULONGLONG ullPixelsLineScrollV = GetPixelsLineScrollV();
 	ULONGLONG ullMaxV = (ullCurrScrollV / ullPixelsLineScrollV * m_sizeLetter.cy) + rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
 		((rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-	ULONGLONG ullNewEndV = int(ullEnd / m_dwGridCapacity * ullPixelsLineScrollV);
-	ULONGLONG ullNewStartV = int(ullStart / m_dwGridCapacity * ullPixelsLineScrollV);
+	ULONGLONG ullNewStartV = ullStart / m_dwGridCapacity * ullPixelsLineScrollV;
+	ULONGLONG ullNewEndV = ullEnd / m_dwGridCapacity * ullPixelsLineScrollV;
 
 	ULONGLONG iNewScrollV { }, iNewScrollH { };
 	if (fHighlight)
@@ -1287,10 +1293,8 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	m_ullSelectionEnd = ullEnd;
 	m_ullBytesSelected = ullEnd - ullStart + 1;
 
-	if (m_stScrollV.IsVisible())
-		m_stScrollV.SetScrollPos(iNewScrollV);
-	if (m_stScrollH.IsVisible())
-		m_stScrollH.SetScrollPos(iNewScrollH);
+	m_stScrollV.SetScrollPos(iNewScrollV);
+	m_stScrollH.SetScrollPos(iNewScrollH);
 
 	UpdateInfoText();
 }
@@ -1298,6 +1302,17 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 int CHexCtrl::GetPixelsLineScrollV()
 {
 	return m_sizeLetter.cy;
+}
+
+void CHexCtrl::OnSize(UINT nType, int cx, int cy)
+{
+	CWnd::OnSize(nType, cx, cy);
+	Invalidate();
+}
+
+void CHexCtrl::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	CWnd::OnGetMinMaxInfo(lpMMI);
 }
 
 

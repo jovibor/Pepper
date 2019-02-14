@@ -108,9 +108,9 @@ namespace HEXCTRL
 		CHexCtrl() {}
 		virtual ~CHexCtrl() {}
 		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
-		void SetData(const unsigned char* pData, ULONGLONG ullCount, bool fVirtual = false);
+		void SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual = false, ULONGLONG ullGotoOffset = 0);
 		void ClearData();
-		void SetSelection(ULONGLONG ullOffset, ULONGLONG ullCount = 1);
+		void SetSelection(ULONGLONG ullOffset, ULONGLONG ullSize = 1);
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
@@ -212,7 +212,10 @@ namespace HEXCTRL
 			SEARCH_NOTFOUND = 0, SEARCH_FOUND = 0xF,
 			SEARCH_BEGINNING = 0xA, SEARCH_END = 0xB,
 		};
-	};
+	public:
+		afx_msg void OnSize(UINT nType, int cx, int cy);
+		afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+};
 
 	/************************************************
 	* WM_NOTIFY message codes (NMHDR.code values)	*

@@ -23,9 +23,21 @@ class CFileLoader : public CWnd
 public:
 	CFileLoader() {};
 	~CFileLoader() {};
-	HRESULT LoadFile(LPCWSTR lpszFileName, bool fHexCtrlCreate = false, ULONGLONG ullGotoOffset = 0);
-	HRESULT FillVecData(std::vector<std::byte>& vecData, ULONGLONG ullOffset, DWORD dwSize);
+
+	//Firs function to call.
+	HRESULT LoadFile(LPCWSTR lpszFileName);
+	
+	//Shows arbitrary offset in already loaded file (LoadFile)
+	//If pHexCtrl == nullptr inner CHexCtrl object is used.
+	HRESULT ShowOffset(ULONGLONG ullOffset, CHexCtrl* pHexCtrl = nullptr);
+
+	//Shows only a piece of the whole loaded file.
+	//If pHexCtrl == nullptr inner CHexCtrl object is used.
+	HRESULT ShowFilePiece(ULONGLONG ullOffsetFrom, ULONGLONG ullSize, CHexCtrl* pHexCtrl = nullptr);
+
+	//Unloads loaded file and all pieces, if present.
 	HRESULT UnloadFile();
+//	HRESULT FillVecData(std::vector<std::byte>& vecData, ULONGLONG ullOffset, DWORD dwSize);
 private:
 	CHexCtrl m_stHex;
 	//Size of the loaded PE file.
@@ -56,10 +68,12 @@ private:
 	ULONGLONG m_ullEndOffsetMapped { };
 	const int IDC_HEX_CTRL = 0xFF;
 	bool m_fCreated { false };
+	PBYTE m_lpMappedPiece { }; //Mapped file piece.
 private:
 	unsigned char GetByte(ULONGLONG ullOffset); //For Virtual HexCtrl retrives next byte on demand.
-	HRESULT ShowOffset(ULONGLONG ullOffset);
 	HRESULT MapFileOffset(ULONGLONG ullOffset, DWORD dwSize = 0); //Main routine for mapping big file's parts.
+	PBYTE MapFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize);
+	HRESULT UnmapFilePiece();
 	HRESULT UnmapFileOffset();
 	bool IsCreated();
 	bool IsLoaded();

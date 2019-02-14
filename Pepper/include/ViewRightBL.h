@@ -35,6 +35,7 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	CWnd* m_pActiveWnd { };
 	CHexCtrl m_stHexEdit;
+	CFileLoader* m_pFileLoader { };
 	CFileLoader m_stFileLoader;
 	std::vector<std::byte> m_vecDebug;
 	LISTEXINFO m_stListInfo;

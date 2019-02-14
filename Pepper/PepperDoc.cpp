@@ -37,7 +37,15 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		return FALSE;
 	}
 
+	m_stFileLoader.LoadFile(lpszPathName);
 	UpdateAllViews(nullptr);
 
 	return TRUE;
+}
+
+void CPepperDoc::OnCloseDocument()
+{
+	m_stFileLoader.UnloadFile();
+
+	CDocument::OnCloseDocument();
 }

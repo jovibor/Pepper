@@ -21,6 +21,7 @@ public:
 private:
 	CPepperDoc() {}
 	virtual ~CPepperDoc() {}
-	BOOL OnOpenDocument(LPCTSTR lpszPathName) override;
+	BOOL OnOpenDocument(LPCTSTR lpszPathName) override;	
+	virtual void OnCloseDocument();
 	DECLARE_MESSAGE_MAP()
 };
