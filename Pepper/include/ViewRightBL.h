@@ -4,6 +4,7 @@
 #include "HexCtrl.h"
 #include "ListEx.h"
 #include "TreeEx.h"
+#include "FileLoader.h"
 
 using namespace HEXCTRL;
 using namespace LISTEX;
@@ -21,12 +22,13 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	DECLARE_MESSAGE_MAP()
 private:
-	PCLIBPE_SECURITY_VEC m_vecSec { };
-	CHexCtrl m_stHexEdit;
-	CHexCtrl m_hex;
 	libpe_ptr m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
+	CWnd* m_pActiveWnd { };
+	CHexCtrl m_stHexEdit;
+	CFileLoader m_stFileLoader;
+	std::vector<std::byte> m_vecDebug;
 	LISTEXINFO m_stListInfo;
 	CListEx m_listExportFuncs;
 	CListEx m_listImportEntry;
@@ -35,10 +37,10 @@ private:
 	CTreeEx m_treeResBottom;
 	DWORD m_dwFileSummary { };
 	CImageList m_imglTreeRes;
-	CWnd* m_pActiveWnd { };
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };
 	RESHELPER m_stResHelper { };
+	PCLIBPE_SECURITY_VEC m_vecSec { };
 
 	int CreateListImportEntry(DWORD dwEntry);
 	int CreateListDelayImportEntry(DWORD dwEntry);

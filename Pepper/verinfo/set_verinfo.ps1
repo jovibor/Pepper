@@ -1,3 +1,4 @@
+#verpatch.exe can be found at: https://github.com/pavel-a/ddverpatch/releases
 #Path to verpatch.exe
 $verpatch = "$PSScriptRoot\verpatch.exe"
 $versionfile = "$PSScriptRoot\version.h"

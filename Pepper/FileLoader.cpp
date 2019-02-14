@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "FileLoader.h"
 
-HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, ULONGLONG ullGotoOffset)
+HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, bool fHexCtrlCreate, ULONGLONG ullGotoOffset)
 {
 	if (m_lpBase || m_lpSectionBase)
 		return ShowOffset(ullGotoOffset);
@@ -21,6 +21,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, ULONGLONG ullGotoOffset)
 		CloseHandle(m_hFile);
 		return E_FILE_CREATEFILEMAPPING_FAILED;
 	}
+	m_fCreated = true;
 
 	m_lpBase = MapViewOfFile(m_hMapObject, FILE_MAP_READ, 0, 0, 0);
 	if (m_lpBase)
@@ -36,28 +37,82 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, ULONGLONG ullGotoOffset)
 		::GetNativeSystemInfo(&m_stSysInfo);
 	}
 
-	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, CW_USEDEFAULT, CW_USEDEFAULT,
-		CW_USEDEFAULT, CW_USEDEFAULT, AfxGetMainWnd()->m_hWnd, nullptr))
-		return E_ABORT;
+	if (fHexCtrlCreate)
+	{
+		if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, CW_USEDEFAULT, CW_USEDEFAULT,
+			CW_USEDEFAULT, CW_USEDEFAULT, AfxGetMainWnd()->m_hWnd, nullptr))
+			return E_ABORT;
 
-	m_stHex.Create(this, IDC_HEX_CTRL, nullptr, true);
+		m_stHex.Create(this, IDC_HEX_CTRL, nullptr, true);
 
-	if (m_fMapViewOfFileWhole)
-		m_stHex.SetData((PBYTE)m_lpBase, (ULONGLONG)m_stFileSize.QuadPart);
-	else
-		m_stHex.SetData(nullptr, (ULONGLONG)m_stFileSize.QuadPart, true);
+		if (m_fMapViewOfFileWhole)
+			m_stHex.SetData((PBYTE)m_lpBase, (ULONGLONG)m_stFileSize.QuadPart);
+		else
+			m_stHex.SetData(nullptr, (ULONGLONG)m_stFileSize.QuadPart, true);
 
-	ShowOffset(ullGotoOffset);
+		ShowOffset(ullGotoOffset);
+	}
 
 	return S_OK;
 }
 
-HRESULT CFileLoader::MapFileOffset(ULONGLONG ullOffset)
+HRESULT CFileLoader::FillVecData(std::vector<std::byte>& vecData, ULONGLONG ullOffset, DWORD dwSize)
 {
+	if (!m_fCreated)
+		return E_ABORT;
+
+	if (IsLoaded())
+	{
+		for (unsigned i = 0; i < dwSize; i++)
+			vecData.emplace_back(((std::byte*)m_lpBase)[ullOffset + i]);
+	}
+	else
+	{
+		if (MapFileOffset(ullOffset, dwSize) == S_OK)
+		{
+			for (unsigned i = 0; i < dwSize; i++)
+				vecData.emplace_back(((std::byte*)((DWORD_PTR)m_lpSectionBase + m_dwDeltaFileOffsetMapped))[ullOffset + i]);
+
+			UnmapFileOffset();
+		}
+	}
+
+	return S_OK;
+}
+
+HRESULT CFileLoader::UnloadFile()
+{
+	if (!m_fCreated)
+		return E_ABORT;
+
+	if (m_lpBase)
+		UnmapViewOfFile(m_lpBase);
+	if (m_hMapObject)
+		CloseHandle(m_hMapObject);
+	if (m_hFile)
+		CloseHandle(m_hFile);
 	if (m_lpSectionBase)
 		UnmapViewOfFile(m_lpSectionBase);
 
-	DWORD_PTR dwSizeToMap = 0x01900000; //25MB.
+	m_lpSectionBase = nullptr;
+	m_lpBase = nullptr;
+	m_hMapObject = nullptr;
+	m_hFile = nullptr;
+	m_fCreated = false;
+	m_fMapViewOfFileWhole = false;
+
+	return S_OK;
+}
+
+HRESULT CFileLoader::MapFileOffset(ULONGLONG ullOffset, DWORD dwSize)
+{
+	UnmapFileOffset();
+
+	DWORD_PTR dwSizeToMap;
+	if (dwSize > 0)
+		dwSizeToMap = dwSize;
+	else
+		dwSizeToMap = 0x01900000; //25MB.
 
 	if (ullOffset > (ULONGLONG)dwSizeToMap)
 		m_ullStartOffsetMapped = ullOffset - (dwSizeToMap / 2);
@@ -82,28 +137,27 @@ HRESULT CFileLoader::MapFileOffset(ULONGLONG ullOffset)
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset)
+HRESULT CFileLoader::UnmapFileOffset()
 {
-	m_stHex.SetSelection(ullOffset);
+	if (m_lpSectionBase)
+		UnmapViewOfFile(m_lpSectionBase);
 
 	return S_OK;
 }
 
-HRESULT CFileLoader::UnloadFile()
+bool CFileLoader::IsCreated()
 {
-	if (m_lpBase)
-		UnmapViewOfFile(m_lpBase);
-	if (m_hMapObject)
-		CloseHandle(m_hMapObject);
-	if (m_hFile)
-		CloseHandle(m_hFile);
-	if (m_lpSectionBase)
-		UnmapViewOfFile(m_lpSectionBase);
+	return m_fCreated;
+}
 
-	m_lpSectionBase = nullptr;
-	m_lpBase = nullptr;
-	m_hMapObject = nullptr;
-	m_hFile = nullptr;
+bool CFileLoader::IsLoaded()
+{
+	return m_fMapViewOfFileWhole;
+}
+
+HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset)
+{
+	m_stHex.SetSelection(ullOffset);
 
 	return S_OK;
 }

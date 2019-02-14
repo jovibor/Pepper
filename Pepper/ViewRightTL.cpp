@@ -598,7 +598,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	}
 
 	if (dwOffset)
-		m_pFileLoader->LoadFile(m_pDocument->GetPathName(), dwOffset);
+		m_pFileLoader->LoadFile(m_pDocument->GetPathName(), true, dwOffset);
 
 	return TRUE;
 }

@@ -155,8 +155,8 @@ namespace libpe
 	using PCLIBPE_RELOCATION_VEC = const LIBPE_RELOCATION_VEC*;
 
 	//Debug table.
-	//Vector of debug entries: dwOffset, IMAGE_DEBUG_DIRECTORY, vector of raw data.
-	struct LIBPE_DEBUG { DWORD dwOffsetDebug; IMAGE_DEBUG_DIRECTORY stDebugDir; std::vector<std::byte> vecDebugRawData; };
+	//Vector of debug entries: dwOffset, IMAGE_DEBUG_DIRECTORY.
+	struct LIBPE_DEBUG { DWORD dwOffsetDebug; IMAGE_DEBUG_DIRECTORY stDebugDir; };
 	using LIBPE_DEBUG_VEC = std::vector<LIBPE_DEBUG>;
 	using PCLIBPE_DEBUG_VEC = const LIBPE_DEBUG_VEC*;
 

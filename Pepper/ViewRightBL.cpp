@@ -24,6 +24,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
+//	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	if (m_pLibpe->GetImageFlags(m_dwFileSummary) != S_OK)
 		return;
@@ -465,8 +466,11 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	if (m_pLibpe->GetDebug(pDebug) != S_OK)
 		return -1;
 
-	const auto& debugEntry = pDebug->at(dwEntry).vecDebugRawData;
-	m_stHexEdit.SetData((PBYTE)debugEntry.data(), debugEntry.size());
+	m_vecDebug.clear();
+	m_stFileLoader.LoadFile(m_pDocument->GetPathName());
+	m_stFileLoader.FillVecData(m_vecDebug, pDebug->at(dwEntry).stDebugDir.PointerToRawData, pDebug->at(dwEntry).stDebugDir.SizeOfData);
+	m_stFileLoader.UnloadFile();
+	m_stHexEdit.SetData((PBYTE)m_vecDebug.data(), m_vecDebug.size());
 
 	CRect rect;
 	GetClientRect(&rect);
