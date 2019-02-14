@@ -1,5 +1,13 @@
+/****************************************************************************************************
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
+* This software is available under the "MIT License modified with The Commons Clause".				*
+* https://github.com/jovibor/Pepper/blob/master/LICENSE												*
+* Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
+* libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
+* https://github.com/jovibor/libpe																	*
+****************************************************************************************************/
 /****************************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/	                *
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/	                *
 * This is an extended and quite featured version of CMFCListCtrl class.		*
 * The main difference is in CListEx::Create method, which takes one			*
 * additional arg - pointer to LISTEXINFO structure, which fields are		*
