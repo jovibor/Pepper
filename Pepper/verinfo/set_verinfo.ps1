@@ -43,7 +43,7 @@ $REVISION=$fields[2]
 $VERSION="$MAJOR.$MINOR.$MAINTENANCE.$REVISION"
 
 #Executing verpatch.exe with all args.
-&$verpatch /va $args $VERSION /pv $VERSION /s copyright $COPYRIGHT /s ProductName $PRODUCTNAME /s desc $PRODUCTDESC
+&$verpatch /va "$args" $VERSION /pv $VERSION /s copyright $COPYRIGHT /s ProductName $PRODUCTNAME /s desc $PRODUCTDESC
 
 #Increasing current version by 1 and writing it back to $versionfile.
 #So $versionfile always contains version number that's gonna be used on next compilation.

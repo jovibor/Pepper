@@ -205,6 +205,7 @@ namespace HEXCTRL
 		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullBytesSelected { };
 		const wchar_t* const m_pwszHexMap = L"0123456789ABCDEF";
 		std::wstring m_wstrBottomText { };
+		std::wstring m_wstrErrVirtual { L"This function isn't supported when in virtual mode!" };
 		bool m_fLMousePressed { false };
 		UINT m_dwCtrlId { };
 

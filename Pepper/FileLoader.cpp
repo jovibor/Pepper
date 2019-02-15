@@ -11,6 +11,7 @@
 ************************************************************/
 #include "stdafx.h"
 #include "FileLoader.h"
+#include <algorithm>
 
 HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 {
@@ -35,13 +36,10 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	if (m_lpBase)
 	{
 		m_fMapViewOfFileWhole = true;
-		m_ullStartOffsetMapped = 0;
-		m_ullEndOffsetMapped = m_stFileSize.QuadPart;
 	}
 	else //Not enough memory? File is too big?
 	{
 		m_fMapViewOfFileWhole = false;
-		m_ullStartOffsetMapped = m_ullEndOffsetMapped = 0;
 		::GetNativeSystemInfo(&m_stSysInfo);
 	}
 
@@ -72,6 +70,13 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, CHexCtrl* pHexCtrl)
 		fVirtual = true;
 		pData = nullptr;
 	}
+
+	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(), [pHexCtrl](const QUERYDATA& r) {return r.hWnd == pHexCtrl->m_hWnd; });
+	if (iter == m_vecQuery.end())
+		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->m_hWnd });
+	else
+		iter->ullOffsetDelta = 0;
+
 	pHexCtrl->SetData(pData, (ULONGLONG)m_stFileSize.QuadPart, fVirtual, ullOffset, this);
 
 	return S_OK;
@@ -87,6 +92,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexC
 
 	bool fVirtual;
 	PBYTE pData;
+
 	if (m_fMapViewOfFileWhole)
 	{
 		fVirtual = false;
@@ -95,44 +101,81 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexC
 	else
 	{
 		fVirtual = true;
-		pData = MapFilePiece(ullOffset, ullSize);
+		pData = nullptr;
 	}
+
+	//Checking for given HWND existence in m_vecQuery. If there is no, create.
+	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
+		[pHexCtrl](const QUERYDATA& rData) {return rData.hWnd == pHexCtrl->m_hWnd; });
+	if (iter == m_vecQuery.end())
+		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->m_hWnd, 0, 0, ullOffset, 0, nullptr });
+	else
+		iter->ullOffsetDelta = ullOffset;
+
 	pHexCtrl->SetData(pData, ullSize, fVirtual, 0, this);
 
 	return S_OK;
 }
 
-/*HRESULT CFileLoader::FillVecData(std::vector<std::byte>& vecData, ULONGLONG ullOffset, DWORD dwSize)
+HRESULT CFileLoader::MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD dwSize)
 {
-	if (!m_fCreated)
-		return E_ABORT;
+	UnmapFileOffset(rData);
 
-	if (IsLoaded())
-	{
-		for (unsigned i = 0; i < dwSize; i++)
-			vecData.emplace_back(((std::byte*)m_lpBase)[ullOffset + i]);
-	}
+	DWORD_PTR dwSizeToMap;
+	if (dwSize > 0)
+		dwSizeToMap = dwSize;
 	else
-	{
-		if (MapFileOffset(ullOffset, dwSize) == S_OK)
-		{
-			for (unsigned i = 0; i < dwSize; i++)
-				vecData.emplace_back(((std::byte*)((DWORD_PTR)m_lpSectionBase + m_dwDeltaFileOffsetMapped))[ullOffset + i]);
+		dwSizeToMap = 0x01900000; //25MB.
 
-			UnmapFileOffset();
-		}
-	}
+
+	ULONGLONG ullStartOffsetMapped { }, ullEndOffsetMapped { };
+	if (ullOffset > (ULONGLONG)dwSizeToMap)
+		ullStartOffsetMapped = ullOffset - (dwSizeToMap / 2);
+	else
+		ullStartOffsetMapped = 0;
+
+	DWORD dwDelta = ullStartOffsetMapped % m_stSysInfo.dwAllocationGranularity;
+	if (dwDelta > 0)
+		ullStartOffsetMapped = (ullStartOffsetMapped < m_stSysInfo.dwAllocationGranularity) ? 0 :
+		(ullStartOffsetMapped - dwDelta);
+
+	if ((LONGLONG)(ullStartOffsetMapped + dwSizeToMap) > m_stFileSize.QuadPart)
+		dwSizeToMap = (DWORD)(m_stFileSize.QuadPart - (LONGLONG)ullStartOffsetMapped);
+
+	DWORD dwOffsetHigh = (ullStartOffsetMapped >> 32) & 0xFFFFFFFFul;
+	DWORD dwOffsetLow = ullStartOffsetMapped & 0xFFFFFFFFul;
+	LPVOID lpData { };
+	if (!(lpData = MapViewOfFile(m_hMapObject, FILE_MAP_READ, dwOffsetHigh, dwOffsetLow, dwSizeToMap)))
+		return E_FILE_MAPVIEWOFFILE_SECTION_FAILED;
+
+	rData.ullStartOffsetMapped = ullStartOffsetMapped;
+	rData.ullEndOffsetMapped = ullStartOffsetMapped + dwSizeToMap;
+	rData.dwDeltaFileOffsetMapped = dwDelta;
+	rData.lpData = lpData;
 
 	return S_OK;
-}*/
+}
+
+HRESULT CFileLoader::UnmapFileOffset(QUERYDATA& rData)
+{
+	if (!rData.lpData)
+		return E_ABORT;
+
+	UnmapViewOfFile(rData.lpData);
+	rData.lpData = nullptr;
+	rData.ullStartOffsetMapped = 0;
+	rData.ullEndOffsetMapped = 0;
+
+	return S_OK;
+}
 
 HRESULT CFileLoader::UnloadFile()
 {
 	if (!m_fCreated)
 		return E_ABORT;
 
-	UnmapFileOffset();
-	UnmapFilePiece();
+	for (auto& i : m_vecQuery)
+		UnmapFileOffset(i);
 
 	if (m_lpBase)
 		UnmapViewOfFile(m_lpBase);
@@ -141,88 +184,11 @@ HRESULT CFileLoader::UnloadFile()
 	if (m_hFile)
 		CloseHandle(m_hFile);
 
-	m_lpSectionBase = nullptr;
 	m_lpBase = nullptr;
 	m_hMapObject = nullptr;
 	m_hFile = nullptr;
 	m_fCreated = false;
 	m_fMapViewOfFileWhole = false;
-
-	return S_OK;
-}
-
-HRESULT CFileLoader::MapFileOffset(ULONGLONG ullOffset, DWORD dwSize)
-{
-	UnmapFileOffset();
-
-	DWORD_PTR dwSizeToMap;
-	if (dwSize > 0)
-		dwSizeToMap = dwSize;
-	else
-		dwSizeToMap = 0x01900000; //25MB.
-
-	if (ullOffset > (ULONGLONG)dwSizeToMap)
-		m_ullStartOffsetMapped = ullOffset - (dwSizeToMap / 2);
-	else
-		m_ullStartOffsetMapped = 0;
-
-	m_dwDeltaFileOffsetMapped = m_ullStartOffsetMapped % m_stSysInfo.dwAllocationGranularity;
-	if (m_dwDeltaFileOffsetMapped > 0)
-		m_ullStartOffsetMapped = (m_ullStartOffsetMapped < m_stSysInfo.dwAllocationGranularity) ? 0 :
-		(m_ullStartOffsetMapped - m_dwDeltaFileOffsetMapped);
-
-	if ((LONGLONG)(m_ullStartOffsetMapped + dwSizeToMap) > m_stFileSize.QuadPart)
-		dwSizeToMap = (DWORD)(m_stFileSize.QuadPart - (LONGLONG)m_ullStartOffsetMapped);
-
-	DWORD dwOffsetHigh = (m_ullStartOffsetMapped >> 32) & 0xFFFFFFFFul;
-	DWORD dwOffsetLow = m_ullStartOffsetMapped & 0xFFFFFFFFul;
-	if (!(m_lpSectionBase = MapViewOfFile(m_hMapObject, FILE_MAP_READ, dwOffsetHigh, dwOffsetLow, dwSizeToMap)))
-		return E_FILE_MAPVIEWOFFILE_SECTION_FAILED;
-
-	m_ullEndOffsetMapped = m_ullStartOffsetMapped + dwSizeToMap;
-
-	return S_OK;
-}
-
-PBYTE CFileLoader::MapFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize)
-{
-	UnmapFilePiece();
-
-	DWORD dwDelta = ullOffset % m_stSysInfo.dwAllocationGranularity;
-	if (dwDelta > 0)
-		ullOffset = (ullOffset < m_stSysInfo.dwAllocationGranularity) ? 0 :
-		(ullOffset - dwDelta);
-
-	if ((LONGLONG)(ullOffset + ullSize) > m_stFileSize.QuadPart)
-		ullSize = (DWORD)(m_stFileSize.QuadPart - (LONGLONG)ullOffset);
-
-	DWORD dwOffsetHigh = (ullOffset >> 32) & 0xFFFFFFFFul;
-	DWORD dwOffsetLow = ullOffset & 0xFFFFFFFFul;
-
-	PBYTE lpMappedPiece;
-	if (!(lpMappedPiece = (PBYTE)MapViewOfFile(m_hMapObject, FILE_MAP_READ, dwOffsetHigh, dwOffsetLow, (size_t)ullSize)))
-		return nullptr;
-
-	return lpMappedPiece + dwDelta;
-}
-
-HRESULT CFileLoader::UnmapFilePiece()
-{
-	if (m_lpMappedPiece)
-		UnmapViewOfFile(m_lpMappedPiece);
-
-	return S_OK;
-}
-
-HRESULT CFileLoader::UnmapFileOffset()
-{
-	if (!m_lpSectionBase)
-		return E_ABORT;
-
-	UnmapViewOfFile(m_lpSectionBase);
-	m_lpSectionBase = nullptr;
-	m_ullStartOffsetMapped = 0;
-	m_ullEndOffsetMapped = 0;
 
 	return S_OK;
 }
@@ -237,45 +203,52 @@ bool CFileLoader::IsLoaded()
 	return m_fMapViewOfFileWhole;
 }
 
-unsigned char CFileLoader::GetByte(ULONGLONG ullOffset)
+BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	unsigned char chByte;
+	PHEXNOTIFY pHexNtfy = (PHEXNOTIFY)lParam;
 
-	if (m_fMapViewOfFileWhole && ullOffset < m_ullEndOffsetMapped)
+	switch (pHexNtfy->hdr.code)
+	{
+	case HEXCTRL_MSG_DESTROY:
+	{
+		auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
+			[pHexNtfy](const QUERYDATA& rData) {return rData.hWnd == pHexNtfy->hdr.hwndFrom; });
+		if (iter != m_vecQuery.end())
+			UnmapFileOffset(*iter);
+		break;
+	}
+	case HEXCTRL_MSG_GETDISPINFO:
+		pHexNtfy->chByte = GetByte(pHexNtfy->hdr.hwndFrom, pHexNtfy->ullByteIndex);
+		break;
+	}
+
+	return CWnd::OnNotify(wParam, lParam, pResult);
+}
+
+unsigned char CFileLoader::GetByte(HWND hWnd, ULONGLONG ullOffset)
+{
+	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
+		[hWnd](const QUERYDATA& rData) {return rData.hWnd == hWnd; });
+	if (iter == m_vecQuery.end())
+		return 0;
+
+	unsigned char chByte;
+	ullOffset += iter->ullOffsetDelta;
+
+	if (m_fMapViewOfFileWhole && ullOffset < (ULONGLONG)m_stFileSize.QuadPart)
 		chByte = ((PBYTE)m_lpBase)[ullOffset];
 	else
 	{
-		if (ullOffset >= m_ullStartOffsetMapped && ullOffset < m_ullEndOffsetMapped)
-			chByte = ((PBYTE)m_lpSectionBase)[ullOffset - m_ullStartOffsetMapped];
+		if (ullOffset >= iter->ullStartOffsetMapped && ullOffset < iter->ullEndOffsetMapped)
+			chByte = ((PBYTE)iter->lpData)[ullOffset - iter->ullStartOffsetMapped];
 		else
 		{
-			if (MapFileOffset(ullOffset) == S_OK)
-				chByte = ((PBYTE)m_lpSectionBase)[ullOffset - m_ullStartOffsetMapped];
+			if (MapFileOffset(*iter, ullOffset) == S_OK)
+				chByte = ((PBYTE)iter->lpData)[ullOffset - iter->ullStartOffsetMapped];
 			else
 				chByte = 0;
 		}
 	}
 
 	return chByte;
-}
-
-BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
-{
-	PHEXNOTIFY pHexNtfy = (PHEXNOTIFY)lParam;
-
-	if (pHexNtfy->hdr.idFrom == IDC_HEX_CTRL)
-	{
-		switch (pHexNtfy->hdr.code)
-		{
-		case HEXCTRL_MSG_DESTROY:
-			UnmapFileOffset();
-			UnmapFilePiece();
-			break;
-		case HEXCTRL_MSG_GETDISPINFO:
-			pHexNtfy->chByte = GetByte(pHexNtfy->ullByteIndex);
-			break;
-		}
-	}
-
-	return CWnd::OnNotify(wParam, lParam, pResult);
 }

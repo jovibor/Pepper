@@ -23,7 +23,7 @@ bool CScrollEx::Create(CWnd * pWndParent, int iScrollType,
 	if (m_fCreated || !pWndParent || (iScrollType != SB_VERT && iScrollType != SB_HORZ))
 		return false;
 
-	if (!CWnd::CreateEx(0, nullptr, nullptr, 0, 0, 0, 0, 0, nullptr, 0))
+	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, nullptr, nullptr))
 		return false;
 
 	m_iScrollType = iScrollType;

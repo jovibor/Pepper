@@ -141,7 +141,6 @@ void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirt
 	//to which data requests will be sent.
 	if (fVirtual && !m_pwndMsg)
 		return;
-
 	m_pData = pData;
 	m_ullDataCount = ullSize;
 	m_fVirtual = fVirtual;
@@ -403,25 +402,25 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case IDM_POPUP_SEARCH:
 		if (m_fVirtual)
-			MessageBoxW(L"This function isn't supported in Virtual mode", L"Error", MB_ICONEXCLAMATION);
+			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			m_dlgSearch.ShowWindow(SW_SHOW);
 		break;
 	case IDM_POPUP_COPYASHEX:
 		if (m_fVirtual)
-			MessageBoxW(L"This function isn't supported in Virtual mode", L"Error", MB_ICONEXCLAMATION);
+			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			CopyToClipboard(COPY_AS_HEX);
 		break;
 	case IDM_POPUP_COPYASHEXFORMATTED:
 		if (m_fVirtual)
-			MessageBoxW(L"This function isn't supported in Virtual mode", L"Error", MB_ICONEXCLAMATION);
+			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			CopyToClipboard(COPY_AS_HEX_FORMATTED);
 		break;
 	case IDM_POPUP_COPYASASCII:
 		if (m_fVirtual)
-			MessageBoxW(L"This function isn't supported in Virtual mode", L"Error", MB_ICONEXCLAMATION);
+			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			CopyToClipboard(COPY_AS_ASCII);
 		break;
@@ -1314,7 +1313,7 @@ int CHexCtrl::GetPixelsLineScrollV()
 void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 {
 	CWnd::OnSize(nType, cx, cy);
-	
+
 	Invalidate();
 	UpdateWindow();
 }
