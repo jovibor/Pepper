@@ -40,7 +40,7 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, const LOGFONT* pLogFont)
+BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, CWnd* pwndMsg, const LOGFONT* pLogFont)
 {
 	if (m_fCreated) //Already created.
 		return FALSE;
@@ -48,6 +48,10 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	m_dwCtrlId = uiCtrlId;
 	m_fFloat = fFloat;
 	m_pwndParentOwner = pwndParent;
+	if (pwndMsg)
+		m_pwndMsg = pwndMsg;
+	else
+		m_pwndMsg = pwndParent;
 
 	DWORD dwStyle;
 	if (fFloat)
@@ -126,21 +130,24 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	return TRUE;
 }
 
-void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual, ULONGLONG ullGotoOffset)
+void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual, ULONGLONG ullOffset, CWnd* pwndMsg)
 {
 	ClearData();
 
-	//Virtual mode is possible only when there is a parent window
+	if (pwndMsg)
+		m_pwndMsg = pwndMsg;
+
+	//Virtual mode is possible only when there is a msg window
 	//to which data requests will be sent.
-	if (fVirtual && m_pwndParentOwner == nullptr)
+	if (fVirtual && !m_pwndMsg)
 		return;
 
 	m_pData = pData;
 	m_ullDataCount = ullSize;
 	m_fVirtual = fVirtual;
 
-	if (ullGotoOffset)
-		SetSelection(ullGotoOffset);
+	if (ullOffset)
+		SetSelection(ullOffset);
 	UpdateInfoText();
 	Recalc();
 }
@@ -237,10 +244,10 @@ void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 
 void CHexCtrl::OnDestroy()
 {
-	if (m_pwndParentOwner)
+	if (m_pwndMsg)
 	{
 		NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
-		m_pwndParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+		m_pwndMsg->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
 		m_pwndParentOwner->SetForegroundWindow();
 	}
 	m_fCreated = false;
@@ -712,11 +719,11 @@ void CHexCtrl::OnPaint()
 				//If it's virtual data control, we aquire next byte to print from parent window.
 				WCHAR wstrHexToPrint[2];
 				unsigned char chByteToPrint { };
-				if (m_fVirtual && m_pwndParentOwner)
+				if (m_fVirtual && m_pwndMsg)
 				{
 					HEXNOTIFY hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
 						ullIndexDataToPrint, 0 };
-					m_pwndParentOwner->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
+					m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
 					chByteToPrint = hexntfy.chByte;
 				}
 				else
@@ -1307,7 +1314,9 @@ int CHexCtrl::GetPixelsLineScrollV()
 void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 {
 	CWnd::OnSize(nType, cx, cy);
+	
 	Invalidate();
+	UpdateWindow();
 }
 
 void CHexCtrl::OnGetMinMaxInfo(MINMAXINFO* lpMMI)

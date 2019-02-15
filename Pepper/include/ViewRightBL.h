@@ -50,7 +50,8 @@ private:
 	LOGFONT m_lf { }, m_hdrlf { };
 	RESHELPER m_stResHelper { };
 	PCLIBPE_SECURITY_VEC m_vecSec { };
-
+	
+	int CreateHexSecHeadersEntry(DWORD dwEntry);
 	int CreateListImportEntry(DWORD dwEntry);
 	int CreateListDelayImportEntry(DWORD dwEntry);
 	int CreateListExportFuncs();

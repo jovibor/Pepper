@@ -52,6 +52,56 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	return S_OK;
 }
 
+HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, CHexCtrl* pHexCtrl)
+{
+	if (!pHexCtrl)
+	{
+		m_stHex.Create(this, IDC_HEX_CTRL, nullptr, true);
+		pHexCtrl = &m_stHex;
+	}
+
+	bool fVirtual;
+	PBYTE pData;
+	if (m_fMapViewOfFileWhole)
+	{
+		fVirtual = false;
+		pData = (PBYTE)m_lpBase;
+	}
+	else
+	{
+		fVirtual = true;
+		pData = nullptr;
+	}
+	pHexCtrl->SetData(pData, (ULONGLONG)m_stFileSize.QuadPart, fVirtual, ullOffset, this);
+
+	return S_OK;
+}
+
+HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexCtrl* pHexCtrl)
+{
+	if (!IsCreated())
+		return E_ABORT;
+
+	if (!pHexCtrl)
+		pHexCtrl = &m_stHex;
+
+	bool fVirtual;
+	PBYTE pData;
+	if (m_fMapViewOfFileWhole)
+	{
+		fVirtual = false;
+		pData = (PBYTE)((DWORD_PTR)m_lpBase + ullOffset);
+	}
+	else
+	{
+		fVirtual = true;
+		pData = MapFilePiece(ullOffset, ullSize);
+	}
+	pHexCtrl->SetData(pData, ullSize, fVirtual, 0, this);
+
+	return S_OK;
+}
+
 /*HRESULT CFileLoader::FillVecData(std::vector<std::byte>& vecData, ULONGLONG ullOffset, DWORD dwSize)
 {
 	if (!m_fCreated)
@@ -185,39 +235,6 @@ bool CFileLoader::IsCreated()
 bool CFileLoader::IsLoaded()
 {
 	return m_fMapViewOfFileWhole;
-}
-
-HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, CHexCtrl* pHexCtrl)
-{
-	if (!pHexCtrl)
-	{
-		m_stHex.Create(this, IDC_HEX_CTRL, nullptr, true);
-		pHexCtrl = &m_stHex;
-	}
-
-	if (m_fMapViewOfFileWhole)
-		pHexCtrl->SetData((PBYTE)m_lpBase, (ULONGLONG)m_stFileSize.QuadPart, false, ullOffset);
-	else
-		pHexCtrl->SetData(nullptr, (ULONGLONG)m_stFileSize.QuadPart, true, ullOffset);
-
-	return S_OK;
-}
-
-HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexCtrl * pHexCtrl)
-{
-	if (!IsCreated())
-		return E_ABORT;
-
-	if (!pHexCtrl)
-		pHexCtrl = &m_stHex;
-
-	if (m_fMapViewOfFileWhole)
-		pHexCtrl->SetData((PBYTE)((DWORD_PTR)m_lpBase + ullOffset), ullSize);
-	else
-		pHexCtrl->SetData(MapFilePiece(ullOffset, ullSize), ullSize);
-
-
-	return S_OK;
 }
 
 unsigned char CFileLoader::GetByte(ULONGLONG ullOffset)

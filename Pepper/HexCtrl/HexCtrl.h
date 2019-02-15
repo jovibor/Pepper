@@ -107,8 +107,22 @@ namespace HEXCTRL
 		friend class CHexDlgSearch;
 		CHexCtrl() {}
 		virtual ~CHexCtrl() {}
-		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, const LOGFONT* pLogFont = nullptr);
-		void SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual = false, ULONGLONG ullGotoOffset = 0);
+		/************************************************************************************************************
+		* Main initialization method, CHexCtrl::Create:																*
+		* 1. Parent window pointer. 2. Id of the control 3. Initial rect, if nullptr it will be screen centered.	*
+		* 4. Float or child window.																					*
+		* 5. Pointer to window to recieve control's generel WM_NOTIFY messages, it can differ from parent window.	*
+		* If it's null all messages will go to parent.																*
+		************************************************************************************************************/
+		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, 
+			CWnd* pwndMsg = nullptr, const LOGFONT* pLogFont = nullptr);
+		/************************************************************************************************************
+		* CHexCtrl::SetData:
+		* 1. Pointer to data, not used if it's virtual control 2. Size of data to see as hex.						*
+		* 3. Is virtual? 4. Offset to scroll to after creation.														*
+		* 5. Pointer to window to send operate messages to. If nullptr, parent window is used.						*
+		************************************************************************************************************/
+		void SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual = false, ULONGLONG ullOffset = 0, CWnd* pwndMsg = nullptr);
 		void ClearData();
 		void SetSelection(ULONGLONG ullOffset, ULONGLONG ullSize = 1);
 		void SetFont(const LOGFONT* pLogFontNew);
@@ -157,6 +171,7 @@ namespace HEXCTRL
 		DWORD m_dwGridCapacity { 16 };
 		DWORD m_dwGridBlockSize { m_dwGridCapacity / 2 }; //Size of block before space delimiter.
 		CWnd* m_pwndParentOwner { };
+		CWnd* m_pwndMsg { };
 		SIZE m_sizeLetter { 1, 1 }; //Current font's letter size (width, height).
 		CFont m_fontHexView;
 		CFont m_fontBottomRect;
@@ -215,7 +230,7 @@ namespace HEXCTRL
 	public:
 		afx_msg void OnSize(UINT nType, int cx, int cy);
 		afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
-};
+	};
 
 	/************************************************
 	* WM_NOTIFY message codes (NMHDR.code values)	*

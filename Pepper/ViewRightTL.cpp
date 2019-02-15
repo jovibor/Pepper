@@ -160,7 +160,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	case IDC_LIST_SECHEADERS:
 		m_listSecHeaders.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listSecHeaders;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_EXPORT:
 		m_listExportDir.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -474,7 +474,9 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		}
 		break;
 	case IDC_LIST_SECHEADERS:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECHEADERS_ENTRY, pNMI->iItem));
+		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
 		}
 		break;

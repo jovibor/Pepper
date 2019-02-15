@@ -24,7 +24,7 @@ public:
 	CFileLoader() {};
 	~CFileLoader() {};
 
-	//Firs function to call.
+	//First function to call.
 	HRESULT LoadFile(LPCWSTR lpszFileName);
 	
 	//Shows arbitrary offset in already loaded file (LoadFile)

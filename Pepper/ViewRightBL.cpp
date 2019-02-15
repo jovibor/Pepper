@@ -74,6 +74,10 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 
 	switch (LOWORD(lHint))
 	{
+	case IDC_LIST_SECHEADERS_ENTRY:
+		CreateHexSecHeadersEntry(HIWORD(lHint));
+		m_pActiveWnd = &m_stHexEdit;
+		break;
 	case IDC_LIST_EXPORT:
 		m_listExportFuncs.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listExportFuncs;
@@ -216,6 +220,21 @@ int CViewRightBL::CreateListExportFuncs()
 		listindex++;
 	}
 	m_listExportFuncs.SetRedraw(TRUE);
+
+	return 0;
+}
+
+int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
+{
+	PCLIBPE_SECHEADERS_VEC pSecHeaders;
+	m_pLibpe->GetSectionsHeaders(pSecHeaders);
+
+	auto& rImageSecHeader = pSecHeaders->at(dwEntry).stSecHdr;
+	m_pFileLoader->ShowFilePiece(rImageSecHeader.PointerToRawData, rImageSecHeader.SizeOfRawData, &m_stHexEdit);
+
+	CRect rect;
+	GetClientRect(&rect);
+	m_stHexEdit.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	return 0;
 }
@@ -474,10 +493,7 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	if (m_pLibpe->GetDebug(pDebug) != S_OK)
 		return -1;
 
-//	m_vecDebug.clear();
 	auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
-//	m_stFileLoader.FillVecData(m_vecDebug, rDebugDir.PointerToRawData, rDebugDir.SizeOfData);
-//	m_stHexEdit.SetData((PBYTE)m_vecDebug.data(), m_vecDebug.size());
 	m_pFileLoader->ShowFilePiece(rDebugDir.PointerToRawData, rDebugDir.SizeOfData, &m_stHexEdit);
 
 	CRect rect;
