@@ -109,12 +109,12 @@ namespace HEXCTRL
 		virtual ~CHexCtrl() {}
 		/************************************************************************************************************
 		* Main initialization method, CHexCtrl::Create:																*
-		* 1. Parent window pointer. 2. Id of the control 3. Initial rect, if nullptr it will be screen centered.	*
-		* 4. Float or child window.																					*
-		* 5. Pointer to window to recieve control's generel WM_NOTIFY messages, it can differ from parent window.	*
-		* If it's null all messages will go to parent.																*
+		* 1. Parent window pointer. 2. Id of the control 3. Extended window styles.									*
+		* 4. Initial rect, if nullptr it will be screen centered. 5. Float or child window.							*																					*
+		* 6. Pointer to window that is to recieve control's WM_NOTIFY messages, it can differ from parent window.	*
+		*	 If it's nullptr, all messages will go to parent. 7. Font for window, if nullptr default is used.		*
 		************************************************************************************************************/
-		BOOL Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect = nullptr, bool fFloat = false, 
+		bool Create(CWnd* pwndParent, UINT uiCtrlId, DWORD dwExStyles = 0, const CRect* pRect = nullptr, bool fFloat = false,
 			CWnd* pwndMsg = nullptr, const LOGFONT* pLogFont = nullptr);
 		/************************************************************************************************************
 		* CHexCtrl::SetData:

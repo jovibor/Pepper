@@ -320,13 +320,17 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 {
-	if (m_pLibpe->GetSecurity(m_vecSec) != S_OK)
+	PCLIBPE_SECURITY_VEC pSec;
+
+	if (m_pLibpe->GetSecurity(pSec) != S_OK)
 		return -1;
-	if (nSertId > m_vecSec->size())
+	if (nSertId > pSec->size())
 		return -1;
 
-	const auto& secEntry = m_vecSec->at(nSertId).vecRawData;
-	m_stHexEdit.SetData((PBYTE)secEntry.data(), secEntry.size());
+	const auto& secEntry = pSec->at(nSertId).stWinSert;
+	DWORD dwStart = pSec->at(nSertId).dwOffsetWinCertDesc + offsetof(WIN_CERTIFICATE, bCertificate);
+	DWORD dwCertSize = (DWORD_PTR)secEntry.dwLength - offsetof(WIN_CERTIFICATE, bCertificate);
+	m_pFileLoader->ShowFilePiece(dwStart, dwCertSize, &m_stHexEdit);
 
 	CRect rect;
 	GetClientRect(&rect);

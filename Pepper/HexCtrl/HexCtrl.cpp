@@ -40,7 +40,7 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
-BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool fFloat, CWnd* pwndMsg, const LOGFONT* pLogFont)
+bool CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, DWORD dwExStyles, const CRect* pRect, bool fFloat, CWnd* pwndMsg, const LOGFONT* pLogFont)
 {
 	if (m_fCreated) //Already created.
 		return FALSE;
@@ -55,7 +55,7 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 
 	DWORD dwStyle;
 	if (fFloat)
-		dwStyle = WS_VISIBLE | WS_OVERLAPPED | WS_CAPTION | WS_THICKFRAME | WS_SYSMENU | WS_MAXIMIZEBOX;
+		dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
 	else
 		dwStyle = WS_VISIBLE | WS_CHILD;
 
@@ -74,9 +74,9 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 
 	HCURSOR hCur;
 	if (!(hCur = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED)))
-		return FALSE;
-	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0, hCur), L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
-		return FALSE;
+		return false;
+	if (!CWnd::CreateEx(dwExStyles, AfxRegisterWndClass(0, hCur), L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
+		return false;
 
 	//Removing window's border frame.
 	MARGINS marg { 0, 0, 0, 1 };
@@ -127,7 +127,7 @@ BOOL CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, const CRect* pRect, bool 
 	Recalc();
 	m_fCreated = true;
 
-	return TRUE;
+	return true;
 }
 
 void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual, ULONGLONG ullOffset, CWnd* pwndMsg)

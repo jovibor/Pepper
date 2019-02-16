@@ -1,8 +1,8 @@
 /****************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/			 				*
-* PE viewer library for x86 (PE32) and x64 (PE32+) binares.			 					*
-* This software is available under the MIT License modified with The Commons Clause.	*
-* Additional info can be found at https://github.com/jovibor/libpe	 					*
+* This software is available under the "MIT License modified with The Commons Clause."	*
+* Windows library for reading PE (x86) and PE+ (x64) files inner structure information.	*
+* https://github.com/jovibor/libpe	 													*
 ****************************************************************************************/
 #pragma once
 #include <vector>
@@ -142,8 +142,8 @@ namespace libpe
 	using PCLIBPE_EXCEPTION_VEC = const LIBPE_EXCEPTION_VEC*;
 
 	//Security table.
-	//Vector of WIN_CERTIFICATE and vector of actual data in form of std::byte.
-	struct LIBPE_SECURITY { DWORD dwOffsetWinCertDesc; WIN_CERTIFICATE stWinSert; std::vector<std::byte> vecRawData; };
+	//Vector of: 1. descriptor offset 2. WIN_CERTIFICATE.
+	struct LIBPE_SECURITY { DWORD dwOffsetWinCertDesc; WIN_CERTIFICATE stWinSert; };
 	using LIBPE_SECURITY_VEC = std::vector<LIBPE_SECURITY>;
 	using PCLIBPE_SECURITY_VEC = const LIBPE_SECURITY_VEC*;
 

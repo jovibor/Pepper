@@ -41,7 +41,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	CString strToolBarName;
 	BOOL bNameValid = strToolBarName.LoadString(IDS_TOOLBAR_STANDARD);
-	ASSERT(bNameValid);
 	m_wndToolBar.SetWindowText(strToolBarName);
 
 //	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);

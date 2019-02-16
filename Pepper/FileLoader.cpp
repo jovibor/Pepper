@@ -43,8 +43,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 		::GetNativeSystemInfo(&m_stSysInfo);
 	}
 
-	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, CW_USEDEFAULT, CW_USEDEFAULT,
-		CW_USEDEFAULT, CW_USEDEFAULT, AfxGetMainWnd()->m_hWnd, nullptr))
+	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr))
 		return E_ABORT;
 
 	return S_OK;
@@ -54,7 +53,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, CHexCtrl* pHexCtrl)
 {
 	if (!pHexCtrl)
 	{
-		m_stHex.Create(this, IDC_HEX_CTRL, nullptr, true);
+		m_stHex.Create(this, IDC_HEX_CTRL, 0, nullptr, true);
 		pHexCtrl = &m_stHex;
 	}
 
