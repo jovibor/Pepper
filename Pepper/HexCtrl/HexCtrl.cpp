@@ -75,7 +75,7 @@ bool CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, DWORD dwExStyles, const C
 	HCURSOR hCur;
 	if (!(hCur = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED)))
 		return false;
-	if (!CWnd::CreateEx(dwExStyles, AfxRegisterWndClass(0, hCur), L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
+	if (!CWnd::CreateEx(dwExStyles, AfxRegisterWndClass(CS_VREDRAW | CS_HREDRAW, hCur), L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
 		return false;
 
 	//Removing window's border frame.
@@ -1308,19 +1308,6 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 int CHexCtrl::GetPixelsLineScrollV()
 {
 	return m_sizeLetter.cy;
-}
-
-void CHexCtrl::OnSize(UINT nType, int cx, int cy)
-{
-	CWnd::OnSize(nType, cx, cy);
-
-	Invalidate();
-	UpdateWindow();
-}
-
-void CHexCtrl::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
-{
-	CWnd::OnGetMinMaxInfo(lpMMI);
 }
 
 

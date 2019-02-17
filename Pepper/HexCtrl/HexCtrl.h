@@ -134,6 +134,7 @@ namespace HEXCTRL
 		int GetDlgCtrlID() const;
 		CWnd* GetParent() const;
 	protected:
+		DECLARE_MESSAGE_MAP()
 		void OnDraw(CDC* pDC);
 		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
@@ -161,7 +162,6 @@ namespace HEXCTRL
 		void SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBytes, bool fHighlight = false);
 		int GetPixelsLineScrollV();
 		void UpdateInfoText();
-		DECLARE_MESSAGE_MAP()
 	private:
 		bool m_fCreated { false };
 		bool m_fFloat { false };
@@ -208,7 +208,6 @@ namespace HEXCTRL
 		std::wstring m_wstrErrVirtual { L"This function isn't supported when in virtual mode!" };
 		bool m_fLMousePressed { false };
 		UINT m_dwCtrlId { };
-
 		//Enums.
 		enum HEXCTRL_CLIPBOARD {
 			COPY_AS_HEX = 0x01,
@@ -228,9 +227,6 @@ namespace HEXCTRL
 			SEARCH_NOTFOUND = 0, SEARCH_FOUND = 0xF,
 			SEARCH_BEGINNING = 0xA, SEARCH_END = 0xB,
 		};
-	public:
-		afx_msg void OnSize(UINT nType, int cx, int cy);
-		afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
 	};
 
 	/************************************************

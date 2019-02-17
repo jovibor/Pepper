@@ -18,10 +18,13 @@ class CMainFrame : public CMDIFrameWndEx
 protected:
 	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
 	BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnWindowManager();
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
 	CMFCToolBar m_wndToolBar;
 	DECLARE_MESSAGE_MAP()
+private:
+	CWnd* pwndMBtnCurDown { };
 };
