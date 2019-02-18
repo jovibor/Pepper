@@ -53,6 +53,7 @@ private:
 		LPVOID		lpData { };
 	};
 	CHexCtrl m_stHex;
+	HEXCREATESTRUCT m_stHC { };
 	//Size of the loaded PE file.
 	LARGE_INTEGER m_stFileSize { };
 	HANDLE m_hFile { };

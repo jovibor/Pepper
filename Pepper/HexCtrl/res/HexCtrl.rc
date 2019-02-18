@@ -73,7 +73,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,154,63,50,14
     LTEXT           "https://github.com/jovibor/Pepper",IDC_STATIC_HTTP_GITHUB,30,49,116,8
-    LTEXT           "Hex Control for MFC, v1.7",IDC_STATIC,29,10,87,8
+    LTEXT           "Hex Control for MFC, v1.7.5",IDC_STATIC,29,10,97,8
     LTEXT           "Author: Jovibor (C), 2018-2019.",IDC_STATIC,29,19,105,8
     LTEXT           "To increase font size:         Ctrl+MouseWheel",IDC_STATIC,29,28,163,8
     LTEXT           "To increase grid capacity:  Ctrl+Shift+MouseWheel",IDC_STATIC,29,37,167,8
@@ -105,6 +105,7 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Bitmap
@@ -113,6 +114,17 @@ END
 IDB_SCROLL_V            BITMAP                  "ScrollExV.bmp"
 
 IDB_SCROLL_H            BITMAP                  "ScrollExH.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_HEXCTRL_ABOUT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

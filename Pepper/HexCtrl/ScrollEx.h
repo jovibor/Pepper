@@ -19,6 +19,8 @@ namespace HEXCTRL {
 		CScrollEx() {}
 		~CScrollEx() {}
 		bool Create(CWnd* pWnd, int iScrollType, ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax);
+		void AddSibling(CScrollEx* pSibling);
+		bool IsSiblingVisible();
 		bool IsVisible() { return m_fVisible; }
 		CWnd* GetParent() { return m_pwndParent; }
 		void SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax);
@@ -80,6 +82,7 @@ namespace HEXCTRL {
 			LASTBUTTON_HOVER = 8
 		};
 		CWnd* m_pwndParent { };
+		CScrollEx* m_pSibling { };
 		UINT m_uiScrollBarSizeWH { };
 		int m_iScrollType { };
 		int m_iScrollBarState { };

@@ -18,8 +18,9 @@ using namespace HEXCTRL;
 * CHexCtrl implementation.												*
 ************************************************************************/
 BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
-	ON_WM_DESTROY()
+	ON_WM_ACTIVATE()
 	ON_WM_CLOSE()
+	ON_WM_DESTROY()
 	ON_WM_ERASEBKGND()
 	ON_WM_PAINT()
 	ON_WM_VSCROLL()
@@ -31,38 +32,34 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_KEYDOWN()
+	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_NCACTIVATE()
 	ON_WM_NCCALCSIZE()
 	ON_WM_NCPAINT()
-	ON_WM_ACTIVATE()
-	ON_WM_SIZE()
-	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
-bool CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, DWORD dwExStyles, const CRect* pRect, bool fFloat, CWnd* pwndMsg, const LOGFONT* pLogFont)
+bool CHexCtrl::Create(const HEXCREATESTRUCT& hc)
 {
 	if (m_fCreated) //Already created.
-		return FALSE;
+		return false;
 
-	m_dwCtrlId = uiCtrlId;
-	m_fFloat = fFloat;
-	m_pwndParentOwner = pwndParent;
-	if (pwndMsg)
-		m_pwndMsg = pwndMsg;
+	m_dwCtrlId = hc.uId;
+	m_fFloat = hc.fFloat;
+	m_pwndParentOwner = hc.pwndParent;
+	if (hc.pwndMsg)
+		m_pwndMsg = hc.pwndMsg;
 	else
-		m_pwndMsg = pwndParent;
+		m_pwndMsg = hc.pwndParent;
 
 	DWORD dwStyle;
-	if (fFloat)
+	if (m_fFloat)
 		dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
 	else
 		dwStyle = WS_VISIBLE | WS_CHILD;
 
 	CRect rc;
-	if (pRect)
-		rc = *pRect;
-	else if (fFloat)
+	if (hc.rc.IsRectNull() && m_fFloat)
 	{	//If pRect == nullptr and it's a float window then place it at screen center.
 
 		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
@@ -75,7 +72,8 @@ bool CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, DWORD dwExStyles, const C
 	HCURSOR hCur;
 	if (!(hCur = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED)))
 		return false;
-	if (!CWnd::CreateEx(dwExStyles, AfxRegisterWndClass(CS_VREDRAW | CS_HREDRAW, hCur), L"HexControl", dwStyle, rc, pwndParent, fFloat ? 0 : uiCtrlId))
+	if (!CWnd::CreateEx(hc.dwExStyles, AfxRegisterWndClass(CS_VREDRAW | CS_HREDRAW, hCur),
+		L"HexControl", dwStyle, rc, m_pwndParentOwner, m_fFloat ? 0 : m_dwCtrlId))
 		return false;
 
 	//Removing window's border frame.
@@ -93,9 +91,9 @@ bool CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, DWORD dwExStyles, const C
 
 	//In case of inability to create font from LOGFONT*
 	//creating default windows font.
-	if (pLogFont)
+	if (hc.pLogFont)
 	{
-		if (!m_fontHexView.CreateFontIndirectW(pLogFont))
+		if (!m_fontHexView.CreateFontIndirectW(hc.pLogFont))
 			if (!m_fontHexView.CreateFontIndirectW(&lf))
 				m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
 	}
@@ -121,6 +119,8 @@ bool CHexCtrl::Create(CWnd* pwndParent, UINT uiCtrlId, DWORD dwExStyles, const C
 
 	m_stScrollV.Create(this, SB_VERT, 0, 0, 0); //Actual sizes are set in Recalc().
 	m_stScrollH.Create(this, SB_HORZ, 0, 0, 0);
+	m_stScrollV.AddSibling(&m_stScrollH);
+	m_stScrollH.AddSibling(&m_stScrollV);
 
 	m_dlgSearch.Create(IDD_HEXCTRL_SEARCH, this);
 
@@ -243,10 +243,12 @@ void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 
 void CHexCtrl::OnDestroy()
 {
+	NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
 	if (m_pwndMsg)
-	{
-		NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
 		m_pwndMsg->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+	if (m_pwndParentOwner)
+	{
+		m_pwndParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
 		m_pwndParentOwner->SetForegroundWindow();
 	}
 	m_fCreated = false;
@@ -776,8 +778,11 @@ void CHexCtrl::OnPaint()
 	}
 }
 
-void CHexCtrl::OnDraw(CDC * pDC)
+void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 {
+	CWnd::OnSize(nType, cx, cy);
+
+	CalcWorkAreaHeight(cy);
 }
 
 BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
@@ -805,7 +810,7 @@ void CHexCtrl::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 {
 	CWnd::OnNcCalcSize(bCalcValidRects, lpncsp);
 
-	//Sequince is important - H->V.
+	//Sequence is important — H->V.
 	m_stScrollH.OnNcCalcSize(bCalcValidRects, lpncsp);
 	m_stScrollV.OnNcCalcSize(bCalcValidRects, lpncsp);
 }
@@ -816,6 +821,48 @@ void CHexCtrl::OnNcPaint()
 
 	m_stScrollV.OnNcPaint();
 	m_stScrollH.OnNcPaint();
+}
+
+void CHexCtrl::CalcWorkAreaHeight(int iClientHeight)
+{
+	m_iHeightWorkArea = iClientHeight - m_iHeightBottomOffArea -
+		((iClientHeight - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
+}
+
+void CHexCtrl::Recalc()
+{
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	ULONGLONG ullStartLineV = m_stScrollV.GetScrollPos() / GetPixelsLineScrollV();
+	HDC hDC = ::GetDC(m_hWnd);
+	SelectObject(hDC, m_fontHexView.m_hObject);
+	TEXTMETRICW tm { };
+	GetTextMetricsW(hDC, &tm);
+	m_sizeLetter.cx = tm.tmAveCharWidth;
+	m_sizeLetter.cy = tm.tmHeight + tm.tmExternalLeading;
+	::ReleaseDC(m_hWnd, hDC);
+
+	m_iFirstVertLine = 0;
+	m_iSecondVertLine = m_sizeLetter.cx * 10;
+	m_iDistanceBetweenHexChunks = m_sizeLetter.cx * 3;
+	m_iSpaceBetweenBlocks = m_sizeLetter.cx * 2;
+	m_iThirdVertLine = m_iSecondVertLine + (m_iDistanceBetweenHexChunks * m_dwGridCapacity) + m_iSpaceBetweenBlocks + m_sizeLetter.cx;
+	m_iIndentAscii = m_iThirdVertLine + m_sizeLetter.cx;
+	m_iSpaceBetweenAscii = m_sizeLetter.cx + 1;
+	m_iFourthVertLine = m_iIndentAscii + (m_iSpaceBetweenAscii * m_dwGridCapacity) + m_sizeLetter.cx;
+	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
+	m_iHeightTopRect = int(m_sizeLetter.cy * 1.5);
+	m_iIndentTextCapacityY = (m_iHeightTopRect / 2) - (m_sizeLetter.cy / 2);
+	CalcWorkAreaHeight(rcClient.Height());
+
+	//Scroll sizes according to current font size.
+	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
+	m_stScrollV.SetScrollSizes(GetPixelsLineScrollV(), uiPage,
+		m_iHeightTopRect + m_iHeightBottomOffArea + (GetPixelsLineScrollV() * (m_ullDataCount / m_dwGridCapacity + 2)));
+	m_stScrollV.SetScrollPos(ullStartLineV * GetPixelsLineScrollV());
+	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, rcClient.Width(), m_iFourthVertLine + 1);
+
+	RedrawWindow();
 }
 
 ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
@@ -980,44 +1027,7 @@ void CHexCtrl::UpdateInfoText()
 	RedrawWindow();
 }
 
-void CHexCtrl::Recalc()
-{
-	CRect rcClient;
-	GetClientRect(&rcClient);
-	ULONGLONG ullStartLineV = m_stScrollV.GetScrollPos() / GetPixelsLineScrollV();
-	HDC hDC = ::GetDC(m_hWnd);
-	SelectObject(hDC, m_fontHexView.m_hObject);
-	TEXTMETRICW tm { };
-	GetTextMetricsW(hDC, &tm);
-	m_sizeLetter.cx = tm.tmAveCharWidth;
-	m_sizeLetter.cy = tm.tmHeight + tm.tmExternalLeading;
-	::ReleaseDC(m_hWnd, hDC);
-
-	m_iFirstVertLine = 0;
-	m_iSecondVertLine = m_sizeLetter.cx * 10;
-	m_iDistanceBetweenHexChunks = m_sizeLetter.cx * 3;
-	m_iSpaceBetweenBlocks = m_sizeLetter.cx * 2;
-	m_iThirdVertLine = m_iSecondVertLine + (m_iDistanceBetweenHexChunks * m_dwGridCapacity) + m_iSpaceBetweenBlocks + m_sizeLetter.cx;
-	m_iIndentAscii = m_iThirdVertLine + m_sizeLetter.cx;
-	m_iSpaceBetweenAscii = m_sizeLetter.cx + 1;
-	m_iFourthVertLine = m_iIndentAscii + (m_iSpaceBetweenAscii * m_dwGridCapacity) + m_sizeLetter.cx;
-	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
-	m_iHeightTopRect = int(m_sizeLetter.cy * 1.5);
-	m_iHeightWorkArea = rcClient.Height() - m_iHeightBottomOffArea -
-		((rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-	m_iIndentTextCapacityY = (m_iHeightTopRect / 2) - (m_sizeLetter.cy / 2);
-
-	//Scroll sizes according to current font size.
-	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
-	m_stScrollV.SetScrollSizes(GetPixelsLineScrollV(), uiPage,
-		m_iHeightTopRect + m_iHeightBottomOffArea + (GetPixelsLineScrollV() * (m_ullDataCount / m_dwGridCapacity + 2)));
-	m_stScrollV.SetScrollPos(ullStartLineV * GetPixelsLineScrollV());
-	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, rcClient.Width(), m_iFourthVertLine + 1);
-
-	RedrawWindow();
-}
-
-void CHexCtrl::Search(HEXSEARCH& rSearch)
+void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 {
 	rSearch.fFound = false;
 	ULONGLONG dwStartAt = rSearch.ullStartAt;

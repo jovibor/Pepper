@@ -28,6 +28,17 @@ protected:
 	void OnDraw(CDC* pDC) override; // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	int CreateHexSecHeadersEntry(DWORD dwEntry);
+	int CreateListImportEntry(DWORD dwEntry);
+	int CreateListDelayImportEntry(DWORD dwEntry);
+	int CreateListExportFuncs();
+	int CreateListRelocsEntry(DWORD dwEntry);
+	int CreateHexDebugEntry(DWORD dwEntry);
+	int CreateTreeResources();
+	int CreateHexTLS();
+	int CreateHexSecurityEntry(unsigned nSertId);
+	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe { };
@@ -35,8 +46,8 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	CWnd* m_pActiveWnd { };
 	CHexCtrl m_stHexEdit;
+	HEXCREATESTRUCT m_stHC { };
 	CFileLoader* m_pFileLoader { };
-	CFileLoader m_stFileLoader;
 	std::vector<std::byte> m_vecDebug;
 	LISTEXINFO m_stListInfo;
 	CListEx m_listExportFuncs;
@@ -49,16 +60,4 @@ private:
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };
 	RESHELPER m_stResHelper { };
-	
-	int CreateHexSecHeadersEntry(DWORD dwEntry);
-	int CreateListImportEntry(DWORD dwEntry);
-	int CreateListDelayImportEntry(DWORD dwEntry);
-	int CreateListExportFuncs();
-	int CreateListRelocsEntry(DWORD dwEntry);
-	int CreateHexDebugEntry(DWORD dwEntry);
-	int CreateTreeResources();
-	int CreateHexTLS();
-	int CreateHexSecurityEntry(unsigned nSertId);
-	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 };

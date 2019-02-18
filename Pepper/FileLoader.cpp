@@ -45,6 +45,10 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 
 	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr))
 		return E_ABORT;
+	
+	m_stHC.fFloat = true;
+	m_stHC.pwndParent = this;
+	m_stHC.uId = IDC_HEX_CTRL;
 
 	return S_OK;
 }
@@ -53,7 +57,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, CHexCtrl* pHexCtrl)
 {
 	if (!pHexCtrl)
 	{
-		m_stHex.Create(this, IDC_HEX_CTRL, 0, nullptr, true);
+		m_stHex.Create(m_stHC);
 		pHexCtrl = &m_stHex;
 	}
 
@@ -87,7 +91,10 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexC
 		return E_ABORT;
 
 	if (!pHexCtrl)
+	{
+		m_stHex.Create(m_stHC);
 		pHexCtrl = &m_stHex;
+	}
 
 	bool fVirtual;
 	PBYTE pData;

@@ -71,6 +71,8 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 	void ShowResource(RESHELPER*);
+	int CreateListTLSCallbacks();
+	void ResLoadError();
 	DECLARE_MESSAGE_MAP()
 private:
 	CWnd* m_pActiveWnd { };
@@ -143,7 +145,4 @@ private:
 	{ WS_MAXIMIZEBOX, L"WS_MAXIMIZEBOX" },
 	{ WS_TILEDWINDOW, L"WS_TILEDWINDOW" }
 	};
-private:
-	int CreateListTLSCallbacks();
-	void ResLoadError();
 };

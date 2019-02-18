@@ -21,6 +21,9 @@ protected:
 	virtual ~CViewRightTR() {}
 	virtual void OnDraw(CDC* pDC);
 	virtual void OnInitialUpdate();
+	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe { };
@@ -28,7 +31,5 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	CWnd* m_pActiveWnd { };
 	CHexCtrl m_stHexEdit;
-	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	HEXCREATESTRUCT m_stHC { };
 };

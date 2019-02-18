@@ -23,7 +23,7 @@ bool CScrollEx::Create(CWnd * pWndParent, int iScrollType,
 	if (m_fCreated || !pWndParent || (iScrollType != SB_VERT && iScrollType != SB_HORZ))
 		return false;
 
-	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr))
+	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, 0))
 		return false;
 
 	m_iScrollType = iScrollType;
@@ -48,6 +48,20 @@ bool CScrollEx::Create(CWnd * pWndParent, int iScrollType,
 	SetScrollSizes(ullScrolline, ullScrollPage, ullScrollSizeMax);
 
 	return true;
+}
+
+void CScrollEx::AddSibling(CScrollEx* pSibling)
+{
+	if (pSibling)
+		m_pSibling = pSibling;
+}
+
+bool CScrollEx::IsSiblingVisible()
+{
+	if (m_pSibling)
+		return m_pSibling->IsVisible();
+
+	return false;
 }
 
 void CScrollEx::SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax)
@@ -212,11 +226,9 @@ void CScrollEx::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 	ULONGLONG ullCurPos = GetScrollPos();
 	if (IsVert())
 	{
-		UINT uiHeight;
-		if (lpncsp->rgrc[2].bottom < lpncsp->rgrc[0].bottom)
+		UINT uiHeight = rc.Height();
+		if (IsSiblingVisible())
 			uiHeight = rc.Height() - m_uiScrollBarSizeWH;
-		else
-			uiHeight = rc.Height();
 
 		if (uiHeight < m_ullScrollSizeMax)
 		{
@@ -235,14 +247,9 @@ void CScrollEx::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 	}
 	else
 	{
-		//If previous clien rect's width (lpncsp->rgrc[2]) was smaller than the given current
-		//then we can assume that there was expanded NC area —> because of vertical scroll bar.
-		//Adjust width in this case.
-		UINT uiWidth;
-		if (lpncsp->rgrc[2].right < lpncsp->rgrc[0].right)
+		UINT uiWidth = rc.Width();
+		if (IsSiblingVisible())
 			uiWidth = rc.Width() - m_uiScrollBarSizeWH;
-		else
-			uiWidth = rc.Width();
 
 		if (uiWidth < m_ullScrollSizeMax)
 		{
@@ -391,7 +398,7 @@ void CScrollEx::DrawScrollBar()
 	dcMem.SelectObject(&bitmap);
 	CDC* pDC = &dcMem;
 
-	CRect rcSNC = GetScrollRect(true);
+	CRect rcSNC = GetScrollRect(true); //Scroll with non client.
 	pDC->FillSolidRect(&rcSNC, m_clrBkNC); //NC Bk.
 	CRect rcS = GetScrollRect();
 	pDC->FillSolidRect(&rcS, m_clrBkScrollBar); //Bk.
@@ -452,7 +459,7 @@ void CScrollEx::DrawArrows(CDC * pDC)
 void CScrollEx::DrawThumb(CDC* pDC)
 {
 	CRect rcThumb = GetThumbRect();
-	if (!rcThumb.IsRectEmpty())
+	if (!rcThumb.IsRectNull())
 		pDC->FillSolidRect(rcThumb, m_clrThumb);
 }
 
@@ -462,7 +469,6 @@ CRect CScrollEx::GetScrollRect(bool fWithNCArea)
 		return 0;
 
 	CWnd* pwndParent = GetParent();
-
 	CRect rcClient = GetParentRect();
 	CRect rcWnd = GetParentRect(false);
 	pwndParent->MapWindowPoints(nullptr, &rcClient);
@@ -524,31 +530,32 @@ UINT CScrollEx::GetScrollSizeWH()
 
 UINT CScrollEx::GetScrollWorkAreaSizeWH()
 {
-	UINT uiScrollWorkArea;
 	UINT uiScrollSize = GetScrollSizeWH();
-
-	if (uiScrollSize <= m_uiScrollBarSizeWH * 2)
+	UINT uiScrollWorkArea;
+	if (uiScrollSize <= m_uiArrowSize * 2)
 		uiScrollWorkArea = 0;
 	else
-		uiScrollWorkArea = uiScrollSize - m_uiScrollBarSizeWH * 2;
+		uiScrollWorkArea = uiScrollSize - m_uiArrowSize * 2; //Minus two arrow's size.
 
 	return uiScrollWorkArea;
 }
 
 CRect CScrollEx::GetThumbRect(bool fClientCoord)
 {
+	CRect rc { };
 	UINT uiThumbSize = GetThumbSizeWH();
 	if (!uiThumbSize)
-		return 0;
+		return rc;
 
 	CRect rcScrollWA = GetScrollWorkAreaRect();
-	CRect rc;
 	if (IsVert())
 	{
 		rc.left = rcScrollWA.left;
 		rc.top = rcScrollWA.top + GetThumbPos();
 		rc.right = rc.left + m_uiScrollBarSizeWH;
 		rc.bottom = rc.top + uiThumbSize;
+		if (rc.bottom > rcScrollWA.bottom)
+			rc.bottom = rcScrollWA.bottom;
 	}
 	else
 	{
@@ -575,7 +582,7 @@ UINT CScrollEx::GetThumbSizeWH()
 	else
 		dDelta = (long double)rcParent.Width() / m_ullScrollSizeMax;
 
-	uiThumbSize = (UINT)std::lroundl((long double)uiScrollWorkAreaSizeWH * dDelta);
+	uiThumbSize = (UINT)std::lroundl(uiScrollWorkAreaSizeWH * dDelta);
 
 	if (uiThumbSize < m_uiThumbSizeMin)
 		uiThumbSize = m_uiThumbSizeMin;
@@ -589,7 +596,7 @@ UINT CScrollEx::GetThumbPos()
 	long double dThumbScrollingSize = GetThumbScrollingSize();
 
 	UINT uiThumbPos;
-	if (ullScrollPos <= dThumbScrollingSize)
+	if (ullScrollPos < dThumbScrollingSize)
 		uiThumbPos = 0;
 	else
 		uiThumbPos = (UINT)std::lroundl(ullScrollPos / dThumbScrollingSize);
@@ -600,16 +607,16 @@ UINT CScrollEx::GetThumbPos()
 long double CScrollEx::GetThumbScrollingSize()
 {
 	if (!m_fCreated)
-		return -1;
+		return 0;
 
-	long double uiWAWOThumb = GetScrollWorkAreaSizeWH() - GetThumbSizeWH(); //Work area without thumb.
+	UINT uiWAWOThumb = GetScrollWorkAreaSizeWH() - GetThumbSizeWH(); //Work area without thumb.
 	int iPage;
 	if (IsVert())
 		iPage = GetParentRect().Height();
 	else
 		iPage = GetParentRect().Width();
 
-	return (m_ullScrollSizeMax - iPage) / uiWAWOThumb;
+	return long double(m_ullScrollSizeMax - iPage) / uiWAWOThumb;
 }
 
 void CScrollEx::SetThumbPos(int iPos)
