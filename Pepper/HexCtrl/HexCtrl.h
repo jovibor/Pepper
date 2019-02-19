@@ -159,14 +159,16 @@ namespace HEXCTRL
 		afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 		afx_msg void OnNcPaint();
 		afx_msg void OnDestroy();
-		void CalcWorkAreaHeight(int iClientHeight);
 		void Recalc();
+		void CalcWorkAreaHeight(int iClientHeight);
+		void CalcScrollSizes(int iClientHeight, int iClientWidth, ULONGLONG ullCurLine);
+		void CalcScrollPageSize();
+		ULONGLONG GetCurrentLineV();
 		ULONGLONG HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);
 		void CopyToClipboard(UINT nType);
 		void Search(CHexDlgSearch::HEXSEARCH& rSearch);
 		void SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBytes, bool fHighlight = false);
-		int GetPixelsLineScrollV();
 		void UpdateInfoText();
 	private:
 		bool m_fCreated { false };

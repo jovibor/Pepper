@@ -207,11 +207,17 @@ ULONGLONG CScrollEx::GetScrollPageSize()
 	return m_ullScrollPage;
 }
 
+void CScrollEx::SetScrollPageSize(ULONGLONG ullSize)
+{
+	m_ullScrollPage = ullSize;
+}
+
 BOOL CScrollEx::OnNcActivate(BOOL bActive)
 {
 	if (!m_fCreated)
 		return FALSE;
 
+	//To repaint NC area.
 	GetParent()->SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
 	return TRUE;

@@ -39,6 +39,7 @@ namespace HEXCTRL {
 		LONGLONG GetScrollPosDelta(ULONGLONG& ullCurrPos, ULONGLONG& ullPrevPos);
 		ULONGLONG GetScrollLineSize();
 		ULONGLONG GetScrollPageSize();
+		void SetScrollPageSize(ULONGLONG ullSize);
 		BOOL OnNcActivate(BOOL bActive);
 		void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 		void OnNcPaint();

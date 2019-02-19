@@ -551,9 +551,7 @@ void CHexCtrl::OnPaint()
 {
 	CPaintDC dc(this);
 
-	ULONGLONG iScrollV = m_stScrollV.GetScrollPos();
 	int iScrollH = (int)m_stScrollH.GetScrollPos();
-
 	CRect rcClient;
 	GetClientRect(rcClient);
 	//Drawing through CMemDC to avoid flickering.
@@ -571,7 +569,7 @@ void CHexCtrl::OnPaint()
 		return;
 
 	//Find the ullLineStart and ullLineEnd position, draw the visible portion.
-	const ULONGLONG ullLineStart = iScrollV / GetPixelsLineScrollV();
+	const ULONGLONG ullLineStart = GetCurrentLineV();
 	ULONGLONG ullLineEndtmp { };
 	if (m_ullDataCount)
 	{
@@ -764,13 +762,8 @@ void CHexCtrl::OnPaint()
 				rDC.SetTextColor(m_clrTextAscii);
 				ExtTextOutA(rDC.m_hDC, iAsciiPosToPrintX, iAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
 			}
-			else
-			{	//Fill remaining chunks with blank spaces.
-				rDC.SetBkColor(m_clrBk);
-				ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, L" ", 2, nullptr);
-				ExtTextOutA(rDC.m_hDC, iAsciiPosToPrintX, iAsciiPosToPrintY, 0, nullptr, "", 1, nullptr);
-			}
-			//Increasing indents for next print, for both - Hex and Ascii
+
+			//Increasing indents for next print, for both - Hex and Ascii.
 			iIndentHexX += m_iDistanceBetweenHexChunks;
 			iIndentAsciiX += m_iSpaceBetweenAscii;
 		}
@@ -783,6 +776,7 @@ void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 	CWnd::OnSize(nType, cx, cy);
 
 	CalcWorkAreaHeight(cy);
+	CalcScrollPageSize();
 }
 
 BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
@@ -823,17 +817,11 @@ void CHexCtrl::OnNcPaint()
 	m_stScrollH.OnNcPaint();
 }
 
-void CHexCtrl::CalcWorkAreaHeight(int iClientHeight)
-{
-	m_iHeightWorkArea = iClientHeight - m_iHeightBottomOffArea -
-		((iClientHeight - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-}
-
 void CHexCtrl::Recalc()
 {
-	CRect rcClient;
-	GetClientRect(&rcClient);
-	ULONGLONG ullStartLineV = m_stScrollV.GetScrollPos() / GetPixelsLineScrollV();
+	ULONGLONG ullCurLineV = GetCurrentLineV();
+
+	//Current font size related.
 	HDC hDC = ::GetDC(m_hWnd);
 	SelectObject(hDC, m_fontHexView.m_hObject);
 	TEXTMETRICW tm { };
@@ -852,50 +840,70 @@ void CHexCtrl::Recalc()
 	m_iFourthVertLine = m_iIndentAscii + (m_iSpaceBetweenAscii * m_dwGridCapacity) + m_sizeLetter.cx;
 	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
 	m_iHeightTopRect = int(m_sizeLetter.cy * 1.5);
-	m_iIndentTextCapacityY = (m_iHeightTopRect / 2) - (m_sizeLetter.cy / 2);
-	CalcWorkAreaHeight(rcClient.Height());
+	m_iIndentTextCapacityY = m_iHeightTopRect / 2 - (m_sizeLetter.cy / 2);
+
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	CalcScrollSizes(rcClient.Height(), rcClient.Width(), ullCurLineV);
+	RedrawWindow();
+}
+
+void CHexCtrl::CalcWorkAreaHeight(int iClientHeight)
+{
+	m_iHeightWorkArea = iClientHeight - m_iHeightBottomOffArea -
+		((iClientHeight - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
+}
+
+void CHexCtrl::CalcScrollSizes(int iClientHeight, int iClientWidth, ULONGLONG ullCurLine)
+{
+	CalcWorkAreaHeight(iClientHeight);
 
 	//Scroll sizes according to current font size.
 	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
-	m_stScrollV.SetScrollSizes(GetPixelsLineScrollV(), uiPage,
-		m_iHeightTopRect + m_iHeightBottomOffArea + (GetPixelsLineScrollV() * (m_ullDataCount / m_dwGridCapacity + 2)));
-	m_stScrollV.SetScrollPos(ullStartLineV * GetPixelsLineScrollV());
-	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, rcClient.Width(), m_iFourthVertLine + 1);
+	m_stScrollV.SetScrollSizes(m_sizeLetter.cy, uiPage,
+		m_iHeightTopRect + m_iHeightBottomOffArea + (m_sizeLetter.cy * (m_ullDataCount / m_dwGridCapacity + 2)));
+	m_stScrollV.SetScrollPos(ullCurLine * m_sizeLetter.cy);
+	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, iClientWidth, m_iFourthVertLine + 1);
+}
 
-	RedrawWindow();
+void CHexCtrl::CalcScrollPageSize()
+{
+	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
+	m_stScrollV.SetScrollPageSize(uiPage);
+}
+
+ULONGLONG CHexCtrl::GetCurrentLineV()
+{
+	return m_stScrollV.GetScrollPos() / m_sizeLetter.cy;
 }
 
 ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 {
-	ULONGLONG dwHexChunk;
-	ULONGLONG iScrollV = m_stScrollV.GetScrollPos();
-	int iScrollH = (int)m_stScrollH.GetScrollPos();
-
 	//To compensate horizontal scroll.
-	pPoint->x += iScrollH;
+	int iX = pPoint->x + (int)m_stScrollH.GetScrollPos();
+	int iY = pPoint->y;
+	ULONGLONG ullCurLine = GetCurrentLineV();
+	ULONGLONG dwHexChunk;
 
 	//Checking if cursor is within hex chunks area.
-	if ((pPoint->x >= m_iIndentFirstHexChunk) && (pPoint->x < m_iThirdVertLine)
-		&& (pPoint->y >= m_iHeightTopRect) && pPoint->y <= m_iHeightWorkArea)
+	if ((iX >= m_iIndentFirstHexChunk) && (iX < m_iThirdVertLine) && (iY >= m_iHeightTopRect) && iY <= m_iHeightWorkArea)
 	{
 		int itmpBetweenBlocks;
-		if (pPoint->x > m_iIndentFirstHexChunk + (m_iDistanceBetweenHexChunks * (int)m_dwGridBlockSize))
+		if (iX > m_iIndentFirstHexChunk + (m_iDistanceBetweenHexChunks * (int)m_dwGridBlockSize))
 			itmpBetweenBlocks = m_iSpaceBetweenBlocks;
 		else
 			itmpBetweenBlocks = 0;
 
 		//Calculate ullHit hex chunk, taking into account scroll position and letter sizes.
-		dwHexChunk = ((pPoint->x - m_iIndentFirstHexChunk - itmpBetweenBlocks) / (m_sizeLetter.cx * 3)) +
-			((pPoint->y - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity +
-			((iScrollV / GetPixelsLineScrollV()) * m_dwGridCapacity);
+		dwHexChunk = ((iX - m_iIndentFirstHexChunk - itmpBetweenBlocks) / (m_sizeLetter.cx * 3)) +
+			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity + (ullCurLine  * m_dwGridCapacity);
 	}
-	else if ((pPoint->x >= m_iIndentAscii) && (pPoint->x < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwGridCapacity))
-		&& (pPoint->y >= m_iHeightTopRect) && pPoint->y <= m_iHeightWorkArea)
+	else if ((iX >= m_iIndentAscii) && (iX < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwGridCapacity))
+		&& (iY >= m_iHeightTopRect) && iY <= m_iHeightWorkArea)
 	{
 		//Calculate ullHit Ascii symbol.
-		dwHexChunk = ((pPoint->x - m_iIndentAscii) / (m_iSpaceBetweenAscii)) +
-			((pPoint->y - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity +
-			((iScrollV / GetPixelsLineScrollV()) * m_dwGridCapacity);
+		dwHexChunk = ((iX - m_iIndentAscii) / (m_iSpaceBetweenAscii)) +
+			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity + (ullCurLine * m_dwGridCapacity);
 	}
 	else
 		dwHexChunk = -1;
@@ -1255,16 +1263,16 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	//New scroll depending on selection direction: top <-> bottom.
 	//fHighlight means centralize scroll position on the screen (used in Search()).
 	ULONGLONG ullEnd = ullStart + ullSize - 1;
-	ULONGLONG ullPixelsLineScrollV = GetPixelsLineScrollV();
-	ULONGLONG ullMaxV = (ullCurrScrollV / ullPixelsLineScrollV * m_sizeLetter.cy) + rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
+	ULONGLONG ullPixelsLineV = m_sizeLetter.cy;
+	ULONGLONG ullMaxV = ullCurrScrollV + rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
 		((rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-	ULONGLONG ullNewStartV = ullStart / m_dwGridCapacity * ullPixelsLineScrollV;
-	ULONGLONG ullNewEndV = ullEnd / m_dwGridCapacity * ullPixelsLineScrollV;
+	ULONGLONG ullNewStartV = ullStart / m_dwGridCapacity * ullPixelsLineV;
+	ULONGLONG ullNewEndV = ullEnd / m_dwGridCapacity * ullPixelsLineV;
 
 	ULONGLONG iNewScrollV { }, iNewScrollH { };
 	if (fHighlight)
 	{
-		iNewScrollV = ullNewStartV - ((m_iHeightWorkArea / 2) / m_sizeLetter.cy * ullPixelsLineScrollV);
+		iNewScrollV = ullNewStartV - ((m_iHeightWorkArea / 2) / m_sizeLetter.cy * ullPixelsLineV);
 		iNewScrollH = (ullStart % m_dwGridCapacity) * m_iDistanceBetweenHexChunks;
 	}
 	else
@@ -1272,25 +1280,25 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 		if (ullStart == ullClick)
 		{
 			if (ullNewEndV >= ullMaxV)
-				iNewScrollV = ullCurrScrollV + ullPixelsLineScrollV;
+				iNewScrollV = ullCurrScrollV + ullPixelsLineV;
 			else
 			{
 				if (ullNewEndV >= ullCurrScrollV)
 					iNewScrollV = ullCurrScrollV;
 				else if (ullNewStartV <= ullCurrScrollV)
-					iNewScrollV = ullCurrScrollV - ullPixelsLineScrollV;
+					iNewScrollV = ullCurrScrollV - ullPixelsLineV;
 			}
 		}
 		else
 		{
 			if (ullNewStartV < ullCurrScrollV)
-				iNewScrollV = ullCurrScrollV - ullPixelsLineScrollV;
+				iNewScrollV = ullCurrScrollV - ullPixelsLineV;
 			else
 			{
 				if (ullNewStartV < ullMaxV)
 					iNewScrollV = ullCurrScrollV;
 				else
-					iNewScrollV = ullCurrScrollV + ullPixelsLineScrollV;
+					iNewScrollV = ullCurrScrollV + ullPixelsLineV;
 			}
 		}
 
@@ -1301,7 +1309,7 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 		else
 			iNewScrollH = ullCurrScrollH;
 	}
-	iNewScrollV -= iNewScrollV % ullPixelsLineScrollV;
+	iNewScrollV -= iNewScrollV % ullPixelsLineV;
 	iNewScrollH -= iNewScrollH % m_sizeLetter.cx;
 
 	m_ullSelectionClick = ullClick;
@@ -1315,10 +1323,6 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	UpdateInfoText();
 }
 
-int CHexCtrl::GetPixelsLineScrollV()
-{
-	return m_sizeLetter.cy;
-}
 
 
 /************************************************************
