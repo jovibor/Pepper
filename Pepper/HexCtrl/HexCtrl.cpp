@@ -39,18 +39,18 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_NCPAINT()
 END_MESSAGE_MAP()
 
-bool CHexCtrl::Create(const HEXCREATESTRUCT& hc)
+bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 {
 	if (m_fCreated) //Already created.
 		return false;
 
-	m_dwCtrlId = hc.uId;
-	m_fFloat = hc.fFloat;
-	m_pwndParentOwner = hc.pwndParent;
-	if (hc.pwndMsg)
-		m_pwndMsg = hc.pwndMsg;
+	m_dwCtrlId = hcs.uId;
+	m_fFloat = hcs.fFloat;
+	m_pwndParentOwner = hcs.pwndParent;
+	if (hcs.pwndMsg)
+		m_pwndMsg = hcs.pwndMsg;
 	else
-		m_pwndMsg = hc.pwndParent;
+		m_pwndMsg = hcs.pwndParent;
 
 	DWORD dwStyle;
 	if (m_fFloat)
@@ -59,7 +59,7 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hc)
 		dwStyle = WS_VISIBLE | WS_CHILD;
 
 	CRect rc;
-	if (hc.rc.IsRectNull() && m_fFloat)
+	if (hcs.rc.IsRectNull() && m_fFloat)
 	{	//If pRect == nullptr and it's a float window then place it at screen center.
 
 		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
@@ -72,7 +72,7 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hc)
 	HCURSOR hCur;
 	if (!(hCur = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED)))
 		return false;
-	if (!CWnd::CreateEx(hc.dwExStyles, AfxRegisterWndClass(CS_VREDRAW | CS_HREDRAW, hCur),
+	if (!CWnd::CreateEx(hcs.dwExStyles, AfxRegisterWndClass(CS_VREDRAW | CS_HREDRAW, hCur),
 		L"HexControl", dwStyle, rc, m_pwndParentOwner, m_fFloat ? 0 : m_dwCtrlId))
 		return false;
 
@@ -91,9 +91,9 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hc)
 
 	//In case of inability to create font from LOGFONT*
 	//creating default windows font.
-	if (hc.pLogFont)
+	if (hcs.pLogFont)
 	{
-		if (!m_fontHexView.CreateFontIndirectW(hc.pLogFont))
+		if (!m_fontHexView.CreateFontIndirectW(hcs.pLogFont))
 			if (!m_fontHexView.CreateFontIndirectW(&lf))
 				m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
 	}
@@ -334,15 +334,10 @@ BOOL CHexCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		return TRUE;
 	}
 
-	ULONGLONG ullCurPos = m_stScrollV.GetScrollPos();
-	ULONGLONG ullPage = m_stScrollV.GetScrollPageSize();
-	ULONGLONG ullNewPos;
 	if (zDelta > 0) //Scrolling Up.
-		ullNewPos = ullCurPos < ullPage ? 0 : ullCurPos - ullPage;
+		m_stScrollV.ScrollPageUp();
 	else
-		ullNewPos = ullCurPos + ullPage;
-
-	m_stScrollV.SetScrollPos(ullNewPos);
+		m_stScrollV.ScrollPageDown();
 
 	return CWnd::OnMouseWheel(nFlags, zDelta, pt);
 }
@@ -861,7 +856,7 @@ void CHexCtrl::CalcScrollSizes(int iClientHeight, int iClientWidth, ULONGLONG ul
 	//Scroll sizes according to current font size.
 	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
 	m_stScrollV.SetScrollSizes(m_sizeLetter.cy, uiPage,
-		m_iHeightTopRect + m_iHeightBottomOffArea + (m_sizeLetter.cy * (m_ullDataCount / m_dwGridCapacity + 2)));
+		m_iHeightTopRect + m_iHeightBottomOffArea + m_sizeLetter.cy * (m_ullDataCount / m_dwGridCapacity + 2));
 	m_stScrollV.SetScrollPos(ullCurLine * m_sizeLetter.cy);
 	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, iClientWidth, m_iFourthVertLine + 1);
 }
@@ -1269,56 +1264,62 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	ULONGLONG ullNewStartV = ullStart / m_dwGridCapacity * ullPixelsLineV;
 	ULONGLONG ullNewEndV = ullEnd / m_dwGridCapacity * ullPixelsLineV;
 
-	ULONGLONG iNewScrollV { }, iNewScrollH { };
+	ULONGLONG ullNewScrollV { }, ullNewScrollH { };
 	if (fHighlight)
 	{
-		iNewScrollV = ullNewStartV - ((m_iHeightWorkArea / 2) / m_sizeLetter.cy * ullPixelsLineV);
-		iNewScrollH = (ullStart % m_dwGridCapacity) * m_iDistanceBetweenHexChunks;
+		//To prevent negative numbers.
+		if (ullNewStartV > m_iHeightWorkArea / 2)
+			ullNewScrollV = ullNewStartV - m_iHeightWorkArea / 2;
+		else
+			ullNewScrollV = 0;
+
+		ullNewScrollH = (ullStart % m_dwGridCapacity) * m_iDistanceBetweenHexChunks;
 	}
 	else
 	{
 		if (ullStart == ullClick)
 		{
 			if (ullNewEndV >= ullMaxV)
-				iNewScrollV = ullCurrScrollV + ullPixelsLineV;
+				ullNewScrollV = ullCurrScrollV + ullPixelsLineV;
 			else
 			{
 				if (ullNewEndV >= ullCurrScrollV)
-					iNewScrollV = ullCurrScrollV;
+					ullNewScrollV = ullCurrScrollV;
 				else if (ullNewStartV <= ullCurrScrollV)
-					iNewScrollV = ullCurrScrollV - ullPixelsLineV;
+					ullNewScrollV = ullCurrScrollV - ullPixelsLineV;
 			}
 		}
 		else
 		{
 			if (ullNewStartV < ullCurrScrollV)
-				iNewScrollV = ullCurrScrollV - ullPixelsLineV;
+				ullNewScrollV = ullCurrScrollV - ullPixelsLineV;
 			else
 			{
 				if (ullNewStartV < ullMaxV)
-					iNewScrollV = ullCurrScrollV;
+					ullNewScrollV = ullCurrScrollV;
 				else
-					iNewScrollV = ullCurrScrollV + ullPixelsLineV;
+					ullNewScrollV = ullCurrScrollV + ullPixelsLineV;
 			}
 		}
 
 		if (ullCx >= (ullCurrScrollH + rcClient.Width()))
-			iNewScrollH = int(ullCurrScrollH + ((ullCx - ullCurrScrollH) / m_sizeLetter.cx));
+			ullNewScrollH = int(ullCurrScrollH + ((ullCx - ullCurrScrollH) / m_sizeLetter.cx));
 		else if (ullCx < ullCurrScrollH)
-			iNewScrollH = int(ullCx);
+			ullNewScrollH = int(ullCx);
 		else
-			iNewScrollH = ullCurrScrollH;
+			ullNewScrollH = ullCurrScrollH;
 	}
-	iNewScrollV -= iNewScrollV % ullPixelsLineV;
-	iNewScrollH -= iNewScrollH % m_sizeLetter.cx;
+	ullNewScrollV -= ullNewScrollV % ullPixelsLineV;
+	ullNewScrollH -= ullNewScrollH % m_sizeLetter.cx;
 
 	m_ullSelectionClick = ullClick;
 	m_ullSelectionStart = ullStart;
 	m_ullSelectionEnd = ullEnd;
 	m_ullBytesSelected = ullEnd - ullStart + 1;
 
-	m_stScrollV.SetScrollPos(iNewScrollV);
-	m_stScrollH.SetScrollPos(iNewScrollH);
+	m_stScrollV.SetScrollPos(ullNewScrollV);
+	if (m_stScrollH.IsVisible())
+		m_stScrollH.SetScrollPos(ullNewScrollH);
 
 	UpdateInfoText();
 }
@@ -1333,9 +1334,9 @@ BEGIN_MESSAGE_MAP(CHexDlgSearch, CDialogEx)
 	ON_WM_ACTIVATE()
 	ON_WM_CLOSE()
 	ON_WM_CTLCOLOR()
-	ON_BN_CLICKED(IDC_BUTTON_SEARCH_F, &CHexDlgSearch::OnButtonSearchF)
-	ON_BN_CLICKED(IDC_BUTTON_SEARCH_B, &CHexDlgSearch::OnButtonSearchB)
-	ON_COMMAND_RANGE(IDC_RADIO_HEX, IDC_RADIO_UNICODE, &CHexDlgSearch::OnRadioBnRange)
+	ON_BN_CLICKED(IDC_HEXCTRL_BUTTON_SEARCH_F, &CHexDlgSearch::OnButtonSearchF)
+	ON_BN_CLICKED(IDC_HEXCTRL_BUTTON_SEARCH_B, &CHexDlgSearch::OnButtonSearchB)
+	ON_COMMAND_RANGE(IDC_HEXCTRL_RADIO_HEX, IDC_HEXCTRL_RADIO_UNICODE, &CHexDlgSearch::OnRadioBnRange)
 END_MESSAGE_MAP()
 
 BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexCtrl* pwndParent)
@@ -1353,8 +1354,8 @@ CHexCtrl* CHexDlgSearch::GetParent() const
 BOOL CHexDlgSearch::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	m_iRadioCurrent = IDC_RADIO_HEX;
-	CheckRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE, m_iRadioCurrent);
+	m_iRadioCurrent = IDC_HEXCTRL_RADIO_HEX;
+	CheckRadioButton(IDC_HEXCTRL_RADIO_HEX, IDC_HEXCTRL_RADIO_UNICODE, m_iRadioCurrent);
 	m_stBrushDefault.CreateSolidBrush(m_clrMenu);
 
 	return TRUE;
@@ -1389,7 +1390,7 @@ void CHexDlgSearch::SearchCallback()
 			swprintf_s(wstrSearch, 127, L"Search found occurrence.");
 
 		m_stSearch.fSecondMatch = true;
-		GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(wstrSearch);
+		GetDlgItem(IDC_HEXCTRL_STATIC_TEXTBOTTOM)->SetWindowTextW(wstrSearch);
 	}
 	else
 	{
@@ -1400,14 +1401,14 @@ void CHexDlgSearch::SearchCallback()
 		else
 			swprintf_s(wstrSearch, 127, L"Didn't find any occurrence. The begining is reached.");
 
-		GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(wstrSearch);
+		GetDlgItem(IDC_HEXCTRL_STATIC_TEXTBOTTOM)->SetWindowTextW(wstrSearch);
 	}
 }
 
 void CHexDlgSearch::OnButtonSearchF()
 {
 	CString strSearchText;
-	GetDlgItemTextW(IDC_EDIT_SEARCH, strSearchText);
+	GetDlgItemTextW(IDC_HEXCTRL_EDIT_SEARCH, strSearchText);
 	if (strSearchText.IsEmpty())
 		return;
 	if (strSearchText.Compare(m_stSearch.wstrSearch.data()) != 0)
@@ -1416,28 +1417,28 @@ void CHexDlgSearch::OnButtonSearchF()
 		m_stSearch.wstrSearch = strSearchText;
 	}
 
-	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
+	switch (GetCheckedRadioButton(IDC_HEXCTRL_RADIO_HEX, IDC_HEXCTRL_RADIO_UNICODE))
 	{
-	case IDC_RADIO_HEX:
+	case IDC_HEXCTRL_RADIO_HEX:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_HEX;
 		break;
-	case IDC_RADIO_ASCII:
+	case IDC_HEXCTRL_RADIO_ASCII:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_ASCII;
 		break;
-	case IDC_RADIO_UNICODE:
+	case IDC_HEXCTRL_RADIO_UNICODE:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_UNICODE;
 		break;
 	}
 	m_stSearch.iDirection = CHexCtrl::HEXCTRL_SEARCH::SEARCH_FORWARD;
 
-	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
+	GetDlgItem(IDC_HEXCTRL_EDIT_SEARCH)->SetFocus();
 	GetParent()->Search(m_stSearch);
 }
 
 void CHexDlgSearch::OnButtonSearchB()
 {
 	CString strSearchText;
-	GetDlgItemTextW(IDC_EDIT_SEARCH, strSearchText);
+	GetDlgItemTextW(IDC_HEXCTRL_EDIT_SEARCH, strSearchText);
 	if (strSearchText.IsEmpty())
 		return;
 	if (strSearchText.Compare(m_stSearch.wstrSearch.data()) != 0)
@@ -1446,21 +1447,21 @@ void CHexDlgSearch::OnButtonSearchB()
 		m_stSearch.wstrSearch = strSearchText;
 	}
 
-	switch (GetCheckedRadioButton(IDC_RADIO_HEX, IDC_RADIO_UNICODE))
+	switch (GetCheckedRadioButton(IDC_HEXCTRL_RADIO_HEX, IDC_HEXCTRL_RADIO_UNICODE))
 	{
-	case IDC_RADIO_HEX:
+	case IDC_HEXCTRL_RADIO_HEX:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_HEX;
 		break;
-	case IDC_RADIO_ASCII:
+	case IDC_HEXCTRL_RADIO_ASCII:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_ASCII;
 		break;
-	case IDC_RADIO_UNICODE:
+	case IDC_HEXCTRL_RADIO_UNICODE:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_UNICODE;
 		break;
 	}
 	m_stSearch.iDirection = CHexCtrl::HEXCTRL_SEARCH::SEARCH_BACKWARD;
 
-	GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
+	GetDlgItem(IDC_HEXCTRL_EDIT_SEARCH)->SetFocus();
 	GetParent()->Search(m_stSearch);
 }
 
@@ -1471,7 +1472,7 @@ void CHexDlgSearch::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 	else
 	{
 		SetLayeredWindowAttributes(0, 255, LWA_ALPHA);
-		GetDlgItem(IDC_EDIT_SEARCH)->SetFocus();
+		GetDlgItem(IDC_HEXCTRL_EDIT_SEARCH)->SetFocus();
 	}
 
 	CDialogEx::OnActivate(nState, pWndOther, bMinimized);
@@ -1496,7 +1497,7 @@ void CHexDlgSearch::OnClose()
 
 HBRUSH CHexDlgSearch::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	if (pWnd->GetDlgCtrlID() == IDC_STATIC_BOTTOM_TEXT)
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_TEXTBOTTOM)
 	{
 		pDC->SetBkColor(m_clrMenu);
 		pDC->SetTextColor(m_stSearch.fFound ? m_clrSearchFound : m_clrSearchFailed);
@@ -1522,7 +1523,7 @@ void CHexDlgSearch::ClearAll()
 	m_stSearch.fWrap = false;
 	m_stSearch.fCount = true;
 
-	GetDlgItem(IDC_STATIC_BOTTOM_TEXT)->SetWindowTextW(L"");
+	GetDlgItem(IDC_HEXCTRL_STATIC_TEXTBOTTOM)->SetWindowTextW(L"");
 }
 
 
@@ -1567,10 +1568,10 @@ void CHexDlgAbout::OnMouseMove(UINT nFlags, CPoint point)
 	if (!pWnd)
 		return;
 
-	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB))
+	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_LINKGITHUB))
 	{
 		m_fGithubLink = !m_fGithubLink;
-		GetDlgItem(IDC_STATIC_HTTP_GITHUB)->RedrawWindow();
+		GetDlgItem(IDC_HEXCTRL_STATIC_LINKGITHUB)->RedrawWindow();
 		SetCursor(m_fGithubLink ? m_curArrow : m_curHand);
 	}
 
@@ -1584,7 +1585,7 @@ void CHexDlgAbout::OnLButtonDown(UINT nFlags, CPoint point)
 	if (!pWnd)
 		return;
 
-	if (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB)
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_LINKGITHUB)
 		ShellExecute(nullptr, L"open", L"https://github.com/jovibor/Pepper", nullptr, nullptr, NULL);
 
 	CDialogEx::OnLButtonDown(nFlags, point);
@@ -1592,7 +1593,7 @@ void CHexDlgAbout::OnLButtonDown(UINT nFlags, CPoint point)
 
 HBRUSH CHexDlgAbout::OnCtlColor(CDC * pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	if (pWnd->GetDlgCtrlID() == IDC_STATIC_HTTP_GITHUB)
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_LINKGITHUB)
 	{
 		pDC->SetBkColor(m_clrMenu);
 		pDC->SetTextColor(RGB(0, 0, 210));

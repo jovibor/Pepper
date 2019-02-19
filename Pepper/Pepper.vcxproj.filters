@@ -37,17 +37,17 @@
     <ClCompile Include="ViewRightTR.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ListEx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="FileLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HexCtrl\HexCtrl.cpp">
-      <Filter>Resource Files\HexCtrl</Filter>
+      <Filter>HexCtrl</Filter>
     </ClCompile>
     <ClCompile Include="HexCtrl\ScrollEx.cpp">
-      <Filter>Resource Files\HexCtrl</Filter>
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="ListEx\ListEx.cpp">
+      <Filter>ListEx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -55,9 +55,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ListEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Pepper.h">
@@ -100,13 +97,16 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HexCtrl\HexCtrl.h">
-      <Filter>Resource Files\HexCtrl</Filter>
+      <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="HexCtrl\ScrollEx.h">
-      <Filter>Resource Files\HexCtrl</Filter>
+      <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="HexCtrl\res\HexCtrlRes.h">
-      <Filter>Resource Files\HexCtrl\res</Filter>
+      <Filter>HexCtrl\res</Filter>
+    </ClInclude>
+    <ClInclude Include="ListEx\ListEx.h">
+      <Filter>ListEx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -114,7 +114,7 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
     <ResourceCompile Include="HexCtrl\res\HexCtrl.rc">
-      <Filter>Resource Files\HexCtrl\res</Filter>
+      <Filter>HexCtrl\res</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
@@ -131,10 +131,10 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="HexCtrl\res\ScrollExH.bmp">
-      <Filter>Resource Files\HexCtrl\res</Filter>
+      <Filter>HexCtrl\res</Filter>
     </Image>
     <Image Include="HexCtrl\res\ScrollExV.bmp">
-      <Filter>Resource Files\HexCtrl\res</Filter>
+      <Filter>HexCtrl\res</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -147,11 +147,14 @@
     <Filter Include="Resource Files">
       <UniqueIdentifier>{1c6366ad-b8eb-472e-8430-81d16a2baf60}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\HexCtrl">
+    <Filter Include="HexCtrl">
       <UniqueIdentifier>{7a123d79-a104-4209-82e8-420d65c487b1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\HexCtrl\res">
+    <Filter Include="HexCtrl\res">
       <UniqueIdentifier>{ac287bfa-b9c0-4aae-9da1-dbbf4d373ee1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ListEx">
+      <UniqueIdentifier>{0a64e748-b993-4684-bad2-e0f78d571c65}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

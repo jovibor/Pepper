@@ -32,12 +32,12 @@ bool CScrollEx::Create(CWnd * pWndParent, int iScrollType,
 	UINT uiBmp;
 	if (IsVert())
 	{
-		uiBmp = IDB_SCROLL_V;
+		uiBmp = IDB_HEXCTRL_SCROLL_V;
 		m_uiScrollBarSizeWH = GetSystemMetrics(SM_CXVSCROLL);
 	}
 	else
 	{
-		uiBmp = IDB_SCROLL_H;
+		uiBmp = IDB_HEXCTRL_SCROLL_H;
 		m_uiScrollBarSizeWH = GetSystemMetrics(SM_CXHSCROLL);
 	}
 
@@ -87,13 +87,18 @@ ULONGLONG CScrollEx::SetScrollPos(ULONGLONG ullNewPos)
 	m_ullScrollPosCur = ullNewPos;
 
 	CRect rc = GetParentRect();
-	int iPageSize = 0;
+	int iScreenSize = 0;
 	if (IsVert())
-		iPageSize = rc.Height();
+		iScreenSize = rc.Height();
 	else
-		iPageSize = rc.Width();
+		iScreenSize = rc.Width();
 
-	ULONGLONG ullMax = m_ullScrollSizeMax - iPageSize;
+	ULONGLONG ullMax;
+	if (iScreenSize > m_ullScrollSizeMax)
+		ullMax = 0;
+	else
+		ullMax = m_ullScrollSizeMax - iScreenSize;
+	
 	if (m_ullScrollPosCur > ullMax)
 		m_ullScrollPosCur = ullMax;
 
@@ -584,6 +589,7 @@ UINT CScrollEx::GetThumbSizeWH()
 
 	UINT uiThumbSize;
 	if (IsVert())
+		//dDelta = (long double)uiScrollWorkAreaSizeWH / m_ullScrollSizeMax;
 		dDelta = (long double)rcParent.Height() / m_ullScrollSizeMax;
 	else
 		dDelta = (long double)rcParent.Width() / m_ullScrollSizeMax;
@@ -622,7 +628,7 @@ long double CScrollEx::GetThumbScrollingSize()
 	else
 		iPage = GetParentRect().Width();
 
-	return long double(m_ullScrollSizeMax - iPage) / uiWAWOThumb;
+	return (m_ullScrollSizeMax - iPage) / (long double)uiWAWOThumb;
 }
 
 void CScrollEx::SetThumbPos(int iPos)

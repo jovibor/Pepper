@@ -119,7 +119,7 @@ namespace HEXCTRL
 		friend class CHexDlgSearch;
 		CHexCtrl() {}
 		virtual ~CHexCtrl() {}
-		bool Create(const HEXCREATESTRUCT& hc); //Main initialization method, CHexCtrl::Create.
+		bool Create(const HEXCREATESTRUCT& hcs); //Main initialization method, CHexCtrl::Create.
 		/************************************************************************************************************
 		* CHexCtrl::SetData:																						*
 		* 1. Pointer to data, not used if it's virtual control 2. Size of data to see as hex.						*

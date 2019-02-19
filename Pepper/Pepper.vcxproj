@@ -116,7 +116,7 @@
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
-    <IncludePath>HexCtrl;HexCtrl\res;res;include;verinfo;$(IncludePath)</IncludePath>
+    <IncludePath>HexCtrl;HexCtrl\res;ListEx;res;include;verinfo;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -379,12 +379,12 @@
     <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="HexCtrl\HexCtrl.cpp" />
     <ClCompile Include="HexCtrl\ScrollEx.cpp" />
+    <ClCompile Include="ListEx\ListEx.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Pepper.cpp" />
     <ClCompile Include="PepperDoc.cpp" />
-    <ClCompile Include="ListEx.cpp" />
     <ClCompile Include="ViewRightBL.cpp" />
     <ClCompile Include="ViewRightTR.cpp" />
     <ClCompile Include="ViewRightBR.cpp" />
@@ -422,13 +422,13 @@
     <ClInclude Include="include\MainFrm.h" />
     <ClInclude Include="include\Pepper.h" />
     <ClInclude Include="include\PepperDoc.h" />
-    <ClInclude Include="include\ListEx.h" />
     <ClInclude Include="include\ViewRightBL.h" />
     <ClInclude Include="include\ViewRightBR.h" />
     <ClInclude Include="include\ViewRightTL.h" />
     <ClInclude Include="include\TreeEx.h" />
     <ClInclude Include="include\stdafx.h" />
     <ClInclude Include="include\ViewRightTR.h" />
+    <ClInclude Include="ListEx\ListEx.h" />
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
