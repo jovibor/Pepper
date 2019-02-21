@@ -97,7 +97,7 @@ void CViewRightTL::OnInitialUpdate()
 	CreateListRelocations();
 	CreateListDebug();
 	CreateListTLS();
-	CreateListLoadConfigTable();
+	CreateListLoadConfigDir();
 	CreateListBoundImport();
 	CreateListDelayImport();
 	CreateListCOM();
@@ -107,9 +107,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 {
 	//Check m_pChildFrame to prevent some UB.
 	//OnUpdate can be invoked before OnInitialUpdate, weird MFC.
-	if (!m_pChildFrame)
-		return;
-	if (LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
+	if (!m_pChildFrame || LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
 		return;
 
 	if (m_pActiveWnd)
@@ -130,32 +128,32 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	case IDC_LIST_DOSHEADER:
 		m_listDOSHeader.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listDOSHeader;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_RICHHEADER:
 		m_listRichHdr.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listRichHdr;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_NTHEADER:
 		m_listNTHeader.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listNTHeader;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_FILEHEADER:
 		m_listFileHeader.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listFileHeader;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_OPTIONALHEADER:
 		m_listOptHeader.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listOptHeader;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_DATADIRECTORIES:
 		m_listDataDirs.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listDataDirs;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_SECHEADERS:
 		m_listSecHeaders.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -206,7 +204,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	case IDC_LIST_LOADCONFIG:
 		m_listLCD.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pActiveWnd = &m_listLCD;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_BOUNDIMPORT:
 		m_listBoundImportDir.SetWindowPos(this, 0, 0, rc.Width(), rc.Height() / 2, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -439,14 +437,13 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	if (pNMI->iItem == -1)
 		return TRUE;
 
-	DWORD dwOffset { };
+	DWORD dwOffset { }, dwSize { };
 	ULONGLONG ullRVA { };
 	switch (pNMI->hdr.idFrom)
 	{
 	case IDC_LIST_DOSHEADER:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-		}
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DOSHEADER_ENTRY, pNMI->iItem));
 		break;
 	case IDC_LIST_RICHHEADER:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
@@ -454,22 +451,21 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		}
 		break;
 	case IDC_LIST_NTHEADER:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-		}
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_NTHEADER_ENTRY, pNMI->iItem));
 		break;
 	case IDC_LIST_FILEHEADER:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-		}
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_FILEHEADER_ENTRY, pNMI->iItem));
 		break;
 	case IDC_LIST_OPTIONALHEADER:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-		}
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_OPTIONALHEADER_ENTRY, pNMI->iItem));
 		break;
 	case IDC_LIST_DATADIRECTORIES:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DATADIRECTORIES_ENTRY, pNMI->iItem));
+		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
 		}
 		break;
@@ -478,6 +474,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECHEADERS_ENTRY, pNMI->iItem));
 		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
+			//Go to section's descriptor offset.
 		}
 		break;
 	case IDC_LIST_EXPORT:
@@ -495,13 +492,16 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			{
 			case IDM_LIST_GOTODESCOFFSET:
 				dwOffset = m_pImport->at(pNMI->iItem).dwOffsetImpDesc;
+				dwSize = sizeof(IMAGE_IMPORT_DESCRIPTOR);
 				break;
 			case IDM_LIST_GOTODATAOFFSET:
+				dwSize = 1;
 				switch (pNMI->iSubItem)
 				{
 				case 1: //Str dll name
 				case 5: //Name
 					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.Name, dwOffset);
+					dwSize = m_pImport->at(pNMI->iItem).strModuleName.size();
 					break;
 				case 2: //OriginalFirstThunk
 					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.OriginalFirstThunk, dwOffset);
@@ -519,13 +519,14 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			}
 		}
 		break;
-
 	case IDC_LIST_EXCEPTION:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_EXCEPTION_ENTRY, pNMI->iItem));
+		break;
 	case IDC_LIST_DEBUG:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DEBUG_ENTRY, pNMI->iItem));
 		break;
-
 	case IDC_LIST_ARCHITECTURE:
 		break;
 	case IDC_LIST_GLOBALPTR:
@@ -536,6 +537,8 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		}
 		break;
 	case IDC_LIST_LOADCONFIG:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_LOADCONFIG_ENTRY, pNMI->iItem));
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
 		}
@@ -560,7 +563,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		break;
 	case IDC_LIST_DELAYIMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DELAYIMPORT_FUNCS, pNMI->iItem));
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DELAYIMPORT_ENTRY, pNMI->iItem));
 		break;
 	case IDC_TREE_RESOURCE_TOP:
 	{
@@ -607,15 +610,15 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	break;
 	}
 
-	if (dwOffset)
-		m_pFileLoader->ShowOffset(dwOffset);
+	if (dwSize)
+		m_pFileLoader->ShowOffset(dwOffset, dwSize);
 
 	return TRUE;
 }
 
 int CViewRightTL::CreateListDOSHeader()
 {
-	PCLIBPE_DOSHEADER pDosHeader { };
+	PCLIBPE_DOSHEADER pDosHeader;
 	if (m_pLibpe->GetMSDOSHeader(pDosHeader) != S_OK)
 		return -1;
 
@@ -630,256 +633,23 @@ int CViewRightTL::CreateListDOSHeader()
 	m_dwPeStart = pDosHeader->e_lfanew;
 
 	WCHAR wstr[9];
-	int listindex = 0;
+	DWORD dwSize, dwOffset, dwValue;
+	for (unsigned i = 0; i < g_mapDOS.size(); i++)
+	{
+		dwOffset = g_mapDOS.at(i).dwOffset;
+		dwSize = g_mapDOS.at(i).dwSize;
+		dwValue = *((PDWORD)((DWORD_PTR)pDosHeader + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		if (i == 0)
+			dwValue = (dwValue & 0xFF00) >> 8 | (dwValue & 0xFF) << 8;
 
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_magic));
-	m_listDOSHeader.InsertItem(listindex, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_magic");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_magic));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 3, L"%02X", pDosHeader->e_magic & 0xFF);
-	swprintf_s(&wstr[2], 3, L"%02X", (pDosHeader->e_magic >> 8) & 0xFF);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_cblp));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_cblp");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_cblp));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_cblp);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_cp));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_cp");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_cp));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_cp);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_crlc));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_crlc");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_crlc));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_crlc);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_cparhdr));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_cparhdr");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_cparhdr));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_cparhdr);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_minalloc));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_minalloc");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_minalloc));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_minalloc);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_maxalloc));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_maxalloc");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_maxalloc));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_maxalloc);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_ss));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_ss");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_ss));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_ss);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_sp));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_sp");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_sp));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_sp);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_csum));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_csum");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_csum));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_csum);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_ip));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_ip");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_ip));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_ip);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_cs));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_cs");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_cs));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_cs);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_lfarlc));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_lfarlc");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_lfarlc));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_lfarlc);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_ovno));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_ovno");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_ovno));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_ovno);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res[0]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_res[0]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res[0]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res[0]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res[1]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res[1]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res[1]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res[1]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res[2]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res[2]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res[2]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res[2]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res[3]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res[3]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res[3]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res[3]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_oemid));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_oemid");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_oemid));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_oemid);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_oeminfo));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_oeminfo");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_oeminfo));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_oeminfo);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[0]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_res2[0]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[0]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[0]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[1]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[1]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[1]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[1]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[2]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[2]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[2]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[2]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[3]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[3]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[3]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[3]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[4]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[4]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[4]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[4]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[5]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[5]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[5]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[5]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[6]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[6]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[6]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[6]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[7]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[7]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[7]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[7]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[8]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[8]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[8]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[8]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_res2[9]));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"   e_res2[9]");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_res2[9]));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 5, L"%04X", pDosHeader->e_res2[9]);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
-
-	swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_DOS_HEADER, e_lfanew));
-	listindex = m_listDOSHeader.InsertItem(listindex + 1, wstr);
-	m_listDOSHeader.SetItemText(listindex, 1, L"e_lfanew");
-	swprintf_s(wstr, 2, L"%X", sizeof(pDosHeader->e_lfanew));
-	m_listDOSHeader.SetItemText(listindex, 2, wstr);
-	swprintf_s(wstr, 9, L"%08X", pDosHeader->e_lfanew);
-	m_listDOSHeader.SetItemText(listindex, 3, wstr);
+		swprintf_s(wstr, 9, L"%08X", dwOffset);
+		m_listDOSHeader.InsertItem(i, wstr);
+		m_listDOSHeader.SetItemText(i, 1, g_mapDOS.at(i).strField.data());
+		swprintf_s(wstr, 9, L"%u", dwSize);
+		m_listDOSHeader.SetItemText(i, 2, wstr);
+		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
+		m_listDOSHeader.SetItemText(i, 3, wstr);
+	}
 
 	return 0;
 }
@@ -923,7 +693,7 @@ int CViewRightTL::CreateListRichHeader()
 
 int CViewRightTL::CreateListNTHeader()
 {
-	PCLIBPE_NTHEADER_VAR pNTHdr { };
+	PCLIBPE_NTHEADER_VAR pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -940,7 +710,7 @@ int CViewRightTL::CreateListNTHeader()
 
 	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
-		const IMAGE_NT_HEADERS32* pNTHeader32 = &pNTHdr->stNTHdr32;
+		const IMAGE_NT_HEADERS32* pNTHeader32 = &pNTHdr->varHdr.stNTHdr32;
 
 		swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, Signature) + m_dwPeStart);
 		listindex = m_listNTHeader.InsertItem(listindex, wstr);
@@ -955,7 +725,7 @@ int CViewRightTL::CreateListNTHeader()
 	}
 	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
 	{
-		const IMAGE_NT_HEADERS64* pNTHeader64 = &pNTHdr->stNTHdr64;
+		const IMAGE_NT_HEADERS64* pNTHeader64 = &pNTHdr->varHdr.stNTHdr64;
 
 		swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_NT_HEADERS64, Signature) + m_dwPeStart);
 		listindex = m_listNTHeader.InsertItem(listindex, wstr);
@@ -2548,14 +2318,10 @@ int CViewRightTL::CreateListTLS()
 	return 0;
 }
 
-int CViewRightTL::CreateListLoadConfigTable()
+int CViewRightTL::CreateListLoadConfigDir()
 {
 	PCLIBPE_LOADCONFIG pLCD;
 	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK)
-		return -1;
-
-	PCLIBPE_DATADIRS_VEC pDataDirs;
-	if (m_pLibpe->GetDataDirectories(pDataDirs) != S_OK)
 		return -1;
 
 	m_listLCD.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_LOADCONFIG, &m_stListInfo);
@@ -2583,1101 +2349,91 @@ int CViewRightTL::CreateListLoadConfigTable()
 	{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT\n Shift to right-justify Guard CF function table stride" }
 	};
 
-	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
 	std::wstring wstrTooltip;
-	DWORD dwLCDSize;
-	DWORD dwTotalSize { };
-
 	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLCD32 = &pLCD->varLCD.stLCD32;
-		dwLCDSize = pLCD32->Size;
 
-		dwTotalSize += sizeof(pLCD32->Size);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Size));
-		m_listLCD.InsertItem(listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"Size");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Size));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->Size);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->TimeDateStamp);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, TimeDateStamp));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"TimeDateStamp");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->TimeDateStamp));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%08X", pLCD32->TimeDateStamp);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-		if (pLCD32->TimeDateStamp)
+		DWORD dwSize, dwOffset, dwValue;
+		for (unsigned i = 0; i < g_mapLCD32.size(); i++)
 		{
-			__time64_t time = pLCD32->TimeDateStamp;
-			_wctime64_s(wstr, MAX_PATH, &time);
-			m_listLCD.SetCellTooltip(listindex, 2, wstr, L"Time / Date:");
+			if (g_mapLCD32.at(i).dwOffset >= pLCD32->Size)
+				break;
+
+			dwOffset = g_mapLCD32.at(i).dwOffset;
+			dwSize = g_mapLCD32.at(i).dwSize;
+			dwValue = *((PDWORD)((DWORD_PTR)pLCD32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+
+			if (i == 1) //TimeDateStamp
+			{
+				if (pLCD32->TimeDateStamp) {
+					WCHAR wstr[MAX_PATH];
+					__time64_t time = pLCD32->TimeDateStamp;
+					_wctime64_s(wstr, MAX_PATH, &time);
+					m_listLCD.SetCellTooltip(i, 2, wstr, L"Time / Date:");
+				}
+			}
+			else if (i == 24) //GuardFlags
+			{
+				wstrTooltip.clear();
+				for (auto & it : mapGuardFlags)
+					if (it.first & pLCD32->GuardFlags)
+						wstrTooltip += it.second + L"\n";
+				if (!wstrTooltip.empty())
+					m_listLCD.SetCellTooltip(i, 3, wstrTooltip, L"GuardFlags:");
+			}
+
+			swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + dwOffset);
+			m_listLCD.InsertItem(i, wstr);
+			m_listLCD.SetItemText(i, 1, g_mapLCD32.at(i).strField.data());
+			swprintf_s(wstr, 9, L"%u", dwSize);
+			m_listLCD.SetItemText(i, 2, wstr);
+			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
+			m_listLCD.SetItemText(i, 3, wstr);
 		}
-
-		dwTotalSize += sizeof(pLCD32->MajorVersion);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MajorVersion));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"MajorVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MajorVersion));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLCD32->MajorVersion);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->MinorVersion);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MinorVersion));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"MinorVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MinorVersion));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLCD32->MinorVersion);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GlobalFlagsClear);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GlobalFlagsClear));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GlobalFlagsClear");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GlobalFlagsClear));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GlobalFlagsClear);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GlobalFlagsSet);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GlobalFlagsSet));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GlobalFlagsSet");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GlobalFlagsSet));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GlobalFlagsSet);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->CriticalSectionDefaultTimeout);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CriticalSectionDefaultTimeout));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CriticalSectionDefaultTimeout");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CriticalSectionDefaultTimeout));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->CriticalSectionDefaultTimeout);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->DeCommitFreeBlockThreshold);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DeCommitFreeBlockThreshold));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DeCommitFreeBlockThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DeCommitFreeBlockThreshold));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->DeCommitFreeBlockThreshold);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->DeCommitTotalFreeThreshold);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DeCommitTotalFreeThreshold));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DeCommitTotalFreeThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DeCommitTotalFreeThreshold));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->DeCommitTotalFreeThreshold);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->LockPrefixTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, LockPrefixTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"LockPrefixTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->LockPrefixTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->LockPrefixTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->MaximumAllocationSize);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, MaximumAllocationSize));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"MaximumAllocationSize");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->MaximumAllocationSize));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->MaximumAllocationSize);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->VirtualMemoryThreshold);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, VirtualMemoryThreshold));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"VirtualMemoryThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->VirtualMemoryThreshold));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->VirtualMemoryThreshold);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->ProcessHeapFlags);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, ProcessHeapFlags));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"ProcessHeapFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->ProcessHeapFlags));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->ProcessHeapFlags);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->ProcessAffinityMask);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, ProcessAffinityMask));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"ProcessAffinityMask");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->ProcessAffinityMask));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->ProcessAffinityMask);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->CSDVersion);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CSDVersion));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CSDVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CSDVersion));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLCD32->CSDVersion);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->DependentLoadFlags);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DependentLoadFlags));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DependentLoadFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DependentLoadFlags));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLCD32->DependentLoadFlags);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->EditList);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, EditList));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"EditList");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->EditList));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->EditList);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->SecurityCookie);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SecurityCookie));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"SecurityCookie");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SecurityCookie));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->SecurityCookie);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->SEHandlerTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SEHandlerTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"SEHandlerTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SEHandlerTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->SEHandlerTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->SEHandlerCount);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, SEHandlerCount));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"SEHandlerCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->SEHandlerCount));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->SEHandlerCount);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardCFCheckFunctionPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFCheckFunctionPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardCFCheckFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFCheckFunctionPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardCFCheckFunctionPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardCFDispatchFunctionPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFDispatchFunctionPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardCFDispatchFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFDispatchFunctionPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardCFDispatchFunctionPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardCFFunctionTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFFunctionTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardCFFunctionTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFFunctionTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardCFFunctionTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardCFFunctionCount);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFFunctionCount));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardCFFunctionCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardCFFunctionCount));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardCFFunctionCount);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardFlags);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardFlags));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardFlags));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardFlags);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-		wstrTooltip.clear();
-		for (auto&i : mapGuardFlags)
-			if (i.first & pLCD32->GuardFlags)
-				wstrTooltip += i.second + L"\n";
-		if (!wstrTooltip.empty())
-			m_listLCD.SetCellTooltip(listindex, 3, wstrTooltip, L"GuardFlags:");
-
-		dwTotalSize += sizeof(pLCD32->CodeIntegrity.Flags);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Catalog));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CodeIntegrity.Catalog");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Flags));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLCD32->CodeIntegrity.Flags);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->CodeIntegrity.Catalog);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Catalog));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CodeIntegrity.Catalog");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Catalog));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLCD32->CodeIntegrity.Catalog);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->CodeIntegrity.CatalogOffset);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.CatalogOffset));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CatalogOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.CatalogOffset));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->CodeIntegrity.CatalogOffset);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->CodeIntegrity.Reserved);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity.Reserved));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"Reserved");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CodeIntegrity.Reserved));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->CodeIntegrity.Reserved);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardAddressTakenIatEntryTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardAddressTakenIatEntryTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardAddressTakenIatEntryTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardAddressTakenIatEntryTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardAddressTakenIatEntryTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardAddressTakenIatEntryCount);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardAddressTakenIatEntryCount));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardAddressTakenIatEntryCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardAddressTakenIatEntryCount));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardAddressTakenIatEntryCount);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardLongJumpTargetTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardLongJumpTargetTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardLongJumpTargetTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardLongJumpTargetTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardLongJumpTargetTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardLongJumpTargetCount);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardLongJumpTargetCount));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardLongJumpTargetCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardLongJumpTargetCount));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardLongJumpTargetCount);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->DynamicValueRelocTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->DynamicValueRelocTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->CHPEMetadataPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, CHPEMetadataPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CHPEMetadataPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->CHPEMetadataPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->CHPEMetadataPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardRFFailureRoutine);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFFailureRoutine));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardRFFailureRoutine");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFFailureRoutine));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardRFFailureRoutine);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardRFFailureRoutineFunctionPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFFailureRoutineFunctionPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardRFFailureRoutineFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFFailureRoutineFunctionPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardRFFailureRoutineFunctionPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->DynamicValueRelocTableOffset);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTableOffset));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTableOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTableOffset));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->DynamicValueRelocTableOffset);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->DynamicValueRelocTableSection);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTableSection));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTableSection");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->DynamicValueRelocTableSection));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLCD32->DynamicValueRelocTableSection);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->Reserved2);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Reserved2));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"Reserved2");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Reserved2));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLCD32->Reserved2);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->GuardRFVerifyStackPointerFunctionPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFVerifyStackPointerFunctionPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardRFVerifyStackPointerFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->GuardRFVerifyStackPointerFunctionPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->GuardRFVerifyStackPointerFunctionPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->HotPatchTableOffset);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, HotPatchTableOffset));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"HotPatchTableOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->HotPatchTableOffset));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->HotPatchTableOffset);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->Reserved3);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, Reserved3));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"Reserved3");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->Reserved3));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->Reserved3);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD32->EnclaveConfigurationPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY32, EnclaveConfigurationPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"EnclaveConfigurationPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD32->EnclaveConfigurationPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD32->EnclaveConfigurationPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
 	}
-	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+	else
 	{
 		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLCD64 = &pLCD->varLCD.stLCD64;
-		dwLCDSize = pLCD64->Size;
 
-		dwTotalSize += sizeof(pLCD64->Size);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Size));
-		m_listLCD.InsertItem(listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"Size");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Size));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->Size);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->TimeDateStamp);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, TimeDateStamp));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"TimeDateStamp");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->TimeDateStamp));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%08X", pLCD64->TimeDateStamp);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-		if (pLCD64->TimeDateStamp)
+		DWORD dwSize, dwOffset;
+		ULONGLONG ullValue;
+		for (unsigned i = 0; i < g_mapLCD64.size(); i++)
 		{
-			__time64_t time = pLCD64->TimeDateStamp;
-			_wctime64_s(wstr, MAX_PATH, &time);
-			m_listLCD.SetCellTooltip(listindex, 2, wstr, L"Time / Date:");
+			if (g_mapLCD64.at(i).dwOffset >= pLCD64->Size)
+				break;
+
+			dwOffset = g_mapLCD64.at(i).dwOffset;
+			dwSize = g_mapLCD64.at(i).dwSize;
+			ullValue = *((PULONGLONG)((DWORD_PTR)pLCD64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+
+			if (i == 1) //TimeDateStamp
+			{
+				if (pLCD64->TimeDateStamp) {
+					__time64_t time = pLCD64->TimeDateStamp;
+					_wctime64_s(wstr, MAX_PATH, &time);
+					m_listLCD.SetCellTooltip(i, 2, wstr, L"Time / Date:");
+				}
+			}
+			else if (i == 24) //GuardFlags
+			{
+				wstrTooltip.clear();
+				for (auto & it : mapGuardFlags)
+					if (it.first & pLCD64->GuardFlags)
+						wstrTooltip += it.second + L"\n";
+				if (!wstrTooltip.empty())
+					m_listLCD.SetCellTooltip(i, 3, wstrTooltip, L"GuardFlags:");
+			}
+
+			swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + dwOffset);
+			m_listLCD.InsertItem(i, wstr);
+			m_listLCD.SetItemText(i, 1, g_mapLCD64.at(i).strField.data());
+			swprintf_s(wstr, 9, L"%u", dwSize);
+			m_listLCD.SetItemText(i, 2, wstr);
+			swprintf_s(wstr, 17, dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX"), ullValue);
+			m_listLCD.SetItemText(i, 3, wstr);
 		}
-
-		dwTotalSize += sizeof(pLCD64->MajorVersion);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MajorVersion));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"MajorVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MajorVersion));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLCD64->MajorVersion);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->MinorVersion);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MinorVersion));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"MinorVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MinorVersion));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLCD64->MinorVersion);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GlobalFlagsClear);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GlobalFlagsClear));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GlobalFlagsClear");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GlobalFlagsClear));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->GlobalFlagsClear);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GlobalFlagsSet);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GlobalFlagsSet));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GlobalFlagsSet");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GlobalFlagsSet));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->GlobalFlagsSet);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->CriticalSectionDefaultTimeout);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CriticalSectionDefaultTimeout));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CriticalSectionDefaultTimeout");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CriticalSectionDefaultTimeout));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->CriticalSectionDefaultTimeout);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->DeCommitFreeBlockThreshold);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DeCommitFreeBlockThreshold));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DeCommitFreeBlockThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DeCommitFreeBlockThreshold));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->DeCommitFreeBlockThreshold);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->DeCommitTotalFreeThreshold);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DeCommitTotalFreeThreshold));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DeCommitTotalFreeThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DeCommitTotalFreeThreshold));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->DeCommitTotalFreeThreshold);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->LockPrefixTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, LockPrefixTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"LockPrefixTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->LockPrefixTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->LockPrefixTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->MaximumAllocationSize);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, MaximumAllocationSize));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"MaximumAllocationSize");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->MaximumAllocationSize));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->MaximumAllocationSize);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->VirtualMemoryThreshold);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, VirtualMemoryThreshold));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"VirtualMemoryThreshold");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->VirtualMemoryThreshold));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->VirtualMemoryThreshold);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->ProcessHeapFlags);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, ProcessHeapFlags));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"ProcessHeapFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->ProcessHeapFlags));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->ProcessHeapFlags);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->ProcessAffinityMask);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, ProcessAffinityMask));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"ProcessAffinityMask");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->ProcessAffinityMask));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->ProcessAffinityMask);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->CSDVersion);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CSDVersion));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CSDVersion");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CSDVersion));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLCD64->CSDVersion);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->DependentLoadFlags);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DependentLoadFlags));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DependentLoadFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DependentLoadFlags));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 5, L"%04X", pLCD64->DependentLoadFlags);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->EditList);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, EditList));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"EditList");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->EditList));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->EditList);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->SecurityCookie);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SecurityCookie));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"SecurityCookie");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SecurityCookie));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->SecurityCookie);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->SEHandlerTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SEHandlerTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"SEHandlerTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SEHandlerTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->SEHandlerTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->SEHandlerCount);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, SEHandlerCount));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"SEHandlerCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->SEHandlerCount));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->SEHandlerCount);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardCFCheckFunctionPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFCheckFunctionPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardCFCheckFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFCheckFunctionPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardCFCheckFunctionPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardCFDispatchFunctionPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFDispatchFunctionPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardCFDispatchFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFDispatchFunctionPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardCFDispatchFunctionPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardCFFunctionTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFFunctionTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardCFFunctionTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFFunctionTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardCFFunctionTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardCFFunctionCount);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFFunctionCount));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardCFFunctionCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardCFFunctionCount));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardCFFunctionCount);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardFlags);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardFlags));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardFlags");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardFlags));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->GuardFlags);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-		wstrTooltip.clear();
-		for (auto&i : mapGuardFlags)
-			if (i.first & pLCD64->GuardFlags)
-				wstrTooltip += i.second + L"\n";
-		if (!wstrTooltip.empty())
-			m_listLCD.SetCellTooltip(listindex, 3, wstrTooltip, L"GuardFlags:");
-
-		dwTotalSize += sizeof(pLCD64->CodeIntegrity.Flags);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Catalog));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CodeIntegrity.Catalog");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Flags));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLCD64->CodeIntegrity.Flags);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->CodeIntegrity.Catalog);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Catalog));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CodeIntegrity.Catalog");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Catalog));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLCD64->CodeIntegrity.Catalog);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->CodeIntegrity.CatalogOffset);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.CatalogOffset));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CatalogOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.CatalogOffset));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->CodeIntegrity.CatalogOffset);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->CodeIntegrity.Reserved);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity.Reserved));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"Reserved");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CodeIntegrity.Reserved));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->CodeIntegrity.Reserved);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardAddressTakenIatEntryTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardAddressTakenIatEntryTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardAddressTakenIatEntryTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardAddressTakenIatEntryTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardAddressTakenIatEntryTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardAddressTakenIatEntryCount);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardAddressTakenIatEntryCount));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardAddressTakenIatEntryCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardAddressTakenIatEntryCount));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardAddressTakenIatEntryCount);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardLongJumpTargetTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardLongJumpTargetTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardLongJumpTargetTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardLongJumpTargetTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardLongJumpTargetTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardLongJumpTargetCount);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardLongJumpTargetCount));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardLongJumpTargetCount");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardLongJumpTargetCount));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardLongJumpTargetCount);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->DynamicValueRelocTable);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTable));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTable");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTable));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->DynamicValueRelocTable);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->CHPEMetadataPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, CHPEMetadataPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"CHPEMetadataPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->CHPEMetadataPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->CHPEMetadataPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardRFFailureRoutine);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFFailureRoutine));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardRFFailureRoutine");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFFailureRoutine));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardRFFailureRoutine);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardRFFailureRoutineFunctionPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFFailureRoutineFunctionPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardRFFailureRoutineFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFFailureRoutineFunctionPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardRFFailureRoutineFunctionPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->DynamicValueRelocTableOffset);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTableOffset));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTableOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTableOffset));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->DynamicValueRelocTableOffset);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->DynamicValueRelocTableSection);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTableSection));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"DynamicValueRelocTableSection");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->DynamicValueRelocTableSection));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLCD64->DynamicValueRelocTableSection);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->Reserved2);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Reserved2));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"Reserved2");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Reserved2));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%04X", pLCD64->Reserved2);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->GuardRFVerifyStackPointerFunctionPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFVerifyStackPointerFunctionPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"GuardRFVerifyStackPointerFunctionPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->GuardRFVerifyStackPointerFunctionPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->GuardRFVerifyStackPointerFunctionPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->HotPatchTableOffset);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, HotPatchTableOffset));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"HotPatchTableOffset");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->HotPatchTableOffset));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->HotPatchTableOffset);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->Reserved3);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, Reserved3));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"Reserved3");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->Reserved3));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pLCD64->Reserved3);
-		m_listLCD.SetItemText(listindex, 3, wstr);
-
-		dwTotalSize += sizeof(pLCD64->EnclaveConfigurationPointer);
-		if (dwTotalSize > dwLCDSize)
-			return 0;
-
-		swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + offsetof(IMAGE_LOAD_CONFIG_DIRECTORY64, EnclaveConfigurationPointer));
-		m_listLCD.InsertItem(++listindex, wstr);
-		m_listLCD.SetItemText(listindex, 1, L"EnclaveConfigurationPointer");
-		swprintf_s(wstr, 3, L"%u", sizeof(pLCD64->EnclaveConfigurationPointer));
-		m_listLCD.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 17, L"%016llX", pLCD64->EnclaveConfigurationPointer);
-		m_listLCD.SetItemText(listindex, 3, wstr);
 	}
 
 	return 0;

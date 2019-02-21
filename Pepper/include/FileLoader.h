@@ -29,7 +29,7 @@ public:
 
 	//Shows arbitrary offset in already loaded file (LoadFile)
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
-	HRESULT ShowOffset(ULONGLONG ullOffset, CHexCtrl* pHexCtrl = nullptr);
+	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, CHexCtrl* pHexCtrl = nullptr);
 
 	//Shows only a piece of the whole loaded file.
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
@@ -41,7 +41,7 @@ private:
 	/****************************************************************************
 	* This is a helper structure for query information.							*
 	* Every window (hWnd) can have its own set of mapped data.					*
-	* So we can map different parts, of the big file,							* 
+	* So we can map different parts, of the big file,							*
 	* for different windows (CHexCtrl instances) simultaneously.				*
 	****************************************************************************/
 	struct QUERYDATA {
@@ -53,6 +53,7 @@ private:
 		LPVOID		lpData { };
 	};
 	CHexCtrl m_stHex;
+//	CHexCtrl* m_pHexCur { }; //Current
 	HEXCREATESTRUCT m_stHC { };
 	//Size of the loaded PE file.
 	LARGE_INTEGER m_stFileSize { };

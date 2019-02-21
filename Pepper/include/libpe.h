@@ -31,8 +31,11 @@ namespace libpe
 
 	//NT header.
 	//Depends on PE type — x86 or x64.
-	union LIBPE_NTHEADER_VAR { IMAGE_NT_HEADERS32 stNTHdr32; IMAGE_NT_HEADERS64 stNTHdr64; };
-	using PCLIBPE_NTHEADER_VAR = const LIBPE_NTHEADER_VAR*;
+	struct LIBPE_NTHEADER {
+		DWORD dwOffsetNTHdrDesc;
+		union LIBPE_NTHEADER_VAR { IMAGE_NT_HEADERS32 stNTHdr32; IMAGE_NT_HEADERS64 stNTHdr64; } varHdr;
+	};
+	using PCLIBPE_NTHEADER_VAR = const LIBPE_NTHEADER*;
 
 	//File header.
 	using PCLIBPE_FILEHEADER = const IMAGE_FILE_HEADER*;

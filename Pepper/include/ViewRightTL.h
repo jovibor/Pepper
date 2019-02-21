@@ -96,7 +96,7 @@ private:
 	int CreateListRelocations();
 	int CreateListDebug();
 	int CreateListTLS();
-	int CreateListLoadConfigTable();
+	int CreateListLoadConfigDir();
 	int CreateListBoundImport();
 	int CreateListDelayImport();
 	int CreateListCOM();

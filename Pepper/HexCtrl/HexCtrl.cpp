@@ -117,23 +117,22 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 	m_menuPopup.AppendMenuW(MF_SEPARATOR);
 	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_ABOUT, L"About");
 
-	m_stScrollV.Create(this, SB_VERT, 0, 0, 0); //Actual sizes are set in Recalc().
+	m_stScrollV.Create(this, SB_VERT, 0, 0, 0); //Actual sizes are set in RecalcAll().
 	m_stScrollH.Create(this, SB_HORZ, 0, 0, 0);
 	m_stScrollV.AddSibling(&m_stScrollH);
 	m_stScrollH.AddSibling(&m_stScrollV);
 
 	m_dlgSearch.Create(IDD_HEXCTRL_SEARCH, this);
 
-	Recalc();
+	RecalcAll();
 	m_fCreated = true;
 
 	return true;
 }
 
-void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual, ULONGLONG ullOffset, CWnd* pwndMsg)
+void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual,
+	ULONGLONG ullSelStart, ULONGLONG ullSelSize, CWnd* pwndMsg)
 {
-	ClearData();
-
 	if (pwndMsg)
 		m_pwndMsg = pwndMsg;
 
@@ -141,14 +140,21 @@ void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirt
 	//to which data requests will be sent.
 	if (fVirtual && !m_pwndMsg)
 		return;
+
 	m_pData = pData;
 	m_ullDataCount = ullSize;
 	m_fVirtual = fVirtual;
+	RecalcScrollSizes();
 
-	if (ullOffset)
-		SetSelection(ullOffset);
-	UpdateInfoText();
-	Recalc();
+	if (ullSelSize)
+		ShowOffset(ullSelStart, ullSelSize);
+	else
+	{
+		m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullBytesSelected = 0;
+		m_stScrollV.SetScrollPos(0);
+		m_stScrollH.SetScrollPos(0);
+		UpdateInfoText();
+	}
 }
 
 void CHexCtrl::ClearData()
@@ -158,12 +164,12 @@ void CHexCtrl::ClearData()
 	m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullBytesSelected = 0;
 
 	m_stScrollV.SetScrollPos(0);
-	m_stScrollV.SetScrollSizes(0, 0, 0);
 	m_stScrollH.SetScrollPos(0);
+	m_stScrollV.SetScrollSizes(0, 0, 0);
 	UpdateInfoText();
 }
 
-void CHexCtrl::SetSelection(ULONGLONG ullOffset, ULONGLONG ullSize)
+void CHexCtrl::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSize)
 {
 	SetSelection(ullOffset, ullOffset, ullSize, true);
 }
@@ -176,7 +182,7 @@ void CHexCtrl::SetFont(const LOGFONT* pLogFontNew)
 	m_fontHexView.DeleteObject();
 	m_fontHexView.CreateFontIndirectW(pLogFontNew);
 
-	Recalc();
+	RecalcAll();
 }
 
 void CHexCtrl::SetFontSize(UINT uiSize)
@@ -191,7 +197,7 @@ void CHexCtrl::SetFontSize(UINT uiSize)
 	m_fontHexView.DeleteObject();
 	m_fontHexView.CreateFontIndirectW(&lf);
 
-	Recalc();
+	RecalcAll();
 }
 
 UINT CHexCtrl::GetFontSize()
@@ -221,7 +227,7 @@ void CHexCtrl::SetCapacity(DWORD dwCapacity)
 
 	m_dwGridCapacity = dwCapacity;
 	m_dwGridBlockSize = m_dwGridCapacity / 2;
-	Recalc();
+	RecalcAll();
 }
 
 int CHexCtrl::GetDlgCtrlID() const
@@ -534,12 +540,14 @@ void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 void CHexCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	RedrawWindow();
+	if (m_stScrollV.GetScrollPosDelta() != 0)
+		RedrawWindow();
 }
 
 void CHexCtrl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	RedrawWindow();
+	if (m_stScrollH.GetScrollPosDelta() != 0)
+		RedrawWindow();
 }
 
 void CHexCtrl::OnPaint()
@@ -770,8 +778,8 @@ void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 {
 	CWnd::OnSize(nType, cx, cy);
 
-	CalcWorkAreaHeight(cy);
-	CalcScrollPageSize();
+	RecalcWorkAreaHeight(cy);
+	RecalcScrollPageSize();
 }
 
 BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
@@ -812,7 +820,7 @@ void CHexCtrl::OnNcPaint()
 	m_stScrollH.OnNcPaint();
 }
 
-void CHexCtrl::Recalc()
+void CHexCtrl::RecalcAll()
 {
 	ULONGLONG ullCurLineV = GetCurrentLineV();
 
@@ -837,31 +845,36 @@ void CHexCtrl::Recalc()
 	m_iHeightTopRect = int(m_sizeLetter.cy * 1.5);
 	m_iIndentTextCapacityY = m_iHeightTopRect / 2 - (m_sizeLetter.cy / 2);
 
-	CRect rcClient;
-	GetClientRect(&rcClient);
-	CalcScrollSizes(rcClient.Height(), rcClient.Width(), ullCurLineV);
+	RecalcScrollSizes();
+	m_stScrollV.SetScrollPos(ullCurLineV * m_sizeLetter.cy);
+
 	RedrawWindow();
 }
 
-void CHexCtrl::CalcWorkAreaHeight(int iClientHeight)
+void CHexCtrl::RecalcWorkAreaHeight(int iClientHeight)
 {
 	m_iHeightWorkArea = iClientHeight - m_iHeightBottomOffArea -
 		((iClientHeight - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
 }
 
-void CHexCtrl::CalcScrollSizes(int iClientHeight, int iClientWidth, ULONGLONG ullCurLine)
+void CHexCtrl::RecalcScrollSizes(int iClientHeight, int iClientWidth)
 {
-	CalcWorkAreaHeight(iClientHeight);
+	if (iClientHeight == 0 && iClientWidth == 0)
+	{
+		CRect rc;
+		GetClientRect(&rc);
+		iClientHeight = rc.Height();
+		iClientWidth = rc.Width();
+	}
 
+	RecalcWorkAreaHeight(iClientHeight);
 	//Scroll sizes according to current font size.
-	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
-	m_stScrollV.SetScrollSizes(m_sizeLetter.cy, uiPage,
+	m_stScrollV.SetScrollSizes(m_sizeLetter.cy, m_iHeightWorkArea - m_iHeightTopRect,
 		m_iHeightTopRect + m_iHeightBottomOffArea + m_sizeLetter.cy * (m_ullDataCount / m_dwGridCapacity + 2));
-	m_stScrollV.SetScrollPos(ullCurLine * m_sizeLetter.cy);
 	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, iClientWidth, m_iFourthVertLine + 1);
 }
 
-void CHexCtrl::CalcScrollPageSize()
+void CHexCtrl::RecalcScrollPageSize()
 {
 	UINT uiPage = m_iHeightWorkArea - m_iHeightTopRect;
 	m_stScrollV.SetScrollPageSize(uiPage);
@@ -874,9 +887,8 @@ ULONGLONG CHexCtrl::GetCurrentLineV()
 
 ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 {
-	//To compensate horizontal scroll.
-	int iX = pPoint->x + (int)m_stScrollH.GetScrollPos();
 	int iY = pPoint->y;
+	int iX = pPoint->x + (int)m_stScrollH.GetScrollPos(); //To compensate horizontal scroll.
 	ULONGLONG ullCurLine = GetCurrentLineV();
 	ULONGLONG dwHexChunk;
 

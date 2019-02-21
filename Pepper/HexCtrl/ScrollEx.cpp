@@ -74,7 +74,6 @@ void CScrollEx::SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, 
 	m_ullScrollSizeMax = ullScrollSizeMax;
 
 	GetParent()->SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-
 	DrawScrollBar();
 }
 
@@ -191,13 +190,10 @@ ULONGLONG CScrollEx::GetScrollPos()
 	return m_ullScrollPosCur;
 }
 
-LONGLONG CScrollEx::GetScrollPosDelta(ULONGLONG & ullPosCurr, ULONGLONG & ullPosPrev)
+LONGLONG CScrollEx::GetScrollPosDelta()
 {
 	if (!m_fCreated)
 		return 0;
-
-	ullPosCurr = m_ullScrollPosCur;
-	ullPosPrev = m_ullScrollPosPrev;
 
 	return LONGLONG(m_ullScrollPosCur - m_ullScrollPosPrev);
 }

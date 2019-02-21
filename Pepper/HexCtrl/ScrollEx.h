@@ -36,7 +36,7 @@ namespace HEXCTRL {
 		void ScrollHome();
 		void ScrollEnd();
 		ULONGLONG GetScrollPos();
-		LONGLONG GetScrollPosDelta(ULONGLONG& ullCurrPos, ULONGLONG& ullPrevPos);
+		LONGLONG GetScrollPosDelta();
 		ULONGLONG GetScrollLineSize();
 		ULONGLONG GetScrollPageSize();
 		void SetScrollPageSize(ULONGLONG ullSize);

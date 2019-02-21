@@ -120,15 +120,15 @@ namespace HEXCTRL
 		CHexCtrl() {}
 		virtual ~CHexCtrl() {}
 		bool Create(const HEXCREATESTRUCT& hcs); //Main initialization method, CHexCtrl::Create.
-		/************************************************************************************************************
-		* CHexCtrl::SetData:																						*
-		* 1. Pointer to data, not used if it's virtual control 2. Size of data to see as hex.						*
-		* 3. Is virtual? 4. Offset to scroll to after creation.														*
-		* 5. Pointer to window to send command messages to. If nullptr, parent window is used.						*
-		************************************************************************************************************/
-		void SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual = false, ULONGLONG ullOffset = 0, CWnd* pwndMsg = nullptr);
+
+		// CHexCtrl::SetData:																	
+		// 1. Pointer to data, not used if it's virtual control 2. Size of data to see as hex.	
+		// 3. Is virtual? 4. Offset to selection after creation. 5. Selection size.				
+		// 6. Pointer to window to send command messages to. Parent window is used if nullptr.
+		void SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual = false,
+			ULONGLONG ullSelStart = 0, ULONGLONG ullSelSize = 0, CWnd* pwndMsg = nullptr);
 		void ClearData();
-		void SetSelection(ULONGLONG ullOffset, ULONGLONG ullSize = 1);
+		void ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSize = 1);
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
@@ -159,10 +159,10 @@ namespace HEXCTRL
 		afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 		afx_msg void OnNcPaint();
 		afx_msg void OnDestroy();
-		void Recalc();
-		void CalcWorkAreaHeight(int iClientHeight);
-		void CalcScrollSizes(int iClientHeight, int iClientWidth, ULONGLONG ullCurLine);
-		void CalcScrollPageSize();
+		void RecalcAll();
+		void RecalcWorkAreaHeight(int iClientHeight);
+		void RecalcScrollSizes(int iClientHeight = 0, int iClientWidth = 0);
+		void RecalcScrollPageSize();
 		ULONGLONG GetCurrentLineV();
 		ULONGLONG HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);

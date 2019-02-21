@@ -28,7 +28,12 @@ protected:
 	void OnDraw(CDC* pDC) override; // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	int CreateHexDosHeaderEntry(DWORD dwEntry);
+	int CreateHexNtHeaderEntry(DWORD dwEntry);
+	int CreateHexFileHeaderEntry(DWORD dwEntry);
+	int CreateHexOptHeaderEntry(DWORD dwEntry);
 	int CreateHexSecHeadersEntry(DWORD dwEntry);
+	int CreateHexLoadConfigEntry(DWORD dwEntry);
 	int CreateListImportEntry(DWORD dwEntry);
 	int CreateListDelayImportEntry(DWORD dwEntry);
 	int CreateListExportFuncs();

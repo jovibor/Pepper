@@ -60,7 +60,8 @@ BEGIN
     DEFPUSHBUTTON   "Search >>",IDC_HEXCTRL_BUTTON_SEARCH_F,244,16,48,14
     CONTROL         "Hex",IDC_HEXCTRL_RADIO_HEX,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,17,49,29,10
     CONTROL         "Ascii / Text",IDC_HEXCTRL_RADIO_ASCII,"Button",BS_AUTORADIOBUTTON,17,62,51,10
-    CONTROL         "Unicode / Text (UTF-16)",IDC_HEXCTRL_RADIO_UNICODE,"Button",BS_AUTORADIOBUTTON,17,75,90,10
+    CONTROL         "Unicode / Text (UTF-16)",IDC_HEXCTRL_RADIO_UNICODE,
+                    "Button",BS_AUTORADIOBUTTON,17,75,90,10
     PUSHBUTTON      "<< Search",IDC_HEXCTRL_BUTTON_SEARCH_B,10,16,48,14
     GROUPBOX        "Search mode:",IDC_STATIC,11,33,102,68
     LTEXT           "",IDC_HEXCTRL_STATIC_TEXTBOTTOM,12,104,289,8
@@ -72,8 +73,8 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,154,63,50,14
-    LTEXT           "https://github.com/jovibor/Pepper", IDC_HEXCTRL_STATIC_LINKGITHUB,30,49,116,8
-    LTEXT           "Hex Control for MFC, v1.7.5",IDC_STATIC,29,10,97,8
+    LTEXT           "https://github.com/jovibor/Pepper",IDC_HEXCTRL_STATIC_LINKGITHUB,30,49,116,8
+    LTEXT           "Hex Control for MFC, v1.8",IDC_STATIC,29,10,97,8
     LTEXT           "Author: Jovibor (C), 2018-2019.",IDC_STATIC,29,19,105,8
     LTEXT           "To increase font size:         Ctrl+MouseWheel",IDC_STATIC,29,28,163,8
     LTEXT           "To increase grid capacity:  Ctrl+Shift+MouseWheel",IDC_STATIC,29,37,167,8
@@ -111,11 +112,25 @@ END
 // Bitmap
 //
 
-IDB_HEXCTRL_SCROLL_V            BITMAP                  "ScrollExV.bmp"
+IDB_HEXCTRL_SCROLL_V    BITMAP                  "ScrollExV.bmp"
 
-IDB_HEXCTRL_SCROLL_H            BITMAP                  "ScrollExH.bmp"
+IDB_HEXCTRL_SCROLL_H    BITMAP                  "ScrollExH.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_HEXCTRL_ABOUT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
 
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
