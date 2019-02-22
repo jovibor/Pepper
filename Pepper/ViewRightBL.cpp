@@ -206,14 +206,14 @@ int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	m_stHexEdit.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pFileLoader->ShowOffset(g_mapDOS.at(dwEntry).dwOffset, g_mapDOS.at(dwEntry).dwSize, &m_stHexEdit);
+	m_pFileLoader->ShowOffset(g_mapDOSHeader.at(dwEntry).dwOffset, g_mapDOSHeader.at(dwEntry).dwSize, &m_stHexEdit);
 
 	return 0;
 }
 
 int CViewRightBL::CreateHexNtHeaderEntry(DWORD dwEntry)
 {
-	PCLIBPE_NTHEADER_VAR pNTHdr;
+	PCLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -233,7 +233,7 @@ int CViewRightBL::CreateHexNtHeaderEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 {
-	PCLIBPE_NTHEADER_VAR pNTHdr;
+	PCLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -246,45 +246,8 @@ int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	m_stHexEdit.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-	DWORD dwOffset = pNTHdr->dwOffsetNTHdrDesc;
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
-		dwOffset += offsetof(IMAGE_NT_HEADERS32, FileHeader);
-	else
-		dwOffset += offsetof(IMAGE_NT_HEADERS64, FileHeader);
-
-	DWORD dwSize { };
-	switch (dwEntry)
-	{
-	case 0:
-		dwSize = 2;
-		break;
-	case 1:
-		dwOffset += 2;
-		dwSize = 2;
-		break;
-	case 2:
-		dwOffset += 4;
-		dwSize = 4;
-		break;
-	case 3:
-		dwOffset += 8;
-		dwSize = 4;
-		break;
-	case 4:
-		dwOffset += 12;
-		dwSize = 4;
-		break;
-	case 5:
-		dwOffset += 16;
-		dwSize = 2;
-		break;
-	case 6:
-		dwOffset += 18;
-		dwSize = 2;
-		break;
-	}
-	m_pFileLoader->ShowOffset(dwOffset, dwSize, &m_stHexEdit);
+	DWORD dwOffset = pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + g_mapFileHeader.at(dwEntry).dwOffset;
+	m_pFileLoader->ShowOffset(dwOffset, g_mapFileHeader.at(dwEntry).dwSize, &m_stHexEdit);
 
 	return 0;
 }

@@ -70,10 +70,10 @@ struct STRUCTHELPER
 	DWORD dwOffset;
 	std::wstring strField;
 };
-
 using map_hdr = const std::map<DWORD, STRUCTHELPER>;
 
-inline map_hdr g_mapDOS {
+//Standard headers maps.
+inline map_hdr g_mapDOSHeader {
 	{ 0, { sizeof(WORD), 0, L"e_magic" } },
 { 1, { sizeof(WORD), 2, L"e_cblp" } },
 { 2, { sizeof(WORD), 4, L"e_cp" } },
@@ -105,6 +105,113 @@ inline map_hdr g_mapDOS {
 { 28, { sizeof(WORD), 56, L"   e_res2[8]" } },
 { 29, { sizeof(WORD), 58, L"   e_res2[9]" } },
 { 30, { sizeof(LONG), 60, L"e_lfanew" } }
+};
+
+inline map_hdr g_mapFileHeader {
+	{ 0, { sizeof(WORD), 0, L"Machine" } },
+{ 1, { sizeof(WORD), 2, L"NumberOfSections" } },
+{ 2, { sizeof(DWORD), 4, L"TimeDateStamp" } },
+{ 3, { sizeof(DWORD), 8, L"PointerToSymbolTable" } },
+{ 4, { sizeof(DWORD), 12, L"NumberOfSymbols" } },
+{ 5, { sizeof(WORD), 16, L"SizeOfOptionalHeader" } },
+{ 6, { sizeof(WORD), 18, L"Characteristics" } }
+};
+
+inline map_hdr g_mapOptHeader32 {
+	{ 0, { sizeof(WORD), 0, L"Magic" } },
+{ 1, { sizeof(BYTE), 2, L"MajorLinkerVersion" } },
+{ 2, { sizeof(BYTE), 3, L"MinorLinkerVersion" } },
+{ 3, { sizeof(DWORD), 4, L"SizeOfCode" } },
+{ 4, { sizeof(DWORD), 8, L"SizeOfInitializedData" } },
+{ 5, { sizeof(DWORD), 12, L"SizeOfUninitializedData" } },
+{ 6, { sizeof(DWORD), 16, L"AddressOfEntryPoint" } },
+{ 7, { sizeof(DWORD), 20, L"BaseOfCode" } },
+{ 8, { sizeof(DWORD), 24, L"BaseOfData" } },
+{ 9, { sizeof(DWORD), 28, L"ImageBase" } },
+{ 10, { sizeof(DWORD), 32, L"SectionAlignment" } },
+{ 11, { sizeof(DWORD), 36, L"FileAlignment" } },
+{ 12, { sizeof(WORD), 40, L"MajorOperatingSystemVersion" } },
+{ 13, { sizeof(WORD), 42, L"MinorOperatingSystemVersion" } },
+{ 14, { sizeof(WORD), 44, L"MajorImageVersion" } },
+{ 15, { sizeof(WORD), 46, L"MinorImageVersion" } },
+{ 16, { sizeof(WORD), 48, L"MajorSubsystemVersion" } },
+{ 17, { sizeof(WORD), 50, L"MinorSubsystemVersion" } },
+{ 18, { sizeof(DWORD), 52, L"Win32VersionValue" } },
+{ 19, { sizeof(DWORD), 56, L"SizeOfImage" } },
+{ 20, { sizeof(DWORD), 60, L"SizeOfHeaders" } },
+{ 21, { sizeof(DWORD), 64, L"CheckSum" } },
+{ 22, { sizeof(WORD), 68, L"Subsystem" } },
+{ 23, { sizeof(WORD), 70, L"DllCharacteristics" } },
+{ 24, { sizeof(DWORD), 72, L"SizeOfStackReserve" } },
+{ 25, { sizeof(DWORD), 76, L"SizeOfStackCommit" } },
+{ 26, { sizeof(DWORD), 80, L"SizeOfHeapReserve" } },
+{ 27, { sizeof(DWORD), 84, L"SizeOfHeapCommit" } },
+{ 28, { sizeof(DWORD), 88, L"LoaderFlags" } },
+{ 29, { sizeof(DWORD), 92, L"NumberOfRvaAndSizes" } }
+};
+
+inline map_hdr g_mapOptHeader64 {
+	{ 0, { sizeof(WORD), 0, L"Magic" } },
+{ 1, { sizeof(BYTE), 2, L"MajorLinkerVersion" } },
+{ 2, { sizeof(BYTE), 3, L"MinorLinkerVersion" } },
+{ 3, { sizeof(DWORD), 4, L"SizeOfCode" } },
+{ 4, { sizeof(DWORD), 8, L"SizeOfInitializedData" } },
+{ 5, { sizeof(DWORD), 12, L"SizeOfUninitializedData" } },
+{ 6, { sizeof(DWORD), 16, L"AddressOfEntryPoint" } },
+{ 7, { sizeof(DWORD), 20, L"BaseOfCode" } },
+{ 8, { sizeof(ULONGLONG), 24, L"ImageBase" } },
+{ 9, { sizeof(DWORD), 32, L"SectionAlignment" } },
+{ 10, { sizeof(DWORD), 36, L"FileAlignment" } },
+{ 11, { sizeof(WORD), 40, L"MajorOperatingSystemVersion" } },
+{ 12, { sizeof(WORD), 42, L"MinorOperatingSystemVersion" } },
+{ 13, { sizeof(WORD), 44, L"MajorImageVersion" } },
+{ 14, { sizeof(WORD), 46, L"MinorImageVersion" } },
+{ 15, { sizeof(WORD), 48, L"MajorSubsystemVersion" } },
+{ 16, { sizeof(WORD), 50, L"MinorSubsystemVersion" } },
+{ 17, { sizeof(DWORD), 52, L"Win32VersionValue" } },
+{ 18, { sizeof(DWORD), 56, L"SizeOfImage" } },
+{ 19, { sizeof(DWORD), 60, L"SizeOfHeaders" } },
+{ 20, { sizeof(DWORD), 64, L"CheckSum" } },
+{ 21, { sizeof(WORD), 68, L"Subsystem" } },
+{ 22, { sizeof(WORD), 70, L"DllCharacteristics" } },
+{ 23, { sizeof(ULONGLONG), 72, L"SizeOfStackReserve" } },
+{ 24, { sizeof(ULONGLONG), 80, L"SizeOfStackCommit" } },
+{ 25, { sizeof(ULONGLONG), 88, L"SizeOfHeapReserve" } },
+{ 26, { sizeof(ULONGLONG), 96, L"SizeOfHeapCommit" } },
+{ 27, { sizeof(DWORD), 104, L"LoaderFlags" } },
+{ 28, { sizeof(DWORD), 108, L"NumberOfRvaAndSizes" } }
+};
+
+inline std::map<WORD, std::wstring> g_mapDataDirs {
+	{ IMAGE_DIRECTORY_ENTRY_EXPORT, L"Export Directory" },
+{ IMAGE_DIRECTORY_ENTRY_IMPORT, L"Import Directory" },
+{ IMAGE_DIRECTORY_ENTRY_RESOURCE, L"Resource Directory" },
+{ IMAGE_DIRECTORY_ENTRY_EXCEPTION, L"Exception Directory" },
+{ IMAGE_DIRECTORY_ENTRY_SECURITY, L"Security Directory" },
+{ IMAGE_DIRECTORY_ENTRY_BASERELOC, L"Relocation Directory" },
+{ IMAGE_DIRECTORY_ENTRY_DEBUG, L"Debug Directory" },
+{ IMAGE_DIRECTORY_ENTRY_ARCHITECTURE, L"Architecture Directory" },
+{ IMAGE_DIRECTORY_ENTRY_GLOBALPTR, L"Global PTR" },
+{ IMAGE_DIRECTORY_ENTRY_TLS, L"TLS Directory" },
+{ IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, L"Load Config Directory" },
+{ IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT, L"Bound Import Directory" },
+{ IMAGE_DIRECTORY_ENTRY_IAT, L"IAT Directory" },
+{ IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, L"Delay Import Directory" },
+{ IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, L"COM Descriptor Directory" }
+};
+
+inline map_hdr g_mapExport {
+	{ 0, { sizeof(DWORD), 0, L"Characteristics" } },
+{ 1, { sizeof(DWORD), 4, L"TimeDateStamp" } },
+{ 2, { sizeof(WORD), 8, L"MajorVersion" } },
+{ 3, { sizeof(WORD), 10, L"MinorVersion" } },
+{ 4, { sizeof(DWORD), 12, L"Name" } },
+{ 5, { sizeof(DWORD), 16, L"Base" } },
+{ 6, { sizeof(DWORD), 20, L"NumberOfFunctions" } },
+{ 7, { sizeof(DWORD), 24, L"NumberOfNames" } },
+{ 8, { sizeof(DWORD), 28, L"AddressOfFunctions" } },
+{ 9, { sizeof(DWORD), 32, L"AddressOfNames" } },
+{ 10, { sizeof(DWORD), 36, L"AddressOfNameOrdinals" } }
 };
 
 inline map_hdr g_mapLCD32 {
@@ -203,7 +310,47 @@ inline map_hdr g_mapLCD64 {
 { 44, { sizeof(ULONGLONG), 256, L"VolatileMetadataPointer" } },
 };
 
-/////////////////////////////////////////////////////////////////////////////
+inline map_hdr g_mapTLS32 {
+	{ 0, { sizeof(DWORD), 0, L"StartAddressOfRawData" } },
+{ 1, { sizeof(DWORD), 4, L"EndAddressOfRawData" } },
+{ 2, { sizeof(DWORD), 8, L"AddressOfIndex" } },
+{ 3, { sizeof(DWORD), 12, L"AddressOfCallBacks" } },
+{ 4, { sizeof(DWORD), 16, L"SizeOfZeroFill" } },
+{ 5, { sizeof(DWORD), 20, L"Characteristics" } },
+};
+
+inline map_hdr g_mapTLS64 {
+	{ 0, { sizeof(ULONGLONG), 0, L"StartAddressOfRawData" } },
+{ 1, { sizeof(ULONGLONG), 8, L"EndAddressOfRawData" } },
+{ 2, { sizeof(ULONGLONG), 16, L"AddressOfIndex" } },
+{ 3, { sizeof(ULONGLONG), 24, L"AddressOfCallBacks" } },
+{ 4, { sizeof(DWORD), 32, L"SizeOfZeroFill" } },
+{ 5, { sizeof(DWORD), 36, L"Characteristics" } },
+};
+
+inline map_hdr g_mapComDir {
+	{ 0, { sizeof(DWORD), 0, L"cb" } },
+{ 1, { sizeof(WORD), 4, L"MajorRuntimeVersion" } },
+{ 2, { sizeof(WORD), 6, L"MinorRuntimeVersion" } },
+{ 3, { sizeof(DWORD), 8, L"MetaData.VirtualAddress" } },
+{ 4, { sizeof(DWORD), 12, L"MetaData.Size" } },
+{ 5, { sizeof(DWORD), 16, L"Flags" } },
+{ 6, { sizeof(DWORD), 20, L"EntryPointToken" } },
+{ 7, { sizeof(DWORD), 24, L"Resources.VirtualAddress" } },
+{ 8, { sizeof(DWORD), 28, L"Resources.Size" } },
+{ 9, { sizeof(DWORD), 32, L"StrongNameSignature.VirtualAddress" } },
+{ 10, { sizeof(DWORD), 36, L"StrongNameSignature.Size" } },
+{ 11, { sizeof(DWORD), 40, L"CodeManagerTable.VirtualAddress" } },
+{ 12, { sizeof(DWORD), 44, L"CodeManagerTable.Size" } },
+{ 13, { sizeof(DWORD), 48, L"VTableFixups.VirtualAddress" } },
+{ 14, { sizeof(DWORD), 52, L"VTableFixups.Size" } },
+{ 15, { sizeof(DWORD), 56, L"ExportAddressTableJumps.VirtualAddress" } },
+{ 16, { sizeof(DWORD), 60, L"ExportAddressTableJumps.Size" } },
+{ 17, { sizeof(DWORD), 64, L"ManagedNativeHeader.VirtualAddress" } },
+{ 18, { sizeof(DWORD), 68, L"ManagedNativeHeader.Size" } }
+};
+////////////////////////////////////////////////////////////
+
 struct RESHELPER
 {
 	RESHELPER() {}

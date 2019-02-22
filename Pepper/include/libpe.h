@@ -35,7 +35,7 @@ namespace libpe
 		DWORD dwOffsetNTHdrDesc;
 		union LIBPE_NTHEADER_VAR { IMAGE_NT_HEADERS32 stNTHdr32; IMAGE_NT_HEADERS64 stNTHdr64; } varHdr;
 	};
-	using PCLIBPE_NTHEADER_VAR = const LIBPE_NTHEADER*;
+	using PCLIBPE_NTHEADER = const LIBPE_NTHEADER*;
 
 	//File header.
 	using PCLIBPE_FILEHEADER = const IMAGE_FILE_HEADER*;
@@ -229,7 +229,7 @@ namespace libpe
 		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset) = 0;
 		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&) = 0;
 		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&) = 0;
-		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER_VAR&) = 0;
+		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER&) = 0;
 		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER&) = 0;
 		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR&) = 0;
 		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC&) = 0;
