@@ -169,6 +169,7 @@ namespace HEXCTRL
 		void CopyToClipboard(UINT nType);
 		void Search(CHexDlgSearch::HEXSEARCH& rSearch);
 		void SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBytes, bool fHighlight = false);
+		void SelectAll();
 		void UpdateInfoText();
 	private:
 		bool m_fCreated { false };
@@ -213,7 +214,7 @@ namespace HEXCTRL
 		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullBytesSelected { };
 		const wchar_t* const m_pwszHexMap = L"0123456789ABCDEF";
 		std::wstring m_wstrBottomText { };
-		std::wstring m_wstrErrVirtual { L"This function isn't supported when in virtual mode!" };
+		std::wstring m_wstrErrVirtual { L"This function isn't supported in Virtual mode!" };
 		bool m_fLMousePressed { false };
 		UINT m_dwCtrlId { };
 		//Enums.

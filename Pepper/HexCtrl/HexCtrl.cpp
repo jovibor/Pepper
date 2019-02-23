@@ -275,26 +275,22 @@ void CHexCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		//Checking for scrollbars existence first.
 		if (m_stScrollH.IsVisible())
 		{
-			if (point.x < rcClient.left)
-			{
+			if (point.x < rcClient.left) {
 				m_stScrollH.ScrollLineLeft();
 				point.x = m_iIndentFirstHexChunk;
 			}
-			else if (point.x >= rcClient.right)
-			{
+			else if (point.x >= rcClient.right) {
 				m_stScrollH.ScrollLineRight();
 				point.x = m_iFourthVertLine - 1;
 			}
 		}
 		if (m_stScrollV.IsVisible())
 		{
-			if (point.y < m_iHeightTopRect)
-			{
+			if (point.y < m_iHeightTopRect) {
 				m_stScrollV.ScrollLineUp();
 				point.y = m_iHeightTopRect;
 			}
-			else if (point.y >= m_iHeightWorkArea)
-			{
+			else if (point.y >= m_iHeightWorkArea) {
 				m_stScrollV.ScrollLineDown();
 				point.y = m_iHeightWorkArea - 1;
 			}
@@ -302,18 +298,16 @@ void CHexCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		const ULONGLONG ullHit = HitTest(&point);
 		if (ullHit != -1)
 		{
-			if (ullHit <= m_ullSelectionClick)
-			{
+			if (ullHit <= m_ullSelectionClick) {
 				m_ullSelectionStart = ullHit;
-				m_ullSelectionEnd = m_ullSelectionClick;
+				m_ullSelectionEnd = m_ullSelectionClick + 1;
 			}
-			else
-			{
+			else {
 				m_ullSelectionStart = m_ullSelectionClick;
-				m_ullSelectionEnd = ullHit;
+				m_ullSelectionEnd = ullHit + 1;
 			}
 
-			m_ullBytesSelected = m_ullSelectionEnd - m_ullSelectionStart + 1;
+			m_ullBytesSelected = m_ullSelectionEnd - m_ullSelectionStart;
 
 			UpdateInfoText();
 		}
@@ -361,19 +355,20 @@ void CHexCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 			if (ullHit <= (int)m_ullSelectionClick)
 			{
 				m_ullSelectionStart = ullHit;
-				m_ullSelectionEnd = m_ullSelectionClick;
+				m_ullSelectionEnd = m_ullSelectionClick + 1;
 			}
 			else
 			{
 				m_ullSelectionStart = m_ullSelectionClick;
-				m_ullSelectionEnd = ullHit;
+				m_ullSelectionEnd = ullHit + 1;
 			}
 
-			m_ullBytesSelected = m_ullSelectionEnd - m_ullSelectionStart + 1;
+			m_ullBytesSelected = m_ullSelectionEnd - m_ullSelectionStart;
 		}
 		else
 		{
-			m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = ullHit;
+			m_ullSelectionClick = m_ullSelectionStart = ullHit;
+			m_ullSelectionEnd = m_ullSelectionStart + 1;
 			m_ullBytesSelected = 1;
 		}
 
@@ -451,6 +446,10 @@ void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	case 'C':
 		if (GetKeyState(VK_CONTROL) < 0)
 			CopyToClipboard(COPY_AS_HEX);
+		break;
+	case 'A':
+		if (GetKeyState(VK_CONTROL) < 0)
+			SelectAll();;
 		break;
 	case VK_RIGHT:
 		if (m_ullBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
@@ -628,7 +627,7 @@ void CHexCtrl::OnPaint()
 	for (unsigned iterCapacity = 0; iterCapacity < m_dwGridCapacity; iterCapacity++)
 	{
 		WCHAR wstrCapacity[4];
-		swprintf_s(&wstrCapacity[0], 3, L"%X", iterCapacity);
+		swprintf_s(wstrCapacity, 3, L"%X", iterCapacity);
 
 		int x, c;
 		if (iterCapacity < m_dwGridBlockSize) //Top capacity numbers (0 1 2 3 4 5 6 7...)
@@ -643,7 +642,7 @@ void CHexCtrl::OnPaint()
 			c = 2;
 			x -= m_sizeLetter.cx;
 		}
-		ExtTextOutW(rDC.m_hDC, x - iScrollH, iFirstHorizLine + m_iIndentTextCapacityY, NULL, nullptr, &wstrCapacity[0], c, nullptr);
+		ExtTextOutW(rDC.m_hDC, x - iScrollH, iFirstHorizLine + m_iIndentTextCapacityY, NULL, nullptr, wstrCapacity, c, nullptr);
 	}
 
 	//"Ascii" text.
@@ -668,29 +667,29 @@ void CHexCtrl::OnPaint()
 	rDC.LineTo(m_iFourthVertLine - iScrollH, iFourthHorizLine);
 
 	//Current line to print.
-	int iLine { };
+	int iLine = 0;
 	//Loop for printing hex and Ascii line by line.
-
 	for (ULONGLONG iterLines = ullLineStart; iterLines < ullLineEnd; iterLines++)
 	{
+		//Left offset numbers.
 		WCHAR wstrOffset[9];
 		swprintf_s(wstrOffset, 9, L"%08llX", iterLines * m_dwGridCapacity);
 
 		//Drawing m_strOffset with bk color depending on selection range.
 		if (m_ullBytesSelected && (iterLines * m_dwGridCapacity + m_dwGridCapacity) > m_ullSelectionStart &&
-			(iterLines * m_dwGridCapacity) <= m_ullSelectionEnd)
+			(iterLines * m_dwGridCapacity) < m_ullSelectionEnd)
 			rDC.SetBkColor(m_clrBkSelected);
 		else
 			rDC.SetBkColor(m_clrBk);
 
-		//Left column offset print (00000001...0000FFFF...).
+		//Left column offset printing (00000001...0000FFFF...).
 		rDC.SetTextColor(m_clrTextCaption);
 		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx - iScrollH, m_iHeightTopRect + (m_sizeLetter.cy * iLine),
 			NULL, nullptr, wstrOffset, 8, nullptr);
 
-		int iIndentHexX { };
-		int iIndentAsciiX { };
-		int iIndentBetweenBlocks { };
+		int iIndentHexX = 0;
+		int iIndentAsciiX = 0;
+		int iIndentBetweenBlocks = 0;
 
 		//Main loop for printing Hex chunks and Ascii chars.
 		for (unsigned iterChunks = 0; iterChunks < m_dwGridCapacity; iterChunks++)
@@ -708,15 +707,6 @@ void CHexCtrl::OnPaint()
 
 			if (ullIndexDataToPrint < m_ullDataCount) //Draw until reaching the end of m_dwDataCount.
 			{
-				//Rect of the space between Hex chunks, needed for proper selection drawing.
-				rc.left = iHexPosToPrintX + m_sizeLetter.cx * 2;
-				rc.top = iHexPosToPrintY;
-				if (iterChunks == m_dwGridBlockSize - 1) //Space between capacity halves.
-					rc.right = iHexPosToPrintX + m_sizeLetter.cx * 5;
-				else
-					rc.right = iHexPosToPrintX + m_sizeLetter.cx * 3;
-				rc.bottom = iHexPosToPrintY + m_sizeLetter.cy;
-
 				//Hex chunk to print.
 				//If it's virtual data control, we aquire next byte to print from parent window.
 				WCHAR wstrHexToPrint[2];
@@ -735,21 +725,26 @@ void CHexCtrl::OnPaint()
 				wstrHexToPrint[1] = m_pwszHexMap[(chByteToPrint & 0x0F)];
 
 				//Selection draw with different BK color.
-				if (m_ullBytesSelected && ullIndexDataToPrint >= m_ullSelectionStart && ullIndexDataToPrint <= m_ullSelectionEnd)
+				if (m_ullBytesSelected && ullIndexDataToPrint >= m_ullSelectionStart && ullIndexDataToPrint < m_ullSelectionEnd)
 				{
 					rDC.SetBkColor(m_clrBkSelected);
 
-					//To prevent change bk color after last selected Hex in a row, and very last Hex.
-					if (ullIndexDataToPrint != m_ullSelectionEnd && (ullIndexDataToPrint + 1) % m_dwGridCapacity)
+					//Space between hex chunks, excluding last hex in a row, filling with bk_selected color.
+					if (ullIndexDataToPrint < m_ullSelectionEnd - 1 && (ullIndexDataToPrint + 1) % m_dwGridCapacity)
+					{				//Rect of the space between Hex chunks, needed for proper selection drawing.
+						rc.left = iHexPosToPrintX + m_sizeLetter.cx * 2;
+						rc.top = iHexPosToPrintY;
+						if (iterChunks == m_dwGridBlockSize - 1) //Space between capacity halves.
+							rc.right = iHexPosToPrintX + m_sizeLetter.cx * 5;
+						else
+							rc.right = iHexPosToPrintX + m_sizeLetter.cx * 3;
+						rc.bottom = iHexPosToPrintY + m_sizeLetter.cy;
+
 						FillRect(rDC.m_hDC, &rc, (HBRUSH)m_stBrushBkSelected.m_hObject);
-					else
-						FillRect(rDC.m_hDC, &rc, (HBRUSH)m_stBrushBk.m_hObject);
+					}
 				}
 				else
-				{
 					rDC.SetBkColor(m_clrBk);
-					FillRect(rDC.m_hDC, &rc, (HBRUSH)m_stBrushBk.m_hObject);
-				}
 
 				//Hex chunk printing.
 				rDC.SetTextColor(m_clrTextHex);
@@ -765,7 +760,6 @@ void CHexCtrl::OnPaint()
 				rDC.SetTextColor(m_clrTextAscii);
 				ExtTextOutA(rDC.m_hDC, iAsciiPosToPrintX, iAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
 			}
-
 			//Increasing indents for next print, for both - Hex and Ascii.
 			iIndentHexX += m_iDistanceBetweenHexChunks;
 			iIndentAsciiX += m_iSpaceBetweenAscii;
@@ -1034,8 +1028,8 @@ void CHexCtrl::UpdateInfoText()
 	{
 		m_wstrBottomText.resize(128);
 		if (m_ullBytesSelected)
-			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes selected: 0x%llX(%llu); Offset: 0x%llX(%llu) - 0x%llX(%llu)",
-				m_ullBytesSelected, m_ullBytesSelected, m_ullSelectionStart, m_ullSelectionStart, m_ullSelectionEnd, m_ullSelectionEnd));
+			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Selected: 0x%llX(%llu); Block: 0x%llX(%llu) - 0x%llX(%llu)",
+				m_ullBytesSelected, m_ullBytesSelected, m_ullSelectionStart, m_ullSelectionStart, m_ullSelectionEnd - 1, m_ullSelectionEnd - 1));
 		else
 			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes total: 0x%llX(%llu)", m_ullDataCount, m_ullDataCount));
 	}
@@ -1269,12 +1263,11 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 
 	//New scroll depending on selection direction: top <-> bottom.
 	//fHighlight means centralize scroll position on the screen (used in Search()).
-	ULONGLONG ullEnd = ullStart + ullSize - 1;
-	ULONGLONG ullPixelsLineV = m_sizeLetter.cy;
+	ULONGLONG ullEnd = ullStart + ullSize;
 	ULONGLONG ullMaxV = ullCurrScrollV + rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
 		((rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-	ULONGLONG ullNewStartV = ullStart / m_dwGridCapacity * ullPixelsLineV;
-	ULONGLONG ullNewEndV = ullEnd / m_dwGridCapacity * ullPixelsLineV;
+	ULONGLONG ullNewStartV = ullStart / m_dwGridCapacity * m_sizeLetter.cy;
+	ULONGLONG ullNewEndV = ullEnd / m_dwGridCapacity * m_sizeLetter.cy;
 
 	ULONGLONG ullNewScrollV { }, ullNewScrollH { };
 	if (fHighlight)
@@ -1292,25 +1285,25 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 		if (ullStart == ullClick)
 		{
 			if (ullNewEndV >= ullMaxV)
-				ullNewScrollV = ullCurrScrollV + ullPixelsLineV;
+				ullNewScrollV = ullCurrScrollV + m_sizeLetter.cy;
 			else
 			{
 				if (ullNewEndV >= ullCurrScrollV)
 					ullNewScrollV = ullCurrScrollV;
 				else if (ullNewStartV <= ullCurrScrollV)
-					ullNewScrollV = ullCurrScrollV - ullPixelsLineV;
+					ullNewScrollV = ullCurrScrollV - m_sizeLetter.cy;
 			}
 		}
 		else
 		{
 			if (ullNewStartV < ullCurrScrollV)
-				ullNewScrollV = ullCurrScrollV - ullPixelsLineV;
+				ullNewScrollV = ullCurrScrollV - m_sizeLetter.cy;
 			else
 			{
 				if (ullNewStartV < ullMaxV)
 					ullNewScrollV = ullCurrScrollV;
 				else
-					ullNewScrollV = ullCurrScrollV + ullPixelsLineV;
+					ullNewScrollV = ullCurrScrollV + m_sizeLetter.cy;
 			}
 		}
 
@@ -1321,13 +1314,13 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 		else
 			ullNewScrollH = ullCurrScrollH;
 	}
-	ullNewScrollV -= ullNewScrollV % ullPixelsLineV;
+	ullNewScrollV -= ullNewScrollV % m_sizeLetter.cy;
 	ullNewScrollH -= ullNewScrollH % m_sizeLetter.cx;
 
 	m_ullSelectionClick = ullClick;
 	m_ullSelectionStart = ullStart;
 	m_ullSelectionEnd = ullEnd;
-	m_ullBytesSelected = ullEnd - ullStart + 1;
+	m_ullBytesSelected = ullEnd - ullStart;
 
 	m_stScrollV.SetScrollPos(ullNewScrollV);
 	if (m_stScrollH.IsVisible())
@@ -1336,6 +1329,15 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	UpdateInfoText();
 }
 
+void CHexCtrl::SelectAll()
+{
+	if (!m_ullDataCount)
+		return;
+
+	m_ullSelectionClick = m_ullSelectionStart = 0;
+	m_ullSelectionEnd = m_ullBytesSelected = m_ullDataCount;
+	UpdateInfoText();
+}
 
 
 /************************************************************
