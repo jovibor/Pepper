@@ -169,7 +169,8 @@ namespace libpe
 	struct LIBPE_TLS {
 		DWORD dwOffsetTLS;
 		union LIBPE_TLS_VAR { IMAGE_TLS_DIRECTORY32 stTLSDir32; IMAGE_TLS_DIRECTORY64 stTLSDir64; } varTLS;
-		std::vector<std::byte> vecTLSRawData; std::vector<DWORD> vecTLSCallbacks;
+		DWORD dwRawDataOffset; DWORD dwRawDataSize;
+		std::vector<DWORD> vecTLSCallbacks;
 	};
 	using PCLIBPE_TLS = const LIBPE_TLS*;
 

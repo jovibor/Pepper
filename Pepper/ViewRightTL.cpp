@@ -446,9 +446,8 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DOSHEADER_ENTRY, pNMI->iItem));
 		break;
 	case IDC_LIST_RICHHEADER:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-		}
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_RICHHEADER_ENTRY, pNMI->iItem));
 		break;
 	case IDC_LIST_NTHEADER:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
@@ -659,7 +658,7 @@ int CViewRightTL::CreateListRichHeader()
 	PCLIBPE_RICHHEADER_VEC pRichHeader;
 	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK)
 		return -1;
-
+	
 	m_listRichHdr.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_RICHHEADER, &m_stListInfo);
 	m_listRichHdr.ShowWindow(SW_HIDE);
 	m_listRichHdr.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);

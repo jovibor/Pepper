@@ -29,14 +29,16 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	int CreateHexDosHeaderEntry(DWORD dwEntry);
+	int CreateHexRichHeaderEntry(DWORD dwEntry);
 	int CreateHexNtHeaderEntry(DWORD dwEntry);
 	int CreateHexFileHeaderEntry(DWORD dwEntry);
 	int CreateHexOptHeaderEntry(DWORD dwEntry);
+	int CreateHexDataDirsEntry(DWORD dwEntry);
 	int CreateHexSecHeadersEntry(DWORD dwEntry);
-	int CreateHexLoadConfigEntry(DWORD dwEntry);
+	int CreateHexLCDEntry(DWORD dwEntry);
+	int CreateListExportFuncs();
 	int CreateListImportEntry(DWORD dwEntry);
 	int CreateListDelayImportEntry(DWORD dwEntry);
-	int CreateListExportFuncs();
 	int CreateListRelocsEntry(DWORD dwEntry);
 	int CreateHexDebugEntry(DWORD dwEntry);
 	int CreateTreeResources();

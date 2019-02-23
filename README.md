@@ -13,3 +13,5 @@
 This software is available under the "MIT License modified with The Commons Clause". 
 
 ### [Latest release page](https://github.com/jovibor/Pepper/releases/latest)
+
+[Microsoft Visual C++ Redistributable for Visual Studio 2017 might be needed.](https://aka.ms/vs/15/release/VC_redist.x86.exe)
