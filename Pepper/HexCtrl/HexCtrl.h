@@ -26,7 +26,7 @@ namespace HEXCTRL
 		bool		fFloat { false };			//Is float or child - incorporated into another window.
 		const		LOGFONT* pLogFont { };		//Font to be used. Default if it's nullptr.
 		CWnd*		pwndMsg { };				//Pointer to the window that is going to recieve command messages, 
-												//such as HEXCTRL_MSG_GETDISPINFO. If zero - parent window is used.
+												//such as HEXCTRL_MSG_GETDISPINFO. If nullptr - parent window is used.
 	};
 
 	struct HEXNOTIFY
@@ -171,14 +171,16 @@ namespace HEXCTRL
 		void SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBytes, bool fHighlight = false);
 		void SelectAll();
 		void UpdateInfoText();
+		void ToWchars(ULONGLONG ull, wchar_t* pwsz, unsigned short shBytes = 4);
 	private:
 		bool m_fCreated { false };
 		bool m_fFloat { false };
 		bool m_fVirtual { false };
 		const unsigned char* m_pData { };
 		ULONGLONG m_ullDataCount { };
-		DWORD m_dwGridCapacity { 16 };
-		DWORD m_dwGridBlockSize { m_dwGridCapacity / 2 }; //Size of block before space delimiter.
+		DWORD m_dwCapacity { 16 };
+		DWORD m_dwCapacityMax { 64 };
+		DWORD m_dwCapacityBlockSize { m_dwCapacity / 2 }; //Size of block before space delimiter.
 		CWnd* m_pwndParentOwner { };
 		CWnd* m_pwndMsg { };
 		SIZE m_sizeLetter { 1, 1 }; //Current font's letter size (width, height).
@@ -212,7 +214,9 @@ namespace HEXCTRL
 		int m_iHeightWorkArea { }; //Needed for mouse selection point.y calculation.
 		int m_iFirstVertLine { }, m_iSecondVertLine { }, m_iThirdVertLine { }, m_iFourthVertLine { }; //Vertical lines indent.
 		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullBytesSelected { };
-		const wchar_t* const m_pwszHexMap = L"0123456789ABCDEF";
+		const wchar_t* const m_pwszHexMap { L"0123456789ABCDEF" };
+		const char* const m_pszHexMap { "0123456789ABCDEF" };
+		std::vector<std::wstring> m_vecLookupCapacity { }; //Text for Capacity.
 		std::wstring m_wstrBottomText { };
 		std::wstring m_wstrErrVirtual { L"This function isn't supported in Virtual mode!" };
 		bool m_fLMousePressed { false };

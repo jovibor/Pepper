@@ -108,6 +108,15 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 		m_fontBottomRect.CreateFontIndirectW(&ncm.lfMessageFont);
 	}
 
+	//Vecor of Capacity numbers for the fast lookup in OnPaint.
+	m_vecLookupCapacity.clear();
+	for (unsigned i = 0; i < m_dwCapacityMax; i++)
+	{
+		WCHAR wstr[4];
+		swprintf_s(wstr, 4, L"%X", i);
+		m_vecLookupCapacity.emplace_back(wstr);
+	}
+
 	m_menuPopup.CreatePopupMenu();
 	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_SEARCH, L"Search...	Ctrl+F");
 	m_menuPopup.AppendMenuW(MF_SEPARATOR);
@@ -222,11 +231,11 @@ void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clr
 
 void CHexCtrl::SetCapacity(DWORD dwCapacity)
 {
-	if (dwCapacity < 1 || dwCapacity > 64)
+	if (dwCapacity < 1 || dwCapacity > m_dwCapacityMax)
 		return;
 
-	m_dwGridCapacity = dwCapacity;
-	m_dwGridBlockSize = m_dwGridCapacity / 2;
+	m_dwCapacity = dwCapacity;
+	m_dwCapacityBlockSize = m_dwCapacity / 2;
 	RecalcAll();
 }
 
@@ -235,7 +244,7 @@ int CHexCtrl::GetDlgCtrlID() const
 	return m_dwCtrlId;
 }
 
-CWnd * CHexCtrl::GetParent() const
+CWnd* CHexCtrl::GetParent() const
 {
 	return m_pwndParentOwner;
 }
@@ -330,7 +339,7 @@ BOOL CHexCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	}
 	else if (nFlags & (MK_CONTROL | MK_SHIFT))
 	{
-		SetCapacity(m_dwGridCapacity + zDelta / WHEEL_DELTA);
+		SetCapacity(m_dwCapacity + zDelta / WHEEL_DELTA);
 		return TRUE;
 	}
 
@@ -477,16 +486,16 @@ void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		if (m_ullBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
 		{
 			if (m_ullSelectionStart == m_ullSelectionClick)
-				SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullBytesSelected + m_dwGridCapacity);
+				SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullBytesSelected + m_dwCapacity);
 			else if (m_ullSelectionStart < m_ullSelectionClick)
 			{
-				ULONGLONG dwStartAt = m_ullBytesSelected > m_dwGridCapacity ? m_ullSelectionStart + m_dwGridCapacity : m_ullSelectionClick;
-				ULONGLONG dwBytes = m_ullBytesSelected >= m_dwGridCapacity ? m_ullBytesSelected - m_dwGridCapacity : m_dwGridCapacity;
+				ULONGLONG dwStartAt = m_ullBytesSelected > m_dwCapacity ? m_ullSelectionStart + m_dwCapacity : m_ullSelectionClick;
+				ULONGLONG dwBytes = m_ullBytesSelected >= m_dwCapacity ? m_ullBytesSelected - m_dwCapacity : m_dwCapacity;
 				SetSelection(m_ullSelectionClick, dwStartAt, dwBytes ? dwBytes : 1);
 			}
 		}
 		else
-			SetSelection(m_ullSelectionClick + m_dwGridCapacity, m_ullSelectionClick + m_dwGridCapacity, 1);
+			SetSelection(m_ullSelectionClick + m_dwCapacity, m_ullSelectionClick + m_dwCapacity, 1);
 		break;
 	case VK_UP:
 		if (m_ullBytesSelected && (GetAsyncKeyState(VK_SHIFT) < 0))
@@ -498,27 +507,27 @@ void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 			{
 				ULONGLONG dwStartAt;
 				ULONGLONG dwBytes;
-				if (m_ullSelectionStart < m_dwGridCapacity)
+				if (m_ullSelectionStart < m_dwCapacity)
 				{
 					dwStartAt = 0;
 					dwBytes = m_ullBytesSelected + m_ullSelectionStart;
 				}
 				else
 				{
-					dwStartAt = m_ullSelectionStart - m_dwGridCapacity;
-					dwBytes = m_ullBytesSelected + m_dwGridCapacity;
+					dwStartAt = m_ullSelectionStart - m_dwCapacity;
+					dwBytes = m_ullBytesSelected + m_dwCapacity;
 				}
 				SetSelection(m_ullSelectionClick, dwStartAt, dwBytes);
 			}
 			else
 			{
-				ULONGLONG dwStartAt = m_ullBytesSelected >= m_dwGridCapacity ? m_ullSelectionClick : m_ullSelectionClick - m_dwGridCapacity + 1;
-				ULONGLONG dwBytes = m_ullBytesSelected >= m_dwGridCapacity ? m_ullBytesSelected - m_dwGridCapacity : m_dwGridCapacity;
+				ULONGLONG dwStartAt = m_ullBytesSelected >= m_dwCapacity ? m_ullSelectionClick : m_ullSelectionClick - m_dwCapacity + 1;
+				ULONGLONG dwBytes = m_ullBytesSelected >= m_dwCapacity ? m_ullBytesSelected - m_dwCapacity : m_dwCapacity;
 				SetSelection(m_ullSelectionClick, dwStartAt, dwBytes ? dwBytes : 1);
 			}
 		}
 		else
-			SetSelection(m_ullSelectionClick - m_dwGridCapacity, m_ullSelectionClick - m_dwGridCapacity, 1);
+			SetSelection(m_ullSelectionClick - m_dwCapacity, m_ullSelectionClick - m_dwCapacity, 1);
 		break;
 	case VK_PRIOR: //Page-Up
 		m_stScrollV.ScrollPageUp();
@@ -578,8 +587,8 @@ void CHexCtrl::OnPaint()
 		ullLineEndtmp = ullLineStart + (rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) / m_sizeLetter.cy;
 
 		//If m_dwDataCount is really small we adjust dwLineEnd to be not bigger than maximum allowed.
-		if (ullLineEndtmp > (m_ullDataCount / m_dwGridCapacity))
-			ullLineEndtmp = m_ullDataCount % m_dwGridCapacity ? m_ullDataCount / m_dwGridCapacity + 1 : m_ullDataCount / m_dwGridCapacity;
+		if (ullLineEndtmp > (m_ullDataCount / m_dwCapacity))
+			ullLineEndtmp = m_ullDataCount % m_dwCapacity ? m_ullDataCount / m_dwCapacity + 1 : m_ullDataCount / m_dwCapacity;
 	}
 	const ULONGLONG ullLineEnd = ullLineEndtmp;
 
@@ -624,13 +633,10 @@ void CHexCtrl::OnPaint()
 	rDC.SetBkColor(m_clrBk);
 
 	//Loop for printing top Capacity numbers.
-	for (unsigned iterCapacity = 0; iterCapacity < m_dwGridCapacity; iterCapacity++)
+	for (unsigned iterCapacity = 0; iterCapacity < m_dwCapacity; iterCapacity++)
 	{
-		WCHAR wstrCapacity[4];
-		swprintf_s(wstrCapacity, 3, L"%X", iterCapacity);
-
 		int x, c;
-		if (iterCapacity < m_dwGridBlockSize) //Top capacity numbers (0 1 2 3 4 5 6 7...)
+		if (iterCapacity < m_dwCapacityBlockSize) //Top capacity numbers (0 1 2 3 4 5 6 7...)
 			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iDistanceBetweenHexChunks*iterCapacity);
 		else //Top capacity numbers, second block (8 9 A B C D E F...).
 			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iDistanceBetweenHexChunks*iterCapacity) + m_iSpaceBetweenBlocks;
@@ -642,7 +648,8 @@ void CHexCtrl::OnPaint()
 			c = 2;
 			x -= m_sizeLetter.cx;
 		}
-		ExtTextOutW(rDC.m_hDC, x - iScrollH, iFirstHorizLine + m_iIndentTextCapacityY, NULL, nullptr, wstrCapacity, c, nullptr);
+		ExtTextOutW(rDC.m_hDC, x - iScrollH, iFirstHorizLine + m_iIndentTextCapacityY, NULL, nullptr,
+			m_vecLookupCapacity.at(iterCapacity).data(), c, nullptr);
 	}
 
 	//"Ascii" text.
@@ -671,30 +678,28 @@ void CHexCtrl::OnPaint()
 	//Loop for printing hex and Ascii line by line.
 	for (ULONGLONG iterLines = ullLineStart; iterLines < ullLineEnd; iterLines++)
 	{
-		//Left offset numbers.
-		WCHAR wstrOffset[9];
-		swprintf_s(wstrOffset, 9, L"%08llX", iterLines * m_dwGridCapacity);
-
-		//Drawing m_strOffset with bk color depending on selection range.
-		if (m_ullBytesSelected && (iterLines * m_dwGridCapacity + m_dwGridCapacity) > m_ullSelectionStart &&
-			(iterLines * m_dwGridCapacity) < m_ullSelectionEnd)
+		//Drawing offset with bk color depending on selection range.
+		if (m_ullBytesSelected && (iterLines * m_dwCapacity + m_dwCapacity) > m_ullSelectionStart &&
+			(iterLines * m_dwCapacity) < m_ullSelectionEnd)
 			rDC.SetBkColor(m_clrBkSelected);
 		else
 			rDC.SetBkColor(m_clrBk);
 
 		//Left column offset printing (00000001...0000FFFF...).
+		wchar_t pwszOffset[8];
+		ToWchars(iterLines * m_dwCapacity, pwszOffset);
 		rDC.SetTextColor(m_clrTextCaption);
 		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx - iScrollH, m_iHeightTopRect + (m_sizeLetter.cy * iLine),
-			NULL, nullptr, wstrOffset, 8, nullptr);
+			NULL, nullptr, pwszOffset, 8, nullptr);
 
 		int iIndentHexX = 0;
 		int iIndentAsciiX = 0;
 		int iIndentBetweenBlocks = 0;
 
 		//Main loop for printing Hex chunks and Ascii chars.
-		for (unsigned iterChunks = 0; iterChunks < m_dwGridCapacity; iterChunks++)
+		for (unsigned iterChunks = 0; iterChunks < m_dwCapacity; iterChunks++)
 		{
-			if (iterChunks >= m_dwGridBlockSize)
+			if (iterChunks >= m_dwCapacityBlockSize)
 				iIndentBetweenBlocks = m_iSpaceBetweenBlocks;
 
 			const UINT iHexPosToPrintX = m_iIndentFirstHexChunk + iIndentHexX + iIndentBetweenBlocks - iScrollH;
@@ -703,14 +708,14 @@ void CHexCtrl::OnPaint()
 			const UINT iAsciiPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine;
 
 			//Index of the next char (in m_pData) to draw.
-			const ULONGLONG ullIndexDataToPrint = iterLines * m_dwGridCapacity + iterChunks;
+			const ULONGLONG ullIndexDataToPrint = iterLines * m_dwCapacity + iterChunks;
 
 			if (ullIndexDataToPrint < m_ullDataCount) //Draw until reaching the end of m_dwDataCount.
 			{
 				//Hex chunk to print.
-				//If it's virtual data control, we aquire next byte to print from parent window.
-				WCHAR wstrHexToPrint[2];
-				unsigned char chByteToPrint { };
+				//If it's virtual data control we aquire next byte_to_print from parent window.
+				WCHAR pwszHexToPrint[2];
+				char chByteToPrint;
 				if (m_fVirtual && m_pwndMsg)
 				{
 					HEXNOTIFY hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
@@ -721,8 +726,8 @@ void CHexCtrl::OnPaint()
 				else
 					chByteToPrint = m_pData[ullIndexDataToPrint];
 
-				wstrHexToPrint[0] = m_pwszHexMap[(chByteToPrint & 0xF0) >> 4];
-				wstrHexToPrint[1] = m_pwszHexMap[(chByteToPrint & 0x0F)];
+				pwszHexToPrint[0] = m_pwszHexMap[(chByteToPrint & 0xF0) >> 4];
+				pwszHexToPrint[1] = m_pwszHexMap[(chByteToPrint & 0x0F)];
 
 				//Selection draw with different BK color.
 				if (m_ullBytesSelected && ullIndexDataToPrint >= m_ullSelectionStart && ullIndexDataToPrint < m_ullSelectionEnd)
@@ -730,11 +735,11 @@ void CHexCtrl::OnPaint()
 					rDC.SetBkColor(m_clrBkSelected);
 
 					//Space between hex chunks, excluding last hex in a row, filling with bk_selected color.
-					if (ullIndexDataToPrint < m_ullSelectionEnd - 1 && (ullIndexDataToPrint + 1) % m_dwGridCapacity)
+					if (ullIndexDataToPrint < m_ullSelectionEnd - 1 && (ullIndexDataToPrint + 1) % m_dwCapacity)
 					{				//Rect of the space between Hex chunks, needed for proper selection drawing.
 						rc.left = iHexPosToPrintX + m_sizeLetter.cx * 2;
 						rc.top = iHexPosToPrintY;
-						if (iterChunks == m_dwGridBlockSize - 1) //Space between capacity halves.
+						if (iterChunks == m_dwCapacityBlockSize - 1) //Space between capacity halves.
 							rc.right = iHexPosToPrintX + m_sizeLetter.cx * 5;
 						else
 							rc.right = iHexPosToPrintX + m_sizeLetter.cx * 3;
@@ -748,17 +753,16 @@ void CHexCtrl::OnPaint()
 
 				//Hex chunk printing.
 				rDC.SetTextColor(m_clrTextHex);
-				ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, &wstrHexToPrint[0], 2, nullptr);
+				ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, pwszHexToPrint, 2, nullptr);
 
 				//Ascii to print.
-				char chAsciiToPrint = chByteToPrint;
-				//For non printable Ascii just print a dot.
-				if (chAsciiToPrint < 32 || chAsciiToPrint == 127)
-					chAsciiToPrint = '.';
+				wchar_t wchAscii = chByteToPrint;
+				if (wchAscii < 32 || wchAscii >= 0x7f) //For non printable Ascii just print a dot.
+					wchAscii = '.';
 
 				//Ascii printing.
 				rDC.SetTextColor(m_clrTextAscii);
-				ExtTextOutA(rDC.m_hDC, iAsciiPosToPrintX, iAsciiPosToPrintY, 0, nullptr, &chAsciiToPrint, 1, nullptr);
+				ExtTextOutW(rDC.m_hDC, iAsciiPosToPrintX, iAsciiPosToPrintY, 0, nullptr, &wchAscii, 1, nullptr);
 			}
 			//Increasing indents for next print, for both - Hex and Ascii.
 			iIndentHexX += m_iDistanceBetweenHexChunks;
@@ -831,10 +835,10 @@ void CHexCtrl::RecalcAll()
 	m_iSecondVertLine = m_sizeLetter.cx * 10;
 	m_iDistanceBetweenHexChunks = m_sizeLetter.cx * 3;
 	m_iSpaceBetweenBlocks = m_sizeLetter.cx * 2;
-	m_iThirdVertLine = m_iSecondVertLine + (m_iDistanceBetweenHexChunks * m_dwGridCapacity) + m_iSpaceBetweenBlocks + m_sizeLetter.cx;
+	m_iThirdVertLine = m_iSecondVertLine + (m_iDistanceBetweenHexChunks * m_dwCapacity) + m_iSpaceBetweenBlocks + m_sizeLetter.cx;
 	m_iIndentAscii = m_iThirdVertLine + m_sizeLetter.cx;
 	m_iSpaceBetweenAscii = m_sizeLetter.cx + 1;
-	m_iFourthVertLine = m_iIndentAscii + (m_iSpaceBetweenAscii * m_dwGridCapacity) + m_sizeLetter.cx;
+	m_iFourthVertLine = m_iIndentAscii + (m_iSpaceBetweenAscii * m_dwCapacity) + m_sizeLetter.cx;
 	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
 	m_iHeightTopRect = int(m_sizeLetter.cy * 1.5);
 	m_iIndentTextCapacityY = m_iHeightTopRect / 2 - (m_sizeLetter.cy / 2);
@@ -864,7 +868,7 @@ void CHexCtrl::RecalcScrollSizes(int iClientHeight, int iClientWidth)
 	RecalcWorkAreaHeight(iClientHeight);
 	//Scroll sizes according to current font size.
 	m_stScrollV.SetScrollSizes(m_sizeLetter.cy, m_iHeightWorkArea - m_iHeightTopRect,
-		m_iHeightTopRect + m_iHeightBottomOffArea + m_sizeLetter.cy * (m_ullDataCount / m_dwGridCapacity + 2));
+		m_iHeightTopRect + m_iHeightBottomOffArea + m_sizeLetter.cy * (m_ullDataCount / m_dwCapacity + 2));
 	m_stScrollH.SetScrollSizes(m_sizeLetter.cx, iClientWidth, m_iFourthVertLine + 1);
 }
 
@@ -890,21 +894,21 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 	if ((iX >= m_iIndentFirstHexChunk) && (iX < m_iThirdVertLine) && (iY >= m_iHeightTopRect) && iY <= m_iHeightWorkArea)
 	{
 		int itmpBetweenBlocks;
-		if (iX > m_iIndentFirstHexChunk + (m_iDistanceBetweenHexChunks * (int)m_dwGridBlockSize))
+		if (iX > m_iIndentFirstHexChunk + (m_iDistanceBetweenHexChunks * (int)m_dwCapacityBlockSize))
 			itmpBetweenBlocks = m_iSpaceBetweenBlocks;
 		else
 			itmpBetweenBlocks = 0;
 
 		//Calculate ullHit hex chunk, taking into account scroll position and letter sizes.
 		dwHexChunk = ((iX - m_iIndentFirstHexChunk - itmpBetweenBlocks) / (m_sizeLetter.cx * 3)) +
-			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity + (ullCurLine  * m_dwGridCapacity);
+			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine  * m_dwCapacity);
 	}
-	else if ((iX >= m_iIndentAscii) && (iX < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwGridCapacity))
+	else if ((iX >= m_iIndentAscii) && (iX < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwCapacity))
 		&& (iY >= m_iHeightTopRect) && iY <= m_iHeightWorkArea)
 	{
 		//Calculate ullHit Ascii symbol.
 		dwHexChunk = ((iX - m_iIndentAscii) / (m_iSpaceBetweenAscii)) +
-			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwGridCapacity + (ullCurLine * m_dwGridCapacity);
+			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine * m_dwCapacity);
 	}
 	else
 		dwHexChunk = -1;
@@ -919,17 +923,17 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 void CHexCtrl::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
 {
 	int itmpBetweenBlocks;
-	if (ullChunk % m_dwGridCapacity > m_dwGridBlockSize)
+	if (ullChunk % m_dwCapacity > m_dwCapacityBlockSize)
 		itmpBetweenBlocks = m_iSpaceBetweenBlocks;
 	else
 		itmpBetweenBlocks = 0;
 
-	ullCx = m_iIndentFirstHexChunk + ((ullChunk % m_dwGridCapacity)*m_iDistanceBetweenHexChunks) + itmpBetweenBlocks;
+	ullCx = m_iIndentFirstHexChunk + ((ullChunk % m_dwCapacity)*m_iDistanceBetweenHexChunks) + itmpBetweenBlocks;
 
-	if (ullChunk % m_dwGridCapacity)
-		ullCy = (ullChunk / m_dwGridCapacity) * m_sizeLetter.cy + m_sizeLetter.cy;
+	if (ullChunk % m_dwCapacity)
+		ullCy = (ullChunk / m_dwCapacity) * m_sizeLetter.cy + m_sizeLetter.cy;
 	else
-		ullCy = (ullChunk / m_dwGridCapacity) * m_sizeLetter.cy;
+		ullCy = (ullChunk / m_dwCapacity) * m_sizeLetter.cy;
 }
 
 void CHexCtrl::CopyToClipboard(UINT nType)
@@ -937,45 +941,38 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 	if (!m_ullBytesSelected)
 		return;
 
-	const char* const strHexMap = "0123456789ABCDEF";
-	char chHexToCopy[2];
-	std::string strToClipboard { };
-
+	std::string strToClipboard;
 	switch (nType)
 	{
 	case COPY_AS_HEX:
 	{
-		for (unsigned i = 0; i < m_ullBytesSelected; i++)
-		{
-			chHexToCopy[0] = strHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
-			chHexToCopy[1] = strHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
-			strToClipboard += chHexToCopy[0];
-			strToClipboard += chHexToCopy[1];
+		for (unsigned i = 0; i < m_ullBytesSelected; i++) {
+			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
+			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
 		}
 		break;
 	}
 	case COPY_AS_HEX_FORMATTED:
 	{
 		//How many spaces are needed to be inserted at the beginnig.
-		DWORD dwModStart = m_ullSelectionStart % m_dwGridCapacity;
+		DWORD dwModStart = m_ullSelectionStart % m_dwCapacity;
+
 		//When to insert first "\r\n".
-		DWORD dwTail = m_dwGridCapacity - dwModStart;
-		DWORD dwNextBlock = m_dwGridCapacity % 2 ? m_dwGridBlockSize + 2 : m_dwGridBlockSize + 1;
+		DWORD dwTail = m_dwCapacity - dwModStart;
+		DWORD dwNextBlock = m_dwCapacity % 2 ? m_dwCapacityBlockSize + 2 : m_dwCapacityBlockSize + 1;
 
 		//If at least two rows are selected.
-		if (dwModStart + m_ullBytesSelected > m_dwGridCapacity)
+		if (dwModStart + m_ullBytesSelected > m_dwCapacity)
 		{
 			strToClipboard.insert(0, dwModStart * 3, ' ');
-			if (dwTail <= m_dwGridBlockSize)
+			if (dwTail <= m_dwCapacityBlockSize)
 				strToClipboard.insert(0, 2, ' ');
 		}
 
 		for (unsigned i = 0; i < m_ullBytesSelected; i++)
 		{
-			chHexToCopy[0] = strHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
-			chHexToCopy[1] = strHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
-			strToClipboard += chHexToCopy[0];
-			strToClipboard += chHexToCopy[1];
+			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
+			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
 
 			if (i < (m_ullBytesSelected - 1) && (dwTail - 1) != 0)
 				if (dwTail == dwNextBlock) //Space between blocks.
@@ -985,7 +982,7 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 			if (--dwTail == 0 && i < (m_ullBytesSelected - 1)) //Next string.
 			{
 				strToClipboard += "\r\n";
-				dwTail = m_dwGridCapacity;
+				dwTail = m_dwCapacity;
 			}
 		}
 		break;
@@ -1006,12 +1003,15 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 	}
 
 	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, strToClipboard.length() + 1);
-	if (!hMem)
+	if (!hMem) {
+		MessageBox(L"GlobalAlloc error.", L"Error", MB_ICONERROR);
 		return;
+	}
 	LPVOID hMemLock = GlobalLock(hMem);
-	if (!hMemLock)
+	if (!hMemLock) {
+		MessageBox(L"GlobalLock error.", L"Error", MB_ICONERROR);
 		return;
-
+	}
 	memcpy(hMemLock, strToClipboard.data(), strToClipboard.length() + 1);
 	GlobalUnlock(hMem);
 	OpenClipboard();
@@ -1034,6 +1034,15 @@ void CHexCtrl::UpdateInfoText()
 			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes total: 0x%llX(%llu)", m_ullDataCount, m_ullDataCount));
 	}
 	RedrawWindow();
+}
+
+void CHexCtrl::ToWchars(ULONGLONG ull, wchar_t* pwsz, unsigned short shBytes)
+{	//Converts shBytes of ull to wchar_t*.
+	for (unsigned i = 0; i < shBytes; i++)
+	{
+		pwsz[i * 2] = m_pwszHexMap[((ull >> ((shBytes - 1 - i) << 3)) & 0xF0) >> 4];
+		pwsz[i * 2 + 1] = m_pwszHexMap[(ull >> ((shBytes - 1 - i) << 3)) & 0x0F];
+	}
 }
 
 void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
@@ -1266,8 +1275,8 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	ULONGLONG ullEnd = ullStart + ullSize;
 	ULONGLONG ullMaxV = ullCurrScrollV + rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
 		((rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-	ULONGLONG ullNewStartV = ullStart / m_dwGridCapacity * m_sizeLetter.cy;
-	ULONGLONG ullNewEndV = ullEnd / m_dwGridCapacity * m_sizeLetter.cy;
+	ULONGLONG ullNewStartV = ullStart / m_dwCapacity * m_sizeLetter.cy;
+	ULONGLONG ullNewEndV = ullEnd / m_dwCapacity * m_sizeLetter.cy;
 
 	ULONGLONG ullNewScrollV { }, ullNewScrollH { };
 	if (fHighlight)
@@ -1278,7 +1287,7 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 		else
 			ullNewScrollV = 0;
 
-		ullNewScrollH = (ullStart % m_dwGridCapacity) * m_iDistanceBetweenHexChunks;
+		ullNewScrollH = (ullStart % m_dwCapacity) * m_iDistanceBetweenHexChunks;
 	}
 	else
 	{

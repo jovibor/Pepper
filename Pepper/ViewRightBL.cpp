@@ -34,7 +34,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
-	if (m_pLibpe->GetImageFlags(m_dwFileSummary) != S_OK)
+	if (m_pLibpe->GetImageInfo(m_dwFileSummary) != S_OK)
 		return;
 
 	//Hex control for SecurityDir and TLSdir.
@@ -215,7 +215,8 @@ int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	m_stHexEdit.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pFileLoader->ShowOffset(g_mapDOSHeader.at(dwEntry).dwOffset, g_mapDOSHeader.at(dwEntry).dwSize, &m_stHexEdit);
+	auto& ref = g_mapDOSHeader.at(dwEntry);
+	m_pFileLoader->ShowOffset(ref.dwOffset, ref.dwSize, &m_stHexEdit);
 
 	return 0;
 }
@@ -231,6 +232,8 @@ int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 	m_stHexEdit.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	//Each «Rich» takes 8 bytes (two DWORDs).
 	m_pFileLoader->ShowOffset(pRichHeader->at(dwEntry).dwOffsetRich, 8, &m_stHexEdit);
+
+	return 0;
 }
 
 int CViewRightBL::CreateHexNtHeaderEntry(DWORD dwEntry)
@@ -290,7 +293,7 @@ int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 		m_pActiveWnd = &m_stHexEdit;
 	}
 
-	DWORD dwOffset, dwSize;
+	DWORD dwOffset { }, dwSize { };
 	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 	{
 		dwOffset = pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + g_mapOptHeader32.at(dwEntry).dwOffset;
@@ -326,7 +329,7 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 		m_pActiveWnd = &m_stHexEdit;
 	}
 
-	DWORD dwOffset, dwSize = sizeof(IMAGE_DATA_DIRECTORY);
+	DWORD dwOffset { }, dwSize = sizeof(IMAGE_DATA_DIRECTORY);
 	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
 		dwOffset = pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader)
 		+ offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry;
