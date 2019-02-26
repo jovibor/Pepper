@@ -40,7 +40,7 @@ void CViewRightTL::OnInitialUpdate()
 		m_fontSummary.CreateFontIndirectW(&lf);
 	}
 
-	if (m_pLibpe->GetImageInfo(m_dwFileSummary) != S_OK)
+	if (m_pLibpe->GetImageInfo(m_dwFileInfo) != S_OK)
 		return;
 
 	m_wstrFullPath = L"Full path: " + m_pMainDoc->GetPathName();
@@ -48,9 +48,9 @@ void CViewRightTL::OnInitialUpdate()
 	m_wstrFileName.erase(0, m_wstrFileName.find_last_of('\\') + 1);
 	m_wstrFileName.insert(0, L"File name: ");
 
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 		m_wstrFileType = L"File type: PE32 (x86)";
-	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 		m_wstrFileType = L"File type: PE32+ (x64)";
 	else
 		m_wstrFileType = L"File type: unknown";
@@ -277,53 +277,50 @@ void CViewRightTL::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 
 	if (pItem->mask & LVIF_TEXT)
 	{
-		WCHAR wstr[50] { };
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).dwOffsetSecHdrDesc);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).dwOffsetSecHdrDesc);
 			break;
 		case 1:
 		{
 			auto& rstr = m_pSecHeaders->at(pItem->iItem);
 			if (rstr.strSecName.empty())
-				swprintf_s(wstr, 9, L"%.8S", rstr.stSecHdr.Name);
+				swprintf_s(pItem->pszText, pItem->cchTextMax, L"%.8S", rstr.stSecHdr.Name);
 			else
-				swprintf_s(wstr, 50, L"%.8S (%S)", rstr.stSecHdr.Name,
+				swprintf_s(pItem->pszText, pItem->cchTextMax, L"%.8S (%S)", rstr.stSecHdr.Name,
 					m_pSecHeaders->at(pItem->iItem).strSecName.data());
 		}
 		break;
 		case 2:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.Misc.VirtualSize);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.Misc.VirtualSize);
 			break;
 		case 3:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.VirtualAddress);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.VirtualAddress);
 			break;
 		case 4:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.SizeOfRawData);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.SizeOfRawData);
 			break;
 		case 5:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToRawData);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToRawData);
 			break;
 		case 6:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToRelocations);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToRelocations);
 			break;
 		case 7:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToLinenumbers);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToLinenumbers);
 			break;
 		case 8:
-			swprintf_s(wstr, 5, L"%04X", m_pSecHeaders->at(pItem->iItem).stSecHdr.NumberOfRelocations);
+			swprintf_s(pItem->pszText, 5, L"%04X", m_pSecHeaders->at(pItem->iItem).stSecHdr.NumberOfRelocations);
 			break;
 		case 9:
-			swprintf_s(wstr, 5, L"%04X", m_pSecHeaders->at(pItem->iItem).stSecHdr.NumberOfLinenumbers);
+			swprintf_s(pItem->pszText, 5, L"%04X", m_pSecHeaders->at(pItem->iItem).stSecHdr.NumberOfLinenumbers);
 			break;
 		case 10:
-			swprintf_s(wstr, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.Characteristics);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.Characteristics);
 			break;
 		}
-		lstrcpynW(pItem->pszText, wstr, pItem->cchTextMax);
 	}
-
 	*pResult = 0;
 }
 
@@ -334,37 +331,34 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 
 	if (pItem->mask & LVIF_TEXT)
 	{
-		WCHAR wstr[MAX_PATH] { };
 		const IMAGE_IMPORT_DESCRIPTOR* pImpDesc = &m_pImport->at(pItem->iItem).stImportDesc;
 
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, 9, L"%08X", m_pImport->at(pItem->iItem).dwOffsetImpDesc);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pImport->at(pItem->iItem).dwOffsetImpDesc);
 			break;
 		case 1:
-			swprintf_s(wstr, MAX_PATH, L"%S (%u)", m_pImport->at(pItem->iItem).strModuleName.data(),
+			swprintf_s(pItem->pszText, pItem->cchTextMax, L"%S (%u)", m_pImport->at(pItem->iItem).strModuleName.data(),
 				m_pImport->at(pItem->iItem).vecImportFunc.size());
 			break;
 		case 2:
-			swprintf_s(wstr, 9, L"%08X", pImpDesc->OriginalFirstThunk);
+			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->OriginalFirstThunk);
 			break;
 		case 3:
-			swprintf_s(wstr, 9, L"%08X", pImpDesc->TimeDateStamp);
+			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->TimeDateStamp);
 			break;
 		case 4:
-			swprintf_s(wstr, 9, L"%08X", pImpDesc->ForwarderChain);
+			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->ForwarderChain);
 			break;
 		case 5:
-			swprintf_s(wstr, 9, L"%08X", pImpDesc->Name);
+			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->Name);
 			break;
 		case 6:
-			swprintf_s(wstr, 9, L"%08X", pImpDesc->FirstThunk);
+			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->FirstThunk);
 			break;
 		}
-		lstrcpynW(pItem->pszText, wstr, pItem->cchTextMax);
 	}
-
 	*pResult = 0;
 }
 
@@ -376,26 +370,23 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 	if (pItem->mask & LVIF_TEXT)
 	{
 		const IMAGE_BASE_RELOCATION* pReloc = &m_pRelocTable->at(pItem->iItem).stBaseReloc;
-		WCHAR wstr[MAX_PATH] { };
 
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, 9, L"%08X", m_pRelocTable->at(pItem->iItem).dwOffsetReloc);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pRelocTable->at(pItem->iItem).dwOffsetReloc);
 			break;
 		case 1:
-			swprintf_s(wstr, 9, L"%08X", pReloc->VirtualAddress);
+			swprintf_s(pItem->pszText, 9, L"%08X", pReloc->VirtualAddress);
 			break;
 		case 2:
-			swprintf_s(wstr, 9, L"%08X", pReloc->SizeOfBlock);
+			swprintf_s(pItem->pszText, 9, L"%08X", pReloc->SizeOfBlock);
 			break;
 		case 3:
-			swprintf_s(wstr, MAX_PATH, L"%u", (pReloc->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD));
+			swprintf_s(pItem->pszText, pItem->cchTextMax, L"%u", (pReloc->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD));
 			break;
 		}
-		lstrcpynW(pItem->pszText, wstr, pItem->cchTextMax);
 	}
-
 	*pResult = 0;
 }
 
@@ -406,26 +397,22 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult
 
 	if (pItem->mask & LVIF_TEXT)
 	{
-		WCHAR wstr[9] { };
-
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(wstr, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).dwOffsetRuntimeFuncDesc);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).dwOffsetRuntimeFuncDesc);
 			break;
 		case 1:
-			swprintf_s(wstr, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.BeginAddress);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.BeginAddress);
 			break;
 		case 2:
-			swprintf_s(wstr, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.EndAddress);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.EndAddress);
 			break;
 		case 3:
-			swprintf_s(wstr, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.UnwindData);
+			swprintf_s(pItem->pszText, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.UnwindData);
 			break;
 		}
-		lstrcpynW(pItem->pszText, wstr, pItem->cchTextMax);
 	}
-
 	*pResult = 0;
 }
 
@@ -437,7 +424,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	if (pNMI->iItem == -1)
 		return TRUE;
 
-	bool fx32 = ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32);
+	bool fx32 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32);
 	DWORD dwOffset, dwSize = 0;
 	switch (pNMI->hdr.idFrom)
 	{
@@ -464,17 +451,10 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	case IDC_LIST_DATADIRECTORIES:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DATADIRECTORIES_ENTRY, pNMI->iItem));
-		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-		}
 		break;
 	case IDC_LIST_SECHEADERS:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECHEADERS_ENTRY, pNMI->iItem));
-		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-			//Go to section's descriptor offset.
-		}
 		break;
 	case IDC_LIST_EXPORT:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
@@ -649,7 +629,7 @@ int CViewRightTL::CreateListDOSHeader()
 	WCHAR wstr[9];
 	DWORD dwSize, dwOffset, dwValue;
 	for (unsigned i = 0; i < g_mapDOSHeader.size(); i++)
-	{	
+	{
 		auto& ref = g_mapDOSHeader.at(i);
 		dwOffset = ref.dwOffset;
 		dwSize = ref.dwSize;
@@ -684,20 +664,20 @@ int CViewRightTL::CreateListRichHeader()
 	m_listRichHdr.InsertColumn(3, L"Version", LVCFMT_LEFT, 100);
 	m_listRichHdr.InsertColumn(4, L"Occurrences", LVCFMT_LEFT, 100);
 
-	WCHAR wstr[MAX_PATH];
+	WCHAR wstr[18];
 	int listindex = 0;
 
 	for (auto& i : *pRichHeader)
 	{
 		swprintf_s(wstr, 9, L"%08X", i.dwOffsetRich);
 		m_listRichHdr.InsertItem(listindex, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%i", listindex + 1);
+		swprintf_s(wstr, 17, L"%i", listindex + 1);
 		m_listRichHdr.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%04X", i.wId);
+		swprintf_s(wstr, 17, L"%04X", i.wId);
 		m_listRichHdr.SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%u", i.wVersion);
+		swprintf_s(wstr, 17, L"%u", i.wVersion);
 		m_listRichHdr.SetItemText(listindex, 3, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%u", i.dwCount);
+		swprintf_s(wstr, 17, L"%u", i.dwCount);
 		m_listRichHdr.SetItemText(listindex, 4, wstr);
 
 		listindex++;
@@ -723,7 +703,7 @@ int CViewRightTL::CreateListNTHeader()
 	WCHAR wstr[9];
 	UINT listindex = 0;
 
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_NT_HEADERS32* pNTHeader32 = &pNTHdr->varHdr.stNTHdr32;
 
@@ -738,7 +718,7 @@ int CViewRightTL::CreateListNTHeader()
 		swprintf_s(&wstr[6], 3, L"%02X", (BYTE)(pNTHeader32->Signature >> 24));
 		m_listNTHeader.SetItemText(listindex, 3, wstr);
 	}
-	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_NT_HEADERS64* pNTHeader64 = &pNTHdr->varHdr.stNTHdr64;
 
@@ -932,7 +912,7 @@ int CViewRightTL::CreateListOptHeader()
 
 	WCHAR wstr[18];
 	std::wstring wstrTooltip;
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_OPTIONAL_HEADER32* pOptHdr32 = &pOptHdr->stOptHdr32;
 
@@ -977,7 +957,7 @@ int CViewRightTL::CreateListOptHeader()
 			m_listOptHeader.SetItemText(i, 3, wstr);
 		}
 	}
-	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_OPTIONAL_HEADER64* pOptHdr64 = &pOptHdr->stOptHdr64;
 
@@ -1047,9 +1027,9 @@ int CViewRightTL::CreateListDataDirectories()
 
 	WCHAR wstr[9];
 	DWORD dwDataDirsOffset { };
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 		dwDataDirsOffset = offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory);
-	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 		dwDataDirsOffset = offsetof(IMAGE_NT_HEADERS64, OptionalHeader.DataDirectory);
 
 	for (unsigned i = 0; i < pvecDataDirs->size(); i++)
@@ -1458,9 +1438,8 @@ int CViewRightTL::CreateListDebug()
 	{ IMAGE_DEBUG_TYPE_REPRO, L"IMAGE_DEBUG_TYPE_REPRO" }
 	};
 
-	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
-
+	int listindex = 0;
 	for (auto& i : *pDebugDir)
 	{
 		const IMAGE_DEBUG_DIRECTORY* pDebug = &i.stDebugDir;
@@ -1469,7 +1448,7 @@ int CViewRightTL::CreateListDebug()
 		m_listDebugDir.InsertItem(listindex, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDebug->Characteristics);
 		m_listDebugDir.SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, MAX_PATH, L"%08X", pDebug->TimeDateStamp);
+		swprintf_s(wstr, 9, L"%08X", pDebug->TimeDateStamp);
 		m_listDebugDir.SetItemText(listindex, 2, wstr);
 		if (pDebug->TimeDateStamp)
 		{
@@ -1483,9 +1462,9 @@ int CViewRightTL::CreateListDebug()
 		m_listDebugDir.SetItemText(listindex, 4, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDebug->Type);
 		m_listDebugDir.SetItemText(listindex, 5, wstr);
-		for (auto&j : mapDebugType)
-			if (j.first == pDebug->Type)
-				m_listDebugDir.SetCellTooltip(listindex, 5, j.second);
+		auto iter = mapDebugType.find(pDebug->Type);
+		if (iter != mapDebugType.end())
+			m_listDebugDir.SetCellTooltip(listindex, 5, iter->second, L"Debug type:");
 		swprintf_s(wstr, 9, L"%08X", pDebug->SizeOfData);
 		m_listDebugDir.SetItemText(listindex, 6, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDebug->AddressOfRawData);
@@ -1531,8 +1510,8 @@ int CViewRightTL::CreateListTLS()
 	{ IMAGE_SCN_ALIGN_MASK, L"IMAGE_SCN_ALIGN_MASK" }
 	};
 
-	WCHAR wstr[MAX_PATH];
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	WCHAR wstr[18];
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_TLS_DIRECTORY32*  pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
 
@@ -1559,7 +1538,7 @@ int CViewRightTL::CreateListTLS()
 			m_listTLSDir.SetItemText(i, 3, wstr);
 		}
 	}
-	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_TLS_DIRECTORY64*  pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
 
@@ -1583,7 +1562,7 @@ int CViewRightTL::CreateListTLS()
 			m_listTLSDir.SetItemText(i, 1, ref.strField.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
 			m_listTLSDir.SetItemText(i, 2, wstr);
-			swprintf_s(wstr, 9, dwSize == 4 ? L"%08X" : L"%016llX", ullValue);
+			swprintf_s(wstr, 17, dwSize == 4 ? L"%08X" : L"%016llX", ullValue);
 			m_listTLSDir.SetItemText(i, 3, wstr);
 		}
 	}
@@ -1624,7 +1603,7 @@ int CViewRightTL::CreateListLoadConfigDir()
 
 	WCHAR wstr[MAX_PATH];
 	std::wstring wstrTooltip;
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLCD32 = &pLCD->varLCD.stLCD32;
 
@@ -1642,7 +1621,6 @@ int CViewRightTL::CreateListLoadConfigDir()
 			if (i == 1) //TimeDateStamp
 			{
 				if (pLCD32->TimeDateStamp) {
-					WCHAR wstr[MAX_PATH];
 					__time64_t time = pLCD32->TimeDateStamp;
 					_wctime64_s(wstr, MAX_PATH, &time);
 					m_listLCD.SetCellTooltip(i, 2, wstr, L"Time / Date:");
@@ -1667,7 +1645,7 @@ int CViewRightTL::CreateListLoadConfigDir()
 			m_listLCD.SetItemText(i, 3, wstr);
 		}
 	}
-	else
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLCD64 = &pLCD->varLCD.stLCD64;
 

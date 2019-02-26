@@ -34,7 +34,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
-	if (m_pLibpe->GetImageInfo(m_dwFileSummary) != S_OK)
+	if (m_pLibpe->GetImageInfo(m_dwFileInfo) != S_OK)
 		return;
 
 	//Hex control for SecurityDir and TLSdir.
@@ -294,12 +294,12 @@ int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 	}
 
 	DWORD dwOffset { }, dwSize { };
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		dwOffset = pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + g_mapOptHeader32.at(dwEntry).dwOffset;
 		dwSize = g_mapOptHeader32.at(dwEntry).dwSize;
 	}
-	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
 		dwOffset = pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + g_mapOptHeader64.at(dwEntry).dwOffset;
 		dwSize = g_mapOptHeader64.at(dwEntry).dwSize;
@@ -330,10 +330,10 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 	}
 
 	DWORD dwOffset { }, dwSize = sizeof(IMAGE_DATA_DIRECTORY);
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 		dwOffset = pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader)
 		+ offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry;
-	else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 		dwOffset = pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader)
 		+ offsetof(IMAGE_OPTIONAL_HEADER64, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry;
 
@@ -385,7 +385,7 @@ int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 
 	DWORD dwOffset = pLCD->dwOffsetLCD;
 	DWORD dwSize;
-	if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		dwOffset += g_mapLCD32.at(dwEntry).dwOffset;
 		dwSize = g_mapLCD32.at(dwEntry).dwSize;
@@ -474,22 +474,22 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 	{
 		swprintf_s(wstr, 9, L"%08X", dwThunkOffset);
 		m_listImportEntry.InsertItem(listindex, wstr);
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA32);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA64);
 
 		swprintf_s(wstr, MAX_PATH, L"%S", i.strFuncName.data());
 		m_listImportEntry.SetItemText(listindex, 1, wstr);
 
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 		{
 			if (i.varThunk.stThunk32.u1.Ordinal & IMAGE_ORDINAL_FLAG32)
 				swprintf_s(wstr, 5, L"%04X", IMAGE_ORDINAL32(i.varThunk.stThunk32.u1.Ordinal));
 			else
 				swprintf_s(wstr, 5, L"%04X", i.stImpByName.Hint);
 		}
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 		{
 			if (i.varThunk.stThunk64.u1.Ordinal & IMAGE_ORDINAL_FLAG64)
 				swprintf_s(wstr, 5, L"%04llX", IMAGE_ORDINAL64(i.varThunk.stThunk64.u1.Ordinal));
@@ -498,17 +498,17 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 		}
 		m_listImportEntry.SetItemText(listindex, 2, wstr);
 
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.stThunk32.u1.AddressOfData);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.stThunk64.u1.AddressOfData);
 		m_listImportEntry.SetItemText(listindex, 3, wstr);
 
 		swprintf_s(wstr, 9, L"%08X", dwThunkRVA);
 		m_listImportEntry.SetItemText(listindex, 4, wstr);
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkRVA += sizeof(IMAGE_THUNK_DATA32);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			dwThunkRVA += sizeof(IMAGE_THUNK_DATA64);
 
 		listindex++;
@@ -574,22 +574,22 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 	{
 		swprintf_s(wstr, 9, L"%08X", dwThunkOffset);
 		m_listDelayImportEntry.InsertItem(listindex, wstr);
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA32);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA64);
 
 		swprintf_s(wstr, 256, L"%S", i.strFuncName.data());
 		m_listDelayImportEntry.SetItemText(listindex, 1, wstr);
 
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 		{
 			if (i.varThunk.st32.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG32)
 				swprintf_s(wstr, 5, L"%04X", IMAGE_ORDINAL32(i.varThunk.st32.stImportNameTable.u1.Ordinal));
 			else
 				swprintf_s(wstr, 5, L"%04X", i.stImpByName.Hint);
 		}
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 		{
 			if (i.varThunk.st64.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG64)
 				swprintf_s(wstr, 5, L"%04llX", IMAGE_ORDINAL64(i.varThunk.st64.stImportNameTable.u1.Ordinal));
@@ -598,27 +598,27 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 		}
 		m_listDelayImportEntry.SetItemText(listindex, 2, wstr);
 
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stImportNameTable.u1.AddressOfData);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stImportNameTable.u1.AddressOfData);
 		m_listDelayImportEntry.SetItemText(listindex, 3, wstr);
 
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stImportAddressTable.u1.AddressOfData);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stImportAddressTable.u1.AddressOfData);
 		m_listDelayImportEntry.SetItemText(listindex, 4, wstr);
 
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stBoundImportAddressTable.u1.AddressOfData);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stBoundImportAddressTable.u1.AddressOfData);
 		m_listDelayImportEntry.SetItemText(listindex, 5, wstr);
 
-		if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE32))
+		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stUnloadInformationTable.u1.AddressOfData);
-		else if (ImageHasFlag(m_dwFileSummary, IMAGE_FLAG_PE64))
+		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stUnloadInformationTable.u1.AddressOfData);
 		m_listDelayImportEntry.SetItemText(listindex, 6, wstr);
 

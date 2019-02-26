@@ -39,80 +39,13 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_NCPAINT()
 END_MESSAGE_MAP()
 
-bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
+CHexCtrl::CHexCtrl()
 {
-	if (m_fCreated) //Already created.
-		return false;
-
-	m_dwCtrlId = hcs.uId;
-	m_fFloat = hcs.fFloat;
-	m_pwndParentOwner = hcs.pwndParent;
-	if (hcs.pwndMsg)
-		m_pwndMsg = hcs.pwndMsg;
-	else
-		m_pwndMsg = hcs.pwndParent;
-
-	DWORD dwStyle;
-	if (m_fFloat)
-		dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
-	else
-		dwStyle = WS_VISIBLE | WS_CHILD;
-
-	CRect rc;
-	if (hcs.rc.IsRectNull() && m_fFloat)
-	{	//If pRect == nullptr and it's a float window then place it at screen center.
-
-		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
-		int iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
-		int iPosCX = iPosX * 3;
-		int iPosCY = iPosY * 3;
-		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
-	}
-
-	HCURSOR hCur;
-	if (!(hCur = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED)))
-		return false;
-	if (!CWnd::CreateEx(hcs.dwExStyles, AfxRegisterWndClass(CS_VREDRAW | CS_HREDRAW, hCur),
-		L"HexControl", dwStyle, rc, m_pwndParentOwner, m_fFloat ? 0 : m_dwCtrlId))
-		return false;
-
-	//Removing window's border frame.
-	MARGINS marg { 0, 0, 0, 1 };
-	DwmExtendFrameIntoClientArea(m_hWnd, &marg);
-	SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-
-	NONCLIENTMETRICSW ncm { sizeof(NONCLIENTMETRICSW) };
-	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-	ncm.lfMessageFont.lfHeight = 18; //For some reason above func returns this value as MAX_LONG.
-
-	LOGFONT lf { };
-	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
-	lf.lfHeight = 18;
-
-	//In case of inability to create font from LOGFONT*
-	//creating default windows font.
-	if (hcs.pLogFont)
-	{
-		if (!m_fontHexView.CreateFontIndirectW(hcs.pLogFont))
-			if (!m_fontHexView.CreateFontIndirectW(&lf))
-				m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
-	}
-	else
-		if (!m_fontHexView.CreateFontIndirectW(&lf))
-			m_fontHexView.CreateFontIndirectW(&ncm.lfMessageFont);
-
-	lf.lfHeight = 16;
-	if (!m_fontBottomRect.CreateFontIndirectW(&lf))
-	{
-		ncm.lfMessageFont.lfHeight = 16;
-		m_fontBottomRect.CreateFontIndirectW(&ncm.lfMessageFont);
-	}
-
 	//Vecor of Capacity numbers for the fast lookup in OnPaint.
-	m_vecLookupCapacity.clear();
+	m_vecLookupCapacity.reserve(m_dwCapacityMax);
 	for (unsigned i = 0; i < m_dwCapacityMax; i++)
 	{
-		WCHAR wstr[4];
+		WCHAR wstr[5];
 		swprintf_s(wstr, 4, L"%X", i);
 		m_vecLookupCapacity.emplace_back(wstr);
 	}
@@ -132,6 +65,71 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 	m_stScrollH.AddSibling(&m_stScrollV);
 
 	m_dlgSearch.Create(IDD_HEXCTRL_SEARCH, this);
+}
+
+bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
+{
+	if (m_fCreated) //Already created.
+		return false;
+
+	m_dwCtrlId = hcs.uId;
+	m_fFloat = hcs.fFloat;
+	m_pwndParentOwner = hcs.pwndParent;
+	if (hcs.pwndMsg)
+		m_pwndMsg = hcs.pwndMsg;
+	else
+		m_pwndMsg = hcs.pwndParent;
+
+	DWORD dwStyle;
+	if (m_fFloat)
+		dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
+	else
+		dwStyle = WS_VISIBLE | WS_CHILD;
+
+	//Font related.//////////////////////////////////////////////
+	LOGFONTW lf { };
+	if (hcs.pLogFont)
+		lf = *hcs.pLogFont;
+	else {
+		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+		lf.lfHeight = 18;
+	}
+
+	if (!m_fontHexView.CreateFontIndirectW(&lf))
+	{
+		NONCLIENTMETRICSW ncm { sizeof(NONCLIENTMETRICSW) };
+		SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+		lf = ncm.lfMessageFont;
+		lf.lfHeight = 18; //For some reason above func returns lfHeight value as MAX_LONG.
+
+		m_fontHexView.CreateFontIndirectW(&lf);
+	}
+	lf.lfHeight = 16;
+	m_fontBottomRect.CreateFontIndirectW(&lf);
+	//End of font related.///////////////////////////////////////
+
+	CRect rc = hcs.rc;
+	if (rc.IsRectNull() && m_fFloat)
+	{	//If initial rc is null, and it's a float window HexCtrl, then place it at screen center.
+
+		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
+		int iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
+		int iPosCX = iPosX * 3;
+		int iPosCY = iPosY * 3;
+		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
+	}
+
+	HCURSOR hCur;
+	if (!(hCur = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED)))
+		return false;
+	if (!CWnd::CreateEx(hcs.dwExStyles, AfxRegisterWndClass(CS_VREDRAW | CS_HREDRAW, hCur),
+		L"HexControl", dwStyle, rc, m_pwndParentOwner, m_fFloat ? 0 : m_dwCtrlId))
+		return false;
+
+	//Removing window's border frame.
+	MARGINS marg { 0, 0, 0, 1 };
+	DwmExtendFrameIntoClientArea(m_hWnd, &marg);
+	SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
 	RecalcAll();
 	m_fCreated = true;
@@ -581,11 +579,9 @@ void CHexCtrl::OnPaint()
 
 	//Find the ullLineStart and ullLineEnd position, draw the visible portion.
 	const ULONGLONG ullLineStart = GetCurrentLineV();
-	ULONGLONG ullLineEndtmp { };
-	if (m_ullDataCount)
-	{
+	ULONGLONG ullLineEndtmp = 0;
+	if (m_ullDataCount) {
 		ullLineEndtmp = ullLineStart + (rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) / m_sizeLetter.cy;
-
 		//If m_dwDataCount is really small we adjust dwLineEnd to be not bigger than maximum allowed.
 		if (ullLineEndtmp > (m_ullDataCount / m_dwCapacity))
 			ullLineEndtmp = m_ullDataCount % m_dwCapacity ? m_ullDataCount / m_dwCapacity + 1 : m_ullDataCount / m_dwCapacity;
@@ -649,7 +645,7 @@ void CHexCtrl::OnPaint()
 			x -= m_sizeLetter.cx;
 		}
 		ExtTextOutW(rDC.m_hDC, x - iScrollH, iFirstHorizLine + m_iIndentTextCapacityY, NULL, nullptr,
-			m_vecLookupCapacity.at(iterCapacity).data(), c, nullptr);
+			m_vecLookupCapacity[iterCapacity].data(), c, nullptr);
 	}
 
 	//"Ascii" text.
@@ -1064,17 +1060,16 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 	{
 	case SEARCH_HEX:
 	{
-		DWORD dwIterations = strSearchAscii.size() % 2 ? strSearchAscii.size() / 2 + 1 : strSearchAscii.size() / 2;
-		int iNextChar = 0;
+		DWORD dwIterations = strSearchAscii.size() / 2 + strSearchAscii.size() % 2;
 		std::string strToUL;
 		char* pEndPtr { };
 
 		for (DWORD i = 0; i < dwIterations; i++)
 		{
-			if (strSearchAscii.size() >= i + 2)
-				strToUL = strSearchAscii.substr(iNextChar, 2);
+			if (i + 2 <= strSearchAscii.size())
+				strToUL = strSearchAscii.substr(i * 2, 2);
 			else
-				strToUL = strSearchAscii.substr(iNextChar, 1);
+				strToUL = strSearchAscii.substr(i * 2, 1);
 
 			unsigned long ulNumber = strtoul(strToUL.data(), &pEndPtr, 16);
 			if (ulNumber == 0 && (pEndPtr == strToUL.data() || *pEndPtr != '\0'))
@@ -1085,7 +1080,6 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 			}
 
 			strSearch += (unsigned char)ulNumber;
-			iNextChar += 2;
 		}
 
 		dwSizeBytes = strSearch.size();

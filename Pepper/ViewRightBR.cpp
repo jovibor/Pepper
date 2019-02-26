@@ -21,7 +21,6 @@ void CViewRightBR::OnInitialUpdate()
 	CScrollView::OnInitialUpdate();
 
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
-
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 

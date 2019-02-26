@@ -22,9 +22,9 @@ namespace HEXCTRL
 		CWnd*		pwndParent { };				//Parent window pointer.
 		UINT		uId { };					//Hex control id.
 		DWORD		dwExStyles { };				//Extended window styles.
-		CRect		rc { };						//Initial rect.
+		CRect		rc { };						//Initial rect. If null, the window is screen centered then.
 		bool		fFloat { false };			//Is float or child - incorporated into another window.
-		const		LOGFONT* pLogFont { };		//Font to be used. Default if it's nullptr.
+		const		LOGFONTW* pLogFont { };		//Font to be used. Default if it's nullptr.
 		CWnd*		pwndMsg { };				//Pointer to the window that is going to recieve command messages, 
 												//such as HEXCTRL_MSG_GETDISPINFO. If nullptr - parent window is used.
 	};
@@ -117,7 +117,7 @@ namespace HEXCTRL
 	{
 	public:
 		friend class CHexDlgSearch;
-		CHexCtrl() {}
+		CHexCtrl();
 		virtual ~CHexCtrl() {}
 		bool Create(const HEXCREATESTRUCT& hcs); //Main initialization method, CHexCtrl::Create.
 
@@ -179,7 +179,7 @@ namespace HEXCTRL
 		const unsigned char* m_pData { };
 		ULONGLONG m_ullDataCount { };
 		DWORD m_dwCapacity { 16 };
-		DWORD m_dwCapacityMax { 64 };
+		const DWORD m_dwCapacityMax { 64 };
 		DWORD m_dwCapacityBlockSize { m_dwCapacity / 2 }; //Size of block before space delimiter.
 		CWnd* m_pwndParentOwner { };
 		CWnd* m_pwndMsg { };
@@ -218,7 +218,7 @@ namespace HEXCTRL
 		const char* const m_pszHexMap { "0123456789ABCDEF" };
 		std::vector<std::wstring> m_vecLookupCapacity { }; //Text for Capacity.
 		std::wstring m_wstrBottomText { };
-		std::wstring m_wstrErrVirtual { L"This function isn't supported in Virtual mode!" };
+		const std::wstring m_wstrErrVirtual { L"This function isn't supported in Virtual mode!" };
 		bool m_fLMousePressed { false };
 		UINT m_dwCtrlId { };
 		//Enums.

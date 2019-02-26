@@ -62,7 +62,7 @@ private:
 	CListEx m_listDelayImportEntry;
 	CListEx m_listRelocsEntry;
 	CTreeEx m_treeResBottom;
-	DWORD m_dwFileSummary { };
+	DWORD m_dwFileInfo { };
 	CImageList m_imglTreeRes;
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONT m_lf { }, m_hdrlf { };

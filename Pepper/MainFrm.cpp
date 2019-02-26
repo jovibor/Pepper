@@ -73,7 +73,7 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		CPoint pt = pMsg->pt;
 		CWnd* pWnd = WindowFromPoint(pt);
 		if (!pWnd)
-			return TRUE;
+			break;
 
 		const CObList& tabGroups = GetMDITabGroups();
 		if (tabGroups.GetCount() > 0)

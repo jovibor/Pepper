@@ -67,7 +67,7 @@ private:
 	HTREEITEM m_hTreeResDir { };
 	bool m_fFileSummaryShow { true };
 	ULONG m_dwPeStart { };
-	DWORD m_dwFileSummary { };
+	DWORD m_dwFileInfo { };
 	PCLIBPE_SECHEADERS_VEC m_pSecHeaders { };
 	PCLIBPE_IMPORT_VEC m_pImport { };
 	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
