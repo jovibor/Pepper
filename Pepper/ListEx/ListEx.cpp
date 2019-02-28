@@ -20,15 +20,16 @@
 #include "strsafe.h"
 
 using namespace LISTEX;
+
 /****************************************************
-* CListExHeader class implementation.				*
+* CListExHdr class implementation.				*
 ****************************************************/
-BEGIN_MESSAGE_MAP(CListExHeader, CMFCHeaderCtrl)
-	ON_MESSAGE(HDM_LAYOUT, &CListExHeader::OnLayout)
+BEGIN_MESSAGE_MAP(CListExHdr, CMFCHeaderCtrl)
+	ON_MESSAGE(HDM_LAYOUT, &CListExHdr::OnLayout)
 	ON_WM_HSCROLL()
 END_MESSAGE_MAP()
 
-CListExHeader::CListExHeader()
+CListExHdr::CListExHdr()
 {
 	NONCLIENTMETRICSW ncm { };
 	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
@@ -42,7 +43,7 @@ CListExHeader::CListExHeader()
 	m_hdItem.pszText = m_wstrHeaderText;
 }
 
-void CListExHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted)
+void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted)
 {
 	CMemDC memDC(*pDC, rect);
 	CDC& rDC = memDC.GetDC();
@@ -78,7 +79,7 @@ void CListExHeader::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed,
 		rDC.DrawTextW(m_wstrHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
 }
 
-LRESULT CListExHeader::OnLayout(WPARAM wParam, LPARAM lParam)
+LRESULT CListExHdr::OnLayout(WPARAM wParam, LPARAM lParam)
 {
 	CMFCHeaderCtrl::DefWindowProcW(HDM_LAYOUT, 0, lParam);
 
@@ -92,12 +93,12 @@ LRESULT CListExHeader::OnLayout(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void CListExHeader::SetHeight(DWORD dwHeight)
+void CListExHdr::SetHeight(DWORD dwHeight)
 {
 	m_dwHeaderHeight = dwHeight;
 }
 
-void CListExHeader::SetColor(COLORREF clrText, COLORREF clrBk)
+void CListExHdr::SetColor(COLORREF clrText, COLORREF clrBk)
 {
 	m_clrText = clrText;
 	m_clrBk = clrBk;
@@ -105,13 +106,13 @@ void CListExHeader::SetColor(COLORREF clrText, COLORREF clrBk)
 	RedrawWindow();
 }
 
-void CListExHeader::SetColumnColor(DWORD iColumn, COLORREF clr)
+void CListExHdr::SetColumnColor(DWORD iColumn, COLORREF clr)
 {
 	m_umapClrColumn[iColumn] = clr;
 	RedrawWindow();
 }
 
-void CListExHeader::SetFont(const LOGFONT* pLogFontNew)
+void CListExHdr::SetFont(const LOGFONT* pLogFontNew)
 {
 	if (!pLogFontNew)
 		return;
@@ -169,6 +170,8 @@ BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID
 		TTS_BALLOON | TTS_NOANIMATE | TTS_NOFADE | TTS_NOPREFIX | TTS_ALWAYSTIP,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		nullptr, nullptr, nullptr, nullptr);
+	if (!m_hwndTt)
+		return FALSE;
 	SetWindowTheme(m_hwndTt, nullptr, L""); //To prevent Windows from changing theme of Balloon window.
 
 	m_stToolInfo.cbSize = TTTOOLINFOW_V1_SIZE;
@@ -177,10 +180,15 @@ BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID
 	::SendMessageW(m_hwndTt, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 	::SendMessageW(m_hwndTt, TTM_SETMAXTIPWIDTH, 0, (LPARAM)400); //to allow use of newline \n.
 
+	m_stNMII.hdr.code = LISTEX_MSG_MENUSELECTED;
+	m_stNMII.hdr.idFrom = GetDlgCtrlID();
+	m_stNMII.hdr.hwndFrom = m_hWnd;
+
 	NONCLIENTMETRICSW ncm { };
 	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
 	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 	ncm.lfMessageFont.lfHeight = 18; //For some weird reason above func returns this value as MAX_LONG.
+	LOGFONTW lf = ncm.lfMessageFont;
 
 	if (pListExInfo)
 	{
@@ -199,17 +207,14 @@ BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID
 		m_dwGridWidth = pListExInfo->dwListGridWidth;
 
 		if (pListExInfo->pListLogFont)
-			m_fontList.CreateFontIndirectW(pListExInfo->pListLogFont);
-		else
-			m_fontList.CreateFontIndirectW(&ncm.lfMessageFont);
+			lf = *pListExInfo->pListLogFont;
 
 		SetHeaderColor(pListExInfo->clrHeaderText, pListExInfo->clrHeaderBk);
 		SetHeaderHeight(pListExInfo->dwHeaderHeight);
 		SetHeaderFont(pListExInfo->pHeaderLogFont);
 	}
-	else
-		m_fontList.CreateFontIndirectW(&ncm.lfMessageFont);
 
+	m_fontList.CreateFontIndirectW(&lf);
 	m_penGrid.CreatePen(PS_SOLID, m_dwGridWidth, m_clrGrid);
 	Update(0);
 
@@ -410,10 +415,10 @@ void CListEx::InitHeader()
 void CListEx::MeasureItem(LPMEASUREITEMSTRUCT lpMIS)
 {
 	//Set row height according to current font's height.
-	TEXTMETRIC tm;
+	TEXTMETRICW tm;
 	CDC* pDC = GetDC();
 	pDC->SelectObject(&m_fontList);
-	GetTextMetrics(pDC->m_hDC, &tm);
+	GetTextMetricsW(pDC->m_hDC, &tm);
 	lpMIS->itemHeight = tm.tmHeight + tm.tmExternalLeading + 1;
 	ReleaseDC(pDC);
 }
@@ -601,19 +606,15 @@ void CListEx::OnRButtonDown(UINT nFlags, CPoint pt)
 
 void CListEx::OnContextMenu(CWnd* pWnd, CPoint pt)
 {
-	LVHITTESTINFO hi { };
+	LVHITTESTINFO hi;
 	ScreenToClient(&pt);
 	hi.pt = pt;
 	ListView_SubItemHitTest(m_hWnd, &hi);
-
-	m_stNMII.hdr.code = LISTEX_MSG_MENUSELECTED;
-	m_stNMII.hdr.idFrom = GetDlgCtrlID();
-	m_stNMII.hdr.hwndFrom = m_hWnd;
 	m_stNMII.iItem = hi.iItem;
 	m_stNMII.iSubItem = hi.iSubItem;
 
 	ClientToScreen(&pt);
-	CMenu* pMenu { };
+	CMenu* pMenu;
 	if (HasMenu(hi.iItem, hi.iSubItem, &pMenu))
 		pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, pt.x, pt.y, this);
 }
@@ -657,7 +658,6 @@ void CListEx::OnTimer(UINT_PTR nIDEvent)
 
 BOOL CListEx::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
-	//	SetFocus();
 	return CMFCListCtrl::OnSetCursor(pWnd, nHitTest, message);
 }
 

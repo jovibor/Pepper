@@ -7,7 +7,7 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 /****************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/	                *
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/				*
 * This is an extended and quite featured version of CMFCListCtrl class.		*
 * The main difference is in CListEx::Create method, which takes one			*
 * additional arg - pointer to LISTEXINFO structure, which fields are		*
@@ -44,17 +44,17 @@ namespace LISTEX {
 	using PLISTEXINFO = LISTEXINFO * ;
 
 	/********************************************
-	* CListExHeader class definition.			*
+	* CListExHdr class definition.			*
 	********************************************/
-	class CListExHeader : public CMFCHeaderCtrl
+	class CListExHdr : public CMFCHeaderCtrl
 	{
 	public:
 		void SetHeight(DWORD dwHeight);
 		void SetFont(const LOGFONT* pFontNew);
 		void SetColor(COLORREF clrText, COLORREF clrBk);
 		void SetColumnColor(DWORD iColumn, COLORREF clr);
-		CListExHeader();
-		virtual ~CListExHeader() {}
+		CListExHdr();
+		virtual ~CListExHdr() {}
 	protected:
 		afx_msg void OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted) override;
 		afx_msg LRESULT OnLayout(WPARAM wParam, LPARAM lParam);
@@ -80,7 +80,7 @@ namespace LISTEX {
 		CListEx() {}
 		virtual ~CListEx() {}
 		BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo = nullptr);
-		CListExHeader& GetHeaderCtrl() override { return m_stListHeader; }
+		CListExHdr& GetHeaderCtrl() override { return m_stListHeader; }
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
@@ -122,7 +122,7 @@ namespace LISTEX {
 		afx_msg void OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnDestroy();
 	private:
-		CListExHeader m_stListHeader;
+		CListExHdr m_stListHeader;
 		CFont m_fontList;
 		CPen m_penGrid;
 		bool m_fTtShown { false };
@@ -153,6 +153,7 @@ namespace LISTEX {
 	/****************************************************************************
 	* WM_NOTIFY codes (NMHDR.code values)										*
 	****************************************************************************/
+	
 	constexpr auto LISTEX_MSG_MENUSELECTED = 0x00001000;
 
 	/*******************Setting the manifest for ComCtl32.dll version 6.***********************/
