@@ -128,6 +128,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
+    <OutDir>$(SolutionDir)\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)\$(Configuration)\$(Platform)\</IntDir>
+    <IncludePath>HexCtrl;HexCtrl\res;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <TargetName>$(ProjectName)_$(Platform)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -224,7 +228,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>powershell.exe $(ProjectDir)\verinfo\set_verinfo.ps1 $(TargetDir)$(ProjectName).exe</Command>
+      <Command>powershell.exe $(ProjectDir)verinfo\set_verinfo.ps1 $(TargetDir)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
     <Xdcmake>
       <OutputFile />
@@ -310,6 +314,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -324,7 +330,10 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <DelayLoadDLLs>libpe.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
+      <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Mincore.lib;</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -336,6 +345,9 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>powershell.exe $(ProjectDir)verinfo\set_verinfo.ps1 $(TargetDir)$(TargetName)$(TargetExt)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|x64'">
     <ClCompile>
@@ -417,6 +429,7 @@
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\FileLoader.h" />
+    <ClInclude Include="include\libpe.h" />
     <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />
     <ClInclude Include="include\MainFrm.h" />

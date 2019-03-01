@@ -622,7 +622,7 @@ void CHexCtrl::OnPaint()
 	rDC.FillSolidRect(&rc, m_clrBkBottomRect);
 	rDC.SetTextColor(m_clrTextBottomRect);
 	rDC.SelectObject(&m_fontBottomRect);
-	DrawTextW(rDC.m_hDC, m_wstrBottomText.data(), m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+	DrawTextW(rDC.m_hDC, m_wstrBottomText.data(), (int)m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 	rDC.SelectObject(&m_fontHexView);
 	rDC.SetTextColor(m_clrTextCaption);
@@ -1060,7 +1060,7 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 	{
 	case SEARCH_HEX:
 	{
-		DWORD dwIterations = strSearchAscii.size() / 2 + strSearchAscii.size() % 2;
+		DWORD dwIterations = DWORD(strSearchAscii.size() / 2 + strSearchAscii.size() % 2);
 		std::string strToUL;
 		char* pEndPtr { };
 
@@ -1560,7 +1560,7 @@ BOOL CHexDlgAbout::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	//To prevent cursor from blinking
-	SetClassLongPtr(m_hWnd, GCL_HCURSOR, 0);
+	SetClassLongPtrW(m_hWnd, GCLP_HCURSOR, 0);
 
 	m_fontDefault = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
 

@@ -45,7 +45,7 @@ BOOL CAboutDlg::OnInitDialog()
 	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, wstrVersion);
 
 	//to prevent cursor from blinking
-	SetClassLongPtr(m_hWnd, GCL_HCURSOR, 0);
+	SetClassLongPtrW(m_hWnd, GCLP_HCURSOR, 0);
 
 	m_fontDefault = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
 

@@ -238,7 +238,7 @@ void CViewRightTL::OnDraw(CDC* pDC)
 		rDC.GetClipBox(rc);
 		rDC.FillSolidRect(rc, RGB(255, 255, 255));
 		rDC.SelectObject(m_fontSummary);
-		GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), m_wstrFullPath.length(), &m_sizeTextToDraw);
+		GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), (int)m_wstrFullPath.length(), &m_sizeTextToDraw);
 		rc.left = 20;
 		rc.top = 20;
 		rc.right = rc.left + m_sizeTextToDraw.cx + 40;
@@ -246,14 +246,14 @@ void CViewRightTL::OnDraw(CDC* pDC)
 		rDC.Rectangle(&rc);
 
 		rDC.SetTextColor(RGB(200, 50, 30));
-		GetTextExtentPoint32W(rDC.m_hDC, m_wstrAppVersion.data(), m_wstrAppVersion.length(), &m_sizeTextToDraw);
+		GetTextExtentPoint32W(rDC.m_hDC, m_wstrAppVersion.data(), (int)m_wstrAppVersion.length(), &m_sizeTextToDraw);
 		ExtTextOutW(rDC.m_hDC, (rc.Width() - m_sizeTextToDraw.cx) / 2 + rc.left, 10, 0, nullptr,
-			m_wstrAppVersion.c_str(), m_wstrAppVersion.length(), nullptr);
+			m_wstrAppVersion.c_str(), (int)m_wstrAppVersion.length(), nullptr);
 
 		rDC.SetTextColor(RGB(0, 0, 255));
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + m_sizeTextToDraw.cy, 0, nullptr, m_wstrFileType.data(), m_wstrFileType.length(), nullptr);
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + 2 * m_sizeTextToDraw.cy, 0, nullptr, m_wstrFileName.data(), m_wstrFileName.length(), nullptr);
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + 3 * m_sizeTextToDraw.cy, 0, nullptr, m_wstrFullPath.data(), m_wstrFullPath.length(), nullptr);
+		ExtTextOutW(rDC.m_hDC, 35, rc.top + m_sizeTextToDraw.cy, 0, nullptr, m_wstrFileType.data(), (int)m_wstrFileType.length(), nullptr);
+		ExtTextOutW(rDC.m_hDC, 35, rc.top + 2 * m_sizeTextToDraw.cy, 0, nullptr, m_wstrFileName.data(), (int)m_wstrFileName.length(), nullptr);
+		ExtTextOutW(rDC.m_hDC, 35, rc.top + 3 * m_sizeTextToDraw.cy, 0, nullptr, m_wstrFullPath.data(), (int)m_wstrFullPath.length(), nullptr);
 	}
 }
 
@@ -339,7 +339,7 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 			swprintf_s(pItem->pszText, 9, L"%08X", m_pImport->at(pItem->iItem).dwOffsetImpDesc);
 			break;
 		case 1:
-			swprintf_s(pItem->pszText, pItem->cchTextMax, L"%S (%u)", m_pImport->at(pItem->iItem).strModuleName.data(),
+			swprintf_s(pItem->pszText, pItem->cchTextMax, L"%S (%zu)", m_pImport->at(pItem->iItem).strModuleName.data(),
 				m_pImport->at(pItem->iItem).vecImportFunc.size());
 			break;
 		case 2:
@@ -383,7 +383,7 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 			swprintf_s(pItem->pszText, 9, L"%08X", pReloc->SizeOfBlock);
 			break;
 		case 3:
-			swprintf_s(pItem->pszText, pItem->cchTextMax, L"%u", (pReloc->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD));
+			swprintf_s(pItem->pszText, pItem->cchTextMax, L"%zu", (pReloc->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD));
 			break;
 		}
 	}
@@ -480,7 +480,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 				case 1: //Str dll name
 				case 5: //Name
 					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.Name, dwOffset);
-					dwSize = m_pImport->at(pNMI->iItem).strModuleName.size();
+					dwSize = (DWORD)m_pImport->at(pNMI->iItem).strModuleName.size();
 					break; ;
 				case 2: //OriginalFirstThunk 
 					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.OriginalFirstThunk, dwOffset);
@@ -707,10 +707,10 @@ int CViewRightTL::CreateListNTHeader()
 	{
 		const IMAGE_NT_HEADERS32* pNTHeader32 = &pNTHdr->varHdr.stNTHdr32;
 
-		swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_NT_HEADERS32, Signature) + m_dwPeStart);
+		swprintf_s(wstr, 9, L"%08zX", offsetof(IMAGE_NT_HEADERS32, Signature) + m_dwPeStart);
 		listindex = m_listNTHeader.InsertItem(listindex, wstr);
 		m_listNTHeader.SetItemText(listindex, 1, L"Signature");
-		swprintf_s(wstr, 2, L"%X", sizeof(pNTHeader32->Signature));
+		swprintf_s(wstr, 2, L"%zX", sizeof(pNTHeader32->Signature));
 		m_listNTHeader.SetItemText(listindex, 2, wstr);
 		swprintf_s(&wstr[0], 3, L"%02X", (BYTE)(pNTHeader32->Signature >> 0));
 		swprintf_s(&wstr[2], 3, L"%02X", (BYTE)(pNTHeader32->Signature >> 8));
@@ -722,10 +722,10 @@ int CViewRightTL::CreateListNTHeader()
 	{
 		const IMAGE_NT_HEADERS64* pNTHeader64 = &pNTHdr->varHdr.stNTHdr64;
 
-		swprintf_s(wstr, 9, L"%08X", offsetof(IMAGE_NT_HEADERS64, Signature) + m_dwPeStart);
+		swprintf_s(wstr, 9, L"%08zX", offsetof(IMAGE_NT_HEADERS64, Signature) + m_dwPeStart);
 		listindex = m_listNTHeader.InsertItem(listindex, wstr);
 		m_listNTHeader.SetItemText(listindex, 1, L"Signature");
-		swprintf_s(wstr, 2, L"%X", sizeof(pNTHeader64->Signature));
+		swprintf_s(wstr, 2, L"%zX", sizeof(pNTHeader64->Signature));
 		m_listNTHeader.SetItemText(listindex, 2, wstr);
 		swprintf_s(&wstr[0], 3, L"%02X", (BYTE)(pNTHeader64->Signature >> 0));
 		swprintf_s(&wstr[2], 3, L"%02X", (BYTE)(pNTHeader64->Signature >> 8));
@@ -841,7 +841,7 @@ int CViewRightTL::CreateListFileHeader()
 			}
 		}
 
-		swprintf_s(wstr, 9, L"%08X", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset);
+		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset);
 		m_listFileHeader.InsertItem(i, wstr);
 		m_listFileHeader.SetItemText(i, 1, ref.strField.data());
 		swprintf_s(wstr, 9, L"%u", dwSize);
@@ -948,7 +948,7 @@ int CViewRightTL::CreateListOptHeader()
 				}
 			}
 
-			swprintf_s(wstr, 9, L"%08X", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + dwOffset);
+			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + dwOffset);
 			m_listOptHeader.InsertItem(i, wstr);
 			m_listOptHeader.SetItemText(i, 1, ref.strField.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
@@ -994,7 +994,7 @@ int CViewRightTL::CreateListOptHeader()
 				}
 			}
 
-			swprintf_s(wstr, 9, L"%08X", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + dwOffset);
+			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + dwOffset);
 			m_listOptHeader.InsertItem(i, wstr);
 			m_listOptHeader.SetItemText(i, 1, ref.strField.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
@@ -1036,7 +1036,7 @@ int CViewRightTL::CreateListDataDirectories()
 	{
 		const IMAGE_DATA_DIRECTORY* pDataDirs = &pvecDataDirs->at(i).stDataDir;
 
-		swprintf_s(wstr, 9, L"%08X", pNTHdr->dwOffsetNTHdrDesc + dwDataDirsOffset + sizeof(IMAGE_DATA_DIRECTORY) * i);
+		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + dwDataDirsOffset + sizeof(IMAGE_DATA_DIRECTORY) * i);
 		m_listDataDirs.InsertItem(i, wstr);
 		m_listDataDirs.SetItemText(i, 1, g_mapDataDirs.at(i).data());
 		swprintf_s(wstr, 9, L"%08X", pDataDirs->VirtualAddress);
@@ -1072,7 +1072,7 @@ int CViewRightTL::CreateListSecHeaders()
 	m_listSecHeaders.InsertColumn(8, L"NumberOfRelocations", LVCFMT_LEFT, 150);
 	m_listSecHeaders.InsertColumn(9, L"NumberOfLinenumbers", LVCFMT_LEFT, 160);
 	m_listSecHeaders.InsertColumn(10, L"Characteristics", LVCFMT_LEFT, 115);
-	m_listSecHeaders.SetItemCountEx(m_pSecHeaders->size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+	m_listSecHeaders.SetItemCountEx((int)m_pSecHeaders->size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
 
 	std::map<DWORD, std::wstring> mapSecFlags {
 		{ 0x00000000, L"IMAGE_SCN_TYPE_REG\n Reserved." },
@@ -1202,7 +1202,7 @@ int CViewRightTL::CreateListImport()
 	m_listImport.InsertColumn(4, L"ForwarderChain", LVCFMT_LEFT, 110);
 	m_listImport.InsertColumn(5, L"Name RVA", LVCFMT_LEFT, 90);
 	m_listImport.InsertColumn(6, L"FirstThunk (IAT)", LVCFMT_LEFT, 135);
-	m_listImport.SetItemCountEx(m_pImport->size(), LVSICF_NOSCROLL);
+	m_listImport.SetItemCountEx((int)m_pImport->size(), LVSICF_NOSCROLL);
 	m_listImport.SetListMenu(&m_menuList);
 
 	WCHAR wstr[MAX_PATH];
@@ -1342,7 +1342,7 @@ int CViewRightTL::CreateListExceptions()
 	m_listExceptionDir.InsertColumn(1, L"BeginAddress", LVCFMT_CENTER, 100);
 	m_listExceptionDir.InsertColumn(2, L"EndAddress", LVCFMT_LEFT, 100);
 	m_listExceptionDir.InsertColumn(3, L"UnwindData/InfoAddress", LVCFMT_LEFT, 180);
-	m_listExceptionDir.SetItemCountEx(m_pExceptionDir->size(), LVSICF_NOSCROLL);
+	m_listExceptionDir.SetItemCountEx((int)m_pExceptionDir->size(), LVSICF_NOSCROLL);
 
 	return 0;
 }
@@ -1394,7 +1394,7 @@ int CViewRightTL::CreateListRelocations()
 	m_listRelocDir.InsertColumn(1, L"Virtual Address", LVCFMT_CENTER, 115);
 	m_listRelocDir.InsertColumn(2, L"Block Size", LVCFMT_LEFT, 100);
 	m_listRelocDir.InsertColumn(3, L"Entries", LVCFMT_LEFT, 100);
-	m_listRelocDir.SetItemCountEx(m_pRelocTable->size(), LVSICF_NOSCROLL);
+	m_listRelocDir.SetItemCountEx((int)m_pRelocTable->size(), LVSICF_NOSCROLL);
 
 	return 0;
 }
@@ -1766,7 +1766,7 @@ int CViewRightTL::CreateListDelayImport()
 		m_listDelayImportDir.InsertItem(listindex, wstr);
 
 		const IMAGE_DELAYLOAD_DESCRIPTOR* pDelayImpDir = &i.stDelayImpDesc;
-		swprintf_s(wstr, MAX_PATH, L"%S (%u)", i.strModuleName.data(), i.vecDelayImpFunc.size());
+		swprintf_s(wstr, MAX_PATH, L"%S (%zu)", i.strModuleName.data(), i.vecDelayImpFunc.size());
 		m_listDelayImportDir.SetItemText(listindex, 1, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->Attributes.AllAttributes);
 		m_listDelayImportDir.SetItemText(listindex, 2, wstr);

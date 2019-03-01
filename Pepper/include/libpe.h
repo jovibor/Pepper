@@ -321,7 +321,11 @@ namespace libpe
 #define ILIBPEAPI __declspec(dllexport) __cdecl
 #else
 #define ILIBPEAPI __declspec(dllimport) __cdecl
+#ifdef _WIN64
+#pragma comment(lib, "libpe_x64.lib")
+#else
 #pragma comment(lib, "libpe.lib")
+#endif
 #endif
 
 extern "C" HRESULT ILIBPEAPI Getlibpe(libpe::libpe_ptr& libpe_ptr);

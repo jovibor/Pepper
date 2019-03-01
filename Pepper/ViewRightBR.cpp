@@ -124,7 +124,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			if (pRes->pData->empty())
 				return ResLoadError();
 
-			hIcon = CreateIconFromResourceEx((PBYTE)pRes->pData->data(), pRes->pData->size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+			hIcon = CreateIconFromResourceEx((PBYTE)pRes->pData->data(), (DWORD)pRes->pData->size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 			if (!hIcon)
 				return ResLoadError();
 			if (!GetIconInfo(hIcon, &iconInfo))
@@ -189,7 +189,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			if (pRes->pData->empty())
 				return ResLoadError();
 
-			hIcon = CreateIconFromResourceEx((PBYTE)pRes->pData->data(), pRes->pData->size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+			hIcon = CreateIconFromResourceEx((PBYTE)pRes->pData->data(), (DWORD)pRes->pData->size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 			if (!hIcon)
 				return ResLoadError();
 
@@ -267,7 +267,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 				}
 
 				GetTextExtentPoint32W(hDC, L"STYLES: ", 8, &m_sizeStrStyles);
-				GetTextExtentPoint32W(hDC, m_wstrRes.data(), m_wstrRes.size(), &m_sizeLetter);
+				GetTextExtentPoint32W(hDC, m_wstrRes.data(), (int)m_wstrRes.size(), &m_sizeLetter);
 				DeleteDC(hDCMemory);
 				::ReleaseDC(m_hWnd, hDC);
 
@@ -341,7 +341,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 									auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 									if (!data.empty())
 									{
-										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), data.size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), (DWORD)data.size(), FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 										if (!hIcon)
 											return ResLoadError();
 										if (!GetIconInfo(hIcon, &iconInfo))
@@ -406,7 +406,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 									auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 									if (!data.empty())
 									{
-										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), data.size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+										hIcon = CreateIconFromResourceEx((PBYTE)data.data(), (DWORD)data.size(), TRUE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 										if (!hIcon)
 											return ResLoadError();
 										if (!GetIconInfo(hIcon, &iconInfo))
@@ -485,7 +485,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 				return ResLoadError();
 
 			m_wstrRes.resize(pRes->pData->size());
-			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)pRes->pData->data(), (int)pRes->pData->size(), &m_wstrRes[0], pRes->pData->size());
+			MultiByteToWideChar(CP_UTF8, 0, (LPCCH)pRes->pData->data(), (int)pRes->pData->size(), &m_wstrRes[0], (int)pRes->pData->size());
 
 			m_stEditResStrings.SetWindowTextW(m_wstrRes.data());
 			m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -587,7 +587,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 		pDC->SetTextColor(RGB(0, 0, 0));
 		pDC->TextOutW(m_iResDlgIndentToDrawX, m_iResDlgIndentToDrawY, L"STYLES: ", 8);
 		pDC->SetTextColor(RGB(111, 0, 138));
-		pDC->TextOutW(m_iResDlgIndentToDrawX + m_sizeStrStyles.cx, m_iResDlgIndentToDrawY, m_wstrRes.data(), m_wstrRes.size());
+		pDC->TextOutW(m_iResDlgIndentToDrawX + m_sizeStrStyles.cx, m_iResDlgIndentToDrawY, m_wstrRes.data(), (int)m_wstrRes.size());
 		ptDrawAt.SetPoint(m_iResDlgIndentToDrawX, m_sizeLetter.cy + m_iResDlgIndentToDrawY * 3);
 		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
 		break;

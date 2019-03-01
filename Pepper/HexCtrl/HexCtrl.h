@@ -15,8 +15,10 @@
 #include "HexCtrlRes.h"
 #include "ScrollEx.h"
 
-namespace HEXCTRL
-{
+namespace HEXCTRL {
+	/********************************************************************************************
+	* Create struct for CHexCtrl::Create method.												*
+	********************************************************************************************/
 	struct HEXCREATESTRUCT
 	{
 		CWnd*		pwndParent { };				//Parent window pointer.

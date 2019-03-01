@@ -108,6 +108,9 @@
     <ClInclude Include="ListEx\ListEx.h">
       <Filter>ListEx</Filter>
     </ClInclude>
+    <ClInclude Include="include\libpe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\Pepper.rc">

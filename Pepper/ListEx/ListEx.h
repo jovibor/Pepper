@@ -20,26 +20,26 @@
 #include <unordered_map>
 
 namespace LISTEX {
-	/************************************************
-	* Helper struct for CListEx class.				*
-	************************************************/
+	/********************************************************************************************
+	* Helper create struct for CListEx::Create method.															*
+	********************************************************************************************/
 	struct LISTEXINFO {
-		COLORREF clrListText { GetSysColor(COLOR_WINDOWTEXT) }; //List text color.
-		COLORREF clrListBkRow1 { GetSysColor(COLOR_WINDOW) }; //List Bk color of the odd rows.
-		COLORREF clrListBkRow2 { GetSysColor(COLOR_WINDOW) }; //List Bk color of the even rows.
-		COLORREF clrListGrid { RGB(220, 220, 220) }; //List grid color.
-		DWORD dwListGridWidth { 1 }; //Width of the list grid.
-		COLORREF clrListTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) }; //Selected item text color.
-		COLORREF clrListBkSelected { GetSysColor(COLOR_HIGHLIGHT) }; //Selected item bk color.
-		COLORREF clrTooltipText { GetSysColor(COLOR_INFOTEXT) }; //Tooltip window text color.
-		COLORREF clrTooltipBk { GetSysColor(COLOR_INFOBK) }; //Tooltip window bk color.
-		COLORREF clrListTextCellTt { GetSysColor(COLOR_WINDOWTEXT) }; //Text color of a cell that has tooltip.
-		COLORREF clrListBkCellTt { RGB(170, 170, 230) }; //Bk color of a cell that has tooltip.
-		const LOGFONT* pListLogFont { }; //List font.
-		COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) }; //List header text color.
-		COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) }; //List header bk color.
-		DWORD dwHeaderHeight { 20 }; //List header height.
-		const LOGFONT* pHeaderLogFont { }; //List header font.
+		const LOGFONT* pListLogFont { };									//List font.
+		const LOGFONT* pHeaderLogFont { };									//List header font.
+		COLORREF clrListText { GetSysColor(COLOR_WINDOWTEXT) };				//List text color.
+		COLORREF clrListBkRow1 { GetSysColor(COLOR_WINDOW) };				//List Bk color of the odd rows.
+		COLORREF clrListBkRow2 { GetSysColor(COLOR_WINDOW) };				//List Bk color of the even rows.
+		COLORREF clrListGrid { RGB(220, 220, 220) };						//List grid color.
+		DWORD dwListGridWidth { 1 };										//Width of the list grid.
+		COLORREF clrListTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) };	//Selected item text color.
+		COLORREF clrListBkSelected { GetSysColor(COLOR_HIGHLIGHT) };		//Selected item bk color.
+		COLORREF clrTooltipText { GetSysColor(COLOR_INFOTEXT) };			//Tooltip window text color.
+		COLORREF clrTooltipBk { GetSysColor(COLOR_INFOBK) };				//Tooltip window bk color.
+		COLORREF clrListTextCellTt { GetSysColor(COLOR_WINDOWTEXT) };		//Text color of a cell that has tooltip.
+		COLORREF clrListBkCellTt { RGB(170, 170, 230) };					//Bk color of a cell that has tooltip.
+		COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) };			//List header text color.
+		COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) };					//List header bk color.
+		DWORD dwHeaderHeight { 20 };										//List header height.
 	};
 	using PLISTEXINFO = LISTEXINFO * ;
 
@@ -153,7 +153,7 @@ namespace LISTEX {
 	/****************************************************************************
 	* WM_NOTIFY codes (NMHDR.code values)										*
 	****************************************************************************/
-	
+
 	constexpr auto LISTEX_MSG_MENUSELECTED = 0x00001000;
 
 	/*******************Setting the manifest for ComCtl32.dll version 6.***********************/
