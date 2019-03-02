@@ -45,13 +45,13 @@ CListExHdr::CListExHdr()
 
 void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted)
 {
-	CMemDC memDC(*pDC, rect);
-	CDC& rDC = memDC.GetDC();
-
 	if (iItem < 0) { //Non working area, after last column.
-		rDC.FillSolidRect(&rect, m_clrBkNWA);
+		pDC->FillSolidRect(&rect, m_clrBkNWA);
 		return;
 	}
+
+	CMemDC memDC(*pDC, rect);
+	CDC& rDC = memDC.GetDC();
 
 	if (m_umapClrColumn.find(iItem) != m_umapClrColumn.end())
 		rDC.FillSolidRect(&rect, m_umapClrColumn[iItem]);
@@ -159,6 +159,7 @@ BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
 	ON_NOTIFY(HDN_TRACKW, 0, &CListEx::OnHdnTrack)
 	ON_WM_CONTEXTMENU()
 	ON_WM_DESTROY()
+	ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, &CListEx::OnLvnColumnclick)
 END_MESSAGE_MAP()
 
 BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo)
@@ -216,9 +217,15 @@ BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID
 
 	m_fontList.CreateFontIndirectW(&lf);
 	m_penGrid.CreatePen(PS_SOLID, m_dwGridWidth, m_clrGrid);
+	m_fCreated = true;
 	Update(0);
 
 	return TRUE;
+}
+
+bool CListEx::IsCreated()
+{
+	return m_fCreated;
 }
 
 void CListEx::SetFont(const LOGFONT* pLogFontNew)
@@ -704,6 +711,10 @@ void CListEx::OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	//*pResult = 0;
+}
+
+void CListEx::OnLvnColumnclick(NMHDR *pNMHDR, LRESULT *pResult)
+{
 }
 
 void CListEx::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)

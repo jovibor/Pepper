@@ -26,8 +26,8 @@ protected:
 	bool m_fGithubLink { true };
 	HCURSOR m_curHand { };
 	HCURSOR m_curArrow { };
-	HFONT m_fontDefault { };
-	HFONT m_fontUnderline { };
+	CFont m_fontDefault;
+	CFont m_fontUnderline;
 	DECLARE_MESSAGE_MAP()
 };
 
@@ -40,18 +40,17 @@ END_MESSAGE_MAP()
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
 	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, PEPPER_VERSION_WSTR);
 
 	//to prevent cursor from blinking
 	SetClassLongPtrW(m_hWnd, GCLP_HCURSOR, 0);
 
-	m_fontDefault = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
-
-	LOGFONT logFont { };
-	GetObject(m_fontDefault, sizeof(logFont), &logFont);
-	logFont.lfUnderline = TRUE;
-
-	m_fontUnderline = CreateFontIndirect(&logFont);
+	m_fontDefault.CreateStockObject(DEFAULT_GUI_FONT);
+	LOGFONTW lf;
+	m_fontDefault.GetLogFont(&lf);
+	lf.lfUnderline = TRUE;
+	m_fontUnderline.CreateFontIndirectW(&lf);
 
 	m_curHand = LoadCursor(nullptr, IDC_HAND);
 	m_curArrow = LoadCursor(nullptr, IDC_ARROW);
@@ -65,7 +64,7 @@ HBRUSH CAboutDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	{
 	case IDC_STATIC_HTTP_GITHUB:
 		pDC->SetTextColor(RGB(0, 255, 50));
-		pDC->SelectObject(m_fGithubLink ? m_fontDefault : m_fontUnderline);
+		pDC->SelectObject(m_fGithubLink ? &m_fontDefault : &m_fontUnderline);
 		break;
 	}
 

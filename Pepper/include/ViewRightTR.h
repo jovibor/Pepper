@@ -13,7 +13,7 @@
 
 using namespace HEXCTRL;
 
-class CViewRightTR : public CScrollView
+class CViewRightTR : public CView
 {
 	DECLARE_DYNCREATE(CViewRightTR)
 protected:

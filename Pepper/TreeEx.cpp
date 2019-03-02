@@ -24,7 +24,7 @@ void CTreeEx::OnPaint()
 	CPaintDC dc(this);
 
 	CRect rc;
-	dc.GetClipBox(&rc);
+	GetClientRect(&rc);
 	CMemDC memDC(dc, rc);
 	CDC& rDC = memDC.GetDC();
 	rDC.GetClipBox(&rc);

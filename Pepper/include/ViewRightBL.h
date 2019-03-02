@@ -18,7 +18,7 @@
 using namespace HEXCTRL;
 using namespace LISTEX;
 
-class CViewRightBL : public CScrollView
+class CViewRightBL : public CView
 {
 	DECLARE_DYNCREATE(CViewRightBL)
 protected:
@@ -52,11 +52,10 @@ private:
 	libpe_ptr m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
+	CFileLoader* m_pFileLoader { };
 	CWnd* m_pActiveWnd { };
 	CHexCtrl m_stHexEdit;
 	HEXCREATESTRUCT m_stHC { };
-	CFileLoader* m_pFileLoader { };
-	std::vector<std::byte> m_vecDebug;
 	LISTEXINFO m_stListInfo;
 	CListEx m_listExportFuncs;
 	CListEx m_listImportEntry;

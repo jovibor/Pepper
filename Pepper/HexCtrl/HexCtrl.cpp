@@ -59,11 +59,6 @@ CHexCtrl::CHexCtrl()
 	m_menuPopup.AppendMenuW(MF_SEPARATOR);
 	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_ABOUT, L"About");
 
-	m_stScrollV.Create(this, SB_VERT, 0, 0, 0); //Actual sizes are set in RecalcAll().
-	m_stScrollH.Create(this, SB_HORZ, 0, 0, 0);
-	m_stScrollV.AddSibling(&m_stScrollH);
-	m_stScrollH.AddSibling(&m_stScrollV);
-
 	m_dlgSearch.Create(IDD_HEXCTRL_SEARCH, this);
 }
 
@@ -130,6 +125,11 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 	MARGINS marg { 0, 0, 0, 1 };
 	DwmExtendFrameIntoClientArea(m_hWnd, &marg);
 	SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+
+	m_stScrollV.Create(this, SB_VERT, 0, 0, 0); //Actual sizes are set in RecalcAll().
+	m_stScrollH.Create(this, SB_HORZ, 0, 0, 0);
+	m_stScrollV.AddSibling(&m_stScrollH);
+	m_stScrollH.AddSibling(&m_stScrollV);
 
 	RecalcAll();
 	m_fCreated = true;
@@ -1514,8 +1514,7 @@ void CHexDlgSearch::OnClose()
 
 HBRUSH CHexDlgSearch::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_TEXTBOTTOM)
-	{
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_TEXTBOTTOM) {
 		pDC->SetBkColor(m_clrMenu);
 		pDC->SetTextColor(m_stSearch.fFound ? m_clrSearchFound : m_clrSearchFailed);
 		return m_stBrushDefault;
@@ -1562,13 +1561,11 @@ BOOL CHexDlgAbout::OnInitDialog()
 	//To prevent cursor from blinking
 	SetClassLongPtrW(m_hWnd, GCLP_HCURSOR, 0);
 
-	m_fontDefault = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
-
-	LOGFONT lf { };
-	GetObject(m_fontDefault, sizeof(lf), &lf);
+	m_fontDefault.CreateStockObject(DEFAULT_GUI_FONT);
+	LOGFONTW lf;
+	m_fontDefault.GetLogFont(&lf);
 	lf.lfUnderline = TRUE;
-
-	m_fontUnderline = CreateFontIndirect(&lf);
+	m_fontUnderline.CreateFontIndirectW(&lf);
 
 	m_stBrushDefault.CreateSolidBrush(m_clrMenu);
 
@@ -1581,7 +1578,6 @@ BOOL CHexDlgAbout::OnInitDialog()
 void CHexDlgAbout::OnMouseMove(UINT nFlags, CPoint point)
 {
 	CWnd* pWnd = ChildWindowFromPoint(point);
-
 	if (!pWnd)
 		return;
 
@@ -1614,7 +1610,7 @@ HBRUSH CHexDlgAbout::OnCtlColor(CDC * pDC, CWnd* pWnd, UINT nCtlColor)
 	{
 		pDC->SetBkColor(m_clrMenu);
 		pDC->SetTextColor(RGB(0, 0, 210));
-		pDC->SelectObject(m_fGithubLink ? m_fontDefault : m_fontUnderline);
+		pDC->SelectObject(m_fGithubLink ? &m_fontDefault : &m_fontUnderline);
 		return m_stBrushDefault;
 	}
 

@@ -23,7 +23,7 @@ END_MESSAGE_MAP()
 
 void CViewRightTL::OnInitialUpdate()
 {
-	CScrollView::OnInitialUpdate();
+	CView::OnInitialUpdate();
 
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
@@ -56,6 +56,8 @@ void CViewRightTL::OnInitialUpdate()
 
 	m_wstrAppVersion = PEPPER_VERSION_WSTR;
 
+	//There can be the absence os some structures of PE, below.
+	//So it's ok to return not S_OK here.
 	m_pLibpe->GetSectionsHeaders(m_pSecHeaders);
 	m_pLibpe->GetImport(m_pImport);
 	m_pLibpe->GetExceptions(m_pExceptionDir);
@@ -261,7 +263,7 @@ BOOL CViewRightTL::OnEraseBkgnd(CDC* pDC)
 
 void CViewRightTL::OnSize(UINT nType, int cx, int cy)
 {
-	CScrollView::OnSize(nType, cx, cy);
+	CView::OnSize(nType, cx, cy);
 
 	if (m_pActiveWnd)
 		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
@@ -415,7 +417,7 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult
 
 BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	CScrollView::OnNotify(wParam, lParam, pResult);
+	CView::OnNotify(wParam, lParam, pResult);
 
 	const LPNMITEMACTIVATE pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 	if (pNMI->iItem == -1)
@@ -1040,10 +1042,12 @@ int CViewRightTL::CreateListDataDirectories()
 		m_listDataDirs.SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDataDirs->Size);
 		m_listDataDirs.SetItemText(i, 3, wstr);
-		swprintf_s(wstr, 9, L"%.8S", pvecDataDirs->at(i).strSecResidesIn.data());
-		m_listDataDirs.SetItemText(i, 4, wstr);
-
-		if (i == 4 && pDataDirs->VirtualAddress)
+		if (!pvecDataDirs->at(i).strSecResidesIn.empty())
+		{
+			swprintf_s(wstr, 9, L"%.8S", pvecDataDirs->at(i).strSecResidesIn.data());
+			m_listDataDirs.SetItemText(i, 4, wstr);
+		}
+		if (i == IMAGE_DIRECTORY_ENTRY_SECURITY && pDataDirs->VirtualAddress)
 			m_listDataDirs.SetCellTooltip(i, 2, L"This address is the file's raw offset on disk.");
 	}
 
@@ -1125,9 +1129,7 @@ int CViewRightTL::CreateListSecHeaders()
 		for (auto& flags : mapSecFlags)
 			if (flags.first & iterSecHdrs.stSecHdr.Characteristics)
 				wstrTipText += flags.second + L"\n";
-
-		if (!wstrTipText.empty())
-		{
+		if (!wstrTipText.empty()) {
 			m_listSecHeaders.SetCellTooltip(listindex, 10, wstrTipText, L"Section Flags:");
 			wstrTipText.clear();
 		}
@@ -1144,7 +1146,7 @@ int CViewRightTL::CreateListExport()
 	if (m_pLibpe->GetExport(pExport) != S_OK)
 		return -1;
 
-	m_listExportDir.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT, &m_stListInfo);
+	m_listExportDir.Create(WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT, &m_stListInfo);
 	m_listExportDir.ShowWindow(SW_HIDE);
 	m_listExportDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
 	m_listExportDir.SetHeaderColumnColor(0, g_clrOffset);
@@ -1204,7 +1206,6 @@ int CViewRightTL::CreateListImport()
 
 	WCHAR wstr[MAX_PATH];
 	int listindex = 0;
-
 	for (auto& i : *m_pImport)
 	{
 		const IMAGE_IMPORT_DESCRIPTOR* pImpDesc = &i.stImportDesc;
@@ -1214,7 +1215,6 @@ int CViewRightTL::CreateListImport()
 			_wctime64_s(wstr, MAX_PATH, &time);
 			m_listImport.SetCellTooltip(listindex, 3, wstr, L"Time / Date:");
 		}
-
 		listindex++;
 	}
 

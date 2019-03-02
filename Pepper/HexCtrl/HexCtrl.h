@@ -57,8 +57,8 @@ namespace HEXCTRL {
 		bool m_fGithubLink { true };
 		HCURSOR m_curHand { };
 		HCURSOR m_curArrow { };
-		HFONT m_fontDefault { };
-		HFONT m_fontUnderline { };
+		CFont m_fontDefault;
+		CFont m_fontUnderline;
 		CBrush m_stBrushDefault;
 		COLORREF m_clrMenu { GetSysColor(COLOR_MENU) };
 	};

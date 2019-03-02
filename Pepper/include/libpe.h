@@ -322,9 +322,17 @@ namespace libpe
 #else
 #define ILIBPEAPI __declspec(dllimport) __cdecl
 #ifdef _WIN64
+#ifdef _DEBUG
+#pragma comment(lib, "libped_x64.lib")
+#else
 #pragma comment(lib, "libpe_x64.lib")
+#endif
+#else
+#ifdef _DEBUG
+#pragma comment(lib, "libped.lib")
 #else
 #pragma comment(lib, "libpe.lib")
+#endif
 #endif
 #endif
 

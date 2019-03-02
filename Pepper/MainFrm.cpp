@@ -56,7 +56,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
-{
+{	
 	if (!CMDIFrameWndEx::PreCreateWindow(cs))
 		return FALSE;
 

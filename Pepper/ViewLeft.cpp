@@ -24,7 +24,7 @@ void CViewLeft::OnInitialUpdate()
 
 	m_pMainDoc = (CPepperDoc*)GetDocument();
 	m_pLibpe = m_pMainDoc->m_pLibpe;
-	
+
 	DWORD dwFileInfo;
 	if (m_pLibpe->GetImageInfo(dwFileInfo) != S_OK)
 		return;
@@ -88,7 +88,7 @@ void CViewLeft::OnInitialUpdate()
 		const HTREEITEM hTreeSecHeaders = m_stTreeMain.InsertItem(L"Sections Headers [IMAGE_SECTION_HEADER]", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeSecHeaders, IDC_LIST_SECHEADERS);
 	}
-	
+
 	PCLIBPE_DATADIRS_VEC vecDataDirs;
 	if (m_pLibpe->GetDataDirectories(vecDataDirs) == S_OK)
 	{
@@ -160,6 +160,8 @@ void CViewLeft::OnInitialUpdate()
 		}
 	}
 	m_stTreeMain.Expand(hTreeRoot, TVE_EXPAND);
+
+	m_fCreated = true;
 }
 
 BOOL CViewLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
@@ -183,6 +185,7 @@ BOOL CViewLeft::OnEraseBkgnd(CDC* pDC)
 void CViewLeft::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
-
-	m_stTreeMain.SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	
+	if (m_fCreated)
+		m_stTreeMain.SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }

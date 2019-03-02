@@ -10,9 +10,9 @@
 #include "ViewRightTR.h"
 #include "constants.h"
 
-IMPLEMENT_DYNCREATE(CViewRightTR, CScrollView)
+IMPLEMENT_DYNCREATE(CViewRightTR, CView)
 
-BEGIN_MESSAGE_MAP(CViewRightTR, CScrollView)
+BEGIN_MESSAGE_MAP(CViewRightTR, CView)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
@@ -20,12 +20,12 @@ BOOL CViewRightTR::PreCreateWindow(CREATESTRUCT& cs)
 {
 	cs.style |= WS_CLIPCHILDREN;
 
-	return CScrollView::PreCreateWindow(cs);
+	return CView::PreCreateWindow(cs);
 }
 
 void CViewRightTR::OnInitialUpdate()
 {
-	CScrollView::OnInitialUpdate();
+	CView::OnInitialUpdate();
 
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
@@ -84,7 +84,7 @@ void CViewRightTR::OnDraw(CDC* pDC)
 
 void CViewRightTR::OnSize(UINT nType, int cx, int cy)
 {
-	CScrollView::OnSize(nType, cx, cy);
+	CView::OnSize(nType, cx, cy);
 
 	if (m_pActiveWnd)
 		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);

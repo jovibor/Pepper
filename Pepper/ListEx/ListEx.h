@@ -80,6 +80,7 @@ namespace LISTEX {
 		CListEx() {}
 		virtual ~CListEx() {}
 		BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo = nullptr);
+		bool IsCreated();
 		CListExHdr& GetHeaderCtrl() override { return m_stListHeader; }
 		void SetFont(const LOGFONT* pLogFontNew);
 		void SetFontSize(UINT uiSize);
@@ -120,8 +121,10 @@ namespace LISTEX {
 		afx_msg void OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnHdnBegintrack(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult);
+		afx_msg void OnLvnColumnclick(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnDestroy();
 	private:
+		bool m_fCreated { false };
 		CListExHdr m_stListHeader;
 		CFont m_fontList;
 		CPen m_penGrid;

@@ -22,12 +22,12 @@ BOOL CViewRightBL::PreCreateWindow(CREATESTRUCT& cs)
 {
 	cs.style |= WS_CLIPCHILDREN;
 
-	return CScrollView::PreCreateWindow(cs);
+	return CView::PreCreateWindow(cs);
 }
 
 void CViewRightBL::OnInitialUpdate()
 {
-	CScrollView::OnInitialUpdate();
+	CView::OnInitialUpdate();
 
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();
@@ -140,7 +140,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 
 void CViewRightBL::OnSize(UINT nType, int cx, int cy)
 {
-	CScrollView::OnSize(nType, cx, cy);
+	CView::OnSize(nType, cx, cy);
 
 	if (m_pActiveWnd)
 		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
@@ -152,7 +152,7 @@ void CViewRightBL::OnDraw(CDC* pDC)
 
 BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 {
-	return CScrollView::OnEraseBkgnd(pDC);
+	return CView::OnEraseBkgnd(pDC);
 }
 
 BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
@@ -200,7 +200,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), nullptr);
 	}
 
-	return CScrollView::OnNotify(wParam, lParam, pResult);
+	return CView::OnNotify(wParam, lParam, pResult);
 }
 
 int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
@@ -401,18 +401,20 @@ int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateListExportFuncs()
 {
+	if (!m_listExportFuncs.IsCreated())
+	{
+		m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, &m_stListInfo);
+		m_listExportFuncs.ShowWindow(SW_HIDE);
+		m_listExportFuncs.InsertColumn(0, L"Offset", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 90);
+		m_listExportFuncs.SetHeaderColumnColor(0, g_clrOffset);
+		m_listExportFuncs.InsertColumn(1, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
+		m_listExportFuncs.InsertColumn(2, L"Ordinal", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
+		m_listExportFuncs.InsertColumn(3, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
+		m_listExportFuncs.InsertColumn(4, L"Forwarder Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 400);
+	}
 	PCLIBPE_EXPORT pExport;
 	if (m_pLibpe->GetExport(pExport) != S_OK)
 		return -1;
-
-	m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, &m_stListInfo);
-	m_listExportFuncs.ShowWindow(SW_HIDE);
-	m_listExportFuncs.InsertColumn(0, L"Offset", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 90);
-	m_listExportFuncs.SetHeaderColumnColor(0, g_clrOffset);
-	m_listExportFuncs.InsertColumn(1, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
-	m_listExportFuncs.InsertColumn(2, L"Ordinal", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
-	m_listExportFuncs.InsertColumn(3, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
-	m_listExportFuncs.InsertColumn(4, L"Forwarder Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 400);
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
@@ -423,7 +425,7 @@ int CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs.SetRedraw(FALSE); //to increase the speed of List populating
 	for (auto& i : pExport->vecFuncs)
 	{
-		swprintf_s(wstr, 9, L"%08X",DWORD( dwOffset + sizeof(DWORD) * i.dwOrdinal));
+		swprintf_s(wstr, 9, L"%08X", DWORD(dwOffset + sizeof(DWORD) * i.dwOrdinal));
 		m_listExportFuncs.InsertItem(listindex, wstr);
 
 		swprintf_s(wstr, 9, L"%08X", i.dwRVA);
@@ -444,6 +446,19 @@ int CViewRightBL::CreateListExportFuncs()
 
 int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 {
+	if (!m_listImportEntry.IsCreated())
+	{
+		m_listImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
+		m_listImportEntry.InsertColumn(0, L"Offset", 0, 90);
+		m_listImportEntry.SetHeaderColumnColor(0, g_clrOffset);
+		m_listImportEntry.InsertColumn(1, L"Function Name", 0, 175);
+		m_listImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
+		m_listImportEntry.InsertColumn(3, L"AddressOfData", 0, 150);
+		m_listImportEntry.InsertColumn(4, L"Thunk RVA", 0, 150);
+	}
+	else
+		m_listImportEntry.DeleteAllItems();
+
 	PCLIBPE_IMPORT_VEC m_pImport;
 	if (m_pLibpe->GetImport(m_pImport) != S_OK || dwEntry > m_pImport->size())
 		return -1;
@@ -451,15 +466,6 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 	if (m_pActiveWnd)
 		m_pActiveWnd->ShowWindow(SW_HIDE);
 	m_pActiveWnd = &m_listImportEntry;
-
-	m_listImportEntry.DestroyWindow();
-	m_listImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
-	m_listImportEntry.InsertColumn(0, L"Offset", 0, 90);
-	m_listImportEntry.SetHeaderColumnColor(0, g_clrOffset);
-	m_listImportEntry.InsertColumn(1, L"Function Name", 0, 175);
-	m_listImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
-	m_listImportEntry.InsertColumn(3, L"AddressOfData", 0, 150);
-	m_listImportEntry.InsertColumn(4, L"Thunk RVA", 0, 150);
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
@@ -547,20 +553,24 @@ int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 
 int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 {
+	if (!m_listDelayImportEntry.IsCreated())
+	{
+		m_listDelayImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_ENTRY, &m_stListInfo);
+		m_listDelayImportEntry.InsertColumn(0, L"Offset", 0, 90);
+		m_listDelayImportEntry.SetHeaderColumnColor(0, g_clrOffset);
+		m_listDelayImportEntry.InsertColumn(1, L"Function Name", 0, 300);
+		m_listDelayImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
+		m_listDelayImportEntry.InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
+		m_listDelayImportEntry.InsertColumn(4, L"IAT AddresOfData", 0, 200);
+		m_listDelayImportEntry.InsertColumn(5, L"BoundIAT AddresOfData", 0, 230);
+		m_listDelayImportEntry.InsertColumn(6, L"UnloadInfoTable AddresOfData", 0, 240);
+	}
+	else
+		m_listDelayImportEntry.DeleteAllItems();
+
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport;
 	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK || dwEntry > pDelayImport->size())
 		return -1;
-
-	m_listDelayImportEntry.DestroyWindow();
-	m_listDelayImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_ENTRY, &m_stListInfo);
-	m_listDelayImportEntry.InsertColumn(0, L"Offset", 0, 90);
-	m_listDelayImportEntry.SetHeaderColumnColor(0, g_clrOffset);
-	m_listDelayImportEntry.InsertColumn(1, L"Function Name", 0, 300);
-	m_listDelayImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
-	m_listDelayImportEntry.InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
-	m_listDelayImportEntry.InsertColumn(4, L"IAT AddresOfData", 0, 200);
-	m_listDelayImportEntry.InsertColumn(5, L"BoundIAT AddresOfData", 0, 230);
-	m_listDelayImportEntry.InsertColumn(6, L"UnloadInfoTable AddresOfData", 0, 240);
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
@@ -635,17 +645,21 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 {
+	if (!m_listRelocsEntry.IsCreated())
+	{
+		m_listRelocsEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, &m_stListInfo);
+		m_listRelocsEntry.ShowWindow(SW_HIDE);
+		m_listRelocsEntry.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+		m_listRelocsEntry.SetHeaderColumnColor(0, g_clrOffset);
+		m_listRelocsEntry.InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
+		m_listRelocsEntry.InsertColumn(2, L"Offset to apply", LVCFMT_LEFT, 120);
+	}
+	else
+		m_listRelocsEntry.DeleteAllItems();
+
 	PCLIBPE_RELOCATION_VEC pReloc;
 	if (m_pLibpe->GetRelocations(pReloc) != S_OK || pReloc->empty() || pReloc->size() < dwEntry)
 		return -1;
-
-	m_listRelocsEntry.DestroyWindow();
-	m_listRelocsEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, &m_stListInfo);
-	m_listRelocsEntry.ShowWindow(SW_HIDE);
-	m_listRelocsEntry.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listRelocsEntry.SetHeaderColumnColor(0, g_clrOffset);
-	m_listRelocsEntry.InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
-	m_listRelocsEntry.InsertColumn(2, L"Offset to apply", LVCFMT_LEFT, 120);
 
 	const std::map<WORD, std::wstring> mapRelocTypes {
 		{ IMAGE_REL_BASED_ABSOLUTE, L"IMAGE_REL_BASED_ABSOLUTE" },

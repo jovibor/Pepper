@@ -73,8 +73,9 @@ void CScrollEx::SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, 
 	m_ullScrollPage = ullScrollPage;
 	m_ullScrollSizeMax = ullScrollSizeMax;
 
-	GetParent()->SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-	DrawScrollBar();
+	CWnd* pWnd = GetParent();
+	if (pWnd)
+		pWnd->SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 }
 
 ULONGLONG CScrollEx::SetScrollPos(ULONGLONG ullNewPos)
@@ -97,7 +98,7 @@ ULONGLONG CScrollEx::SetScrollPos(ULONGLONG ullNewPos)
 		ullMax = 0;
 	else
 		ullMax = m_ullScrollSizeMax - iScreenSize;
-	
+
 	if (m_ullScrollPosCur > ullMax)
 		m_ullScrollPosCur = ullMax;
 

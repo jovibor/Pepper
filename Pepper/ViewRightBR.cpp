@@ -19,6 +19,7 @@ END_MESSAGE_MAP()
 void CViewRightBR::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
+	SetScrollSizes(MM_TEXT, CSize(0, 0));
 
 	m_pChildFrame = (CChildFrame*)GetParentFrame();
 	m_pMainDoc = (CPepperDoc*)GetDocument();

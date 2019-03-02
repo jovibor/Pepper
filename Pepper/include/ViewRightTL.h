@@ -18,7 +18,7 @@
 using namespace LISTEX;
 using namespace HEXCTRL;
 
-class CViewRightTL : public CScrollView
+class CViewRightTL : public CView
 {
 	DECLARE_DYNCREATE(CViewRightTL)
 protected:

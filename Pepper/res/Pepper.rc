@@ -109,6 +109,24 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
+    POPUP "1"
+    BEGIN
+        MENUITEM "11",                          ID_1_11
+        MENUITEM "12",                          ID_1_12
+        MENUITEM "13",                          ID_1_13
+    END
+    POPUP "2"
+    BEGIN
+        MENUITEM "21",                          ID_2_21
+        MENUITEM "22",                          ID_2_22
+        MENUITEM "23",                          ID_2_23
+    END
+    POPUP "3"
+    BEGIN
+        MENUITEM "31",                          ID_3_31
+        MENUITEM "32",                          ID_3_32
+        MENUITEM "33",                          ID_3_33
+    END
 END
 
 
