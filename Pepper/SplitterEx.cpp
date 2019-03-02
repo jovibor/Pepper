@@ -68,7 +68,7 @@ bool CSplitterEx::HideRow(UINT nRow)
 	if (nRow >= m_vecRows.size() || !m_vecRows.at(nRow))
 		return false;
 
-	m_vecRows.at(nRow) = false;
+	m_vecRows[nRow] = false;
 	m_nRows--;
 	RecalcPanes();
 
@@ -92,7 +92,7 @@ bool CSplitterEx::HideCol(UINT nCol)
 	if (nCol >= m_vecCols.size() || !m_vecCols.at(nCol))
 		return false;
 
-	m_vecCols.at(nCol) = false;
+	m_vecCols[nCol] = false;
 	m_nCols--;
 	RecalcPanes();
 
@@ -104,7 +104,7 @@ bool CSplitterEx::ShowCol(UINT nCol)
 	if (nCol >= m_vecCols.size() || m_vecCols.at(nCol))
 		return false;
 
-	m_vecCols.at(nCol) = true;
+	m_vecCols[nCol] = true;
 	m_nCols++;
 	RecalcPanes();
 
@@ -146,12 +146,12 @@ void CSplitterEx::RecalcPanes()
 	for (unsigned iterRow = 0; iterRow < m_vecRows.size(); iterRow++)
 		for (unsigned iterCol = 0; iterCol < m_vecCols.size(); iterCol++)
 			for (auto& i : m_vecPanes) //Search for exact pane.
-				if (std::get<0>(i) == vecRowsOrdered.at(iterRow) && std::get<1>(i) == vecColsOrdered.at(iterCol))
+				if (std::get<0>(i) == vecRowsOrdered[iterRow] && std::get<1>(i) == vecColsOrdered[iterCol])
 				{
 					CWnd *pPane = std::get<2>(i);
 					pPane->SetDlgCtrlID(AFX_IDW_PANE_FIRST + iterRow * 16 + iterCol);
 
-					if (!m_vecCols.at(iterCol) || !m_vecRows.at(iterRow))
+					if (!m_vecCols[iterCol] || !m_vecRows[iterRow])
 						pPane->ShowWindow(SW_HIDE);
 					else
 						pPane->ShowWindow(SW_SHOW);

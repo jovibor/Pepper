@@ -13,6 +13,7 @@
 #include "ListEx.h"
 #include "TreeEx.h"
 #include "FileLoader.h"
+#include "constants.h"
 
 using namespace HEXCTRL;
 using namespace LISTEX;

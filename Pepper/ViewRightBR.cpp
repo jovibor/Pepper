@@ -253,8 +253,8 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 					aninfo.iMinAnimate = 0;
 					SystemParametersInfo(SPI_SETANIMATION, aninfo.cbSize, &aninfo, SPIF_SENDCHANGE);
 				}
-				LONG lLong = GetWindowLongW(hwndResDlg, GWL_EXSTYLE);
-				SetWindowLongW(hwndResDlg, GWL_EXSTYLE, lLong | WS_EX_LAYERED);
+				LONG_PTR lLong = GetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE);
+				SetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE, lLong | WS_EX_LAYERED);
 				::SetLayeredWindowAttributes(hwndResDlg, 0, 1, LWA_ALPHA);
 
 				::ShowWindow(hwndResDlg, SW_SHOWNOACTIVATE);

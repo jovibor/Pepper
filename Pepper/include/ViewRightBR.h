@@ -7,10 +7,11 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #pragma once
+#include <memory>
 #include "PepperDoc.h"
 #include "ChildFrm.h"
 #include "ListEx.h"
-#include <memory>
+#include "constants.h"
 
 using namespace LISTEX;
 

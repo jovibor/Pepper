@@ -147,7 +147,7 @@ namespace LISTEX {
 		std::unordered_map<int, std::unordered_map<int, CMenu*>> m_umapCellMenu { };
 		std::unordered_map<int, std::unordered_map<int, DWORD_PTR>> m_umapCellData { };
 		NMITEMACTIVATE m_stNMII { };
-		const int ID_TIMER_TOOLTIP { 0x01 };
+		const ULONG_PTR ID_TIMER_TOOLTIP { 0x01 };
 	};
 
 	/****************************************************************************

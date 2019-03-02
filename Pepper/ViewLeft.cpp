@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "ViewLeft.h"
 #include "resource.h"
+#include "constants.h"
 
 IMPLEMENT_DYNCREATE(CViewLeft, CView)
 

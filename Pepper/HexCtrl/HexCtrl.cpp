@@ -1044,9 +1044,9 @@ void CHexCtrl::ToWchars(ULONGLONG ull, wchar_t* pwsz, unsigned short shBytes)
 void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 {
 	rSearch.fFound = false;
-	ULONGLONG dwStartAt = rSearch.ullStartAt;
-	ULONGLONG dwSizeBytes;
-	ULONGLONG dwUntil;
+	ULONGLONG ullStartAt = rSearch.ullStartAt;
+	ULONGLONG ullSizeBytes;
+	ULONGLONG ullUntil;
 	std::string strSearch { };
 
 	if (rSearch.wstrSearch.empty() || m_ullDataCount == 0 || rSearch.ullStartAt > (m_ullDataCount - 1))
@@ -1064,7 +1064,7 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 		std::string strToUL;
 		char* pEndPtr { };
 
-		for (DWORD i = 0; i < dwIterations; i++)
+		for (size_t i = 0; i < dwIterations; i++)
 		{
 			if (i + 2 <= strSearchAscii.size())
 				strToUL = strSearchAscii.substr(i * 2, 2);
@@ -1082,16 +1082,16 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 			strSearch += (unsigned char)ulNumber;
 		}
 
-		dwSizeBytes = strSearch.size();
-		if (dwSizeBytes > m_ullDataCount)
+		ullSizeBytes = strSearch.size();
+		if (ullSizeBytes > m_ullDataCount)
 			goto End;
 
 		break;
 	}
 	case SEARCH_ASCII:
 	{
-		dwSizeBytes = strSearchAscii.size();
-		if (dwSizeBytes > m_ullDataCount)
+		ullSizeBytes = strSearchAscii.size();
+		if (ullSizeBytes > m_ullDataCount)
 			goto End;
 
 		strSearch = std::move(strSearchAscii);
@@ -1099,8 +1099,8 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 	}
 	case SEARCH_UNICODE:
 	{
-		dwSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
-		if (dwSizeBytes > m_ullDataCount)
+		ullSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
+		if (ullSizeBytes > m_ullDataCount)
 			goto End;
 
 		break;
@@ -1114,10 +1114,10 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 	{
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
-			dwUntil = m_ullDataCount - strSearch.size();
-			dwStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
+			ullUntil = m_ullDataCount - strSearch.size();
+			ullStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
 
-			for (ULONGLONG i = dwStartAt; i <= dwUntil; i++)
+			for (ULONGLONG i = ullStartAt; i <= ullUntil; i++)
 			{
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
@@ -1128,8 +1128,8 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 				}
 			}
 
-			dwStartAt = 0;
-			for (ULONGLONG i = dwStartAt; i <= dwUntil; i++)
+			ullStartAt = 0;
+			for (ULONGLONG i = ullStartAt; i <= ullUntil; i++)
 			{
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
@@ -1144,10 +1144,10 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 		}
 		if (rSearch.iDirection == SEARCH_BACKWARD)
 		{
-			if (rSearch.fSecondMatch && dwStartAt > 0)
+			if (rSearch.fSecondMatch && ullStartAt > 0)
 			{
-				dwStartAt--;
-				for (int i = (int)dwStartAt; i >= 0; i--)
+				ullStartAt--;
+				for (int i = (int)ullStartAt; i >= 0; i--)
 				{
 					if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 					{
@@ -1159,8 +1159,8 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 				}
 			}
 
-			dwStartAt = m_ullDataCount - strSearch.size();
-			for (int i = (int)dwStartAt; i >= 0; i--)
+			ullStartAt = m_ullDataCount - strSearch.size();
+			for (int i = (int)ullStartAt; i >= 0; i--)
 			{
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
 				{
@@ -1179,10 +1179,10 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 	{
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
-			dwUntil = m_ullDataCount - dwSizeBytes;
-			dwStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
+			ullUntil = m_ullDataCount - ullSizeBytes;
+			ullStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
 
-			for (ULONGLONG i = dwStartAt; i <= dwUntil; i++)
+			for (ULONGLONG i = ullStartAt; i <= ullUntil; i++)
 			{
 				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
@@ -1193,8 +1193,8 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 				}
 			}
 
-			dwStartAt = 0;
-			for (ULONGLONG i = dwStartAt; i <= dwUntil; i++)
+			ullStartAt = 0;
+			for (ULONGLONG i = ullStartAt; i <= ullUntil; i++)
 			{
 				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
@@ -1209,10 +1209,10 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 		}
 		else if (rSearch.iDirection == SEARCH_BACKWARD)
 		{
-			if (rSearch.fSecondMatch && dwStartAt > 0)
+			if (rSearch.fSecondMatch && ullStartAt > 0)
 			{
-				dwStartAt--;
-				for (int i = (int)dwStartAt; i >= 0; i--)
+				ullStartAt--;
+				for (int i = (int)ullStartAt; i >= 0; i--)
 				{
 					if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 					{
@@ -1224,8 +1224,8 @@ void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
 				}
 			}
 
-			dwStartAt = m_ullDataCount - dwSizeBytes;
-			for (int i = (int)dwStartAt; i >= 0; i--)
+			ullStartAt = m_ullDataCount - ullSizeBytes;
+			for (int i = (int)ullStartAt; i >= 0; i--)
 			{
 				if (wmemcmp((const wchar_t*)(m_pData + i), rSearch.wstrSearch.data(), rSearch.wstrSearch.length()) == 0)
 				{
@@ -1246,7 +1246,7 @@ End:
 	{
 		m_dlgSearch.SearchCallback();
 		if (rSearch.fFound)
-			SetSelection(rSearch.ullStartAt, rSearch.ullStartAt, dwSizeBytes, true);
+			SetSelection(rSearch.ullStartAt, rSearch.ullStartAt, ullSizeBytes, true);
 	}
 }
 

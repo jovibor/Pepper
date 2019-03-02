@@ -11,6 +11,7 @@
 ************************************************************/
 #include "stdafx.h"
 #include "FileLoader.h"
+#include "constants.h"
 #include <algorithm>
 
 HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)

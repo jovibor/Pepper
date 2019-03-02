@@ -328,4 +328,4 @@ namespace libpe
 #endif
 #endif
 
-extern "C" HRESULT ILIBPEAPI Getlibpe(libpe::libpe_ptr& libpe_ptr);
+extern "C" HRESULT ILIBPEAPI Getlibpe(libpe::libpe_ptr& plibpe);

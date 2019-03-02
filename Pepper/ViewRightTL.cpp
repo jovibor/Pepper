@@ -8,7 +8,6 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "ViewRightTL.h"
-#include "version.h"
 
 IMPLEMENT_DYNCREATE(CViewRightTL, CView)
 
@@ -55,9 +54,7 @@ void CViewRightTL::OnInitialUpdate()
 	else
 		m_wstrFileType = L"File type: unknown";
 
-	WCHAR wstrVersion[MAX_PATH];
-	swprintf_s(wstrVersion, MAX_PATH, L"%S, version: %u.%u.%u", PRODUCT_NAME, MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION);
-	m_wstrAppVersion = wstrVersion;
+	m_wstrAppVersion = PEPPER_VERSION_WSTR;
 
 	m_pLibpe->GetSectionsHeaders(m_pSecHeaders);
 	m_pLibpe->GetImport(m_pImport);
@@ -97,7 +94,7 @@ void CViewRightTL::OnInitialUpdate()
 	CreateListRelocations();
 	CreateListDebug();
 	CreateListTLS();
-	CreateListLoadConfigDir();
+	CreateListLCD();
 	CreateListBoundImport();
 	CreateListDelayImport();
 	CreateListCOM();
@@ -639,7 +636,7 @@ int CViewRightTL::CreateListDOSHeader()
 
 		swprintf_s(wstr, 9, L"%08X", dwOffset);
 		m_listDOSHeader.InsertItem(i, wstr);
-		m_listDOSHeader.SetItemText(i, 1, ref.strField.data());
+		m_listDOSHeader.SetItemText(i, 1, ref.wstrName.data());
 		swprintf_s(wstr, 9, L"%u", dwSize);
 		m_listDOSHeader.SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
@@ -843,7 +840,7 @@ int CViewRightTL::CreateListFileHeader()
 
 		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset);
 		m_listFileHeader.InsertItem(i, wstr);
-		m_listFileHeader.SetItemText(i, 1, ref.strField.data());
+		m_listFileHeader.SetItemText(i, 1, ref.wstrName.data());
 		swprintf_s(wstr, 9, L"%u", dwSize);
 		m_listFileHeader.SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
@@ -919,7 +916,7 @@ int CViewRightTL::CreateListOptHeader()
 		DWORD dwSize, dwOffset, dwValue;
 		for (unsigned i = 0; i < g_mapOptHeader32.size(); i++)
 		{
-			auto & ref = g_mapOptHeader32.at(i);
+			auto& ref = g_mapOptHeader32.at(i);
 			dwOffset = ref.dwOffset;
 			dwSize = ref.dwSize;
 			dwValue = *((PDWORD)((DWORD_PTR)pOptHdr32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
@@ -950,7 +947,7 @@ int CViewRightTL::CreateListOptHeader()
 
 			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + dwOffset);
 			m_listOptHeader.InsertItem(i, wstr);
-			m_listOptHeader.SetItemText(i, 1, ref.strField.data());
+			m_listOptHeader.SetItemText(i, 1, ref.wstrName.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
 			m_listOptHeader.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : L"%08X"), dwValue);
@@ -996,7 +993,7 @@ int CViewRightTL::CreateListOptHeader()
 
 			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + dwOffset);
 			m_listOptHeader.InsertItem(i, wstr);
-			m_listOptHeader.SetItemText(i, 1, ref.strField.data());
+			m_listOptHeader.SetItemText(i, 1, ref.wstrName.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
 			m_listOptHeader.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX")), ullValue);
@@ -1173,7 +1170,7 @@ int CViewRightTL::CreateListExport()
 
 		swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + dwOffset);
 		m_listExportDir.InsertItem(i, wstr);
-		m_listExportDir.SetItemText(i, 1, ref.strField.data());
+		m_listExportDir.SetItemText(i, 1, ref.wstrName.data());
 		swprintf_s(wstr, 9, L"%u", dwSize);
 		m_listExportDir.SetItemText(i, 2, wstr);
 		if (i == 4) //Name
@@ -1531,7 +1528,7 @@ int CViewRightTL::CreateListTLS()
 
 			swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir.InsertItem(i, wstr);
-			m_listTLSDir.SetItemText(i, 1, ref.strField.data());
+			m_listTLSDir.SetItemText(i, 1, ref.wstrName.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
 			m_listTLSDir.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, L"%08X", dwValue);
@@ -1559,7 +1556,7 @@ int CViewRightTL::CreateListTLS()
 
 			swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir.InsertItem(i, wstr);
-			m_listTLSDir.SetItemText(i, 1, ref.strField.data());
+			m_listTLSDir.SetItemText(i, 1, ref.wstrName.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
 			m_listTLSDir.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 4 ? L"%08X" : L"%016llX", ullValue);
@@ -1570,7 +1567,7 @@ int CViewRightTL::CreateListTLS()
 	return 0;
 }
 
-int CViewRightTL::CreateListLoadConfigDir()
+int CViewRightTL::CreateListLCD()
 {
 	PCLIBPE_LOADCONFIG pLCD;
 	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK)
@@ -1629,7 +1626,7 @@ int CViewRightTL::CreateListLoadConfigDir()
 			else if (i == 24) //GuardFlags
 			{
 				wstrTooltip.clear();
-				for (auto & it : mapGuardFlags)
+				for (auto& it : mapGuardFlags)
 					if (it.first & pLCD32->GuardFlags)
 						wstrTooltip += it.second + L"\n";
 				if (!wstrTooltip.empty())
@@ -1638,7 +1635,7 @@ int CViewRightTL::CreateListLoadConfigDir()
 
 			swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + dwOffset);
 			m_listLCD.InsertItem(i, wstr);
-			m_listLCD.SetItemText(i, 1, ref.strField.data());
+			m_listLCD.SetItemText(i, 1, ref.wstrName.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
 			m_listLCD.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
@@ -1681,7 +1678,7 @@ int CViewRightTL::CreateListLoadConfigDir()
 
 			swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + dwOffset);
 			m_listLCD.InsertItem(i, wstr);
-			m_listLCD.SetItemText(i, 1, ref.strField.data());
+			m_listLCD.SetItemText(i, 1, ref.wstrName.data());
 			swprintf_s(wstr, 9, L"%u", dwSize);
 			m_listLCD.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX"), ullValue);
@@ -1843,7 +1840,7 @@ int CViewRightTL::CreateListCOM()
 
 		swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + dwOffset);
 		m_listCOMDir.InsertItem(i, wstr);
-		m_listCOMDir.SetItemText(i, 1, ref.strField.data());
+		m_listCOMDir.SetItemText(i, 1, ref.wstrName.data());
 		swprintf_s(wstr, 9, L"%u", dwSize);
 		m_listCOMDir.SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);

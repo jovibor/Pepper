@@ -11,8 +11,8 @@
 #include "MainFrm.h"
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "version.h"
 #include "resource.h"
+#include "constants.h"
 
 class CAboutDlg : public CDialogEx
 {
@@ -40,9 +40,7 @@ END_MESSAGE_MAP()
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	WCHAR wstrVersion[MAX_PATH];
-	swprintf_s(wstrVersion, MAX_PATH, L"Version: %u.%u.%u", MAJOR_VERSION, MINOR_VERSION, MAINTENANCE_VERSION);
-	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, wstrVersion);
+	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, PEPPER_VERSION_WSTR);
 
 	//to prevent cursor from blinking
 	SetClassLongPtrW(m_hWnd, GCLP_HCURSOR, 0);

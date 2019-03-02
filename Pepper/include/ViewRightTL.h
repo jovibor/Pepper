@@ -13,6 +13,7 @@
 #include "TreeEx.h"
 #include "HexCtrl.h"
 #include "FileLoader.h"
+#include "constants.h"
 
 using namespace LISTEX;
 using namespace HEXCTRL;
@@ -96,7 +97,7 @@ private:
 	int CreateListRelocations();
 	int CreateListDebug();
 	int CreateListTLS();
-	int CreateListLoadConfigDir();
+	int CreateListLCD();
 	int CreateListBoundImport();
 	int CreateListDelayImport();
 	int CreateListCOM();

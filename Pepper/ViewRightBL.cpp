@@ -162,7 +162,6 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	if (pTree->hdr.idFrom == IDC_TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
 	{
 		PCLIBPE_RESOURCE_ROOT pstResRoot;
-
 		if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 			return -1;
 
@@ -174,22 +173,22 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		auto& rootvec = pstResRoot->vecResRoot;
 		if (idlvl2 >= 0)
 		{
-			auto& lvl2tup = rootvec.at(idlvlRoot).stResLvL2;
+			auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
 			auto& lvl2vec = lvl2tup.vecResLvL2;
 
 			if (!lvl2vec.empty())
 			{
 				if (idlvl3 >= 0)
 				{
-					auto& lvl3tup = lvl2vec.at(idlvl2).stResLvL3;
+					auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
 					auto& lvl3vec = lvl3tup.vecResLvL3;
 
 					if (!lvl3vec.empty())
 					{
-						auto& data = lvl3vec.at(idlvl3).vecResRawDataLvL3;
+						auto& data = lvl3vec[idlvl3].vecResRawDataLvL3;
 						//Resource data and resource type to show in CViewRightBR.
-						m_stResHelper.IdResType = rootvec.at(idlvlRoot).stResDirEntryRoot.Id;
-						m_stResHelper.IdResName = lvl2vec.at(idlvl2).stResDirEntryLvL2.Id;
+						m_stResHelper.IdResType = rootvec[idlvlRoot].stResDirEntryRoot.Id;
+						m_stResHelper.IdResName = lvl2vec[idlvl2].stResDirEntryLvL2.Id;
 						m_stResHelper.pData = (std::vector<std::byte>*)&data;
 						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&m_stResHelper));
 					}
@@ -740,13 +739,13 @@ int CViewRightBL::CreateTreeResources()
 		const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry = &iterRoot.stResDirEntryRoot;
 		if (pResDirEntry->NameIsString)
 			//Enclose in double quotes.
-			swprintf(wstr, MAX_PATH, L"\u00AB%s\u00BB", iterRoot.wstrResNameRoot.data());
+			swprintf_s(wstr, MAX_PATH, L"\u00AB%s\u00BB", iterRoot.wstrResNameRoot.data());
 		else
 		{	//Setting Treectrl root node name depending on Resource typeID.
 			if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
-				swprintf(wstr, MAX_PATH, L"%s [Id: %u]", g_mapResType.at(pResDirEntry->Id).data(), pResDirEntry->Id);
+				swprintf_s(wstr, MAX_PATH, L"%s [Id: %u]", g_mapResType.at(pResDirEntry->Id).data(), pResDirEntry->Id);
 			else
-				swprintf(wstr, MAX_PATH, L"%u", pResDirEntry->Id);
+				swprintf_s(wstr, MAX_PATH, L"%u", pResDirEntry->Id);
 		}
 
 		const HTREEITEM treeRoot = m_treeResBottom.InsertItem(wstr, iconDirs, iconDirs);
@@ -767,9 +766,9 @@ int CViewRightBL::CreateTreeResources()
 			{
 				pResDirEntry = &iterLvL3.stResDirEntryLvL3;
 				if (pResDirEntry->NameIsString)
-					swprintf(wstr, MAX_PATH, L"«%s» - lang: %i", iterLvL2.wstrResNameLvL2.data(), pResDirEntry->Id);
+					swprintf_s(wstr, MAX_PATH, L"«%s» - lang: %i", iterLvL2.wstrResNameLvL2.data(), pResDirEntry->Id);
 				else
-					swprintf(wstr, MAX_PATH, L"%u - lang: %i", iterLvL2.stResDirEntryLvL2.Id, pResDirEntry->Id);
+					swprintf_s(wstr, MAX_PATH, L"%u - lang: %i", iterLvL2.stResDirEntryLvL2.Id, pResDirEntry->Id);
 
 				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
 				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(wstr, treeRoot), m_vecResId.size() - 1);

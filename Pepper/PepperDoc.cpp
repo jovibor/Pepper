@@ -8,6 +8,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "PepperDoc.h"
+#include "constants.h"
 
 IMPLEMENT_DYNCREATE(CPepperDoc, CDocument)
 

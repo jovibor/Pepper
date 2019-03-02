@@ -8,6 +8,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "ViewRightTR.h"
+#include "constants.h"
 
 IMPLEMENT_DYNCREATE(CViewRightTR, CScrollView)
 

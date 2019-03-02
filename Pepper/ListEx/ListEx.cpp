@@ -54,7 +54,7 @@ void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BO
 	}
 
 	if (m_umapClrColumn.find(iItem) != m_umapClrColumn.end())
-		rDC.FillSolidRect(&rect, m_umapClrColumn.at(iItem));
+		rDC.FillSolidRect(&rect, m_umapClrColumn[iItem]);
 	else
 		rDC.FillSolidRect(&rect, m_clrBk);
 	rDC.SetTextColor(m_clrText);

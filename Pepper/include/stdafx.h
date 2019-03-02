@@ -7,5 +7,4 @@
 
 #include <afxcontrolbars.h>     // MFC support for ribbons and control bars
 #include "strsafe.h"
-#include "constants.h"
 #include "libpe.h"

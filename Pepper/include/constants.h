@@ -1,7 +1,19 @@
 #pragma once
 #include <map>
 #include "libpe.h"
+#include "version.h"
+
 using namespace libpe;
+
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
+#define TOWSTR_HELPER(x) L##x
+#define TOWSTR(x) TOWSTR_HELPER(x)
+#ifdef _WIN64
+#define PEPPER_VERSION_WSTR TOWSTR(PRODUCT_NAME) ", version: " STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MAINTENANCE_VERSION) " (x64)"
+#else
+#define PEPPER_VERSION_WSTR TOWSTR(PRODUCT_NAME) ", version: " STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MAINTENANCE_VERSION)
+#endif
 
 //Errors, that might come from libpe.
 inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {
@@ -68,7 +80,7 @@ struct STRUCTHELPER
 {
 	DWORD dwSize;
 	DWORD dwOffset;
-	std::wstring strField;
+	std::wstring wstrName;
 };
 using map_hdr = const std::map<DWORD, STRUCTHELPER>;
 
