@@ -114,7 +114,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)$(Configuration)\$(Platform)\</IntDir>
-    <TargetName>$(ProjectName)_$(Platform)</TargetName>
+    <TargetName>$(ProjectName)64d</TargetName>
     <IncludePath>HexCtrl;HexCtrl\res;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -137,7 +137,7 @@
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>HexCtrl;HexCtrl\res;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <TargetName>$(ProjectName)_$(Platform)</TargetName>
+    <TargetName>$(ProjectName)64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|x64'">
     <LinkIncremental>false</LinkIncremental>

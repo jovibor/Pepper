@@ -317,23 +317,30 @@ namespace libpe
 	constexpr DWORD IMAGE_FLAG_COMDESCRIPTOR = 0x00800000;
 }
 
-#if defined(ILIBPE_EXPORT)
+#ifdef ILIBPE_EXPORT
 #define ILIBPEAPI __declspec(dllexport) __cdecl
 #else
 #define ILIBPEAPI __declspec(dllimport) __cdecl
+/********************************************************
+* Platform and configuration specific .lib name macros.	*
+********************************************************/
 #ifdef _WIN64
 #ifdef _DEBUG
-#pragma comment(lib, "libped_x64.lib")
+#define LIBNAME_PROPER(x) x"64d.lib"
 #else
-#pragma comment(lib, "libpe_x64.lib")
+#define LIBNAME_PROPER(x) x"64.lib"
 #endif
 #else
 #ifdef _DEBUG
-#pragma comment(lib, "libped.lib")
+#define LIBNAME_PROPER(x) x"d.lib"
 #else
-#pragma comment(lib, "libpe.lib")
+#define LIBNAME_PROPER(x) x".lib"
 #endif
 #endif
+/********************************************************
+* End. //////////////////////////////////////////////// *
+********************************************************/
+#pragma comment(lib, LIBNAME_PROPER("libpe"))
 #endif
 
 extern "C" HRESULT ILIBPEAPI Getlibpe(libpe::libpe_ptr& plibpe);

@@ -64,7 +64,7 @@ CHexCtrl::CHexCtrl()
 
 bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 {
-	if (m_fCreated) //Already created.
+	if (IsCreated()) //Already created.
 		return false;
 
 	m_dwCtrlId = hcs.uId;
@@ -135,6 +135,11 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 	m_fCreated = true;
 
 	return true;
+}
+
+bool CHexCtrl::IsCreated()
+{
+	return m_fCreated;
 }
 
 void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual,

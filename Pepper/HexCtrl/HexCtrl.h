@@ -122,7 +122,8 @@ namespace HEXCTRL {
 		CHexCtrl();
 		virtual ~CHexCtrl() {}
 		bool Create(const HEXCREATESTRUCT& hcs); //Main initialization method, CHexCtrl::Create.
-
+		bool IsCreated(); //Shows whether control created or not.
+		
 		// CHexCtrl::SetData:																	
 		// 1. Pointer to data, not used if it's virtual control 2. Size of data to see as hex.	
 		// 3. Is virtual? 4. Offset to selection after creation. 5. Selection size.				
