@@ -228,7 +228,7 @@ bool CListEx::IsCreated()
 	return m_fCreated;
 }
 
-void CListEx::SetFont(const LOGFONT* pLogFontNew)
+void CListEx::SetFont(const LOGFONTW* pLogFontNew)
 {
 	if (!pLogFontNew)
 		return;
@@ -282,16 +282,16 @@ UINT CListEx::GetFontSize()
 	return lf.lfHeight;
 }
 
-void CListEx::SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTt, const std::wstring& wstrCaption)
+void CListEx::SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTooltip, const std::wstring& wstrCaption)
 {
 	auto it = m_umapCellTt.find(iItem);
 
 	//If there is no tooltip for such item/subitem we just set it.
-	if (it == m_umapCellTt.end() && (!wstrTt.empty() || !wstrCaption.empty()))
+	if (it == m_umapCellTt.end() && (!wstrTooltip.empty() || !wstrCaption.empty()))
 	{
 		//Initializing inner map.
 		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner {
-			{ iSubitem, { wstrTt, wstrCaption } } };
+			{ iSubitem, { wstrTooltip, wstrCaption } } };
 		m_umapCellTt.insert({ iItem, std::move(umapInner) });
 	}
 	else
@@ -301,11 +301,11 @@ void CListEx::SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTt
 		//If there is Item's tooltip but no Subitem's tooltip
 		//inserting new Subitem into inner map.
 		if (itInner == it->second.end())
-			it->second.insert({ iSubitem, { wstrTt, wstrCaption } });
+			it->second.insert({ iSubitem, { wstrTooltip, wstrCaption } });
 		else //If there is already exist this Item-Subitem's tooltip:
-			 //change or erase it, depending on wstrTt emptiness.
-			if (!wstrTt.empty())
-				itInner->second = { wstrTt, wstrCaption };
+			 //change or erase it, depending on wstrTooltip emptiness.
+			if (!wstrTooltip.empty())
+				itInner->second = { wstrTooltip, wstrCaption };
 			else
 				it->second.erase(itInner);
 	}
@@ -438,14 +438,14 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	CDC* pDC = CDC::FromHandle(pDIS->hDC);
 	pDC->SelectObject(&m_penGrid);
 	pDC->SelectObject(&m_fontList);
-	COLORREF clrText, clrBk;
-	COLORREF clrBkCurrRow = pDIS->itemID % 2 ? m_clrBkRow2 : m_clrBkRow1;
+	COLORREF clrBkCurrRow = (pDIS->itemID % 2) ? m_clrBkRow2 : m_clrBkRow1;
 
 	switch (pDIS->itemAction)
 	{
 	case ODA_SELECT:
 	case ODA_DRAWENTIRE:
 	{
+		COLORREF clrText, clrBk;
 		CRect rc;
 		GetItemRect(pDIS->itemID, &rc, LVIR_LABEL);
 
@@ -736,14 +736,14 @@ void CListEx::OnDestroy()
 	::DestroyWindow(m_hwndTt);
 }
 
-bool CListEx::HasTooltip(int nItem, int nSubitem, std::wstring** ppwstrText, std::wstring** ppwstrCaption)
+bool CListEx::HasTooltip(int iItem, int iSubitem, std::wstring** ppwstrText, std::wstring** ppwstrCaption)
 {
 	//Can return true/false indicating if subitem has tooltip,
 	//or can return pointers to tooltip text as well, if poiters are not nullptr.
-	auto it = m_umapCellTt.find(nItem);
+	auto it = m_umapCellTt.find(iItem);
 	if (it != m_umapCellTt.end())
 	{
-		auto itInner = it->second.find(nSubitem);
+		auto itInner = it->second.find(iSubitem);
 
 		//If subitem id found and its text is not empty.
 		if (itInner != it->second.end() && !std::get<0>(itInner->second).empty())

@@ -33,7 +33,7 @@ public:
 
 	//Shows only a piece of the whole loaded file.
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
-	HRESULT ShowFilePiece(ULONGLONG ullOffsetFrom, ULONGLONG ullSize, CHexCtrl* pHexCtrl = nullptr);
+	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexCtrl* pHexCtrl = nullptr);
 
 	//Unloads loaded file and all pieces, if present.
 	HRESULT UnloadFile();
@@ -53,7 +53,6 @@ private:
 		LPVOID		lpData { };
 	};
 	CHexCtrl m_stHex;
-//	CHexCtrl* m_pHexCur { }; //Current
 	HEXCREATESTRUCT m_stHC { };
 	//Size of the loaded PE file.
 	LARGE_INTEGER m_stFileSize { };

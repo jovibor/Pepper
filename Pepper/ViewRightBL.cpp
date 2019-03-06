@@ -169,10 +169,9 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		const long idlvlRoot = std::get<0>(m_vecResId.at(dwResId));
 		const long idlvl2 = std::get<1>(m_vecResId.at(dwResId));
 		const long idlvl3 = std::get<2>(m_vecResId.at(dwResId));
-
-		auto& rootvec = pstResRoot->vecResRoot;
 		if (idlvl2 >= 0)
 		{
+			auto& rootvec = pstResRoot->vecResRoot;
 			auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
 			auto& lvl2vec = lvl2tup.vecResLvL2;
 
@@ -425,7 +424,7 @@ int CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs.SetRedraw(FALSE); //to increase the speed of List populating
 	for (auto& i : pExport->vecFuncs)
 	{
-		swprintf_s(wstr, 9, L"%08X", DWORD(dwOffset + sizeof(DWORD) * i.dwOrdinal));
+		swprintf_s(wstr, 9, L"%08lX", DWORD(dwOffset + sizeof(DWORD) * i.dwOrdinal));
 		m_listExportFuncs.InsertItem(listindex, wstr);
 
 		swprintf_s(wstr, 9, L"%08X", i.dwRVA);
@@ -477,7 +476,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 	m_listImportEntry.SetRedraw(FALSE);
 	for (auto& i : m_pImport->at(dwEntry).vecImportFunc)
 	{
-		swprintf_s(wstr, 9, L"%08X", dwThunkOffset);
+		swprintf_s(wstr, 9, L"%08lX", dwThunkOffset);
 		m_listImportEntry.InsertItem(listindex, wstr);
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA32);
@@ -509,7 +508,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.stThunk64.u1.AddressOfData);
 		m_listImportEntry.SetItemText(listindex, 3, wstr);
 
-		swprintf_s(wstr, 9, L"%08X", dwThunkRVA);
+		swprintf_s(wstr, 9, L"%08lX", dwThunkRVA);
 		m_listImportEntry.SetItemText(listindex, 4, wstr);
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkRVA += sizeof(IMAGE_THUNK_DATA32);
@@ -581,7 +580,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 	m_listDelayImportEntry.SetRedraw(FALSE);
 	for (auto&i : pDelayImport->at(dwEntry).vecDelayImpFunc)
 	{
-		swprintf_s(wstr, 9, L"%08X", dwThunkOffset);
+		swprintf_s(wstr, 9, L"%08lX", dwThunkOffset);
 		m_listDelayImportEntry.InsertItem(listindex, wstr);
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA32);
@@ -743,7 +742,7 @@ int CViewRightBL::CreateTreeResources()
 	m_imglTreeRes.Create(16, 16, ILC_COLOR32, 0, 4);
 	const int iconDirs = m_imglTreeRes.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_DIR_ICON));
 	m_treeResBottom.SetImageList(&m_imglTreeRes, TVSIL_NORMAL);
-	long ilvlRoot = 0, ilvl2 = 0, ilvl3 = 0;
+	long ilvlRoot = 0;
 
 	//Creating a treeCtrl and setting, with SetItemData(),
 	//a unique id for each node, that is an index in vector (m_vecResId),
@@ -765,13 +764,13 @@ int CViewRightBL::CreateTreeResources()
 		const HTREEITEM treeRoot = m_treeResBottom.InsertItem(wstr, iconDirs, iconDirs);
 		m_vecResId.emplace_back(ilvlRoot, -1, -1);
 		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
-		ilvl2 = 0;
+		long ilvl2 = 0;
 		LIBPE_RESOURCE_LVL2 pstResLvL2 = iterRoot.stResLvL2;
 
 		for (auto& iterLvL2 : pstResLvL2.vecResLvL2)
 		{
 			m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
-			ilvl3 = 0;
+			long ilvl3 = 0;
 
 			//			pResDirEntry = &std::get<0>(iterLvL2);
 			LIBPE_RESOURCE_LVL3 pstResLvL3 = iterLvL2.stResLvL3;

@@ -16,37 +16,38 @@ using namespace libpe;
 #endif
 
 //Errors, that might come from libpe.
+#define WSTR(x) L## #x
 inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {
-	{ E_CALL_LOADPE_FIRST, L"E_CALL_LOADPE_FIRST" },
-{ E_FILE_OPEN_FAILED, L"E_FILE_OPEN_FAILED" },
-{ E_FILE_SIZE_TOO_SMALL, L"E_FILE_SIZE_TOO_SMALL" },
-{ E_FILE_CREATEFILEMAPPING_FAILED, L"E_FILE_CREATEFILEMAPPING_FAILED" },
-{ E_FILE_MAPVIEWOFFILE_FAILED, L"E_FILE_MAPVIEWOFFILE_FAILED" },
-{ E_FILE_MAPVIEWOFFILE_SECTION_FAILED, L"E_FILE_MAPVIEWOFFILE_SECTION_FAILED" },
-{ E_FILE_SECTION_DATA_CORRUPTED, L"E_FILE_SECTION_DATA_CORRUPTED" },
-{ E_IMAGE_TYPE_UNSUPPORTED, L"E_IMAGE_TYPE_UNSUPPORTED" },
-{ E_IMAGE_HAS_NO_DOSHEADER, L"E_IMAGE_HAS_NO_DOSHEADER" },
-{ E_IMAGE_HAS_NO_RICHHEADER, L"E_IMAGE_HAS_NO_RICHHEADER" },
-{ E_IMAGE_HAS_NO_NTHEADER, L"E_IMAGE_HAS_NO_NTHEADER" },
-{ E_IMAGE_HAS_NO_FILEHEADER, L"E_IMAGE_HAS_NO_FILEHEADER" },
-{ E_IMAGE_HAS_NO_OPTHEADER, L"E_IMAGE_HAS_NO_OPTHEADER" },
-{ E_IMAGE_HAS_NO_DATADIRECTORIES, L"E_IMAGE_HAS_NO_DATADIRECTORIES" },
-{ E_IMAGE_HAS_NO_SECTIONS, L"E_IMAGE_HAS_NO_SECTIONS" },
-{ E_IMAGE_HAS_NO_EXPORT, L"E_IMAGE_HAS_NO_EXPORT" },
-{ E_IMAGE_HAS_NO_IMPORT, L"E_IMAGE_HAS_NO_IMPORT" },
-{ E_IMAGE_HAS_NO_RESOURCE, L"E_IMAGE_HAS_NO_RESOURCE" },
-{ E_IMAGE_HAS_NO_EXCEPTION, L"E_IMAGE_HAS_NO_EXCEPTION" },
-{ E_IMAGE_HAS_NO_SECURITY, L"E_IMAGE_HAS_NO_SECURITY" },
-{ E_IMAGE_HAS_NO_BASERELOC, L"E_IMAGE_HAS_NO_BASERELOC" },
-{ E_IMAGE_HAS_NO_DEBUG, L"E_IMAGE_HAS_NO_DEBUG" },
-{ E_IMAGE_HAS_NO_ARCHITECTURE, L"E_IMAGE_HAS_NO_ARCHITECTURE" },
-{ E_IMAGE_HAS_NO_GLOBALPTR, L"E_IMAGE_HAS_NO_GLOBALPTR" },
-{ E_IMAGE_HAS_NO_TLS, L"E_IMAGE_HAS_NO_TLS" },
-{ E_IMAGE_HAS_NO_LOADCONFIG, L"E_IMAGE_HAS_NO_LOADCONFIG" },
-{ E_IMAGE_HAS_NO_BOUNDIMPORT, L"E_IMAGE_HAS_NO_BOUNDIMPORT" },
-{ E_IMAGE_HAS_NO_IAT, L"E_IMAGE_HAS_NO_IAT" },
-{ E_IMAGE_HAS_NO_DELAYIMPORT, L"E_IMAGE_HAS_NO_DELAYIMPORT" },
-{ E_IMAGE_HAS_NO_COMDESCRIPTOR, L"E_IMAGE_HAS_NO_COMDESCRIPTOR" }
+	{ E_CALL_LOADPE_FIRST, WSTR(E_CALL_LOADPE_FIRST) },
+{ E_FILE_CREATEFILE_FAILED, WSTR(E_FILE_CREATEFILE_FAILED) },
+{ E_FILE_SIZE_TOO_SMALL, WSTR(E_FILE_SIZE_TOO_SMALL) },
+{ E_FILE_CREATEFILEMAPPING_FAILED, WSTR(E_FILE_CREATEFILEMAPPING_FAILED) },
+{ E_FILE_MAPVIEWOFFILE_FAILED, WSTR(E_FILE_MAPVIEWOFFILE_FAILED) },
+{ E_FILE_MAPVIEWOFFILE_SECTION_FAILED, WSTR(E_FILE_MAPVIEWOFFILE_SECTION_FAILED) },
+{ E_FILE_SECTION_DATA_CORRUPTED, WSTR(E_FILE_SECTION_DATA_CORRUPTED) },
+{ E_IMAGE_TYPE_UNSUPPORTED, WSTR(E_IMAGE_TYPE_UNSUPPORTED) },
+{ E_IMAGE_HAS_NO_DOSHEADER, WSTR(E_IMAGE_HAS_NO_DOSHEADER) },
+{ E_IMAGE_HAS_NO_RICHHEADER, WSTR(E_IMAGE_HAS_NO_RICHHEADER) },
+{ E_IMAGE_HAS_NO_NTHEADER, WSTR(E_IMAGE_HAS_NO_NTHEADER) },
+{ E_IMAGE_HAS_NO_FILEHEADER, WSTR(E_IMAGE_HAS_NO_FILEHEADER) },
+{ E_IMAGE_HAS_NO_OPTHEADER, WSTR(E_IMAGE_HAS_NO_OPTHEADER) },
+{ E_IMAGE_HAS_NO_DATADIRECTORIES, WSTR(E_IMAGE_HAS_NO_DATADIRECTORIES) },
+{ E_IMAGE_HAS_NO_SECTIONS, WSTR(E_IMAGE_HAS_NO_SECTIONS) },
+{ E_IMAGE_HAS_NO_EXPORT, WSTR(E_IMAGE_HAS_NO_EXPORT) },
+{ E_IMAGE_HAS_NO_IMPORT, WSTR(E_IMAGE_HAS_NO_IMPORT) },
+{ E_IMAGE_HAS_NO_RESOURCE, WSTR(E_IMAGE_HAS_NO_RESOURCE) },
+{ E_IMAGE_HAS_NO_EXCEPTION, WSTR(E_IMAGE_HAS_NO_EXCEPTION) },
+{ E_IMAGE_HAS_NO_SECURITY, WSTR(E_IMAGE_HAS_NO_SECURITY) },
+{ E_IMAGE_HAS_NO_BASERELOC, WSTR(E_IMAGE_HAS_NO_BASERELOC) },
+{ E_IMAGE_HAS_NO_DEBUG, WSTR(E_IMAGE_HAS_NO_DEBUG) },
+{ E_IMAGE_HAS_NO_ARCHITECTURE, WSTR(E_IMAGE_HAS_NO_ARCHITECTURE) },
+{ E_IMAGE_HAS_NO_GLOBALPTR, WSTR(E_IMAGE_HAS_NO_GLOBALPTR) },
+{ E_IMAGE_HAS_NO_TLS, WSTR(E_IMAGE_HAS_NO_TLS) },
+{ E_IMAGE_HAS_NO_LOADCONFIG, WSTR(E_IMAGE_HAS_NO_LOADCONFIG) },
+{ E_IMAGE_HAS_NO_BOUNDIMPORT, WSTR(E_IMAGE_HAS_NO_BOUNDIMPORT) },
+{ E_IMAGE_HAS_NO_IAT, WSTR(E_IMAGE_HAS_NO_IAT) },
+{ E_IMAGE_HAS_NO_DELAYIMPORT, WSTR(E_IMAGE_HAS_NO_DELAYIMPORT) },
+{ E_IMAGE_HAS_NO_COMDESCRIPTOR, WSTR(E_IMAGE_HAS_NO_COMDESCRIPTOR) }
 };
 
 inline const std::map<WORD, std::wstring> g_mapResType {
@@ -82,10 +83,10 @@ struct STRUCTHELPER
 	DWORD dwOffset;
 	std::wstring wstrName;
 };
-using map_hdr = const std::map<DWORD, STRUCTHELPER>;
+using map_hdr = std::map<DWORD, STRUCTHELPER>;
 
 //Standard headers maps.
-inline map_hdr g_mapDOSHeader {
+inline const map_hdr g_mapDOSHeader {
 	{ 0, { sizeof(WORD), 0, L"e_magic" } },
 { 1, { sizeof(WORD), 2, L"e_cblp" } },
 { 2, { sizeof(WORD), 4, L"e_cp" } },
@@ -119,7 +120,7 @@ inline map_hdr g_mapDOSHeader {
 { 30, { sizeof(LONG), 60, L"e_lfanew" } }
 };
 
-inline map_hdr g_mapFileHeader {
+inline const map_hdr g_mapFileHeader {
 	{ 0, { sizeof(WORD), 0, L"Machine" } },
 { 1, { sizeof(WORD), 2, L"NumberOfSections" } },
 { 2, { sizeof(DWORD), 4, L"TimeDateStamp" } },
@@ -129,7 +130,7 @@ inline map_hdr g_mapFileHeader {
 { 6, { sizeof(WORD), 18, L"Characteristics" } }
 };
 
-inline map_hdr g_mapOptHeader32 {
+inline const map_hdr g_mapOptHeader32 {
 	{ 0, { sizeof(WORD), 0, L"Magic" } },
 { 1, { sizeof(BYTE), 2, L"MajorLinkerVersion" } },
 { 2, { sizeof(BYTE), 3, L"MinorLinkerVersion" } },
@@ -162,7 +163,7 @@ inline map_hdr g_mapOptHeader32 {
 { 29, { sizeof(DWORD), 92, L"NumberOfRvaAndSizes" } }
 };
 
-inline map_hdr g_mapOptHeader64 {
+inline const map_hdr g_mapOptHeader64 {
 	{ 0, { sizeof(WORD), 0, L"Magic" } },
 { 1, { sizeof(BYTE), 2, L"MajorLinkerVersion" } },
 { 2, { sizeof(BYTE), 3, L"MinorLinkerVersion" } },
@@ -194,7 +195,7 @@ inline map_hdr g_mapOptHeader64 {
 { 28, { sizeof(DWORD), 108, L"NumberOfRvaAndSizes" } }
 };
 
-inline std::map<WORD, std::wstring> g_mapDataDirs {
+inline const std::map<WORD, std::wstring> g_mapDataDirs {
 	{ IMAGE_DIRECTORY_ENTRY_EXPORT, L"Export Directory" },
 { IMAGE_DIRECTORY_ENTRY_IMPORT, L"Import Directory" },
 { IMAGE_DIRECTORY_ENTRY_RESOURCE, L"Resource Directory" },
@@ -212,7 +213,7 @@ inline std::map<WORD, std::wstring> g_mapDataDirs {
 { IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, L"COM Descriptor Directory" }
 };
 
-inline map_hdr g_mapExport {
+inline const map_hdr g_mapExport {
 	{ 0, { sizeof(DWORD), 0, L"Characteristics" } },
 { 1, { sizeof(DWORD), 4, L"TimeDateStamp" } },
 { 2, { sizeof(WORD), 8, L"MajorVersion" } },
@@ -226,7 +227,7 @@ inline map_hdr g_mapExport {
 { 10, { sizeof(DWORD), 36, L"AddressOfNameOrdinals" } }
 };
 
-inline map_hdr g_mapLCD32 {
+inline const map_hdr g_mapLCD32 {
 	{ 0, { sizeof(DWORD), 0, L"Size" } },
 { 1, { sizeof(DWORD), 4, L"TimeDateStamp" } },
 { 2, { sizeof(WORD), 8, L"MajorVersion" } },
@@ -274,7 +275,7 @@ inline map_hdr g_mapLCD32 {
 { 44, { sizeof(DWORD), 160, L"VolatileMetadataPointer" } },
 };
 
-inline map_hdr g_mapLCD64 {
+inline const map_hdr g_mapLCD64 {
 	{ 0, { sizeof(DWORD), 0, L"Size" } },
 { 1, { sizeof(DWORD), 4, L"TimeDateStamp" } },
 { 2, { sizeof(WORD), 8, L"MajorVersion" } },
@@ -322,7 +323,7 @@ inline map_hdr g_mapLCD64 {
 { 44, { sizeof(ULONGLONG), 256, L"VolatileMetadataPointer" } },
 };
 
-inline map_hdr g_mapTLS32 {
+inline const map_hdr g_mapTLS32 {
 	{ 0, { sizeof(DWORD), 0, L"StartAddressOfRawData" } },
 { 1, { sizeof(DWORD), 4, L"EndAddressOfRawData" } },
 { 2, { sizeof(DWORD), 8, L"AddressOfIndex" } },
@@ -331,7 +332,7 @@ inline map_hdr g_mapTLS32 {
 { 5, { sizeof(DWORD), 20, L"Characteristics" } },
 };
 
-inline map_hdr g_mapTLS64 {
+inline const map_hdr g_mapTLS64 {
 	{ 0, { sizeof(ULONGLONG), 0, L"StartAddressOfRawData" } },
 { 1, { sizeof(ULONGLONG), 8, L"EndAddressOfRawData" } },
 { 2, { sizeof(ULONGLONG), 16, L"AddressOfIndex" } },
@@ -340,7 +341,7 @@ inline map_hdr g_mapTLS64 {
 { 5, { sizeof(DWORD), 36, L"Characteristics" } },
 };
 
-inline map_hdr g_mapComDir {
+inline const map_hdr g_mapComDir {
 	{ 0, { sizeof(DWORD), 0, L"cb" } },
 { 1, { sizeof(WORD), 4, L"MajorRuntimeVersion" } },
 { 2, { sizeof(WORD), 6, L"MinorRuntimeVersion" } },
@@ -435,4 +436,5 @@ constexpr auto IDM_LIST_GOTODATAOFFSET = 0x8002;
 * End of IDC.											*
 ********************************************************/
 
+//Color of list "Offset" column
 constexpr COLORREF g_clrOffset = RGB(150, 150, 150);

@@ -17,17 +17,16 @@
 HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 {
 	if (IsCreated())
-		return S_OK;
+		return E_ABORT;
 
 	m_hFile = CreateFileW(lpszFileName, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (m_hFile == INVALID_HANDLE_VALUE)
-		return E_FILE_OPEN_FAILED;
+		return E_FILE_CREATEFILE_FAILED;
 
 	::GetFileSizeEx(m_hFile, &m_stFileSize);
 
 	m_hMapObject = CreateFileMappingW(m_hFile, nullptr, PAGE_READONLY, 0, 0, nullptr);
-	if (!m_hMapObject)
-	{
+	if (!m_hMapObject) {
 		CloseHandle(m_hFile);
 		return E_FILE_CREATEFILEMAPPING_FAILED;
 	}
@@ -36,8 +35,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	m_lpBase = MapViewOfFile(m_hMapObject, FILE_MAP_READ, 0, 0, 0);
 	if (m_lpBase)
 		m_fMapViewOfFileWhole = true;
-	else //Not enough memory? File is too big?
-	{
+	else { //Not enough memory? File is too big?
 		m_fMapViewOfFileWhole = false;
 		::GetNativeSystemInfo(&m_stSysInfo);
 	}
@@ -139,7 +137,7 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD 
 		dwSizeToMap = 0x01900000; //25MB.
 
 
-	ULONGLONG ullStartOffsetMapped { }, ullEndOffsetMapped { };
+	ULONGLONG ullStartOffsetMapped;
 	if (ullOffset > (ULONGLONG)dwSizeToMap)
 		ullStartOffsetMapped = ullOffset - (dwSizeToMap / 2);
 	else

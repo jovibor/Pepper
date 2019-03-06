@@ -45,7 +45,7 @@ namespace HEXCTRL {
 	class CHexDlgAbout : public CDialogEx
 	{
 	public:
-		CHexDlgAbout(CWnd* m_pParent = nullptr) : CDialogEx(IDD_HEXCTRL_ABOUT) {}
+		explicit CHexDlgAbout(CWnd* m_pParent = nullptr) : CDialogEx(IDD_HEXCTRL_ABOUT) {}
 		virtual ~CHexDlgAbout() {}
 	protected:
 		virtual BOOL OnInitDialog() override;
@@ -84,7 +84,7 @@ namespace HEXCTRL {
 		};
 	public:
 		friend class CHexCtrl;
-		CHexDlgSearch(CWnd* m_pParent = nullptr) {}
+		explicit CHexDlgSearch(CWnd* m_pParent = nullptr) {}
 		virtual ~CHexDlgSearch() {}
 		BOOL Create(UINT nIDTemplate, CHexCtrl* pParentWnd);
 		CHexCtrl* GetParent() const;
@@ -104,7 +104,7 @@ namespace HEXCTRL {
 	private:
 		CHexCtrl* m_pParent { };
 		HEXSEARCH m_stSearch { };
-		DWORD m_dwnOccurrence { };
+		DWORD m_dwOccurrences { };
 		int m_iRadioCurrent { };
 		COLORREF m_clrSearchFailed { RGB(200, 0, 0) };
 		COLORREF m_clrSearchFound { RGB(0, 200, 0) };
@@ -171,7 +171,7 @@ namespace HEXCTRL {
 		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);
 		void CopyToClipboard(UINT nType);
 		void Search(CHexDlgSearch::HEXSEARCH& rSearch);
-		void SetSelection(ULONGLONG dwClick, ULONGLONG dwStart, ULONGLONG dwBytes, bool fHighlight = false);
+		void SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullSize, bool fHighlight = false);
 		void SelectAll();
 		void UpdateInfoText();
 		void ToWchars(ULONGLONG ull, wchar_t* pwsz, unsigned short shBytes = 4);
@@ -201,8 +201,7 @@ namespace HEXCTRL {
 		COLORREF m_clrBkSelected { RGB(200, 200, 255) };
 		COLORREF m_clrTextBottomRect { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrBkBottomRect { RGB(250, 250, 250) };
-		const CBrush m_stBrushBk { m_clrBk };
-		const CBrush m_stBrushBkSelected { m_clrBkSelected };
+		CBrush m_stBrushBkSelected { m_clrBkSelected };
 		CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
 		int m_iIndentAscii { }; //Indent of Ascii text begining.
 		int m_iIndentFirstHexChunk { }; //First hex chunk indent.

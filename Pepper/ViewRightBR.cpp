@@ -98,9 +98,6 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 void CViewRightBR::ShowResource(RESHELPER* pRes)
 {
-	LPGRPICONDIR pGRPIDir;
-	HICON hIcon;
-	ICONINFO iconInfo;
 	m_stEditResStrings.ShowWindow(SW_HIDE);
 	m_stImgRes.DeleteImageList();
 	m_iResTypeToDraw = -1;
@@ -111,13 +108,15 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 
 	CRect rcClient;
 	GetClientRect(&rcClient);
-
 	PCLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 		return;
 
 	if (pRes)
 	{
+		LPGRPICONDIR pGRPIDir;
+		HICON hIcon;
+		ICONINFO iconInfo;
 		switch (pRes->IdResType)
 		{
 		case 1: //RT_CURSOR

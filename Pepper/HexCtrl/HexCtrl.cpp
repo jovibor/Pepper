@@ -589,7 +589,7 @@ void CHexCtrl::OnPaint()
 		ullLineEndtmp = ullLineStart + (rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) / m_sizeLetter.cy;
 		//If m_dwDataCount is really small we adjust dwLineEnd to be not bigger than maximum allowed.
 		if (ullLineEndtmp > (m_ullDataCount / m_dwCapacity))
-			ullLineEndtmp = m_ullDataCount % m_dwCapacity ? m_ullDataCount / m_dwCapacity + 1 : m_ullDataCount / m_dwCapacity;
+			ullLineEndtmp = (m_ullDataCount % m_dwCapacity) ? m_ullDataCount / m_dwCapacity + 1 : m_ullDataCount / m_dwCapacity;
 	}
 	const ULONGLONG ullLineEnd = ullLineEndtmp;
 
@@ -618,7 +618,7 @@ void CHexCtrl::OnPaint()
 	rc.left = m_iFirstVertLine - iScrollH; rc.top = iFirstHorizLine;
 	rc.right = m_iSecondVertLine - iScrollH; rc.bottom = iSecondHorizLine;
 	rDC.SetTextColor(m_clrTextCaption);
-	DrawTextW(rDC.m_hDC, L"Offset", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	rDC.DrawTextW(L"Offset", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//«Bytes total:» text.
 	rc.left = m_iFirstVertLine + 5;	rc.top = iThirdHorizLine + 1;
@@ -627,7 +627,7 @@ void CHexCtrl::OnPaint()
 	rDC.FillSolidRect(&rc, m_clrBkBottomRect);
 	rDC.SetTextColor(m_clrTextBottomRect);
 	rDC.SelectObject(&m_fontBottomRect);
-	DrawTextW(rDC.m_hDC, m_wstrBottomText.data(), (int)m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+	rDC.DrawTextW(m_wstrBottomText.data(), (int)m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 	rDC.SelectObject(&m_fontHexView);
 	rDC.SetTextColor(m_clrTextCaption);
@@ -656,7 +656,7 @@ void CHexCtrl::OnPaint()
 	//"Ascii" text.
 	rc.left = m_iThirdVertLine - iScrollH; rc.top = iFirstHorizLine;
 	rc.right = m_iFourthVertLine - iScrollH; rc.bottom = iSecondHorizLine;
-	DrawTextW(rDC.m_hDC, L"Ascii", 5, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+	rDC.DrawTextW(L"Ascii", 5, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//First Vertical line.
 	rDC.MoveTo(m_iFirstVertLine - iScrollH, 0);
@@ -715,7 +715,7 @@ void CHexCtrl::OnPaint()
 			{
 				//Hex chunk to print.
 				//If it's virtual data control we aquire next byte_to_print from parent window.
-				WCHAR pwszHexToPrint[2];
+				wchar_t pwszHexToPrint[2];
 				char chByteToPrint;
 				if (m_fVirtual && m_pwndMsg)
 				{
@@ -737,7 +737,7 @@ void CHexCtrl::OnPaint()
 
 					//Space between hex chunks, excluding last hex in a row, filling with bk_selected color.
 					if (ullIndexDataToPrint < m_ullSelectionEnd - 1 && (ullIndexDataToPrint + 1) % m_dwCapacity)
-					{				//Rect of the space between Hex chunks, needed for proper selection drawing.
+					{	//Rect of the space between Hex chunks. Needed for proper selection drawing.
 						rc.left = iHexPosToPrintX + m_sizeLetter.cx * 2;
 						rc.top = iHexPosToPrintY;
 						if (iterChunks == m_dwCapacityBlockSize - 1) //Space between capacity halves.
@@ -746,7 +746,7 @@ void CHexCtrl::OnPaint()
 							rc.right = iHexPosToPrintX + m_sizeLetter.cx * 3;
 						rc.bottom = iHexPosToPrintY + m_sizeLetter.cy;
 
-						FillRect(rDC.m_hDC, &rc, (HBRUSH)m_stBrushBkSelected.m_hObject);
+						rDC.FillRect(&rc, &m_stBrushBkSelected);
 					}
 				}
 				else
@@ -960,7 +960,7 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 
 		//When to insert first "\r\n".
 		DWORD dwTail = m_dwCapacity - dwModStart;
-		DWORD dwNextBlock = m_dwCapacity % 2 ? m_dwCapacityBlockSize + 2 : m_dwCapacityBlockSize + 1;
+		DWORD dwNextBlock = (m_dwCapacity % 2) ? m_dwCapacityBlockSize + 2 : m_dwCapacityBlockSize + 1;
 
 		//If at least two rows are selected.
 		if (dwModStart + m_ullBytesSelected > m_dwCapacity)
@@ -990,10 +990,9 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 	}
 	case COPY_AS_ASCII:
 	{
-		char ch;
 		for (unsigned i = 0; i < m_ullBytesSelected; i++)
 		{
-			ch = m_pData[m_ullSelectionStart + i];
+			char ch = m_pData[m_ullSelectionStart + i];
 			//If next byte is zero —> substitute it with space.
 			if (ch == 0)
 				ch = ' ';
@@ -1399,14 +1398,14 @@ void CHexDlgSearch::SearchCallback()
 			if (!m_stSearch.fWrap)
 			{
 				if (m_stSearch.iDirection == CHexCtrl::HEXCTRL_SEARCH::SEARCH_FORWARD)
-					m_dwnOccurrence++;
+					m_dwOccurrences++;
 				else if (m_stSearch.iDirection == CHexCtrl::HEXCTRL_SEARCH::SEARCH_BACKWARD)
-					m_dwnOccurrence--;
+					m_dwOccurrences--;
 			}
 			else
-				m_dwnOccurrence = 1;
+				m_dwOccurrences = 1;
 
-			swprintf_s(wstrSearch, 127, L"Found occurrence \u2116 %u from the beginning.", m_dwnOccurrence);
+			swprintf_s(wstrSearch, 127, L"Found occurrence \u2116 %lu from the beginning.", m_dwOccurrences);
 		}
 		else
 			swprintf_s(wstrSearch, 127, L"Search found occurrence.");
@@ -1537,7 +1536,7 @@ void CHexDlgSearch::OnRadioBnRange(UINT nID)
 
 void CHexDlgSearch::ClearAll()
 {
-	m_dwnOccurrence = 0;
+	m_dwOccurrences = 0;
 	m_stSearch.ullStartAt = 0;
 	m_stSearch.fSecondMatch = false;
 	m_stSearch.wstrSearch = { };

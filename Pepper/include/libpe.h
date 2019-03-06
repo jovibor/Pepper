@@ -7,6 +7,7 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <Windows.h>
 #include <ImageHlp.h>
 
 #ifndef __cpp_lib_byte
@@ -16,21 +17,21 @@
 #else
 #define __cpp17_conformant 1
 #endif
-static_assert(__cpp17_conformant, "C++17 conformant compiler is required (MSVS 15.7 with /std:c++17 or higher).");
+static_assert(__cpp17_conformant, "C++17 conformant compiler is required (MSVS 15.7 with /std:c++17, or higher).");
 
-namespace libpe
-{
-	//Dos header.
+namespace libpe {
+	//Standard DOS header struct.
 	using PCLIBPE_DOSHEADER = const IMAGE_DOS_HEADER*;
 
 	//Rich.
-	//Vector of undocumented DOUBLE DWORDs of "Rich" structure.
+	//Vector of undocumented «Rich» struct.
+	//Struct: 1. Offset of the entry. 2. WORD - Id 3. WORD - version 4. DWORD - count of occurrences.
 	struct LIBPE_RICH { DWORD dwOffsetRich; WORD wId; WORD wVersion; DWORD dwCount; };
 	using LIBPE_RICHHEADER_VEC = std::vector<LIBPE_RICH>;
 	using PCLIBPE_RICHHEADER_VEC = const LIBPE_RICHHEADER_VEC*;
 
 	//NT header.
-	//Depends on PE type — x86 or x64.
+	//Struct: 1. Offset of the header 2. Header itself (whether x86 or x64).
 	struct LIBPE_NTHEADER {
 		DWORD dwOffsetNTHdrDesc;
 		union LIBPE_NTHEADER_VAR { IMAGE_NT_HEADERS32 stNTHdr32; IMAGE_NT_HEADERS64 stNTHdr64; } varHdr;
@@ -38,20 +39,25 @@ namespace libpe
 	using PCLIBPE_NTHEADER = const LIBPE_NTHEADER*;
 
 	//File header.
+	//Standard File header struct.
 	using PCLIBPE_FILEHEADER = const IMAGE_FILE_HEADER*;
 
-	//Optional header. Depends on file type — x86 or x64.
+	//Optional header.
+	//Union of standard Optional header struct, depends on file type — x86 or x64.
 	union LIBPE_OPTHEADER_VAR { IMAGE_OPTIONAL_HEADER32 stOptHdr32; IMAGE_OPTIONAL_HEADER64 stOptHdr64; };
 	using PCLIBPE_OPTHEADER_VAR = const LIBPE_OPTHEADER_VAR*;
 
 	//Data directories.
-	//Vector of IMAGE_DATA_DIRECTORY and section name this dir resides in.
+	//Vector of LIBPE_DATADIR struct.
+	//Struct: 1. Standard IMAGE_DATA_DIRECTORY 2. String with the name of the section this dir resides in (points to).
 	struct LIBPE_DATADIR { IMAGE_DATA_DIRECTORY stDataDir; std::string strSecResidesIn; };
 	using LIBPE_DATADIRS_VEC = std::vector<LIBPE_DATADIR>;
 	using PCLIBPE_DATADIRS_VEC = const LIBPE_DATADIRS_VEC*;
 
 	//Sections headers.
-	//Section header and section real name, if presented. For more info check:
+	//Vector of LIBPE_SECHEADERS struct.
+	//Struct: 1. Section header offset 2. Standard section header struct 3. String with the section full name
+	//For more info check:
 	//docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_image_section_header#members
 	//«An 8-byte, null-padded UTF-8 string. For longer names, this member contains a forward slash (/) 
 	//followed by an ASCII representation of a decimal number that is an offset into the string table.»
@@ -60,7 +66,10 @@ namespace libpe
 	using PCLIBPE_SECHEADERS_VEC = const LIBPE_SECHEADERS_VEC*;
 
 	//Export table.
-	//IMAGE_EXPORT_DIRECTORY, Actual export module name, vector of exported funcs: RVA, ordinal, func name, func forwarder name.
+	//LIBPE_EXPORT struct: 1 Export descriptor offset 2. Standard export header struct. 3 String of actual module name
+	//4. Vector of LIBPE_EXPORT_FUNC struct - exported functions struct.
+	//LIBPE_EXPORT_FUNC struct:
+	//1. RVA 2. Ordinal 3. Func name 4. Func forwarder name.
 	struct LIBPE_EXPORT_FUNC { DWORD dwRVA; DWORD dwOrdinal; std::string strFuncName; std::string strForwarderName; };
 	struct LIBPE_EXPORT {
 		DWORD dwOffsetExportDesc; IMAGE_EXPORT_DIRECTORY stExportDesc;
@@ -69,8 +78,10 @@ namespace libpe
 	using PCLIBPE_EXPORT = const LIBPE_EXPORT*;
 
 	//Import table:
-	//IMAGE_IMPORT_DESCRIPTOR, import module name, vector of:
-	//Ordinal/Hint (depending on import type), func name, import thunk RVA.
+	//Vector of LIBPE_IMPORT_MODULE struct.
+	//Struct: 1. Offset of import descriptor 2. Standard import descriptor 3. Import module name 4. Vector of LIBPE_IMPORT_FUNC struct
+	//LIBPE_IMPORT_FUNC struct - import module funcs struct:
+	//1. Union of standard IMAGE_THUNK_DATA (x86 or x64) 2. Standard IMAGE_IMPORT_BY_NAME struct 3. String with function name.
 	struct LIBPE_IMPORT_FUNC {
 		union LIBPE_IMPORT_THUNK_VAR {
 			IMAGE_THUNK_DATA32 stThunk32;
@@ -140,32 +151,38 @@ namespace libpe
 	***************************************************************************************/
 
 	//Exception table.
+	//Vector of LIBPE_EXCEPTION struct.
+	//Struct: 1. Descriptor offset 2. Standard _IMAGE_RUNTIME_FUNCTION_ENTRY struct.
 	struct LIBPE_EXCEPTION { DWORD dwOffsetRuntimeFuncDesc; _IMAGE_RUNTIME_FUNCTION_ENTRY stRuntimeFuncEntry; };
 	using LIBPE_EXCEPTION_VEC = std::vector<LIBPE_EXCEPTION>;
 	using PCLIBPE_EXCEPTION_VEC = const LIBPE_EXCEPTION_VEC*;
 
 	//Security table.
-	//Vector of: 1. descriptor offset 2. WIN_CERTIFICATE.
+	//Vector of LIBPE_SECURITY struct.
+	//Struct: 1. Descriptor offset 2. Standard WIN_CERTIFICATE struct.
 	struct LIBPE_SECURITY { DWORD dwOffsetWinCertDesc; WIN_CERTIFICATE stWinSert; };
 	using LIBPE_SECURITY_VEC = std::vector<LIBPE_SECURITY>;
 	using PCLIBPE_SECURITY_VEC = const LIBPE_SECURITY_VEC*;
 
 	//Relocation table.
-	//Vector of dwOffset, IMAGE_BASE_RELOCATION, and vector of dwOffset, <Relocations type and Offset>
+	//Vector of LIBPE_RELOCATION struct.
+	//Struct: 1. Descritor offset 2. Standard IMAGE_BASE_RELOCATION struct 3. Vector of the LIBPE_RELOC_DATA struct
+	//LIBPE_RELOC_DATA struct: 1. Relocation data offset 2. Relocation type 3. Relocation offset (offset reloc must be applied to)
 	struct LIBPE_RELOC_DATA { DWORD dwOffsetRelocData; WORD wRelocType; WORD wRelocOffset; };
 	struct LIBPE_RELOCATION { DWORD dwOffsetReloc; IMAGE_BASE_RELOCATION stBaseReloc; std::vector<LIBPE_RELOC_DATA> vecRelocData; };
 	using LIBPE_RELOCATION_VEC = std::vector<LIBPE_RELOCATION>;
 	using PCLIBPE_RELOCATION_VEC = const LIBPE_RELOCATION_VEC*;
 
 	//Debug table.
-	//Vector of debug entries: dwOffset, IMAGE_DEBUG_DIRECTORY.
+	//Vector of LIBPE_DEBUG struct.
+	//Struct: 1. Debug descriptor offset. 2. Standard IMAGE_DEBUG_DIRECTORY struct
 	struct LIBPE_DEBUG { DWORD dwOffsetDebug; IMAGE_DEBUG_DIRECTORY stDebugDir; };
 	using LIBPE_DEBUG_VEC = std::vector<LIBPE_DEBUG>;
 	using PCLIBPE_DEBUG_VEC = const LIBPE_DEBUG_VEC*;
 
 	//TLS table.
-	//Offset, var of TLS headertype, depends on file type — x86 or x64.
-	//Vector of std::byte — TLS Raw data, vector<std::byte> — TLS Callbacks.
+	//LIBPE_TLS struct: 1. TLS header offset 2. Union of standard IMAGE_TLS_DIRECTORY header (x86 or x64) 
+	//3. TLS raw data offset 4. TLS raw data size 5. Vector of DWORDS of TLS Callbacks.
 	struct LIBPE_TLS {
 		DWORD dwOffsetTLS;
 		union LIBPE_TLS_VAR { IMAGE_TLS_DIRECTORY32 stTLSDir32; IMAGE_TLS_DIRECTORY64 stTLSDir64; } varTLS;
@@ -175,6 +192,7 @@ namespace libpe
 	using PCLIBPE_TLS = const LIBPE_TLS*;
 
 	//LoadConfigDirectory.
+	//LCD struct: 1. Offset of the descriptor 2. Union of standard IMAGE_LOAD_CONFIG_DIRECTORY struct (x86 or x64)
 	struct LIBPE_LOADCONFIG {
 		DWORD dwOffsetLCD;
 		union LIBPE_LOADCONFIG_VAR { IMAGE_LOAD_CONFIG_DIRECTORY32 stLCD32; IMAGE_LOAD_CONFIG_DIRECTORY64 stLCD64; } varLCD;
@@ -182,7 +200,13 @@ namespace libpe
 	using PCLIBPE_LOADCONFIG = const LIBPE_LOADCONFIG*;
 
 	//Bound import table.
-	struct LIBPE_BOUNDFORWARDER { DWORD dwOffsetBoundForwDesc; IMAGE_BOUND_FORWARDER_REF stBoundForwarder; std::string strBoundForwarderName; };
+	//Vector of LIBPE_BOUNDIMPORT struct.
+	//Struct: 1. Descriptor offset 2. Standard bound import descriptor 3. Bound name 4. Vector of LIBPE_BOUNDFORWARDER struct
+	//LIBPE_BOUNDFORWARDER struct: 1. Descriptor offset 2. Standard IMAGE_BOUND_FORWARDER_REF struct 3. Bound forwarder name
+	struct LIBPE_BOUNDFORWARDER {
+		DWORD dwOffsetBoundForwDesc; IMAGE_BOUND_FORWARDER_REF stBoundForwarder;
+		std::string strBoundForwarderName;
+	};
 	struct LIBPE_BOUNDIMPORT {
 		DWORD dwOffsetBoundImpDesc;	IMAGE_BOUND_IMPORT_DESCRIPTOR stBoundImpDesc; std::string strBoundName;
 		std::vector<LIBPE_BOUNDFORWARDER> vecBoundForwarder;
@@ -191,6 +215,13 @@ namespace libpe
 	using PCLIBPE_BOUNDIMPORT_VEC = const LIBPE_BOUNDIMPORT_VEC*;
 
 	//Delay import table.
+	//Vector of LIBPE_DELAYIMPORT struct.
+	//Struct: 1. Descriptor offset 2. Standard IMAGE_DELAYLOAD_DESCRIPTOR struct 
+	//3. Module name string 4. Vector of LIBPE_DELAYIMPORT_FUNC struct
+	//LIBPE_DELAYIMPORT_FUNC struct: 
+	//1. Union of four IMAGE_THUNK_DATA (x86 or x64) — 1) Import addres table 2) Import name table
+	//3) Bound import addres table 4) Unload information table
+	//2. Standard IMAGE_IMPORT_BY_NAME struct 3. Function name string
 	struct LIBPE_DELAYIMPORT_FUNC {
 		union LIBPE_DELAYIMPORT_THUNK_VAR
 		{
@@ -218,36 +249,37 @@ namespace libpe
 	using PCLIBPE_DELAYIMPORT_VEC = const LIBPE_DELAYIMPORT_VEC*;
 
 	//COM descriptor table.
+	//LIBPE_COMDESCRIPTOR struct: 1. Offset of the header 2. Standard IMAGE_COR20_HEADER struct
 	struct LIBPE_COMDESCRIPTOR { DWORD dwOffsetComDesc; IMAGE_COR20_HEADER stCorHdr; };
 	using PCLIBPE_COMDESCRIPTOR = const LIBPE_COMDESCRIPTOR*;
 
 	//Pure Virtual base class Ilibpe.
-	class  Ilibpe
+	class Ilibpe
 	{
 	public:
 		virtual HRESULT LoadPe(LPCWSTR) = 0;
-		virtual HRESULT GetImageInfo(DWORD&) = 0;
-		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f) = 0;
-		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset) = 0;
-		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&) = 0;
-		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&) = 0;
-		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER&) = 0;
-		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER&) = 0;
-		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR&) = 0;
-		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC&) = 0;
-		virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC&) = 0;
-		virtual HRESULT GetExport(PCLIBPE_EXPORT&) = 0;
-		virtual HRESULT GetImport(PCLIBPE_IMPORT_VEC&) = 0;
-		virtual HRESULT GetResources(PCLIBPE_RESOURCE_ROOT&) = 0;
-		virtual HRESULT GetExceptions(PCLIBPE_EXCEPTION_VEC&) = 0;
-		virtual HRESULT GetSecurity(PCLIBPE_SECURITY_VEC&) = 0;
-		virtual HRESULT GetRelocations(PCLIBPE_RELOCATION_VEC&) = 0;
-		virtual HRESULT GetDebug(PCLIBPE_DEBUG_VEC&) = 0;
-		virtual HRESULT GetTLS(PCLIBPE_TLS&) = 0;
-		virtual HRESULT GetLoadConfig(PCLIBPE_LOADCONFIG&) = 0;
-		virtual HRESULT GetBoundImport(PCLIBPE_BOUNDIMPORT_VEC&) = 0;
-		virtual HRESULT GetDelayImport(PCLIBPE_DELAYIMPORT_VEC&) = 0;
-		virtual HRESULT GetCOMDescriptor(PCLIBPE_COMDESCRIPTOR&) = 0;
+		virtual HRESULT GetImageInfo(DWORD&)noexcept = 0;
+		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f)noexcept = 0;
+		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset)noexcept = 0;
+		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&)noexcept = 0;
+		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&)noexcept = 0;
+		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER&)noexcept = 0;
+		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER&)noexcept = 0;
+		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR&)noexcept = 0;
+		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC&)noexcept = 0;
+		virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC&)noexcept = 0;
+		virtual HRESULT GetExport(PCLIBPE_EXPORT&)noexcept = 0;
+		virtual HRESULT GetImport(PCLIBPE_IMPORT_VEC&)noexcept = 0;
+		virtual HRESULT GetResources(PCLIBPE_RESOURCE_ROOT&)noexcept = 0;
+		virtual HRESULT GetExceptions(PCLIBPE_EXCEPTION_VEC&)noexcept = 0;
+		virtual HRESULT GetSecurity(PCLIBPE_SECURITY_VEC&)noexcept = 0;
+		virtual HRESULT GetRelocations(PCLIBPE_RELOCATION_VEC&)noexcept = 0;
+		virtual HRESULT GetDebug(PCLIBPE_DEBUG_VEC&)noexcept = 0;
+		virtual HRESULT GetTLS(PCLIBPE_TLS&)noexcept = 0;
+		virtual HRESULT GetLoadConfig(PCLIBPE_LOADCONFIG&)noexcept = 0;
+		virtual HRESULT GetBoundImport(PCLIBPE_BOUNDIMPORT_VEC&)noexcept = 0;
+		virtual HRESULT GetDelayImport(PCLIBPE_DELAYIMPORT_VEC&)noexcept = 0;
+		virtual HRESULT GetCOMDescriptor(PCLIBPE_COMDESCRIPTOR&)noexcept = 0;
 	};
 	using libpe_ptr = std::shared_ptr<Ilibpe>;
 
@@ -256,7 +288,7 @@ namespace libpe
 	*************************************************/
 
 	constexpr auto E_CALL_LOADPE_FIRST = 0xFFFF;
-	constexpr auto E_FILE_OPEN_FAILED = 0x0010;
+	constexpr auto E_FILE_CREATEFILE_FAILED = 0x0010;
 	constexpr auto E_FILE_SIZE_TOO_SMALL = 0x0011;
 	constexpr auto E_FILE_CREATEFILEMAPPING_FAILED = 0x0012;
 	constexpr auto E_FILE_MAPVIEWOFFILE_FAILED = 0x0013;

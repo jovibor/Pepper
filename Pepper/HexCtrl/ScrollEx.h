@@ -59,7 +59,7 @@ namespace HEXCTRL {
 		UINT GetThumbSizeWH();
 		UINT GetThumbPos();
 		long double GetThumbScrollingSize();
-		void SetThumbPos(int uiPos);
+		void SetThumbPos(int iPos);
 		CRect GetFirstArrowRect(bool fClientCoord = false);
 		CRect GetLastArrowRect(bool fClientCoord = false);
 		CRect GetFirstChannelRect(bool fClientCoord = false);

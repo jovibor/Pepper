@@ -331,7 +331,6 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 	if (pItem->mask & LVIF_TEXT)
 	{
 		const IMAGE_IMPORT_DESCRIPTOR* pImpDesc = &m_pImport->at(pItem->iItem).stImportDesc;
-
 		switch (pItem->iSubItem)
 		{
 		case 0:
@@ -369,7 +368,6 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 	if (pItem->mask & LVIF_TEXT)
 	{
 		const IMAGE_BASE_RELOCATION* pReloc = &m_pRelocTable->at(pItem->iItem).stBaseReloc;
-
 		switch (pItem->iSubItem)
 		{
 		case 0:
@@ -573,12 +571,11 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			const long idlvl2 = std::get<1>(m_vecResId.at(dwResId));
 			const long idlvl3 = std::get<2>(m_vecResId.at(dwResId));
 
-			auto& rootvec = pstResRoot->vecResRoot;
 			if (idlvl2 >= 0)
 			{
+				auto& rootvec = pstResRoot->vecResRoot;
 				auto& lvl2tup = rootvec.at(idlvlRoot).stResLvL2;
 				auto& lvl2vec = lvl2tup.vecResLvL2;
-
 				if (!lvl2vec.empty())
 				{
 					if (idlvl3 >= 0)
@@ -625,21 +622,20 @@ int CViewRightTL::CreateListDOSHeader()
 
 	m_dwPeStart = pDosHeader->e_lfanew;
 
-	WCHAR wstr[9];
-	DWORD dwSize, dwOffset, dwValue;
 	for (unsigned i = 0; i < g_mapDOSHeader.size(); i++)
 	{
+		WCHAR wstr[9];
 		auto& ref = g_mapDOSHeader.at(i);
-		dwOffset = ref.dwOffset;
-		dwSize = ref.dwSize;
-		dwValue = *((PDWORD)((DWORD_PTR)pDosHeader + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		DWORD dwOffset = ref.dwOffset;
+		DWORD dwSize = ref.dwSize;
+		DWORD dwValue = *((PDWORD)((DWORD_PTR)pDosHeader + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 		if (i == 0)
 			dwValue = (dwValue & 0xFF00) >> 8 | (dwValue & 0xFF) << 8;
 
-		swprintf_s(wstr, 9, L"%08X", dwOffset);
+		swprintf_s(wstr, 9, L"%08lX", dwOffset);
 		m_listDOSHeader.InsertItem(i, wstr);
 		m_listDOSHeader.SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 9, L"%u", dwSize);
+		swprintf_s(wstr, 9, L"%lu", dwSize);
 		m_listDOSHeader.SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 		m_listDOSHeader.SetItemText(i, 3, wstr);
@@ -665,7 +661,6 @@ int CViewRightTL::CreateListRichHeader()
 
 	WCHAR wstr[18];
 	int listindex = 0;
-
 	for (auto& i : *pRichHeader)
 	{
 		swprintf_s(wstr, 9, L"%08X", i.dwOffsetRich);
@@ -701,7 +696,6 @@ int CViewRightTL::CreateListNTHeader()
 
 	WCHAR wstr[9];
 	UINT listindex = 0;
-
 	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_NT_HEADERS32* pNTHeader32 = &pNTHdr->varHdr.stNTHdr32;
@@ -754,7 +748,7 @@ int CViewRightTL::CreateListFileHeader()
 	m_listFileHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listFileHeader.InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
 
-	std::map<WORD, std::wstring> mapMachineType {
+	const std::map<WORD, std::wstring> mapMachineType {
 		{ IMAGE_FILE_MACHINE_UNKNOWN, L"IMAGE_FILE_MACHINE_UNKNOWN" },
 	{ IMAGE_FILE_MACHINE_TARGET_HOST, L"IMAGE_FILE_MACHINE_TARGET_HOST" },
 	{ IMAGE_FILE_MACHINE_I386, L"IMAGE_FILE_MACHINE_I386" },
@@ -788,7 +782,7 @@ int CViewRightTL::CreateListFileHeader()
 	{ IMAGE_FILE_MACHINE_CEE, L"IMAGE_FILE_MACHINE_CEE" }
 	};
 
-	std::map<WORD, std::wstring> mapCharacteristics {
+	const std::map<WORD, std::wstring> mapCharacteristics {
 		{ IMAGE_FILE_RELOCS_STRIPPED, L"IMAGE_FILE_RELOCS_STRIPPED" },
 	{ IMAGE_FILE_EXECUTABLE_IMAGE, L"IMAGE_FILE_EXECUTABLE_IMAGE" },
 	{ IMAGE_FILE_LINE_NUMS_STRIPPED, L"IMAGE_FILE_LINE_NUMS_STRIPPED" },
@@ -806,14 +800,14 @@ int CViewRightTL::CreateListFileHeader()
 	{ IMAGE_FILE_BYTES_REVERSED_HI, L"IMAGE_FILE_BYTES_REVERSED_HI" },
 	};
 
-	WCHAR wstr[350];
-	DWORD dwSize, dwOffset, dwValue;
 	for (unsigned i = 0; i < g_mapFileHeader.size(); i++)
 	{
+		WCHAR wstr[350];
 		auto& ref = g_mapFileHeader.at(i);
-		dwOffset = ref.dwOffset;
-		dwSize = ref.dwSize;
-		dwValue = *((PDWORD)((DWORD_PTR)&pNTHdr->varHdr.stNTHdr32.FileHeader + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		DWORD dwOffset = ref.dwOffset;
+		DWORD dwSize = ref.dwSize;
+		DWORD dwValue = *((PDWORD)((DWORD_PTR)&pNTHdr->varHdr.stNTHdr32.FileHeader + dwOffset)) &
+			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 		if (i == 0) { //Machine
 			auto iterMachine = mapMachineType.find(pFileHeader->Machine);
@@ -830,11 +824,10 @@ int CViewRightTL::CreateListFileHeader()
 		else if (i == 6) //Characteristics
 		{
 			std::wstring  wstrCharact;
-			for (auto& i : mapCharacteristics)
-				if (i.first & pFileHeader->Characteristics)
-					wstrCharact += i.second + L"\n";
-			if (!wstrCharact.empty())
-			{
+			for (auto& iter : mapCharacteristics)
+				if (iter.first & pFileHeader->Characteristics)
+					wstrCharact += iter.second + L"\n";
+			if (!wstrCharact.empty()) {
 				wstrCharact.erase(wstrCharact.size() - 1); //to remove last '\n'
 				m_listFileHeader.SetCellTooltip(i, 3, wstrCharact, L"Characteristics:");
 			}
@@ -843,7 +836,7 @@ int CViewRightTL::CreateListFileHeader()
 		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset);
 		m_listFileHeader.InsertItem(i, wstr);
 		m_listFileHeader.SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 9, L"%u", dwSize);
+		swprintf_s(wstr, 9, L"%lu", dwSize);
 		m_listFileHeader.SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 		m_listFileHeader.SetItemText(i, 3, wstr);
@@ -869,7 +862,7 @@ int CViewRightTL::CreateListOptHeader()
 	m_listOptHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listOptHeader.InsertColumn(3, L"Value", LVCFMT_LEFT, 140);
 
-	std::map<WORD, std::wstring> mapSubSystem {
+	const std::map<WORD, std::wstring> mapSubSystem {
 		{ IMAGE_SUBSYSTEM_UNKNOWN, L"IMAGE_SUBSYSTEM_UNKNOWN" },
 	{ IMAGE_SUBSYSTEM_NATIVE, L"IMAGE_SUBSYSTEM_NATIVE" },
 	{ IMAGE_SUBSYSTEM_WINDOWS_GUI, L"IMAGE_SUBSYSTEM_WINDOWS_GUI" },
@@ -886,12 +879,12 @@ int CViewRightTL::CreateListOptHeader()
 	{ IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION, L"IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION" },
 	{ IMAGE_SUBSYSTEM_XBOX_CODE_CATALOG, L"IMAGE_SUBSYSTEM_XBOX_CODE_CATALOG" }
 	};
-	std::map<WORD, std::wstring> mapMagic {
+	const std::map<WORD, std::wstring> mapMagic {
 		{ IMAGE_NT_OPTIONAL_HDR32_MAGIC, L"IMAGE_NT_OPTIONAL_HDR32_MAGIC" },
 	{ IMAGE_NT_OPTIONAL_HDR64_MAGIC, L"IMAGE_NT_OPTIONAL_HDR64_MAGIC" },
 	{ IMAGE_ROM_OPTIONAL_HDR_MAGIC, L"IMAGE_ROM_OPTIONAL_HDR_MAGIC" }
 	};
-	std::map<WORD, std::wstring> mapDllCharacteristics {
+	const std::map<WORD, std::wstring> mapDllCharacteristics {
 		{ 0x0001, L"IMAGE_LIBRARY_PROCESS_INIT" },
 	{ 0x0002, L"IMAGE_LIBRARY_PROCESS_TERM" },
 	{ 0x0004, L"IMAGE_LIBRARY_THREAD_INIT" },
@@ -913,15 +906,13 @@ int CViewRightTL::CreateListOptHeader()
 	std::wstring wstrTooltip;
 	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
-		const IMAGE_OPTIONAL_HEADER32* pOptHdr32 = &pOptHdr->stOptHdr32;
-
-		DWORD dwSize, dwOffset, dwValue;
 		for (unsigned i = 0; i < g_mapOptHeader32.size(); i++)
 		{
+			const IMAGE_OPTIONAL_HEADER32* pOptHdr32 = &pOptHdr->stOptHdr32;
 			auto& ref = g_mapOptHeader32.at(i);
-			dwOffset = ref.dwOffset;
-			dwSize = ref.dwSize;
-			dwValue = *((PDWORD)((DWORD_PTR)pOptHdr32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+			DWORD dwOffset = ref.dwOffset;
+			DWORD dwSize = ref.dwSize;
+			DWORD dwValue = *((PDWORD)((DWORD_PTR)pOptHdr32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 			if (i == 0) //TimeDateStamp
 			{
@@ -937,9 +928,9 @@ int CViewRightTL::CreateListOptHeader()
 			}
 			else if (i == 23) //Dllcharacteristics
 			{
-				for (auto& i : mapDllCharacteristics) {
-					if (i.first & pOptHdr32->DllCharacteristics)
-						wstrTooltip += i.second + L"\n";
+				for (auto& iter : mapDllCharacteristics) {
+					if (iter.first & pOptHdr32->DllCharacteristics)
+						wstrTooltip += iter.second + L"\n";
 				}
 				if (!wstrTooltip.empty()) {
 					wstrTooltip.erase(wstrTooltip.size() - 1); //to remove last '\n'
@@ -950,7 +941,7 @@ int CViewRightTL::CreateListOptHeader()
 			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + dwOffset);
 			m_listOptHeader.InsertItem(i, wstr);
 			m_listOptHeader.SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%u", dwSize);
+			swprintf_s(wstr, 9, L"%lu", dwSize);
 			m_listOptHeader.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : L"%08X"), dwValue);
 			m_listOptHeader.SetItemText(i, 3, wstr);
@@ -958,16 +949,13 @@ int CViewRightTL::CreateListOptHeader()
 	}
 	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
-		const IMAGE_OPTIONAL_HEADER64* pOptHdr64 = &pOptHdr->stOptHdr64;
-
-		DWORD dwSize, dwOffset;
-		ULONGLONG ullValue;
 		for (unsigned i = 0; i < g_mapOptHeader64.size(); i++)
 		{
+			const IMAGE_OPTIONAL_HEADER64* pOptHdr64 = &pOptHdr->stOptHdr64;
 			auto& ref = g_mapOptHeader64.at(i);
-			dwOffset = ref.dwOffset;
-			dwSize = ref.dwSize;
-			ullValue = *((PULONGLONG)((DWORD_PTR)pOptHdr64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+			DWORD dwOffset = ref.dwOffset;
+			DWORD dwSize = ref.dwSize;
+			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pOptHdr64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
 
 			if (i == 0) //TimeDateStamp
 			{
@@ -983,9 +971,9 @@ int CViewRightTL::CreateListOptHeader()
 			}
 			else if (i == 22) //Dllcharacteristics
 			{
-				for (auto& i : mapDllCharacteristics) {
-					if (i.first & pOptHdr64->DllCharacteristics)
-						wstrTooltip += i.second + L"\n";
+				for (auto& iter : mapDllCharacteristics) {
+					if (iter.first & pOptHdr64->DllCharacteristics)
+						wstrTooltip += iter.second + L"\n";
 				}
 				if (!wstrTooltip.empty()) {
 					wstrTooltip.erase(wstrTooltip.size() - 1); //to remove last '\n'
@@ -996,7 +984,7 @@ int CViewRightTL::CreateListOptHeader()
 			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + dwOffset);
 			m_listOptHeader.InsertItem(i, wstr);
 			m_listOptHeader.SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%u", dwSize);
+			swprintf_s(wstr, 9, L"%lu", dwSize);
 			m_listOptHeader.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX")), ullValue);
 			m_listOptHeader.SetItemText(i, 3, wstr);
@@ -1033,7 +1021,7 @@ int CViewRightTL::CreateListDataDirectories()
 
 	for (unsigned i = 0; i < pvecDataDirs->size(); i++)
 	{
-		const IMAGE_DATA_DIRECTORY* pDataDirs = &pvecDataDirs->at(i).stDataDir;
+		const IMAGE_DATA_DIRECTORY* pDataDirs = &(*pvecDataDirs)[i].stDataDir;
 
 		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + dwDataDirsOffset + sizeof(IMAGE_DATA_DIRECTORY) * i);
 		m_listDataDirs.InsertItem(i, wstr);
@@ -1044,7 +1032,7 @@ int CViewRightTL::CreateListDataDirectories()
 		m_listDataDirs.SetItemText(i, 3, wstr);
 		if (!pvecDataDirs->at(i).strSecResidesIn.empty())
 		{
-			swprintf_s(wstr, 9, L"%.8S", pvecDataDirs->at(i).strSecResidesIn.data());
+			swprintf_s(wstr, 9, L"%.8S", (*pvecDataDirs)[i].strSecResidesIn.data());
 			m_listDataDirs.SetItemText(i, 4, wstr);
 		}
 		if (i == IMAGE_DIRECTORY_ENTRY_SECURITY && pDataDirs->VirtualAddress)
@@ -1075,7 +1063,7 @@ int CViewRightTL::CreateListSecHeaders()
 	m_listSecHeaders.InsertColumn(10, L"Characteristics", LVCFMT_LEFT, 115);
 	m_listSecHeaders.SetItemCountEx((int)m_pSecHeaders->size(), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
 
-	std::map<DWORD, std::wstring> mapSecFlags {
+	const std::map<DWORD, std::wstring> mapSecFlags {
 		{ 0x00000000, L"IMAGE_SCN_TYPE_REG\n Reserved." },
 	{ 0x00000001, L"IMAGE_SCN_TYPE_DSECT\n Reserved." },
 	{ 0x00000002, L"IMAGE_SCN_TYPE_NOLOAD\n Reserved." },
@@ -1123,7 +1111,6 @@ int CViewRightTL::CreateListSecHeaders()
 
 	UINT listindex = 0;
 	std::wstring wstrTipText;
-
 	for (auto& iterSecHdrs : *m_pSecHeaders)
 	{
 		for (auto& flags : mapSecFlags)
@@ -1155,28 +1142,26 @@ int CViewRightTL::CreateListExport()
 	m_listExportDir.InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
 
 	const IMAGE_EXPORT_DIRECTORY* pExportDesc = &pExport->stExportDesc;
-
-	WCHAR wstr[MAX_PATH];
-	DWORD dwSize, dwOffset, dwValue;
 	for (unsigned i = 0; i < g_mapExport.size(); i++)
 	{
+		WCHAR wstr[MAX_PATH];
 		auto& ref = g_mapExport.at(i);
-		dwOffset = ref.dwOffset;
-		dwSize = ref.dwSize;
-		dwValue = *((PDWORD)((DWORD_PTR)pExportDesc + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		DWORD dwOffset = ref.dwOffset;
+		DWORD dwSize = ref.dwSize;
+		DWORD dwValue = *((PDWORD)((DWORD_PTR)pExportDesc + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 		if (i == 1 && pExportDesc->TimeDateStamp) {
 			__time64_t time = pExportDesc->TimeDateStamp;
 			_wctime64_s(wstr, MAX_PATH, &time);
 			m_listExportDir.SetCellTooltip(i, 3, wstr, L"Time / Date:");
 		}
 
-		swprintf_s(wstr, 9, L"%08X", pExport->dwOffsetExportDesc + dwOffset);
+		swprintf_s(wstr, 9, L"%08lX", pExport->dwOffsetExportDesc + dwOffset);
 		m_listExportDir.InsertItem(i, wstr);
 		m_listExportDir.SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 9, L"%u", dwSize);
+		swprintf_s(wstr, 9, L"%lu", dwSize);
 		m_listExportDir.SetItemText(i, 2, wstr);
 		if (i == 4) //Name
-			swprintf_s(wstr, MAX_PATH, L"%08X (%S)", dwValue, pExport->strModuleName.data());
+			swprintf_s(wstr, MAX_PATH, L"%08lX (%S)", dwValue, pExport->strModuleName.data());
 		else
 			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 
@@ -1244,14 +1229,14 @@ int CViewRightTL::CreateTreeResources()
 		if (pResDirEntry->DataIsDirectory)
 		{
 			if (pResDirEntry->NameIsString)
-				swprintf(wstr, MAX_PATH, L"Entry: %i [Name: %s]", ilvlRoot, iterRoot.wstrResNameRoot.data());
+				swprintf(wstr, MAX_PATH, L"Entry: %li [Name: %s]", ilvlRoot, iterRoot.wstrResNameRoot.data());
 			else
 			{
 				if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
-					swprintf(wstr, MAX_PATH, L"Entry: %i [Id: %u, %s]",
+					swprintf(wstr, MAX_PATH, L"Entry: %li [Id: %u, %s]",
 						ilvlRoot, pResDirEntry->Id, g_mapResType.at(pResDirEntry->Id).data());
 				else
-					swprintf(wstr, MAX_PATH, L"Entry: %i [Id: %u]", ilvlRoot, pResDirEntry->Id);
+					swprintf(wstr, MAX_PATH, L"Entry: %li [Id: %u]", ilvlRoot, pResDirEntry->Id);
 			}
 			treeRoot = m_treeResTop.InsertItem(wstr, m_hTreeResDir);
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
@@ -1265,9 +1250,9 @@ int CViewRightTL::CreateTreeResources()
 				if (pResDirEntry->DataIsDirectory)
 				{
 					if (pResDirEntry->NameIsString)
-						swprintf(wstr, MAX_PATH, L"Entry: %i, Name: %s", ilvl2, iterLvL2.wstrResNameLvL2.data());
+						swprintf(wstr, MAX_PATH, L"Entry: %li, Name: %s", ilvl2, iterLvL2.wstrResNameLvL2.data());
 					else
-						swprintf(wstr, MAX_PATH, L"Entry: %i, Id: %u", ilvl2, pResDirEntry->Id);
+						swprintf(wstr, MAX_PATH, L"Entry: %li, Id: %u", ilvl2, pResDirEntry->Id);
 
 					treeLvL2 = m_treeResTop.InsertItem(wstr, treeRoot);
 					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
@@ -1280,9 +1265,9 @@ int CViewRightTL::CreateTreeResources()
 						pResDirEntry = &iterLvL3.stResDirEntryLvL3;
 
 						if (pResDirEntry->NameIsString)
-							swprintf(wstr, MAX_PATH, L"Entry: %i, Name: %s", ilvl3, iterLvL3.wstrResNameLvL3.data());
+							swprintf(wstr, MAX_PATH, L"Entry: %li, Name: %s", ilvl3, iterLvL3.wstrResNameLvL3.data());
 						else
-							swprintf(wstr, MAX_PATH, L"Entry: %i, lang: %u", ilvl3, pResDirEntry->Id);
+							swprintf(wstr, MAX_PATH, L"Entry: %li, lang: %u", ilvl3, pResDirEntry->Id);
 
 						const HTREEITEM treeLvL3 = m_treeResTop.InsertItem(wstr, treeLvL2);
 						m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
@@ -1296,9 +1281,9 @@ int CViewRightTL::CreateTreeResources()
 					pResDirEntry = &iterLvL2.stResDirEntryLvL2;
 
 					if (pResDirEntry->NameIsString)
-						swprintf(wstr, MAX_PATH, L"Entry: %i, Name: %s", ilvl2, iterLvL2.wstrResNameLvL2.data());
+						swprintf(wstr, MAX_PATH, L"Entry: %li, Name: %s", ilvl2, iterLvL2.wstrResNameLvL2.data());
 					else
-						swprintf(wstr, MAX_PATH, L"Entry: %i, lang: %u", ilvl2, pResDirEntry->Id);
+						swprintf(wstr, MAX_PATH, L"Entry: %li, lang: %u", ilvl2, pResDirEntry->Id);
 
 					treeLvL2 = m_treeResTop.InsertItem(wstr, treeRoot);
 					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
@@ -1312,9 +1297,9 @@ int CViewRightTL::CreateTreeResources()
 			pResDirEntry = &iterRoot.stResDirEntryRoot;
 
 			if (pResDirEntry->NameIsString)
-				swprintf(wstr, MAX_PATH, L"Entry: %i, Name: %s", ilvlRoot, iterRoot.wstrResNameRoot.data());
+				swprintf(wstr, MAX_PATH, L"Entry: %li, Name: %s", ilvlRoot, iterRoot.wstrResNameRoot.data());
 			else
-				swprintf(wstr, MAX_PATH, L"Entry: %i, lang: %u", ilvlRoot, pResDirEntry->Id);
+				swprintf(wstr, MAX_PATH, L"Entry: %li, lang: %u", ilvlRoot, pResDirEntry->Id);
 
 			treeRoot = m_treeResTop.InsertItem(wstr, m_hTreeResDir);
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
@@ -1415,7 +1400,7 @@ int CViewRightTL::CreateListDebug()
 	m_listDebugDir.InsertColumn(7, L"AddressOfRawData", LVCFMT_LEFT, 170);
 	m_listDebugDir.InsertColumn(8, L"PointerToRawData", LVCFMT_LEFT, 140);
 
-	std::map<DWORD, std::wstring> mapDebugType {
+	const std::map<DWORD, std::wstring> mapDebugType {
 		{ IMAGE_DEBUG_TYPE_UNKNOWN, L"IMAGE_DEBUG_TYPE_UNKNOWN" },
 	{ IMAGE_DEBUG_TYPE_COFF, L"IMAGE_DEBUG_TYPE_COFF" },
 	{ IMAGE_DEBUG_TYPE_CODEVIEW, L"IMAGE_DEBUG_TYPE_CODEVIEW" },
@@ -1489,7 +1474,7 @@ int CViewRightTL::CreateListTLS()
 	m_listTLSDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 110);
 	m_listTLSDir.InsertColumn(3, L"Value", LVCFMT_LEFT, 150);
 
-	std::map<DWORD, std::wstring> mapCharact {
+	const std::map<DWORD, std::wstring> mapCharact {
 		{ IMAGE_SCN_ALIGN_1BYTES, L"IMAGE_SCN_ALIGN_1BYTES" },
 	{ IMAGE_SCN_ALIGN_2BYTES, L"IMAGE_SCN_ALIGN_2BYTES" },
 	{ IMAGE_SCN_ALIGN_4BYTES, L"IMAGE_SCN_ALIGN_4BYTES" },
@@ -1511,14 +1496,12 @@ int CViewRightTL::CreateListTLS()
 	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_TLS_DIRECTORY32*  pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
-
-		DWORD dwSize, dwOffset, dwValue;
 		for (unsigned i = 0; i < g_mapTLS32.size(); i++)
 		{
 			auto& ref = g_mapTLS32.at(i);
-			dwOffset = ref.dwOffset;
-			dwSize = ref.dwSize;
-			dwValue = *((PDWORD)((DWORD_PTR)pTLSDir32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+			DWORD dwOffset = ref.dwOffset;
+			DWORD dwSize = ref.dwSize;
+			DWORD dwValue = *((PDWORD)((DWORD_PTR)pTLSDir32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 			if (i == 5) { //Characteristics
 				auto iterCharact = mapCharact.find(pTLSDir32->Characteristics);
@@ -1526,27 +1509,24 @@ int CViewRightTL::CreateListTLS()
 					m_listTLSDir.SetCellTooltip(i, 3, iterCharact->second, L"Characteristics:");
 			}
 
-			swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + dwOffset);
+			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir.InsertItem(i, wstr);
 			m_listTLSDir.SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%u", dwSize);
+			swprintf_s(wstr, 9, L"%lu", dwSize);
 			m_listTLSDir.SetItemText(i, 2, wstr);
-			swprintf_s(wstr, 9, L"%08X", dwValue);
+			swprintf_s(wstr, 9, L"%08lX", dwValue);
 			m_listTLSDir.SetItemText(i, 3, wstr);
 		}
 	}
 	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_TLS_DIRECTORY64*  pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
-
-		DWORD dwSize, dwOffset;
-		ULONGLONG ullValue;
 		for (unsigned i = 0; i < g_mapTLS64.size(); i++)
 		{
 			auto& ref = g_mapTLS64.at(i);
-			dwOffset = ref.dwOffset;
-			dwSize = ref.dwSize;
-			ullValue = *((PULONGLONG)((DWORD_PTR)pTLSDir64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+			DWORD dwOffset = ref.dwOffset;
+			DWORD dwSize = ref.dwSize;
+			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pTLSDir64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
 
 			if (i == 5) { //Characteristics
 				auto iterCharact = mapCharact.find(pTLSDir64->Characteristics);
@@ -1554,10 +1534,10 @@ int CViewRightTL::CreateListTLS()
 					m_listTLSDir.SetCellTooltip(i, 3, iterCharact->second, L"Characteristics:");
 			}
 
-			swprintf_s(wstr, 9, L"%08X", pTLSDir->dwOffsetTLS + dwOffset);
+			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir.InsertItem(i, wstr);
 			m_listTLSDir.SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%u", dwSize);
+			swprintf_s(wstr, 9, L"%lu", dwSize);
 			m_listTLSDir.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 4 ? L"%08X" : L"%016llX", ullValue);
 			m_listTLSDir.SetItemText(i, 3, wstr);
@@ -1581,7 +1561,7 @@ int CViewRightTL::CreateListLCD()
 	m_listLCD.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 110);
 	m_listLCD.InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
 
-	std::map<WORD, std::wstring> mapGuardFlags {
+	const std::map<WORD, std::wstring> mapGuardFlags {
 		{ IMAGE_GUARD_CF_INSTRUMENTED, L"IMAGE_GUARD_CF_INSTRUMENTED\n Module performs control flow integrity checks using system-supplied support" },
 	{ IMAGE_GUARD_CFW_INSTRUMENTED, L"IMAGE_GUARD_CFW_INSTRUMENTED\n Module performs control flow and write integrity checks" },
 	{ IMAGE_GUARD_CF_FUNCTION_TABLE_PRESENT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_PRESENT\n Module contains valid control flow target metadata" },
@@ -1603,17 +1583,15 @@ int CViewRightTL::CreateListLCD()
 	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
 		const IMAGE_LOAD_CONFIG_DIRECTORY32* pLCD32 = &pLCD->varLCD.stLCD32;
-
-		DWORD dwSize, dwOffset, dwValue;
 		for (unsigned i = 0; i < g_mapLCD32.size(); i++)
 		{
 			auto& ref = g_mapLCD32.at(i);
 			if (ref.dwOffset >= pLCD32->Size)
 				break;
 
-			dwOffset = ref.dwOffset;
-			dwSize = ref.dwSize;
-			dwValue = *((PDWORD)((DWORD_PTR)pLCD32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+			DWORD dwOffset = ref.dwOffset;
+			DWORD dwSize = ref.dwSize;
+			DWORD dwValue = *((PDWORD)((DWORD_PTR)pLCD32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 			if (i == 1) //TimeDateStamp
 			{
@@ -1633,10 +1611,10 @@ int CViewRightTL::CreateListLCD()
 					m_listLCD.SetCellTooltip(i, 3, wstrTooltip, L"GuardFlags:");
 			}
 
-			swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + dwOffset);
+			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
 			m_listLCD.InsertItem(i, wstr);
 			m_listLCD.SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%u", dwSize);
+			swprintf_s(wstr, 9, L"%lu", dwSize);
 			m_listLCD.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 			m_listLCD.SetItemText(i, 3, wstr);
@@ -1645,18 +1623,15 @@ int CViewRightTL::CreateListLCD()
 	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
 		const IMAGE_LOAD_CONFIG_DIRECTORY64* pLCD64 = &pLCD->varLCD.stLCD64;
-
-		DWORD dwSize, dwOffset;
-		ULONGLONG ullValue;
 		for (unsigned i = 0; i < g_mapLCD64.size(); i++)
 		{
 			auto& ref = g_mapLCD64.at(i);
 			if (ref.dwOffset >= pLCD64->Size)
 				break;
 
-			dwOffset = ref.dwOffset;
-			dwSize = ref.dwSize;
-			ullValue = *((PULONGLONG)((DWORD_PTR)pLCD64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+			DWORD dwOffset = ref.dwOffset;
+			DWORD dwSize = ref.dwSize;
+			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pLCD64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
 
 			if (i == 1) //TimeDateStamp
 			{
@@ -1676,10 +1651,10 @@ int CViewRightTL::CreateListLCD()
 					m_listLCD.SetCellTooltip(i, 3, wstrTooltip, L"GuardFlags:");
 			}
 
-			swprintf_s(wstr, 9, L"%08X", pLCD->dwOffsetLCD + dwOffset);
+			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
 			m_listLCD.InsertItem(i, wstr);
 			m_listLCD.SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%u", dwSize);
+			swprintf_s(wstr, 9, L"%lu", dwSize);
 			m_listLCD.SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX"), ullValue);
 			m_listLCD.SetItemText(i, 3, wstr);
@@ -1807,7 +1782,7 @@ int CViewRightTL::CreateListCOM()
 	m_listCOMDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listCOMDir.InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
 
-	std::map<DWORD, std::wstring> mapFlags {
+	const std::map<DWORD, std::wstring> mapFlags {
 		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_ILONLY, L"COMIMAGE_FLAGS_ILONLY" },
 	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITREQUIRED, L"COMIMAGE_FLAGS_32BITREQUIRED" },
 	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_IL_LIBRARY, L"COMIMAGE_FLAGS_IL_LIBRARY" },
@@ -1818,30 +1793,28 @@ int CViewRightTL::CreateListCOM()
 	};
 
 	const IMAGE_COR20_HEADER* pCom = &pCOMDesc->stCorHdr;
-
-	WCHAR wstr[9];
-	std::wstring wstrToolTip;
-	DWORD dwSize, dwOffset, dwValue;
 	for (unsigned i = 0; i < g_mapComDir.size(); i++)
 	{
+		WCHAR wstr[9];
+		std::wstring wstrToolTip;
 		auto& ref = g_mapComDir.at(i);
-		dwOffset = ref.dwOffset;
-		dwSize = ref.dwSize;
-		dwValue = *((PDWORD)((DWORD_PTR)pCom + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		DWORD dwOffset = ref.dwOffset;
+		DWORD dwSize = ref.dwSize;
+		DWORD dwValue = *((PDWORD)((DWORD_PTR)pCom + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 		if (i == 5)
 		{
-			for (auto&i : mapFlags)
-				if (i.first & pCOMDesc->stCorHdr.Flags)
-					wstrToolTip += i.second + L"\n";
+			for (auto& iter : mapFlags)
+				if (iter.first & pCOMDesc->stCorHdr.Flags)
+					wstrToolTip += iter.second + L"\n";
 			if (!wstrToolTip.empty())
 				m_listCOMDir.SetCellTooltip(i, 3, wstrToolTip, L"Flags:");
 		}
 
-		swprintf_s(wstr, 9, L"%08X", pCOMDesc->dwOffsetComDesc + dwOffset);
+		swprintf_s(wstr, 9, L"%08lX", pCOMDesc->dwOffsetComDesc + dwOffset);
 		m_listCOMDir.InsertItem(i, wstr);
 		m_listCOMDir.SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 9, L"%u", dwSize);
+		swprintf_s(wstr, 9, L"%lu", dwSize);
 		m_listCOMDir.SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 		m_listCOMDir.SetItemText(i, 3, wstr);

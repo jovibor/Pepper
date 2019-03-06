@@ -44,7 +44,7 @@ protected:
 	void RecalcPanes();
 	void StartTracking(int ht);
 	void StopTracking(BOOL fAccept);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint pt);
 	virtual void OnInvertTracker(const CRect& rect);
 	virtual void OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect);
 private:

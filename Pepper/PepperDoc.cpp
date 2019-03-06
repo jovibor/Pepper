@@ -39,7 +39,7 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 	m_stFileLoader.LoadFile(lpszPathName);
 	UpdateAllViews(nullptr);
-
+	
 	return TRUE;
 }
 

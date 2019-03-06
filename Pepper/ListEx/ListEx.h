@@ -50,7 +50,7 @@ namespace LISTEX {
 	{
 	public:
 		void SetHeight(DWORD dwHeight);
-		void SetFont(const LOGFONT* pFontNew);
+		void SetFont(const LOGFONTW* pLogFontNew);
 		void SetColor(COLORREF clrText, COLORREF clrBk);
 		void SetColumnColor(DWORD iColumn, COLORREF clr);
 		CListExHdr();
@@ -82,7 +82,7 @@ namespace LISTEX {
 		BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo = nullptr);
 		bool IsCreated();
 		CListExHdr& GetHeaderCtrl() override { return m_stListHeader; }
-		void SetFont(const LOGFONT* pLogFontNew);
+		void SetFont(const LOGFONTW* pLogFontNew);
 		void SetFontSize(UINT uiSize);
 		UINT GetFontSize();
 		//To remove tooltip from specific subitem just set it again with empty (L"") string.
@@ -108,11 +108,11 @@ namespace LISTEX {
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 		afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 		afx_msg void OnKillFocus(CWnd* pNewWnd);
-		afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-		afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-		afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+		afx_msg void OnLButtonDown(UINT nFlags, CPoint pt);
+		afx_msg void OnRButtonDown(UINT nFlags, CPoint pt);
+		afx_msg void OnContextMenu(CWnd* pWnd, CPoint pt);
 		virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
-		afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+		afx_msg void OnMouseMove(UINT nFlags, CPoint pt);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 		afx_msg void OnTimer(UINT_PTR nIDEvent);
 		afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
