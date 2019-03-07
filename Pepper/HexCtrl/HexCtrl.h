@@ -117,13 +117,15 @@ namespace HEXCTRL {
 	********************************************/
 	class CHexCtrl : public CWnd
 	{
+	private:
+		enum HEXCTRL_SHOWAS { ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8 };
 	public:
 		friend class CHexDlgSearch;
 		CHexCtrl();
 		virtual ~CHexCtrl() {}
 		bool Create(const HEXCREATESTRUCT& hcs); //Main initialization method, CHexCtrl::Create.
 		bool IsCreated(); //Shows whether control created or not.
-		
+
 		// CHexCtrl::SetData:																	
 		// 1. Pointer to data, not used if it's virtual control 2. Size of data to see as hex.	
 		// 3. Is virtual? 4. Offset to selection after creation. 5. Selection size.				
@@ -175,6 +177,7 @@ namespace HEXCTRL {
 		void SelectAll();
 		void UpdateInfoText();
 		void ToWchars(ULONGLONG ull, wchar_t* pwsz, unsigned short shBytes = 4);
+		void SetShowAs(HEXCTRL_SHOWAS enShowAs);
 	private:
 		bool m_fCreated { false };
 		bool m_fFloat { false };
@@ -184,6 +187,7 @@ namespace HEXCTRL {
 		DWORD m_dwCapacity { 16 };
 		const DWORD m_dwCapacityMax { 64 };
 		DWORD m_dwCapacityBlockSize { m_dwCapacity / 2 }; //Size of block before space delimiter.
+		HEXCTRL_SHOWAS m_enShowAs { HEXCTRL_SHOWAS::ASBYTE };
 		CWnd* m_pwndParentOwner { };
 		CWnd* m_pwndMsg { };
 		SIZE m_sizeLetter { 1, 1 }; //Current font's letter size (width, height).
@@ -193,7 +197,8 @@ namespace HEXCTRL {
 		CHexDlgAbout m_dlgAbout;
 		CScrollEx m_stScrollV;
 		CScrollEx m_stScrollH;
-		CMenu m_menuPopup;
+		CMenu m_menuMain;
+		CMenu m_menuSubShowAs;
 		COLORREF m_clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };
 		COLORREF m_clrTextCaption { RGB(0, 0, 180) };
@@ -203,12 +208,15 @@ namespace HEXCTRL {
 		COLORREF m_clrBkBottomRect { RGB(250, 250, 250) };
 		CBrush m_stBrushBkSelected { m_clrBkSelected };
 		CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
+		int m_iSizeFirstHalve { }; //Size of first halve of capacity.
+		int m_iSizeHexByte { }; //Size of two hex letters representing one byte.
 		int m_iIndentAscii { }; //Indent of Ascii text begining.
 		int m_iIndentFirstHexChunk { }; //First hex chunk indent.
 		int m_iIndentTextCapacityY { }; //Caption text (0 1 2... D E F...) vertical offset.
 		int m_iIndentBottomLine { 1 }; //Bottom line indent from window's bottom.
-		int m_iDistanceBetweenHexChunks { }; //Space between begining of two hex chunks.
-		int m_iSpaceBetweenAscii { }; //Space between Ascii chars.
+		int m_iDistanceBetweenHexChunks { }; //Distance between begining of two hex chunks.
+		int m_iSpaceBetweenHexChunks { }; //Space between Hex chunks.
+		int m_iSpaceBetweenAscii { }; //Space between two Ascii chars.
 		int m_iSpaceBetweenBlocks { }; //Additional space between hex chunks after half of capacity.
 		int m_iHeightTopRect { }; //Height of the header where offsets (0 1 2... D E F...) reside.
 		int m_iHeightBottomRect { 22 }; //Height of bottom Info rect.
@@ -226,11 +234,8 @@ namespace HEXCTRL {
 		/////////////////////////Enums///////////////////////////////////////////////
 		enum HEXCTRL_CLIPBOARD { COPY_AS_HEX, COPY_AS_HEX_FORMATTED, COPY_AS_ASCII };
 		enum HEXCTRL_MENU {
-			IDM_POPUP_SEARCH,
-			IDM_POPUP_COPYASHEX,
-			IDM_POPUP_COPYASHEXFORMATTED,
-			IDM_POPUP_COPYASASCII,
-			IDM_POPUP_ABOUT
+			IDM_MAIN_SEARCH, IDM_MAIN_COPYASHEX, IDM_MAIN_COPYASHEXFORMATTED, IDM_MAIN_COPYASASCII, IDM_MAIN_ABOUT,
+			IDM_SUB_SHOWASBYTE, IDM_SUB_SHOWASWORD, IDM_SUB_SHOWASDWORD, IDM_SUB_SHOWASQWORD
 		};
 		enum HEXCTRL_SEARCH {
 			SEARCH_HEX, SEARCH_ASCII, SEARCH_UNICODE,

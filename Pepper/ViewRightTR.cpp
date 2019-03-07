@@ -27,8 +27,8 @@ void CViewRightTR::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
 
-	m_pChildFrame = (CChildFrame*)GetParentFrame();
-	m_pMainDoc = (CPepperDoc*)GetDocument();
+	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
+	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 
 	//Hex control for Resources raw.

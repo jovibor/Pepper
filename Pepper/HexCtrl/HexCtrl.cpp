@@ -50,14 +50,24 @@ CHexCtrl::CHexCtrl()
 		m_vecLookupCapacity.emplace_back(wstr);
 	}
 
-	m_menuPopup.CreatePopupMenu();
-	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_SEARCH, L"Search...	Ctrl+F");
-	m_menuPopup.AppendMenuW(MF_SEPARATOR);
-	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_COPYASHEX, L"Copy as Hex...	Ctrl+C");
-	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_COPYASHEXFORMATTED, L"Copy as Formatted Hex...");
-	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_COPYASASCII, L"Copy as Ascii...");
-	m_menuPopup.AppendMenuW(MF_SEPARATOR);
-	m_menuPopup.AppendMenuW(MF_STRING, IDM_POPUP_ABOUT, L"About");
+	//Submenu for data showing options:
+	m_menuSubShowAs.CreatePopupMenu();
+	m_menuSubShowAs.AppendMenuW(MF_STRING | MF_CHECKED, IDM_SUB_SHOWASBYTE, L"Show as BYTE");
+	m_menuSubShowAs.AppendMenuW(MF_STRING, IDM_SUB_SHOWASWORD, L"Show as WORD");
+	m_menuSubShowAs.AppendMenuW(MF_STRING, IDM_SUB_SHOWASDWORD, L"Show as DWORD");
+	m_menuSubShowAs.AppendMenuW(MF_STRING, IDM_SUB_SHOWASQWORD, L"Show as QWORD");
+
+	//Main menu:
+	m_menuMain.CreatePopupMenu();
+	m_menuMain.AppendMenuW(MF_STRING, IDM_MAIN_SEARCH, L"Search...	Ctrl+F");
+	m_menuMain.AppendMenuW(MF_SEPARATOR);
+	m_menuMain.AppendMenuW(MF_POPUP, (UINT)m_menuSubShowAs.m_hMenu, L"Show data as...");
+	m_menuMain.AppendMenuW(MF_SEPARATOR);
+	m_menuMain.AppendMenuW(MF_STRING, IDM_MAIN_COPYASHEX, L"Copy as Hex...	Ctrl+C");
+	m_menuMain.AppendMenuW(MF_STRING, IDM_MAIN_COPYASHEXFORMATTED, L"Copy as Formatted Hex...");
+	m_menuMain.AppendMenuW(MF_STRING, IDM_MAIN_COPYASASCII, L"Copy as Ascii...");
+	m_menuMain.AppendMenuW(MF_SEPARATOR);
+	m_menuMain.AppendMenuW(MF_STRING, IDM_MAIN_ABOUT, L"About");
 
 	m_dlgSearch.Create(IDD_HEXCTRL_SEARCH, this);
 }
@@ -237,6 +247,14 @@ void CHexCtrl::SetCapacity(DWORD dwCapacity)
 	if (dwCapacity < 1 || dwCapacity > m_dwCapacityMax)
 		return;
 
+	if (dwCapacity < m_dwCapacity)
+		dwCapacity -= dwCapacity % m_enShowAs;
+	else
+		dwCapacity += m_enShowAs - (dwCapacity % m_enShowAs);
+
+	if (dwCapacity < (DWORD)m_enShowAs)
+		dwCapacity = m_enShowAs;
+
 	m_dwCapacity = dwCapacity;
 	m_dwCapacityBlockSize = m_dwCapacity / 2;
 	RecalcAll();
@@ -410,32 +428,44 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	switch (uiId)
 	{
-	case IDM_POPUP_SEARCH:
+	case IDM_MAIN_SEARCH:
 		if (m_fVirtual)
 			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			m_dlgSearch.ShowWindow(SW_SHOW);
 		break;
-	case IDM_POPUP_COPYASHEX:
+	case IDM_MAIN_COPYASHEX:
 		if (m_fVirtual)
 			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			CopyToClipboard(COPY_AS_HEX);
 		break;
-	case IDM_POPUP_COPYASHEXFORMATTED:
+	case IDM_MAIN_COPYASHEXFORMATTED:
 		if (m_fVirtual)
 			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			CopyToClipboard(COPY_AS_HEX_FORMATTED);
 		break;
-	case IDM_POPUP_COPYASASCII:
+	case IDM_MAIN_COPYASASCII:
 		if (m_fVirtual)
 			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			CopyToClipboard(COPY_AS_ASCII);
 		break;
-	case IDM_POPUP_ABOUT:
+	case IDM_MAIN_ABOUT:
 		m_dlgAbout.DoModal();
+		break;
+	case IDM_SUB_SHOWASBYTE:
+		SetShowAs(HEXCTRL_SHOWAS::ASBYTE);
+		break;
+	case IDM_SUB_SHOWASWORD:
+		SetShowAs(HEXCTRL_SHOWAS::ASWORD);
+		break;
+	case IDM_SUB_SHOWASDWORD:
+		SetShowAs(HEXCTRL_SHOWAS::ASDWORD);
+		break;
+	case IDM_SUB_SHOWASQWORD:
+		SetShowAs(HEXCTRL_SHOWAS::ASQWORD);
 		break;
 	}
 
@@ -444,7 +474,7 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void CHexCtrl::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	m_menuPopup.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
+	m_menuMain.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
 }
 
 void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
@@ -633,26 +663,33 @@ void CHexCtrl::OnPaint()
 	rDC.SetTextColor(m_clrTextCaption);
 	rDC.SetBkColor(m_clrBk);
 
+	int iCapacityShowAs = 1;
+	int iIndentCapacityX = 0;
 	//Loop for printing top Capacity numbers.
 	for (unsigned iterCapacity = 0; iterCapacity < m_dwCapacity; iterCapacity++)
 	{
-		int x, c;
-		if (iterCapacity < m_dwCapacityBlockSize) //Top capacity numbers (0 1 2 3 4 5 6 7...)
-			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iDistanceBetweenHexChunks*iterCapacity);
-		else //Top capacity numbers, second block (8 9 A B C D E F...).
-			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + (m_iDistanceBetweenHexChunks*iterCapacity) + m_iSpaceBetweenBlocks;
+		int x = m_iIndentFirstHexChunk + m_sizeLetter.cx + iIndentCapacityX; //Top capacity numbers (0 1 2 3 4 5 6 7...)
+		//Top capacity numbers, second block (8 9 A B C D E F...).
+		if (iterCapacity >= m_dwCapacityBlockSize && m_enShowAs == HEXCTRL_SHOWAS::ASBYTE)
+			x = m_iIndentFirstHexChunk + m_sizeLetter.cx + iIndentCapacityX + m_iSpaceBetweenBlocks;
 
 		//If iterCapacity >= 16 two chars needed (10, 11,... 1F) to print as capacity.
-		if (iterCapacity < 16)
-			c = 1;
-		else {
+		int c = 1;
+		if (iterCapacity >= 16) {
 			c = 2;
 			x -= m_sizeLetter.cx;
 		}
 		ExtTextOutW(rDC.m_hDC, x - iScrollH, iFirstHorizLine + m_iIndentTextCapacityY, NULL, nullptr,
 			m_vecLookupCapacity[iterCapacity].data(), c, nullptr);
-	}
 
+		iIndentCapacityX += m_iSizeHexByte;
+		if (iCapacityShowAs == m_enShowAs) {
+			iIndentCapacityX += m_iSpaceBetweenHexChunks;
+			iCapacityShowAs = 1;
+		}
+		else
+			iCapacityShowAs++;
+	}
 	//"Ascii" text.
 	rc.left = m_iThirdVertLine - iScrollH; rc.top = iFirstHorizLine;
 	rc.right = m_iFourthVertLine - iScrollH; rc.bottom = iSecondHorizLine;
@@ -695,12 +732,13 @@ void CHexCtrl::OnPaint()
 
 		int iIndentHexX = 0;
 		int iIndentAsciiX = 0;
-		int iIndentBetweenBlocks = 0;
-
+		int iShowAs = 1;
 		//Main loop for printing Hex chunks and Ascii chars.
 		for (unsigned iterChunks = 0; iterChunks < m_dwCapacity; iterChunks++)
 		{
-			if (iterChunks >= m_dwCapacityBlockSize)
+			//Additional space between capacity halves. Only with BYTEs representation.
+			int iIndentBetweenBlocks = 0;
+			if (iterChunks >= m_dwCapacityBlockSize && m_enShowAs == HEXCTRL_SHOWAS::ASBYTE)
 				iIndentBetweenBlocks = m_iSpaceBetweenBlocks;
 
 			const UINT iHexPosToPrintX = m_iIndentFirstHexChunk + iIndentHexX + iIndentBetweenBlocks - iScrollH;
@@ -735,16 +773,16 @@ void CHexCtrl::OnPaint()
 				{
 					rDC.SetBkColor(m_clrBkSelected);
 
-					//Space between hex chunks, excluding last hex in a row, filling with bk_selected color.
-					if (ullIndexDataToPrint < m_ullSelectionEnd - 1 && (ullIndexDataToPrint + 1) % m_dwCapacity)
+					//Space between hex chunks (excluding last hex in a row) filling with bk_selected color.
+					if (ullIndexDataToPrint < (m_ullSelectionEnd - 1) && (ullIndexDataToPrint + 1) % m_dwCapacity &&
+						((ullIndexDataToPrint + 1) % m_enShowAs) == 0)
 					{	//Rect of the space between Hex chunks. Needed for proper selection drawing.
-						rc.left = iHexPosToPrintX + m_sizeLetter.cx * 2;
+						rc.left = iHexPosToPrintX + m_iSizeHexByte;
+						rc.right = rc.left + m_iSpaceBetweenHexChunks;
 						rc.top = iHexPosToPrintY;
-						if (iterChunks == m_dwCapacityBlockSize - 1) //Space between capacity halves.
-							rc.right = iHexPosToPrintX + m_sizeLetter.cx * 5;
-						else
-							rc.right = iHexPosToPrintX + m_sizeLetter.cx * 3;
 						rc.bottom = iHexPosToPrintY + m_sizeLetter.cy;
+						if (iterChunks == m_dwCapacityBlockSize - 1) //Space between capacity halves.
+							rc.right += m_iSpaceBetweenBlocks;
 
 						rDC.FillRect(&rc, &m_stBrushBkSelected);
 					}
@@ -766,7 +804,13 @@ void CHexCtrl::OnPaint()
 				ExtTextOutW(rDC.m_hDC, iAsciiPosToPrintX, iAsciiPosToPrintY, 0, nullptr, &wchAscii, 1, nullptr);
 			}
 			//Increasing indents for next print, for both - Hex and Ascii.
-			iIndentHexX += m_iDistanceBetweenHexChunks;
+			iIndentHexX += m_iSizeHexByte;
+			if (iShowAs == m_enShowAs) {
+				iIndentHexX += m_iSpaceBetweenHexChunks;
+				iShowAs = 1;
+			}
+			else
+				iShowAs++;
 			iIndentAsciiX += m_iSpaceBetweenAscii;
 		}
 		iLine++;
@@ -834,13 +878,18 @@ void CHexCtrl::RecalcAll()
 
 	m_iFirstVertLine = 0;
 	m_iSecondVertLine = m_sizeLetter.cx * 10;
-	m_iDistanceBetweenHexChunks = m_sizeLetter.cx * 3;
+	m_iSizeHexByte = m_sizeLetter.cx * 2;
 	m_iSpaceBetweenBlocks = m_sizeLetter.cx * 2;
-	m_iThirdVertLine = m_iSecondVertLine + (m_iDistanceBetweenHexChunks * m_dwCapacity) + m_iSpaceBetweenBlocks + m_sizeLetter.cx;
+	m_iSpaceBetweenHexChunks = m_sizeLetter.cx;
+	m_iDistanceBetweenHexChunks = m_iSizeHexByte * m_enShowAs + m_iSpaceBetweenHexChunks;
+	m_iThirdVertLine = m_iSecondVertLine + m_iDistanceBetweenHexChunks * (m_dwCapacity / m_enShowAs)
+		+ m_iSpaceBetweenBlocks + m_sizeLetter.cx;
 	m_iIndentAscii = m_iThirdVertLine + m_sizeLetter.cx;
 	m_iSpaceBetweenAscii = m_sizeLetter.cx + 1;
 	m_iFourthVertLine = m_iIndentAscii + (m_iSpaceBetweenAscii * m_dwCapacity) + m_sizeLetter.cx;
 	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
+	m_iSizeFirstHalve = m_iIndentFirstHexChunk + m_dwCapacityBlockSize * (m_sizeLetter.cx * 2) +
+		(m_dwCapacityBlockSize / m_enShowAs - 1) * m_iSpaceBetweenHexChunks;
 	m_iHeightTopRect = int(m_sizeLetter.cy * 1.5);
 	m_iIndentTextCapacityY = m_iHeightTopRect / 2 - (m_sizeLetter.cy / 2);
 
@@ -889,47 +938,50 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 	int iY = pPoint->y;
 	int iX = pPoint->x + (int)m_stScrollH.GetScrollPos(); //To compensate horizontal scroll.
 	ULONGLONG ullCurLine = GetCurrentLineV();
-	ULONGLONG dwHexChunk;
+	ULONGLONG ullHexChunk;
 
 	//Checking if cursor is within hex chunks area.
-	if ((iX >= m_iIndentFirstHexChunk) && (iX < m_iThirdVertLine) && (iY >= m_iHeightTopRect) && iY <= m_iHeightWorkArea)
+	if ((iX >= m_iIndentFirstHexChunk) && (iX < m_iThirdVertLine) && (iY >= m_iHeightTopRect) && (iY <= m_iHeightWorkArea))
 	{
-		int itmpBetweenBlocks;
-		if (iX > m_iIndentFirstHexChunk + (m_iDistanceBetweenHexChunks * (int)m_dwCapacityBlockSize))
-			itmpBetweenBlocks = m_iSpaceBetweenBlocks;
+		//Additional space between halves. Only in BYTE's view mode.
+		int iBetweenBlocks;
+		if (m_enShowAs == HEXCTRL_SHOWAS::ASBYTE && iX > m_iSizeFirstHalve)
+			iBetweenBlocks = m_iSpaceBetweenBlocks;
 		else
-			itmpBetweenBlocks = 0;
+			iBetweenBlocks = 0;
 
-		//Calculate ullHit hex chunk, taking into account scroll position and letter sizes.
-		dwHexChunk = ((iX - m_iIndentFirstHexChunk - itmpBetweenBlocks) / (m_sizeLetter.cx * 3)) +
-			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine  * m_dwCapacity);
+		//Calculate hex chunk.
+		DWORD dwX = iX - m_iIndentFirstHexChunk - iBetweenBlocks;
+		dwX -= (dwX / m_iDistanceBetweenHexChunks) * m_iSpaceBetweenHexChunks;
+		ullHexChunk = dwX / m_iSizeHexByte + ((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine  * m_dwCapacity);
 	}
 	else if ((iX >= m_iIndentAscii) && (iX < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwCapacity))
 		&& (iY >= m_iHeightTopRect) && iY <= m_iHeightWorkArea)
 	{
 		//Calculate ullHit Ascii symbol.
-		dwHexChunk = ((iX - m_iIndentAscii) / (m_iSpaceBetweenAscii)) +
+		ullHexChunk = ((iX - m_iIndentAscii) / m_iSpaceBetweenAscii) +
 			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine * m_dwCapacity);
 	}
 	else
-		dwHexChunk = -1;
+		ullHexChunk = -1;
 
 	//If cursor is out of end-bound of hex chunks or Ascii chars.
-	if (dwHexChunk >= m_ullDataCount)
-		dwHexChunk = -1;
+	if (ullHexChunk >= m_ullDataCount)
+		ullHexChunk = -1;
 
-	return dwHexChunk;
+	return ullHexChunk;
 }
 
 void CHexCtrl::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
 {
-	int itmpBetweenBlocks;
-	if (ullChunk % m_dwCapacity > m_dwCapacityBlockSize)
-		itmpBetweenBlocks = m_iSpaceBetweenBlocks;
+	int iBetweenBlocks;
+	if (m_enShowAs == HEXCTRL_SHOWAS::ASBYTE && (ullChunk % m_dwCapacity) > m_dwCapacityBlockSize)
+		iBetweenBlocks = m_iSpaceBetweenBlocks;
 	else
-		itmpBetweenBlocks = 0;
+		iBetweenBlocks = 0;
 
-	ullCx = m_iIndentFirstHexChunk + ((ullChunk % m_dwCapacity)*m_iDistanceBetweenHexChunks) + itmpBetweenBlocks;
+	ullCx = m_iIndentFirstHexChunk + ((ullChunk % m_dwCapacity) * m_iSizeHexByte) + iBetweenBlocks;
+	ullCx += ((ullCx - m_iIndentFirstHexChunk) / m_iDistanceBetweenHexChunks) * m_iSpaceBetweenHexChunks;
 
 	if (ullChunk % m_dwCapacity)
 		ullCy = (ullChunk / m_dwCapacity) * m_sizeLetter.cy + m_sizeLetter.cy;
@@ -963,11 +1015,11 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 		DWORD dwNextBlock = (m_dwCapacity % 2) ? m_dwCapacityBlockSize + 2 : m_dwCapacityBlockSize + 1;
 
 		//If at least two rows are selected.
-		if (dwModStart + m_ullBytesSelected > m_dwCapacity)
-		{
-			strToClipboard.insert(0, dwModStart * 3, ' ');
-			if (dwTail <= m_dwCapacityBlockSize)
-				strToClipboard.insert(0, 2, ' ');
+		if (dwModStart + m_ullBytesSelected > m_dwCapacity) {
+			size_t sCount = (dwModStart * 2) + (dwModStart / m_enShowAs);
+			//Additional spaces between halves. Only in BYTE's view mode.
+			sCount += m_enShowAs == HEXCTRL_SHOWAS::ASBYTE ? (dwTail <= m_dwCapacityBlockSize ? 2 : 0) : 0;
+			strToClipboard.insert(0, sCount, ' ');
 		}
 
 		for (unsigned i = 0; i < m_ullBytesSelected; i++)
@@ -976,11 +1028,11 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
 
 			if (i < (m_ullBytesSelected - 1) && (dwTail - 1) != 0)
-				if (dwTail == dwNextBlock) //Space between blocks.
-					strToClipboard += "   ";
-				else
+				if (m_enShowAs == HEXCTRL_SHOWAS::ASBYTE && dwTail == dwNextBlock)
+					strToClipboard += "   "; //Additional spaces between halves. Only in BYTE's view mode.
+				else if (((m_dwCapacity - dwTail + 1) % m_enShowAs) == 0) //Add space after hex full chunk, ShowAs_size depending.
 					strToClipboard += " ";
-			if (--dwTail == 0 && i < (m_ullBytesSelected - 1)) //Next string.
+			if (--dwTail == 0 && i < (m_ullBytesSelected - 1)) //Next row.
 			{
 				strToClipboard += "\r\n";
 				dwTail = m_dwCapacity;
@@ -1043,6 +1095,34 @@ void CHexCtrl::ToWchars(ULONGLONG ull, wchar_t* pwsz, unsigned short shBytes)
 		pwsz[i * 2] = m_pwszHexMap[((ull >> ((shBytes - 1 - i) << 3)) & 0xF0) >> 4];
 		pwsz[i * 2 + 1] = m_pwszHexMap[(ull >> ((shBytes - 1 - i) << 3)) & 0x0F];
 	}
+}
+
+void CHexCtrl::SetShowAs(HEXCTRL_SHOWAS enShowAs)
+{
+	//Unchecking all menus and checking only the current needed.
+	m_enShowAs = enShowAs;
+	for (int i = 0; i < m_menuSubShowAs.GetMenuItemCount(); i++)
+		m_menuSubShowAs.CheckMenuItem(i, MF_UNCHECKED | MF_BYPOSITION);
+
+	int id { };
+	switch (enShowAs)
+	{
+	case ASBYTE:
+		id = 0;
+		break;
+	case ASWORD:
+		id = 1;
+		break;
+	case ASDWORD:
+		id = 2;
+		break;
+	case ASQWORD:
+		id = 3;
+		break;
+	}
+	m_menuSubShowAs.CheckMenuItem(id, MF_CHECKED | MF_BYPOSITION);
+	SetCapacity(m_dwCapacity);
+	RecalcAll();
 }
 
 void CHexCtrl::Search(CHexDlgSearch::HEXSEARCH& rSearch)
@@ -1285,7 +1365,8 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 		else
 			ullNewScrollV = 0;
 
-		ullNewScrollH = (ullStart % m_dwCapacity) * m_iDistanceBetweenHexChunks;
+		ullNewScrollH = (ullStart % m_dwCapacity) * m_iSizeHexByte;
+		ullNewScrollH += (ullNewScrollH / m_iDistanceBetweenHexChunks) * m_iSpaceBetweenHexChunks;
 	}
 	else
 	{
@@ -1315,14 +1396,13 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 		}
 
 		if (ullCx >= (ullCurrScrollH + rcClient.Width()))
-			ullNewScrollH = int(ullCurrScrollH + ((ullCx - ullCurrScrollH) / m_sizeLetter.cx));
+			ullNewScrollH = ullCurrScrollH + (ullCx - (ullCurrScrollH + rcClient.Width()));
 		else if (ullCx < ullCurrScrollH)
-			ullNewScrollH = int(ullCx);
+			ullNewScrollH = ullCx;
 		else
 			ullNewScrollH = ullCurrScrollH;
 	}
 	ullNewScrollV -= ullNewScrollV % m_sizeLetter.cy;
-	ullNewScrollH -= ullNewScrollH % m_sizeLetter.cx;
 
 	m_ullSelectionClick = ullClick;
 	m_ullSelectionStart = ullStart;
