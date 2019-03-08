@@ -888,7 +888,7 @@ void CHexCtrl::RecalcAll()
 	m_iSpaceBetweenAscii = m_sizeLetter.cx + 1;
 	m_iFourthVertLine = m_iIndentAscii + (m_iSpaceBetweenAscii * m_dwCapacity) + m_sizeLetter.cx;
 	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
-	m_iSizeFirstHalve = m_iIndentFirstHexChunk + m_dwCapacityBlockSize * (m_sizeLetter.cx * 2) +
+	m_iSizeFirstHalf = m_iIndentFirstHexChunk + m_dwCapacityBlockSize * (m_sizeLetter.cx * 2) +
 		(m_dwCapacityBlockSize / m_enShowAs - 1) * m_iSpaceBetweenHexChunks;
 	m_iHeightTopRect = int(m_sizeLetter.cy * 1.5);
 	m_iIndentTextCapacityY = m_iHeightTopRect / 2 - (m_sizeLetter.cy / 2);
@@ -945,15 +945,26 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 	{
 		//Additional space between halves. Only in BYTE's view mode.
 		int iBetweenBlocks;
-		if (m_enShowAs == HEXCTRL_SHOWAS::ASBYTE && iX > m_iSizeFirstHalve)
+		if (m_enShowAs == HEXCTRL_SHOWAS::ASBYTE && iX > m_iSizeFirstHalf)
 			iBetweenBlocks = m_iSpaceBetweenBlocks;
 		else
 			iBetweenBlocks = 0;
 
 		//Calculate hex chunk.
 		DWORD dwX = iX - m_iIndentFirstHexChunk - iBetweenBlocks;
-		dwX -= (dwX / m_iDistanceBetweenHexChunks) * m_iSpaceBetweenHexChunks;
-		ullHexChunk = dwX / m_iSizeHexByte + ((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine  * m_dwCapacity);
+		DWORD dwChunkX { };
+		int iSpaceBetweenHexChunks = 0;
+		for (unsigned i = 1; i <= m_dwCapacity; i++)
+		{
+			if ((i % m_enShowAs) == 0)
+				iSpaceBetweenHexChunks += m_iSpaceBetweenHexChunks;
+			if ((m_iSizeHexByte * i + iSpaceBetweenHexChunks) > dwX)
+			{
+				dwChunkX = i - 1;
+				break;
+			}
+		}
+		ullHexChunk = dwChunkX + ((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine  * m_dwCapacity);
 	}
 	else if ((iX >= m_iIndentAscii) && (iX < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwCapacity))
 		&& (iY >= m_iHeightTopRect) && iY <= m_iHeightWorkArea)
@@ -980,8 +991,8 @@ void CHexCtrl::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
 	else
 		iBetweenBlocks = 0;
 
-	ullCx = m_iIndentFirstHexChunk + ((ullChunk % m_dwCapacity) * m_iSizeHexByte) + iBetweenBlocks;
-	ullCx += ((ullCx - m_iIndentFirstHexChunk) / m_iDistanceBetweenHexChunks) * m_iSpaceBetweenHexChunks;
+	ullCx = m_iIndentFirstHexChunk + iBetweenBlocks + (ullChunk % m_dwCapacity) * m_iSizeHexByte;
+	ullCx += ((ullChunk % m_dwCapacity) / m_enShowAs) * m_iSpaceBetweenHexChunks;
 
 	if (ullChunk % m_dwCapacity)
 		ullCy = (ullChunk / m_dwCapacity) * m_sizeLetter.cy + m_sizeLetter.cy;
@@ -1395,8 +1406,9 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 			}
 		}
 
-		if (ullCx >= (ullCurrScrollH + rcClient.Width()))
-			ullNewScrollH = ullCurrScrollH + (ullCx - (ullCurrScrollH + rcClient.Width()));
+		ULONGLONG ullMaxClient = ullCurrScrollH + rcClient.Width() - m_iSizeHexByte;
+		if (ullCx >= ullMaxClient)
+			ullNewScrollH = ullCurrScrollH + (ullCx - ullMaxClient);
 		else if (ullCx < ullCurrScrollH)
 			ullNewScrollH = ullCx;
 		else

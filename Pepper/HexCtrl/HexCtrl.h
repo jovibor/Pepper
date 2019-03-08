@@ -208,7 +208,7 @@ namespace HEXCTRL {
 		COLORREF m_clrBkBottomRect { RGB(250, 250, 250) };
 		CBrush m_stBrushBkSelected { m_clrBkSelected };
 		CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
-		int m_iSizeFirstHalve { }; //Size of first halve of capacity.
+		int m_iSizeFirstHalf { }; //Size of first half of capacity.
 		int m_iSizeHexByte { }; //Size of two hex letters representing one byte.
 		int m_iIndentAscii { }; //Indent of Ascii text begining.
 		int m_iIndentFirstHexChunk { }; //First hex chunk indent.
