@@ -251,4 +251,7 @@ namespace HEXCTRL {
 
 	constexpr auto HEXCTRL_MSG_DESTROY = 0x00FF;
 	constexpr auto HEXCTRL_MSG_GETDISPINFO = 0x0100;
+
+	//Version string:
+	constexpr auto HEXCTRL_VERSION_WSTR = L"Hex Control for MFC, v1.8.5";
 };

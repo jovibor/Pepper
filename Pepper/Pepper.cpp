@@ -41,7 +41,7 @@ BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	::SetWindowTextW(GetDlgItem(IDC_STATIC_VERSION)->m_hWnd, PEPPER_VERSION_WSTR);
+	GetDlgItem(IDC_STATIC_VERSION)->SetWindowTextW(PEPPER_VERSION_WSTR);
 
 	//to prevent cursor from blinking
 	SetClassLongPtrW(m_hWnd, GCLP_HCURSOR, 0);

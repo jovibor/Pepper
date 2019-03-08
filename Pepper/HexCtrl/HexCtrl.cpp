@@ -1435,9 +1435,9 @@ BEGIN_MESSAGE_MAP(CHexDlgSearch, CDialogEx)
 	ON_WM_ACTIVATE()
 	ON_WM_CLOSE()
 	ON_WM_CTLCOLOR()
-	ON_BN_CLICKED(IDC_HEXCTRL_BUTTON_SEARCH_F, &CHexDlgSearch::OnButtonSearchF)
-	ON_BN_CLICKED(IDC_HEXCTRL_BUTTON_SEARCH_B, &CHexDlgSearch::OnButtonSearchB)
-	ON_COMMAND_RANGE(IDC_HEXCTRL_RADIO_HEX, IDC_HEXCTRL_RADIO_UNICODE, &CHexDlgSearch::OnRadioBnRange)
+	ON_BN_CLICKED(IDC_HEXCTRL_SEARCH_BUTTON_SEARCH_F, &CHexDlgSearch::OnButtonSearchF)
+	ON_BN_CLICKED(IDC_HEXCTRL_SEARCH_BUTTON_SEARCH_B, &CHexDlgSearch::OnButtonSearchB)
+	ON_COMMAND_RANGE(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE, &CHexDlgSearch::OnRadioBnRange)
 END_MESSAGE_MAP()
 
 BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexCtrl* pwndParent)
@@ -1455,8 +1455,8 @@ CHexCtrl* CHexDlgSearch::GetParent() const
 BOOL CHexDlgSearch::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	m_iRadioCurrent = IDC_HEXCTRL_RADIO_HEX;
-	CheckRadioButton(IDC_HEXCTRL_RADIO_HEX, IDC_HEXCTRL_RADIO_UNICODE, m_iRadioCurrent);
+	m_iRadioCurrent = IDC_HEXCTRL_SEARCH_RADIO_HEX;
+	CheckRadioButton(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE, m_iRadioCurrent);
 	m_stBrushDefault.CreateSolidBrush(m_clrMenu);
 
 	return TRUE;
@@ -1491,7 +1491,7 @@ void CHexDlgSearch::SearchCallback()
 			swprintf_s(wstrSearch, 127, L"Search found occurrence.");
 
 		m_stSearch.fSecondMatch = true;
-		GetDlgItem(IDC_HEXCTRL_STATIC_TEXTBOTTOM)->SetWindowTextW(wstrSearch);
+		GetDlgItem(IDC_HEXCTRL_SEARCH_STATIC_TEXTBOTTOM)->SetWindowTextW(wstrSearch);
 	}
 	else
 	{
@@ -1502,14 +1502,14 @@ void CHexDlgSearch::SearchCallback()
 		else
 			swprintf_s(wstrSearch, 127, L"Didn't find any occurrence. The begining is reached.");
 
-		GetDlgItem(IDC_HEXCTRL_STATIC_TEXTBOTTOM)->SetWindowTextW(wstrSearch);
+		GetDlgItem(IDC_HEXCTRL_SEARCH_STATIC_TEXTBOTTOM)->SetWindowTextW(wstrSearch);
 	}
 }
 
 void CHexDlgSearch::OnButtonSearchF()
 {
 	CString strSearchText;
-	GetDlgItemTextW(IDC_HEXCTRL_EDIT_SEARCH, strSearchText);
+	GetDlgItemTextW(IDC_HEXCTRL_SEARCH_EDITSEARCH, strSearchText);
 	if (strSearchText.IsEmpty())
 		return;
 	if (strSearchText.Compare(m_stSearch.wstrSearch.data()) != 0)
@@ -1518,28 +1518,28 @@ void CHexDlgSearch::OnButtonSearchF()
 		m_stSearch.wstrSearch = strSearchText;
 	}
 
-	switch (GetCheckedRadioButton(IDC_HEXCTRL_RADIO_HEX, IDC_HEXCTRL_RADIO_UNICODE))
+	switch (GetCheckedRadioButton(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE))
 	{
-	case IDC_HEXCTRL_RADIO_HEX:
+	case IDC_HEXCTRL_SEARCH_RADIO_HEX:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_HEX;
 		break;
-	case IDC_HEXCTRL_RADIO_ASCII:
+	case IDC_HEXCTRL_SEARCH_RADIO_ASCII:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_ASCII;
 		break;
-	case IDC_HEXCTRL_RADIO_UNICODE:
+	case IDC_HEXCTRL_SEARCH_RADIO_UNICODE:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_UNICODE;
 		break;
 	}
 	m_stSearch.iDirection = CHexCtrl::HEXCTRL_SEARCH::SEARCH_FORWARD;
 
-	GetDlgItem(IDC_HEXCTRL_EDIT_SEARCH)->SetFocus();
+	GetDlgItem(IDC_HEXCTRL_SEARCH_EDITSEARCH)->SetFocus();
 	GetParent()->Search(m_stSearch);
 }
 
 void CHexDlgSearch::OnButtonSearchB()
 {
 	CString strSearchText;
-	GetDlgItemTextW(IDC_HEXCTRL_EDIT_SEARCH, strSearchText);
+	GetDlgItemTextW(IDC_HEXCTRL_SEARCH_EDITSEARCH, strSearchText);
 	if (strSearchText.IsEmpty())
 		return;
 	if (strSearchText.Compare(m_stSearch.wstrSearch.data()) != 0)
@@ -1548,21 +1548,21 @@ void CHexDlgSearch::OnButtonSearchB()
 		m_stSearch.wstrSearch = strSearchText;
 	}
 
-	switch (GetCheckedRadioButton(IDC_HEXCTRL_RADIO_HEX, IDC_HEXCTRL_RADIO_UNICODE))
+	switch (GetCheckedRadioButton(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE))
 	{
-	case IDC_HEXCTRL_RADIO_HEX:
+	case IDC_HEXCTRL_SEARCH_RADIO_HEX:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_HEX;
 		break;
-	case IDC_HEXCTRL_RADIO_ASCII:
+	case IDC_HEXCTRL_SEARCH_RADIO_ASCII:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_ASCII;
 		break;
-	case IDC_HEXCTRL_RADIO_UNICODE:
+	case IDC_HEXCTRL_SEARCH_RADIO_UNICODE:
 		m_stSearch.dwSearchType = CHexCtrl::HEXCTRL_SEARCH::SEARCH_UNICODE;
 		break;
 	}
 	m_stSearch.iDirection = CHexCtrl::HEXCTRL_SEARCH::SEARCH_BACKWARD;
 
-	GetDlgItem(IDC_HEXCTRL_EDIT_SEARCH)->SetFocus();
+	GetDlgItem(IDC_HEXCTRL_SEARCH_EDITSEARCH)->SetFocus();
 	GetParent()->Search(m_stSearch);
 }
 
@@ -1573,7 +1573,7 @@ void CHexDlgSearch::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 	else
 	{
 		SetLayeredWindowAttributes(0, 255, LWA_ALPHA);
-		GetDlgItem(IDC_HEXCTRL_EDIT_SEARCH)->SetFocus();
+		GetDlgItem(IDC_HEXCTRL_SEARCH_EDITSEARCH)->SetFocus();
 	}
 
 	CDialogEx::OnActivate(nState, pWndOther, bMinimized);
@@ -1598,7 +1598,7 @@ void CHexDlgSearch::OnClose()
 
 HBRUSH CHexDlgSearch::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_TEXTBOTTOM) {
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_SEARCH_STATIC_TEXTBOTTOM) {
 		pDC->SetBkColor(m_clrMenu);
 		pDC->SetTextColor(m_stSearch.fFound ? m_clrSearchFound : m_clrSearchFailed);
 		return m_stBrushDefault;
@@ -1623,7 +1623,7 @@ void CHexDlgSearch::ClearAll()
 	m_stSearch.fWrap = false;
 	m_stSearch.fCount = true;
 
-	GetDlgItem(IDC_HEXCTRL_STATIC_TEXTBOTTOM)->SetWindowTextW(L"");
+	GetDlgItem(IDC_HEXCTRL_SEARCH_STATIC_TEXTBOTTOM)->SetWindowTextW(L"");
 }
 
 
@@ -1656,6 +1656,8 @@ BOOL CHexDlgAbout::OnInitDialog()
 	m_curHand = LoadCursor(nullptr, IDC_HAND);
 	m_curArrow = LoadCursor(nullptr, IDC_ARROW);
 
+	GetDlgItem(IDC_HEXCTRL_ABOUT_STATIC_VERSION)->SetWindowTextW(HEXCTRL_VERSION_WSTR);
+
 	return TRUE;
 }
 
@@ -1665,10 +1667,10 @@ void CHexDlgAbout::OnMouseMove(UINT nFlags, CPoint point)
 	if (!pWnd)
 		return;
 
-	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_LINKGITHUB))
+	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB))
 	{
 		m_fGithubLink = !m_fGithubLink;
-		GetDlgItem(IDC_HEXCTRL_STATIC_LINKGITHUB)->RedrawWindow();
+		GetDlgItem(IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)->RedrawWindow();
 		SetCursor(m_fGithubLink ? m_curArrow : m_curHand);
 	}
 
@@ -1682,7 +1684,7 @@ void CHexDlgAbout::OnLButtonDown(UINT nFlags, CPoint point)
 	if (!pWnd)
 		return;
 
-	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_LINKGITHUB)
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)
 		ShellExecute(nullptr, L"open", L"https://github.com/jovibor/Pepper", nullptr, nullptr, NULL);
 
 	CDialogEx::OnLButtonDown(nFlags, point);
@@ -1690,7 +1692,7 @@ void CHexDlgAbout::OnLButtonDown(UINT nFlags, CPoint point)
 
 HBRUSH CHexDlgAbout::OnCtlColor(CDC * pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_STATIC_LINKGITHUB)
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)
 	{
 		pDC->SetBkColor(m_clrMenu);
 		pDC->SetTextColor(RGB(0, 0, 210));
