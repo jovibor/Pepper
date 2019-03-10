@@ -64,7 +64,10 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	case IDC_HEX_RIGHT_TR:
 	{
 		const auto& hexData = (std::vector<std::byte>*)pHint;
-		m_stHexEdit.SetData((PBYTE)hexData->data(), hexData->size());
+		HEXDATASTRUCT hds;
+		hds.pData = (PBYTE)hexData->data();
+		hds.ullDataSize = hexData->size();
+		m_stHexEdit.SetData(hds);
 		m_pActiveWnd = &m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);

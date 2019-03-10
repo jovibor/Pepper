@@ -47,6 +47,8 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	m_stHC.pwndParent = this;
 	m_stHC.uId = IDC_HEX_CTRL;
 
+	m_stHD.pwndMsg = this;
+
 	return S_OK;
 }
 
@@ -82,8 +84,14 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 	if (fExist)
 		pHexCtrl->ShowOffset(ullOffset, ullSelectionSize);
 	else
-		pHexCtrl->SetData(pData, (ULONGLONG)m_stFileSize.QuadPart, fVirtual, ullOffset, ullSelectionSize, this);
-
+	{
+		m_stHD.pData = pData;
+		m_stHD.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
+		m_stHD.fVirtual = fVirtual;
+		m_stHD.ullSelectionStart = ullOffset;
+		m_stHD.ullSelectionSize = ullSelectionSize;
+		pHexCtrl->SetData(m_stHD);
+	}
 	//If floating HexCtrl in use - bring it to front.
 	if (pHexCtrl == &m_stHex)
 		pHexCtrl->SetForegroundWindow();
@@ -121,7 +129,11 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexC
 	else
 		iter->ullOffsetDelta = ullOffset;
 
-	pHexCtrl->SetData(pData, ullSize, fVirtual, 0, 0, this);
+	m_stHD.pData = pData;
+	m_stHD.ullDataSize = ullSize;
+	m_stHD.fVirtual = fVirtual;
+	m_stHD.ullSelectionSize = 0;
+	pHexCtrl->SetData(m_stHD);
 
 	return S_OK;
 }

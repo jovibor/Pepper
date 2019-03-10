@@ -54,6 +54,7 @@ private:
 	};
 	CHexCtrl m_stHex;
 	HEXCREATESTRUCT m_stHC { };
+	HEXDATASTRUCT m_stHD;
 	//Size of the loaded PE file.
 	LARGE_INTEGER m_stFileSize { };
 	HANDLE m_hFile { };
