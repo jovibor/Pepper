@@ -29,6 +29,13 @@ namespace HEXCTRL {
 		const		LOGFONTW* pLogFont { };		//Font to be used. Default if it's nullptr.
 		CWnd*		pwndMsg { };				//Pointer to the window that is going to recieve command messages, 
 												//such as HEXCTRL_MSG_GETDISPINFO. If nullptr - parent window is used.
+		COLORREF clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };		//Hex chunks color.
+		COLORREF clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };	//Ascii text color.
+		COLORREF clrTextCaption { RGB(0, 0, 180) };					//Caption color
+		COLORREF clrBk { GetSysColor(COLOR_WINDOW) };				//Background color.
+		COLORREF clrBkSelected { RGB(200, 200, 255) };				//Background color of the selected Hex/Ascii.
+		COLORREF clrTextInfoRect { GetSysColor(COLOR_WINDOWTEXT) };	//Text color of the bottom "Info" rect.
+		COLORREF clrBkInfoRect { RGB(250, 250, 250) };				//Background color of the bottom "Info" rect.
 	};
 
 	struct HEXNOTIFY
@@ -131,7 +138,7 @@ namespace HEXCTRL {
 		// 3. Is virtual? 4. Offset to selection after creation. 5. Selection size.				
 		// 6. Pointer to window to send command messages to. Parent window is used if nullptr.
 		void SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual = false,
-			ULONGLONG ullSelStart = 0, ULONGLONG ullSelSize = 0, CWnd* pwndMsg = nullptr);
+			ULONGLONG ullSelectionStart = 0, ULONGLONG ullSelectionSize = 0, CWnd* pwndMsg = nullptr);
 		void ClearData();
 		void ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSize = 1);
 		void SetFont(const LOGFONT* pLogFontNew);
@@ -176,7 +183,7 @@ namespace HEXCTRL {
 		void SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullSize, bool fHighlight = false);
 		void SelectAll();
 		void UpdateInfoText();
-		void ToWchars(ULONGLONG ull, wchar_t* pwsz, unsigned short shBytes = 4);
+		void ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwBytes = 4);
 		void SetShowAs(HEXCTRL_SHOWAS enShowAs);
 	private:
 		bool m_fCreated { false };
@@ -199,14 +206,14 @@ namespace HEXCTRL {
 		CScrollEx m_stScrollH;
 		CMenu m_menuMain;
 		CMenu m_menuSubShowAs;
-		COLORREF m_clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };
-		COLORREF m_clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };
-		COLORREF m_clrTextCaption { RGB(0, 0, 180) };
-		COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) };
-		COLORREF m_clrBkSelected { RGB(200, 200, 255) };
-		COLORREF m_clrTextBottomRect { GetSysColor(COLOR_WINDOWTEXT) };
-		COLORREF m_clrBkBottomRect { RGB(250, 250, 250) };
-		CBrush m_stBrushBkSelected { m_clrBkSelected };
+		COLORREF m_clrTextHex { };
+		COLORREF m_clrTextAscii { };
+		COLORREF m_clrTextCaption { };
+		COLORREF m_clrBk { };
+		COLORREF m_clrBkSelected { };
+		COLORREF m_clrTextInfoRect { };
+		COLORREF m_clrBkInfoRect { };
+		CBrush m_stBrushBkSelected;
 		CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
 		int m_iSizeFirstHalf { }; //Size of first half of capacity.
 		int m_iSizeHexByte { }; //Size of two hex letters representing one byte.
@@ -231,6 +238,7 @@ namespace HEXCTRL {
 		const std::wstring m_wstrErrVirtual { L"This function isn't supported in Virtual mode!" };
 		bool m_fLMousePressed { false };
 		UINT m_dwCtrlId { };
+		DWORD m_dwOffsetDigits { 8 }; //Amount of digits in "Offset", depends on data size in SetData.
 		/////////////////////////Enums///////////////////////////////////////////////
 		enum HEXCTRL_CLIPBOARD { COPY_AS_HEX, COPY_AS_HEX_FORMATTED, COPY_AS_ASCII };
 		enum HEXCTRL_MENU {

@@ -84,6 +84,14 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 		m_pwndMsg = hcs.pwndMsg;
 	else
 		m_pwndMsg = hcs.pwndParent;
+	m_clrTextHex = hcs.clrTextHex;
+	m_clrTextAscii = hcs.clrTextAscii;
+	m_clrTextCaption = hcs.clrTextCaption;
+	m_clrBk = hcs.clrBk;
+	m_clrBkSelected = hcs.clrBkSelected;
+	m_clrTextInfoRect = hcs.clrTextInfoRect;
+	m_clrBkInfoRect = hcs.clrBkInfoRect;
+	m_stBrushBkSelected.CreateSolidBrush(m_clrBkSelected);
 
 	DWORD dwStyle;
 	if (m_fFloat)
@@ -153,7 +161,7 @@ bool CHexCtrl::IsCreated()
 }
 
 void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirtual,
-	ULONGLONG ullSelStart, ULONGLONG ullSelSize, CWnd* pwndMsg)
+	ULONGLONG ullSelectionStart, ULONGLONG ullSelectionSize, CWnd* pwndMsg)
 {
 	if (pwndMsg)
 		m_pwndMsg = pwndMsg;
@@ -166,10 +174,12 @@ void CHexCtrl::SetData(const unsigned char* pData, ULONGLONG ullSize, bool fVirt
 	m_pData = pData;
 	m_ullDataCount = ullSize;
 	m_fVirtual = fVirtual;
-	RecalcScrollSizes();
+	m_dwOffsetDigits = ullSize <= 0xfffffffful ? 8 : (ullSize < 0xfffffffffful ? 10 : (ullSize < 0xfffffffffffful ? 12 :
+		(ullSize < 0xfffffffffffffful ? 14 : 16)));
+	RecalcAll();
 
-	if (ullSelSize)
-		ShowOffset(ullSelStart, ullSelSize);
+	if (ullSelectionSize)
+		ShowOffset(ullSelectionStart, ullSelectionSize);
 	else
 	{
 		m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullBytesSelected = 0;
@@ -654,8 +664,8 @@ void CHexCtrl::OnPaint()
 	rc.left = m_iFirstVertLine + 5;	rc.top = iThirdHorizLine + 1;
 	rc.right = rcClient.right > m_iFourthVertLine ? rcClient.right : m_iFourthVertLine;
 	rc.bottom = iFourthHorizLine;
-	rDC.FillSolidRect(&rc, m_clrBkBottomRect);
-	rDC.SetTextColor(m_clrTextBottomRect);
+	rDC.FillSolidRect(&rc, m_clrBkInfoRect);
+	rDC.SetTextColor(m_clrTextInfoRect);
 	rDC.SelectObject(&m_fontBottomRect);
 	rDC.DrawTextW(m_wstrBottomText.data(), (int)m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
@@ -724,11 +734,11 @@ void CHexCtrl::OnPaint()
 			rDC.SetBkColor(m_clrBk);
 
 		//Left column offset printing (00000001...0000FFFF...).
-		wchar_t pwszOffset[8];
-		ToWchars(iterLines * m_dwCapacity, pwszOffset);
+		wchar_t pwszOffset[16];
+		ToWchars(iterLines * m_dwCapacity, pwszOffset, m_dwOffsetDigits / 2);
 		rDC.SetTextColor(m_clrTextCaption);
 		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx - iScrollH, m_iHeightTopRect + (m_sizeLetter.cy * iLine),
-			NULL, nullptr, pwszOffset, 8, nullptr);
+			NULL, nullptr, pwszOffset, m_dwOffsetDigits, nullptr);
 
 		int iIndentHexX = 0;
 		int iIndentAsciiX = 0;
@@ -877,7 +887,7 @@ void CHexCtrl::RecalcAll()
 	::ReleaseDC(m_hWnd, hDC);
 
 	m_iFirstVertLine = 0;
-	m_iSecondVertLine = m_sizeLetter.cx * 10;
+	m_iSecondVertLine = m_dwOffsetDigits * m_sizeLetter.cx + m_sizeLetter.cx * 2;
 	m_iSizeHexByte = m_sizeLetter.cx * 2;
 	m_iSpaceBetweenBlocks = m_sizeLetter.cx * 2;
 	m_iSpaceBetweenHexChunks = m_sizeLetter.cx;
@@ -1099,12 +1109,13 @@ void CHexCtrl::UpdateInfoText()
 	RedrawWindow();
 }
 
-void CHexCtrl::ToWchars(ULONGLONG ull, wchar_t* pwsz, unsigned short shBytes)
-{	//Converts shBytes of ull to wchar_t*.
-	for (unsigned i = 0; i < shBytes; i++)
+void CHexCtrl::ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwBytes)
+{
+	//Converts dwBytes of ull to wchar_t*.
+	for (unsigned i = 0; i < dwBytes; i++)
 	{
-		pwsz[i * 2] = m_pwszHexMap[((ull >> ((shBytes - 1 - i) << 3)) & 0xF0) >> 4];
-		pwsz[i * 2 + 1] = m_pwszHexMap[(ull >> ((shBytes - 1 - i) << 3)) & 0x0F];
+		pwsz[i * 2] = m_pwszHexMap[((ull >> ((dwBytes - 1 - i) << 3)) & 0xF0) >> 4];
+		pwsz[i * 2 + 1] = m_pwszHexMap[(ull >> ((dwBytes - 1 - i) << 3)) & 0x0F];
 	}
 }
 
