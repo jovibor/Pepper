@@ -18,46 +18,59 @@
 
 namespace HEXCTRL {
 	/********************************************************************************************
-	* Create struct for CHexCtrl::Create method.												*
+	* HEXCOLORSTRUCT - All HexCtrl colors.														*
+	********************************************************************************************/
+	struct HEXCOLORSTRUCT {
+		COLORREF clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };		//Hex chunks color.
+		COLORREF clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };	//Ascii text color.
+		COLORREF clrTextSelected { GetSysColor(COLOR_WINDOWTEXT) }; //Selected text color.
+		COLORREF clrTextCaption { RGB(0, 0, 180) };					//Caption color
+		COLORREF clrTextInfoRect { GetSysColor(COLOR_WINDOWTEXT) };	//Text color of the bottom "Info" rect.
+		COLORREF clrTextCursor { RGB(255, 255, 255) };				//Cursor text color.
+		COLORREF clrBk { GetSysColor(COLOR_WINDOW) };				//Background color.
+		COLORREF clrBkSelected { RGB(200, 200, 255) };				//Background color of the selected Hex/Ascii.
+		COLORREF clrBkInfoRect { RGB(250, 250, 250) };				//Background color of the bottom "Info" rect.
+		COLORREF clrBkCursor { RGB(0, 0, 250) };					//Cursor background color.
+	};
+	using PHEXCOLORSTRUCT = HEXCOLORSTRUCT * ;
+	/********************************************************************************************
+	* HEXCREATESTRUCT - for CHexCtrl::Create method.												*
 	********************************************************************************************/
 	struct HEXCREATESTRUCT
 	{
-		CWnd*		pwndParent { };				//Parent window pointer.
-		UINT		uId { };					//Hex control id.
-		DWORD		dwExStyles { };				//Extended window styles.
-		CRect		rc { };						//Initial rect. If null, the window is screen centered then.
-		bool		fFloat { false };			//Is float or child - incorporated into another window.
-		const		LOGFONTW* pLogFont { };		//Font to be used. Default if it's nullptr.
-		CWnd*		pwndMsg { };				//Pointer to the window that is going to recieve command messages, 
-												//such as HEXCTRL_MSG_GETDISPINFO. If nullptr - parent window is used.
-		COLORREF clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };		//Hex chunks color.
-		COLORREF clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };	//Ascii text color.
-		COLORREF clrTextCaption { RGB(0, 0, 180) };					//Caption color
-		COLORREF clrBk { GetSysColor(COLOR_WINDOW) };				//Background color.
-		COLORREF clrBkSelected { RGB(200, 200, 255) };				//Background color of the selected Hex/Ascii.
-		COLORREF clrTextInfoRect { GetSysColor(COLOR_WINDOWTEXT) };	//Text color of the bottom "Info" rect.
-		COLORREF clrBkInfoRect { RGB(250, 250, 250) };				//Background color of the bottom "Info" rect.
-		COLORREF clrBkCursor { RGB(0, 0, 250) };					//Cursor background color.
-		COLORREF clrTextCursor { RGB(255, 255, 255) };				//Cursor text color.
+		CWnd*		    pwndParent { };			//Parent window's pointer.
+		UINT		    uId { };				//Hex control Id.
+		DWORD			dwExStyles { };			//Extended window styles.
+		CRect			rect { };				//Initial rect. If null, the window is screen centered.
+		bool			fFloat { false };		//Is float or child (incorporated into another window)?.
+		const			LOGFONTW* pLogFont { };	//Font to be used, nullptr for default.
+		CWnd*			pwndMsg { };			//Window ptr that is to recieve command messages, if nullptr parent window is used.
+		PHEXCOLORSTRUCT pstColor { };			//Pointer to HEXCOLORSTRUCT, if nullptr default colors are used.
 	};
 
+	/********************************************************************************************
+	* HEXDATASTRUCT - for CHexCtrl::SetData method.												*
+	********************************************************************************************/
 	struct HEXDATASTRUCT {
 		ULONGLONG ullDataSize { };			//Size of the data to display, in bytes.
 		ULONGLONG ullSelectionStart { };	//Set selection at this position. Works only if ullSelectionSize > 0.
-		ULONGLONG ullSelectionSize { };		//How many bytes to select.
+		ULONGLONG ullSelectionSize { };		//How many bytes to set as selected.
 		CWnd* pwndMsg { };					//Window to send the control messages to. If nullptr then the parent window is used.
 		unsigned char* pData { };			//Pointer to the data. Not used if it's virtual control.
 		bool fMutable { false };			//Will data be mutable (editable) or just read mode.
 		bool fVirtual { false };			//Is Virtual data mode?.
 	};
 
-	struct HEXNOTIFY
+	/********************************************************************************************
+	* HEXNOTIFYSTRUCT - used in notifications routines.											*
+	********************************************************************************************/
+	struct HEXNOTIFYSTRUCT
 	{
 		NMHDR			hdr;			//Standart Windows header.
 		ULONGLONG		ullByteIndex;	//Index of the byte to draw next.
 		unsigned char	chByte;			//Value of that byte to send back.
 	};
-	using PHEXNOTIFY = HEXNOTIFY * ;
+	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT * ;
 
 	/********************************************
 	* CHexDlgAbout class definition.			*
@@ -137,28 +150,24 @@ namespace HEXCTRL {
 	********************************************/
 	class CHexCtrl : public CWnd
 	{
-	private:
-		enum HEXCTRL_SHOWAS { ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8 };
 	public:
 		friend class CHexDlgSearch;
 		CHexCtrl();
 		virtual ~CHexCtrl() {}
 		bool Create(const HEXCREATESTRUCT& hcs); //Main initialization method, CHexCtrl::Create.
 		bool IsCreated();						 //Shows whether control created or not.
-
-		// CHexCtrl::SetData - main method for setting data to display (and edit).																
-		void SetData(const HEXDATASTRUCT& hds);
-		void ClearData();	//Clears all data from HexCtrl's view (not touching data itself).
-		void ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSize = 1);
-		void SetFont(const LOGFONT* pLogFontNew);
-		void SetFontSize(UINT uiSize);
-		UINT GetFontSize();
-		void SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
-			COLORREF clrBk, COLORREF clrBkSelected);
-		void SetCapacity(DWORD dwCapacity);
+		void SetData(const HEXDATASTRUCT& hds);  //Main method for setting data to display (and edit).																
+		void ClearData();						 //Clears all data from HexCtrl's view (not touching data itself).
+		void ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSize = 1); //Shows (selects) given offset.
+		void SetFont(const LOGFONT* pLogFontNew);//Sets the control's font.
+		void SetFontSize(UINT uiSize);			 //Sets the control's font size.
+		UINT GetFontSize();						 //Gets the control's font size.
+		void SetColor(const HEXCOLORSTRUCT& clr);//Sets all the colors for the control.
+		void SetCapacity(DWORD dwCapacity);		 //Sets the control's current capacity.
 		int GetDlgCtrlID() const;
 		CWnd* GetParent() const;
 	protected:
+		enum HEXCTRL_SHOWAS { ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8 };
 		DECLARE_MESSAGE_MAP()
 		void OnDraw(CDC* pDC) {} //All drawing is in OnPaint.
 		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
@@ -203,65 +212,57 @@ namespace HEXCTRL {
 		void CursorMoveDown();
 		void CursorScroll();
 	private:
-		bool m_fCreated { false };		//Is control created or not yet.
-		bool m_fFloat { false };		//Is control window float or not.
-		bool m_fVirtual { false };		//Is control works in "Virtual" mode.
-		bool m_fMutable { false };		//Is control works in Edit mode.
-		unsigned char* m_pData { };		//Modifiable in "Edit" mode.
-		ULONGLONG m_ullDataSize { };	//Size of the displayed data in bytes.
-		DWORD m_dwCapacity { 16 };		//How many bytes displayed in one row
+		bool m_fCreated { false };			//Is control created or not yet.
+		bool m_fFloat { false };			//Is control window float or not.
+		bool m_fVirtual { false };			//Is control works in "Virtual" mode.
+		bool m_fMutable { false };			//Is control works in Edit mode.
+		unsigned char* m_pData { };			//Modifiable in "Edit" mode.
+		ULONGLONG m_ullDataSize { };		//Size of the displayed data in bytes.
+		DWORD m_dwCapacity { 16 };			//How many bytes displayed in one row
 		const DWORD m_dwCapacityMax { 64 }; //Maximum capacity.
 		DWORD m_dwCapacityBlockSize { m_dwCapacity / 2 }; //Size of block before space delimiter.
 		HEXCTRL_SHOWAS m_enShowAs { HEXCTRL_SHOWAS::ASBYTE }; //Show data mode.
-		CWnd* m_pwndParentOwner { };	//Parent or owner window pointer.
-		CWnd* m_pwndMsg { };			//Window the control messages will be sent to.
-		SIZE m_sizeLetter { 1, 1 };		//Current font's letter size (width, height).
-		CFont m_fontHexView;			//Main Hex chunks font.
-		CFont m_fontBottomRect;			//Font for bottom Info rect.
-		CHexDlgSearch m_dlgSearch;		//Search dialog.
-		CHexDlgAbout m_dlgAbout;		//About dialog.
-		CScrollEx m_stScrollV;			//Vertical scroll object.
-		CScrollEx m_stScrollH;			//Horizontal scroll object.
-		CMenu m_menuMain;				//Main popup menu.
-		CMenu m_menuSubShowAs;			//Submenu "Show as..."
-		COLORREF m_clrTextHex { };
-		COLORREF m_clrTextAscii { };
-		COLORREF m_clrTextCaption { };
-		COLORREF m_clrBk { };
-		COLORREF m_clrBkSelected { };
-		COLORREF m_clrTextInfoRect { };
-		COLORREF m_clrBkInfoRect { };
-		COLORREF m_clrBkCursor { };
-		COLORREF m_clrTextCursor { };
-		CBrush m_stBrushBkSelected;		//Brush for "selected" background.
+		CWnd* m_pwndParentOwner { };		//Parent or owner window pointer.
+		CWnd* m_pwndMsg { };				//Window the control messages will be sent to.
+		SIZE m_sizeLetter { 1, 1 };			//Current font's letter size (width, height).
+		CFont m_fontHexView;				//Main Hex chunks font.
+		CFont m_fontBottomRect;				//Font for bottom Info rect.
+		CHexDlgSearch m_dlgSearch;			//Search dialog.
+		CHexDlgAbout m_dlgAbout;			//About dialog.
+		CScrollEx m_stScrollV;				//Vertical scroll object.
+		CScrollEx m_stScrollH;				//Horizontal scroll object.
+		CMenu m_menuMain;					//Main popup menu.
+		CMenu m_menuSubShowAs;				//Submenu "Show as..."
+		HEXCOLORSTRUCT m_stColor;			//All control related colors.
+		CBrush m_stBrushBkSelected;			//Brush for "selected" background.
 		CPen m_penLines { PS_SOLID, 1, RGB(200, 200, 200) };
-		int m_iSizeFirstHalf { };		  //Size of first half of capacity.
-		int m_iSizeHexByte { };			  //Size of two hex letters representing one byte.
-		int m_iIndentAscii { };			  //Indent of Ascii text begining.
-		int m_iIndentFirstHexChunk { };	  //First hex chunk indent.
-		int m_iIndentTextCapacityY { };	  //Caption text (0 1 2... D E F...) vertical offset.
-		int m_iIndentBottomLine { 1 };	  //Bottom line indent from window's bottom.
-		int m_iDistanceBetweenHexChunks { }; //Distance between begining of two hex chunks.
-		int m_iSpaceBetweenHexChunks { }; //Space between Hex chunks.
-		int m_iSpaceBetweenAscii { };	  //Space between two Ascii chars.
-		int m_iSpaceBetweenBlocks { };	  //Additional space between hex chunks after half of capacity.
-		int m_iHeightTopRect { };		  //Height of the header where offsets (0 1 2... D E F...) reside.
-		int m_iHeightBottomRect { 22 };	  //Height of bottom Info rect.
+		int m_iSizeFirstHalf { };		    //Size of first half of capacity.
+		int m_iSizeHexByte { };			    //Size of two hex letters representing one byte.
+		int m_iIndentAscii { };			    //Indent of Ascii text begining.
+		int m_iIndentFirstHexChunk { };	    //First hex chunk indent.
+		int m_iIndentTextCapacityY { };	    //Caption text (0 1 2... D E F...) vertical offset.
+		int m_iIndentBottomLine { 1 };	    //Bottom line indent from window's bottom.
+		int m_iDistanceBetweenHexChunks { };//Distance between begining of two hex chunks.
+		int m_iSpaceBetweenHexChunks { };   //Space between Hex chunks.
+		int m_iSpaceBetweenAscii { };	    //Space between two Ascii chars.
+		int m_iSpaceBetweenBlocks { };	    //Additional space between hex chunks after half of capacity.
+		int m_iHeightTopRect { };		    //Height of the header where offsets (0 1 2... D E F...) reside.
+		int m_iHeightBottomRect { 22 };	    //Height of bottom Info rect.
 		int m_iHeightBottomOffArea { m_iHeightBottomRect + m_iIndentBottomLine }; //Height of not visible rect from window's bottom to m_iThirdHorizLine.
-		int m_iHeightWorkArea { };		  //Needed for mouse selection point.y calculation.
+		int m_iHeightWorkArea { };		    //Needed for mouse selection point.y calculation.
 		int m_iFirstVertLine { }, m_iSecondVertLine { }, m_iThirdVertLine { }, m_iFourthVertLine { }; //Vertical lines indent.
 		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullBytesSelected { };
 		const wchar_t* const m_pwszHexMap { L"0123456789ABCDEF" };
 		const char* const m_pszHexMap { "0123456789ABCDEF" };
 		std::unordered_map<unsigned, std::wstring> m_umapCapacity;
-		std::wstring m_wstrBottomText { }; //Info text (bottom rect).
+		std::wstring m_wstrBottomText { };  //Info text (bottom rect).
 		const std::wstring m_wstrErrVirtual { L"This function isn't supported in Virtual mode!" };
 		bool m_fLMousePressed { false };
-		UINT m_dwCtrlId { };			 //Id of the control.
-		DWORD m_dwOffsetDigits { 8 };	 //Amount of digits in "Offset", depends on data size set in SetData.
-		ULONGLONG m_ullCursorPos { };	 //Current cursor position.
-		bool m_fCursorHigh { true };	 //Cursor's High or Low bits position (first or last digit in hex chunk).
-		bool m_fCursorAscii { false };	 //Whether cursor at Ascii or Hex chunks area.
+		UINT m_dwCtrlId { };				//Id of the control.
+		DWORD m_dwOffsetDigits { 8 };		//Amount of digits in "Offset", depends on data size set in SetData.
+		ULONGLONG m_ullCursorPos { };		//Current cursor position.
+		bool m_fCursorHigh { true };		//Cursor's High or Low bits position (first or last digit in hex chunk).
+		bool m_fCursorAscii { false };		//Whether cursor at Ascii or Hex chunks area.
 
 		/////////////////////////Enums///////////////////////////////////////////////
 		enum HEXCTRL_CLIPBOARD { COPY_HEX, COPY_HEXFORMATTED, COPY_ASCII };
@@ -282,9 +283,9 @@ namespace HEXCTRL {
 	************************************************/
 
 	constexpr auto HEXCTRL_MSG_DESTROY = 0x00FF;
-	constexpr auto HEXCTRL_MSG_GETDISPINFO = 0x0100;
-	constexpr auto HEXCTRL_MSG_DATASET = 0x0101;
+	constexpr auto HEXCTRL_MSG_GETDATA = 0x0100;
+	constexpr auto HEXCTRL_MSG_SETDATA = 0x0101;
 
 	//Version string.
-	constexpr auto HEXCTRL_VERSION_WSTR = L"Hex Control for MFC, v2.0.0";
+	constexpr auto HEXCTRL_VERSION_WSTR = L"Hex Control for MFC, v2.0.1";
 };

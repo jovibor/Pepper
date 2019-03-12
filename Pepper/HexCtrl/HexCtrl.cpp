@@ -83,16 +83,10 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 		m_pwndMsg = hcs.pwndMsg;
 	else
 		m_pwndMsg = hcs.pwndParent;
-	m_clrTextHex = hcs.clrTextHex;
-	m_clrTextAscii = hcs.clrTextAscii;
-	m_clrTextCaption = hcs.clrTextCaption;
-	m_clrBk = hcs.clrBk;
-	m_clrBkSelected = hcs.clrBkSelected;
-	m_clrTextInfoRect = hcs.clrTextInfoRect;
-	m_clrBkInfoRect = hcs.clrBkInfoRect;
-	m_clrBkCursor = hcs.clrBkCursor;
-	m_clrTextCursor = hcs.clrTextCursor;
-	m_stBrushBkSelected.CreateSolidBrush(m_clrBkSelected);
+	if (hcs.pstColor)
+		m_stColor = *hcs.pstColor;
+
+	m_stBrushBkSelected.CreateSolidBrush(m_stColor.clrBkSelected);
 
 	DWORD dwStyle;
 	if (m_fFloat)
@@ -122,9 +116,9 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 	m_fontBottomRect.CreateFontIndirectW(&lf);
 	//End of font related.///////////////////////////////////////
 
-	CRect rc = hcs.rc;
+	CRect rc = hcs.rect;
 	if (rc.IsRectNull() && m_fFloat)
-	{	//If initial rc is null, and it's a float window HexCtrl, then place it at screen center.
+	{	//If initial rect is null, and it's a float window HexCtrl, then place it at screen center.
 
 		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
 		int iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
@@ -241,15 +235,9 @@ UINT CHexCtrl::GetFontSize()
 	return lf.lfHeight;
 }
 
-void CHexCtrl::SetColor(COLORREF clrTextHex, COLORREF clrTextAscii, COLORREF clrTextCaption,
-	COLORREF clrBk, COLORREF clrBkSelected)
+void CHexCtrl::SetColor(const HEXCOLORSTRUCT& clr)
 {
-	m_clrTextHex = clrTextHex;
-	m_clrTextAscii = clrTextAscii;
-	m_clrTextCaption = clrTextCaption;
-	m_clrBk = clrBk;
-	m_clrBkSelected = clrBkSelected;
-
+	m_stColor = clr;
 	RedrawWindow();
 }
 
@@ -746,9 +734,9 @@ void CHexCtrl::OnPaint()
 	CMemDC memDC(dc, rcClient);
 	CDC& rDC = memDC.GetDC();
 
-	RECT rc; //Used for all local rc related drawing.
+	RECT rc; //Used for all local rect related drawing.
 	rDC.GetClipBox(&rc);
-	rDC.FillSolidRect(&rc, m_clrBk);
+	rDC.FillSolidRect(&rc, m_stColor.clrBk);
 	rDC.SelectObject(&m_penLines);
 	rDC.SelectObject(&m_fontHexView);
 
@@ -791,21 +779,21 @@ void CHexCtrl::OnPaint()
 	//«Offset» text.
 	rc.left = m_iFirstVertLine - iScrollH; rc.top = iFirstHorizLine;
 	rc.right = m_iSecondVertLine - iScrollH; rc.bottom = iSecondHorizLine;
-	rDC.SetTextColor(m_clrTextCaption);
+	rDC.SetTextColor(m_stColor.clrTextCaption);
 	rDC.DrawTextW(L"Offset", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//«Bytes total:» text.
 	rc.left = m_iFirstVertLine + 5;	rc.top = iThirdHorizLine + 1;
 	rc.right = rcClient.right > m_iFourthVertLine ? rcClient.right : m_iFourthVertLine;
 	rc.bottom = iFourthHorizLine;
-	rDC.FillSolidRect(&rc, m_clrBkInfoRect);
-	rDC.SetTextColor(m_clrTextInfoRect);
+	rDC.FillSolidRect(&rc, m_stColor.clrBkInfoRect);
+	rDC.SetTextColor(m_stColor.clrTextInfoRect);
 	rDC.SelectObject(&m_fontBottomRect);
 	rDC.DrawTextW(m_wstrBottomText.data(), (int)m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 	rDC.SelectObject(&m_fontHexView);
-	rDC.SetTextColor(m_clrTextCaption);
-	rDC.SetBkColor(m_clrBk);
+	rDC.SetTextColor(m_stColor.clrTextCaption);
+	rDC.SetBkColor(m_stColor.clrBk);
 
 	int iCapacityShowAs = 1;
 	int iIndentCapacityX = 0;
@@ -863,14 +851,14 @@ void CHexCtrl::OnPaint()
 		//Drawing offset with bk color depending on selection range.
 		if (m_ullBytesSelected && (iterLines * m_dwCapacity + m_dwCapacity) > m_ullSelectionStart &&
 			(iterLines * m_dwCapacity) < m_ullSelectionEnd)
-			rDC.SetBkColor(m_clrBkSelected);
+			rDC.SetBkColor(m_stColor.clrBkSelected);
 		else
-			rDC.SetBkColor(m_clrBk);
+			rDC.SetBkColor(m_stColor.clrBk);
 
 		//Left column offset printing (00000001...0000FFFF...).
 		wchar_t pwszOffset[16];
 		ToWchars(iterLines * m_dwCapacity, pwszOffset, m_dwOffsetDigits / 2);
-		rDC.SetTextColor(m_clrTextCaption);
+		rDC.SetTextColor(m_stColor.clrTextCaption);
 		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx - iScrollH, m_iHeightTopRect + (m_sizeLetter.cy * iLine),
 			NULL, nullptr, pwszOffset, m_dwOffsetDigits, nullptr);
 
@@ -901,7 +889,7 @@ void CHexCtrl::OnPaint()
 				char chByteToPrint;
 				if (m_fVirtual && m_pwndMsg)
 				{
-					HEXNOTIFY hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDISPINFO },
+					HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDATA },
 						ullIndexDataToPrint, 0 };
 					m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
 					chByteToPrint = hexntfy.chByte;
@@ -913,10 +901,11 @@ void CHexCtrl::OnPaint()
 				pwszHexToPrint[1] = m_pwszHexMap[(chByteToPrint & 0x0F)];
 
 				//Selection draw with different BK color.
-				COLORREF clrBk;
+				COLORREF clrBk, clrBkAscii, clrTextHex, clrTextAscii;
 				if (m_ullBytesSelected && ullIndexDataToPrint >= m_ullSelectionStart && ullIndexDataToPrint < m_ullSelectionEnd)
 				{
-					clrBk = m_clrBkSelected;
+					clrBk = clrBkAscii = m_stColor.clrBkSelected;
+					clrTextHex = clrTextAscii = m_stColor.clrTextSelected;
 					//Space between hex chunks (excluding last hex in a row) filling with bk_selected color.
 					if (ullIndexDataToPrint < (m_ullSelectionEnd - 1) && (ullIndexDataToPrint + 1) % m_dwCapacity &&
 						((ullIndexDataToPrint + 1) % m_enShowAs) == 0)
@@ -932,21 +921,25 @@ void CHexCtrl::OnPaint()
 					}
 				}
 				else
-					clrBk = m_clrBk;
-
+				{
+					clrBk = clrBkAscii = m_stColor.clrBk;
+					clrTextHex = m_stColor.clrTextHex;
+					clrTextAscii = m_stColor.clrTextAscii;
+				}
 				//Hex chunk printing.
 				if (m_fMutable && ullIndexDataToPrint == m_ullCursorPos)
 				{
-					rDC.SetBkColor(m_fCursorHigh ? m_clrBkCursor : clrBk);
-					rDC.SetTextColor(m_fCursorHigh ? m_clrTextCursor : m_clrTextHex);
+					rDC.SetBkColor(m_fCursorHigh ? m_stColor.clrBkCursor : clrBk);
+					rDC.SetTextColor(m_fCursorHigh ? m_stColor.clrTextCursor : clrTextHex);
 					ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, &pwszHexToPrint[0], 1, nullptr);
-					rDC.SetBkColor(!m_fCursorHigh ? m_clrBkCursor : clrBk);
-					rDC.SetTextColor(!m_fCursorHigh ? m_clrTextCursor : m_clrTextHex);
+					rDC.SetBkColor(!m_fCursorHigh ? m_stColor.clrBkCursor : clrBk);
+					rDC.SetTextColor(!m_fCursorHigh ? m_stColor.clrTextCursor : clrTextHex);
 					ExtTextOutW(rDC.m_hDC, iHexPosToPrintX + m_sizeLetter.cx, iHexPosToPrintY, 0, nullptr, &pwszHexToPrint[1], 1, nullptr);
 				}
-				else {
+				else
+				{
 					rDC.SetBkColor(clrBk);
-					rDC.SetTextColor(m_clrTextHex);
+					rDC.SetTextColor(clrTextHex);
 					ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, pwszHexToPrint, 2, nullptr);
 				}
 
@@ -956,14 +949,9 @@ void CHexCtrl::OnPaint()
 					wchAscii = '.';
 
 				//Ascii printing.
-				COLORREF clrBkAscii, clrTextAscii;
 				if (m_fMutable && ullIndexDataToPrint == m_ullCursorPos) {
-					clrBkAscii = m_clrBkCursor;
-					clrTextAscii = m_clrTextCursor;
-				}
-				else {
-					clrBkAscii = clrBk;
-					clrTextAscii = m_clrTextAscii;
+					clrBkAscii = m_stColor.clrBkCursor;
+					clrTextAscii = m_stColor.clrTextCursor;
 				}
 				rDC.SetBkColor(clrBkAscii);
 				rDC.SetTextColor(clrTextAscii);
@@ -1340,7 +1328,7 @@ void CHexCtrl::SetSingleByteData(ULONGLONG ullByte, BYTE chData, bool fWhole, bo
 
 	if (m_pwndMsg)
 	{
-		HEXNOTIFY hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DATASET },
+		HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_SETDATA },
 			ullByte, chByteNew };
 		m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
 	}

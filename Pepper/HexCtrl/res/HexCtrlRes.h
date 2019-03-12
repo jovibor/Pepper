@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by HexCtrl.rc
+// Used by HexCtrl.rect
 //
 #define IDB_HEXCTRL_SCROLL_V					4009
 #define IDB_HEXCTRL_SCROLL_H					4010

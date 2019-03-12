@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by Pepper.rc
+// Used by Pepper.rect
 //
 #define IDD_ABOUTBOX                    100
 #define ID_STATUSBAR_PANE1              120

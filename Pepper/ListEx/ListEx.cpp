@@ -67,9 +67,9 @@ void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BO
 	GetItem(iItem, &m_hdItem);
 
 	if (StrStrW(m_wstrHeaderText, L"\n"))
-	{	//If it's multiline text, first — calculate rc for the text,
+	{	//If it's multiline text, first — calculate rect for the text,
 		//with CALC_RECT flag (not drawing anything),
-		//and then calculate rc for final vertical text alignment.
+		//and then calculate rect for final vertical text alignment.
 		CRect rcText;
 		rDC.DrawTextW(m_wstrHeaderText, &rcText, DT_CENTER | DT_CALCRECT);
 		rect.top = rect.Height() / 2 - rcText.Height() / 2;
@@ -514,7 +514,7 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 			pDC->FillSolidRect(&rc, clrBk);
 
 			CString strSubitem = GetItemText(pDIS->itemID, i);
-			rc.left += 3; //Drawing text +-3 px from rc bounds
+			rc.left += 3; //Drawing text +-3 px from rect bounds
 			ExtTextOutW(pDC->m_hDC, rc.left, rc.top, ETO_CLIPPED, rc, strSubitem, strSubitem.GetLength(), nullptr);
 			rc.left -= 3;
 
@@ -545,7 +545,7 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint pt)
 
 	if (fHasTooltip)
 	{
-		//Check if cursor is still in the same cell's rc. If so - just leave.
+		//Check if cursor is still in the same cell's rect. If so - just leave.
 		if (m_stCurrCell.iItem == hi.iItem && m_stCurrCell.iSubItem == hi.iSubItem)
 			return;
 
@@ -560,7 +560,7 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint pt)
 		::SendMessage(m_hwndTt, TTM_UPDATETIPTEXT, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 		::SendMessage(m_hwndTt, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
 
-		//Timer to check whether mouse left subitem rc.
+		//Timer to check whether mouse left subitem rect.
 		SetTimer(ID_TIMER_TOOLTIP, 200, 0);
 	}
 	else
@@ -636,7 +636,7 @@ BOOL CListEx::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void CListEx::OnTimer(UINT_PTR nIDEvent)
 {
-	//Checking if mouse left list's subitem rc,
+	//Checking if mouse left list's subitem rect,
 	//if so — hiding tooltip and killing timer.
 	if (nIDEvent == ID_TIMER_TOOLTIP)
 	{
@@ -680,7 +680,7 @@ BOOL CListEx::OnEraseBkgnd(CDC* pDC)
 void CListEx::OnPaint()
 {
 	//To avoid flickering.
-	//Drawing to CMemDC, excluding list header area (rc).
+	//Drawing to CMemDC, excluding list header area (rect).
 	CRect rc, rcHdr;
 	GetClientRect(&rc);
 	GetHeaderCtrl().GetClientRect(rcHdr);

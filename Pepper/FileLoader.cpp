@@ -226,7 +226,7 @@ bool CFileLoader::IsLoaded()
 
 BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	PHEXNOTIFY pHexNtfy = (PHEXNOTIFY)lParam;
+	PHEXNOTIFYSTRUCT pHexNtfy = (PHEXNOTIFYSTRUCT)lParam;
 
 	switch (pHexNtfy->hdr.code)
 	{
@@ -241,7 +241,7 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		}
 	}
 	break;
-	case HEXCTRL_MSG_GETDISPINFO:
+	case HEXCTRL_MSG_GETDATA:
 		pHexNtfy->chByte = GetByte(pHexNtfy->hdr.hwndFrom, pHexNtfy->ullByteIndex);
 		break;
 	}
