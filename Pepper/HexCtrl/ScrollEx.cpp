@@ -9,10 +9,33 @@
 ****************************************************************************************/
 #include "stdafx.h"
 #include "ScrollEx.h"
+#include "res/HexCtrlRes.h"
 #include <cmath>
 
 using namespace HEXCTRL;
 
+namespace HEXCTRL {
+	/********************************************
+	* Internal enums.							*
+	********************************************/
+	namespace {
+		enum SCROLLEX_STATE
+		{
+			FIRSTBUTTON_HOVER, FIRSTBUTTON_CLICK,
+			FIRSTCHANNEL_CLICK, THUMB_HOVER,
+			THUMB_CLICK, LASTCHANNEL_CLICK,
+			LASTBUTTON_CLICK, LASTBUTTON_HOVER
+		};
+		enum SCROLLEX_TIMERS {
+			IDT_FIRSTCLICK = 0x7ff0,
+			IDT_CLICKREPEAT = 0x7ff1
+		};
+	}
+}
+
+/****************************************************
+* CScrollEx class implementation.					*
+****************************************************/
 BEGIN_MESSAGE_MAP(CScrollEx, CWnd)
 	ON_WM_TIMER()
 END_MESSAGE_MAP()
@@ -303,34 +326,34 @@ void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 			if (GetThumbRect(true).PtInRect(pt))
 			{
 				m_ptCursorCur = pt;
-				m_iScrollBarState = THUMB_CLICK;
+				m_iScrollBarState = SCROLLEX_STATE::THUMB_CLICK;
 				GetParent()->SetCapture();
 			}
 			else if (GetFirstArrowRect(true).PtInRect(pt))
 			{
 				ScrollLineUp();
-				m_iScrollBarState = FIRSTBUTTON_CLICK;
+				m_iScrollBarState = SCROLLEX_STATE::FIRSTBUTTON_CLICK;
 				GetParent()->SetCapture();
 				SetTimer(IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetLastArrowRect(true).PtInRect(pt))
 			{
 				ScrollLineDown();
-				m_iScrollBarState = LASTBUTTON_CLICK;
+				m_iScrollBarState = SCROLLEX_STATE::LASTBUTTON_CLICK;
 				GetParent()->SetCapture();
 				SetTimer(IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetFirstChannelRect(true).PtInRect(pt))
 			{
 				ScrollPageUp();
-				m_iScrollBarState = FIRSTCHANNEL_CLICK;
+				m_iScrollBarState = SCROLLEX_STATE::FIRSTCHANNEL_CLICK;
 				GetParent()->SetCapture();
 				SetTimer(IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetLastChannelRect(true).PtInRect(pt))
 			{
 				ScrollPageDown();
-				m_iScrollBarState = LASTCHANNEL_CLICK;
+				m_iScrollBarState = SCROLLEX_STATE::LASTCHANNEL_CLICK;
 				GetParent()->SetCapture();
 				SetTimer(IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
@@ -733,7 +756,7 @@ bool CScrollEx::IsVert()
 
 bool CScrollEx::IsThumbDragging()
 {
-	return m_iScrollBarState == THUMB_CLICK ? true : false;
+	return m_iScrollBarState == SCROLLEX_STATE::THUMB_CLICK ? true : false;
 }
 
 void CScrollEx::ResetTimers()

@@ -107,7 +107,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
-    <IncludePath>HexCtrl;HexCtrl\res;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>HexCtrl;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,14 +115,14 @@
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)$(Configuration)\$(Platform)\</IntDir>
     <TargetName>$(ProjectName)64d</TargetName>
-    <IncludePath>HexCtrl;HexCtrl\res;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>HexCtrl;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IntDir>$(SolutionDir)$(Configuration)\</IntDir>
-    <IncludePath>HexCtrl;HexCtrl\res;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>HexCtrl;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -136,7 +136,7 @@
     <GenerateManifest>false</GenerateManifest>
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>HexCtrl;HexCtrl\res;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>HexCtrl;ListEx;res;include;verinfo;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <TargetName>$(ProjectName)64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|x64'">
@@ -146,7 +146,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
@@ -405,6 +405,8 @@
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="HexCtrl\HexCtrl.cpp" />
+    <ClCompile Include="HexCtrl\HexCtrlDlgAbout.cpp" />
+    <ClCompile Include="HexCtrl\HexCtrlDlgSearch.cpp" />
     <ClCompile Include="HexCtrl\ScrollEx.cpp" />
     <ClCompile Include="ListEx\ListEx.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
@@ -439,6 +441,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HexCtrl\HexCtrl.h" />
+    <ClInclude Include="HexCtrl\HexCtrlDlgAbout.h" />
+    <ClInclude Include="HexCtrl\HexCtrlDlgSearch.h" />
     <ClInclude Include="HexCtrl\res\HexCtrlRes.h" />
     <ClInclude Include="HexCtrl\ScrollEx.h" />
     <ClInclude Include="include\ChildFrm.h" />

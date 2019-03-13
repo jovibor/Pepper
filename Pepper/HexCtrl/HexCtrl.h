@@ -9,12 +9,9 @@
 * 3. Call myHex.SetData method to set the data and its size to display as hex.	        *
 ****************************************************************************************/
 #pragma once
-#pragma comment(lib, "Dwmapi.lib")
-#include <afxcontrolbars.h>
-#include <vector>
-#include <unordered_map>
-#include "HexCtrlRes.h"
-#include "ScrollEx.h"
+#include <memory>			//std::unique_ptr and related.
+#include <unordered_map>	//std::unordered_map and related.
+#include <afxwin.h>			//MFC core and standard components.
 
 namespace HEXCTRL {
 	/********************************************************************************************
@@ -33,8 +30,9 @@ namespace HEXCTRL {
 		COLORREF clrBkCursor { RGB(0, 0, 250) };					//Cursor background color.
 	};
 	using PHEXCOLORSTRUCT = HEXCOLORSTRUCT * ;
+
 	/********************************************************************************************
-	* HEXCREATESTRUCT - for CHexCtrl::Create method.												*
+	* HEXCREATESTRUCT - for CHexCtrl::Create method.											*
 	********************************************************************************************/
 	struct HEXCREATESTRUCT
 	{
@@ -66,94 +64,23 @@ namespace HEXCTRL {
 	********************************************************************************************/
 	struct HEXNOTIFYSTRUCT
 	{
-		NMHDR			hdr;			//Standart Windows header.
-		ULONGLONG		ullByteIndex;	//Index of the byte to draw next.
-		unsigned char	chByte;			//Value of that byte to send back.
+		NMHDR			hdr;			//Standard Windows header. For hdr.code values see HEXCTRL_MSG_* messages.
+		ULONGLONG		ullByteIndex;	//Index of the byte to get/send.
+		unsigned char	chByte;			//Value of the byte to get/send.
 	};
 	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT * ;
 
 	/********************************************
-	* CHexDlgAbout class definition.			*
-	********************************************/
-	class CHexDlgAbout : public CDialogEx
-	{
-	public:
-		explicit CHexDlgAbout(CWnd* m_pParent = nullptr) : CDialogEx(IDD_HEXCTRL_ABOUT) {}
-		virtual ~CHexDlgAbout() {}
-	protected:
-		virtual BOOL OnInitDialog() override;
-		afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-		afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-		HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-		DECLARE_MESSAGE_MAP()
-	private:
-		bool m_fGithubLink { true };
-		HCURSOR m_curHand { };
-		HCURSOR m_curArrow { };
-		CFont m_fontDefault;
-		CFont m_fontUnderline;
-		CBrush m_stBrushDefault;
-		COLORREF m_clrMenu { GetSysColor(COLOR_MENU) };
-	};
-
-	/********************************************
-	* CHexDlgSearch class definition.			*
-	********************************************/
-	class CHexCtrl;
-	class CHexDlgSearch : public CDialogEx
-	{
-	private:
-		struct HEXSEARCH
-		{
-			std::wstring	wstrSearch { };			//String search for.
-			DWORD			dwSearchType { };		//Hex, Ascii, Unicode, etc...
-			ULONGLONG		ullStartAt { };			//An offset, search should start at.
-			int				iDirection { };
-			bool			fWrap { false };		//Was search wrapped?
-			int				iWrap { };				//Wrap direction.
-			bool			fSecondMatch { false }; //First or subsequent match. 
-			bool			fFound { false };
-			bool			fCount { true };		//Do we count matches or just print "Found".
-		};
-	public:
-		friend class CHexCtrl;
-		explicit CHexDlgSearch(CWnd* m_pParent = nullptr) {}
-		virtual ~CHexDlgSearch() {}
-		BOOL Create(UINT nIDTemplate, CHexCtrl* pParentWnd);
-		CHexCtrl* GetParent() const;
-	protected:
-		virtual void DoDataExchange(CDataExchange* pDX);
-		virtual BOOL OnInitDialog();
-		afx_msg void OnButtonSearchF();
-		afx_msg void OnButtonSearchB();
-		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
-		afx_msg void OnClose();
-		virtual BOOL PreTranslateMessage(MSG* pMsg);
-		HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-		void OnRadioBnRange(UINT nID);
-		void SearchCallback();
-		void ClearAll();
-		DECLARE_MESSAGE_MAP()
-	private:
-		CHexCtrl* m_pParent { };
-		HEXSEARCH m_stSearch { };
-		DWORD m_dwOccurrences { };
-		int m_iRadioCurrent { };
-		COLORREF m_clrSearchFailed { RGB(200, 0, 0) };
-		COLORREF m_clrSearchFound { RGB(0, 200, 0) };
-		CBrush m_stBrushDefault;
-		COLORREF m_clrMenu { GetSysColor(COLOR_MENU) };
-	};
-
-	/********************************************
 	* CHexCtrl class definition.				*
 	********************************************/
+	class CScrollEx;	//Forward declaration.
+	struct HEXSEARCH;	//Forward declaration.
 	class CHexCtrl : public CWnd
 	{
 	public:
 		friend class CHexDlgSearch;
 		CHexCtrl();
-		virtual ~CHexCtrl() {}
+		virtual ~CHexCtrl();
 		bool Create(const HEXCREATESTRUCT& hcs); //Main initialization method, CHexCtrl::Create.
 		bool IsCreated();						 //Shows whether control created or not.
 		void SetData(const HEXDATASTRUCT& hds);  //Main method for setting data to display (and edit).																
@@ -164,10 +91,9 @@ namespace HEXCTRL {
 		UINT GetFontSize();						 //Gets the control's font size.
 		void SetColor(const HEXCOLORSTRUCT& clr);//Sets all the colors for the control.
 		void SetCapacity(DWORD dwCapacity);		 //Sets the control's current capacity.
-		int GetDlgCtrlID() const;
-		CWnd* GetParent() const;
+		int GetDlgCtrlID()const;
+		CWnd* GetParent()const;
 	protected:
-		enum HEXCTRL_SHOWAS { ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8 };
 		DECLARE_MESSAGE_MAP()
 		void OnDraw(CDC* pDC) {} //All drawing is in OnPaint.
 		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
@@ -198,12 +124,12 @@ namespace HEXCTRL {
 		ULONGLONG HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);
 		void CopyToClipboard(UINT nType);
-		void Search(CHexDlgSearch::HEXSEARCH& rSearch);
+		void Search(HEXSEARCH& rSearch);
 		void SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullSize, bool fHighlight = false);
 		void SelectAll();
 		void UpdateInfoText();
 		void ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwBytes = 4);
-		void SetShowAs(HEXCTRL_SHOWAS enShowAs);
+		void SetShowAs(DWORD dwShowAs);
 		void SetSingleByteData(ULONGLONG ullByte, BYTE chData, bool fWhole = true, bool fHighPart = true, bool fMoveNext = true);
 		void SetCursorPos(ULONGLONG ullPos, bool fHighPart); //Sets the cursor position when in Edit mode.
 		void CursorMoveRight();
@@ -221,16 +147,15 @@ namespace HEXCTRL {
 		DWORD m_dwCapacity { 16 };			//How many bytes displayed in one row
 		const DWORD m_dwCapacityMax { 64 }; //Maximum capacity.
 		DWORD m_dwCapacityBlockSize { m_dwCapacity / 2 }; //Size of block before space delimiter.
-		HEXCTRL_SHOWAS m_enShowAs { HEXCTRL_SHOWAS::ASBYTE }; //Show data mode.
+		DWORD m_dwShowAs { };				//Show data mode.
 		CWnd* m_pwndParentOwner { };		//Parent or owner window pointer.
 		CWnd* m_pwndMsg { };				//Window the control messages will be sent to.
 		SIZE m_sizeLetter { 1, 1 };			//Current font's letter size (width, height).
 		CFont m_fontHexView;				//Main Hex chunks font.
 		CFont m_fontBottomRect;				//Font for bottom Info rect.
-		CHexDlgSearch m_dlgSearch;			//Search dialog.
-		CHexDlgAbout m_dlgAbout;			//About dialog.
-		CScrollEx m_stScrollV;				//Vertical scroll object.
-		CScrollEx m_stScrollH;				//Horizontal scroll object.
+		std::unique_ptr<CHexDlgSearch> m_pDlgSearch { std::make_unique<CHexDlgSearch>() }; //Search dialog.
+		std::unique_ptr<CScrollEx> m_pstScrollV { std::make_unique<CScrollEx>() }; //Vertical scroll object.
+		std::unique_ptr<CScrollEx> m_pstScrollH { std::make_unique<CScrollEx>() }; //Horizontal scroll object.
 		CMenu m_menuMain;					//Main popup menu.
 		CMenu m_menuSubShowAs;				//Submenu "Show as..."
 		HEXCOLORSTRUCT m_stColor;			//All control related colors.
@@ -263,29 +188,14 @@ namespace HEXCTRL {
 		ULONGLONG m_ullCursorPos { };		//Current cursor position.
 		bool m_fCursorHigh { true };		//Cursor's High or Low bits position (first or last digit in hex chunk).
 		bool m_fCursorAscii { false };		//Whether cursor at Ascii or Hex chunks area.
-
-		/////////////////////////Enums///////////////////////////////////////////////
-		enum HEXCTRL_CLIPBOARD { COPY_HEX, COPY_HEXFORMATTED, COPY_ASCII };
-		enum HEXCTRL_MENU {
-			IDM_MAIN_SEARCH, IDM_MAIN_COPYASHEX, IDM_MAIN_COPYASHEXFORMATTED, IDM_MAIN_COPYASASCII, IDM_MAIN_ABOUT,
-			IDM_SUB_SHOWASBYTE, IDM_SUB_SHOWASWORD, IDM_SUB_SHOWASDWORD, IDM_SUB_SHOWASQWORD
-		};
-		enum HEXCTRL_SEARCH {
-			SEARCH_HEX, SEARCH_ASCII, SEARCH_UNICODE,
-			SEARCH_FORWARD, SEARCH_BACKWARD,
-			SEARCH_NOTFOUND, SEARCH_FOUND,
-			SEARCH_BEGINNING, SEARCH_END,
-		};
 	};
 
-	/************************************************
-	* WM_NOTIFY message codes (NMHDR.code values)	*
-	************************************************/
+	/********************************************************************************************
+	* WM_NOTIFY message codes (NMHDR.code values).												*
+	* These codes are used to notify m_pwndMsg window about control's current states.			*
+	********************************************************************************************/
 
-	constexpr auto HEXCTRL_MSG_DESTROY = 0x00FF;
-	constexpr auto HEXCTRL_MSG_GETDATA = 0x0100;
-	constexpr auto HEXCTRL_MSG_SETDATA = 0x0101;
-
-	//Version string.
-	constexpr auto HEXCTRL_VERSION_WSTR = L"Hex Control for MFC, v2.0.1";
+	constexpr auto HEXCTRL_MSG_DESTROY = 0x00FF;	//Inicates that HexCtrl is being destroyed.
+	constexpr auto HEXCTRL_MSG_GETDATA = 0x0100;	//Used in Virtual mode to demand the next byte to display.
+	constexpr auto HEXCTRL_MSG_SETDATA = 0x0101;	//Indicates that the byte in memory has changed, used in edit mode.
 };

@@ -40,14 +40,20 @@
     <ClCompile Include="FileLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HexCtrl\HexCtrl.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
     <ClCompile Include="HexCtrl\ScrollEx.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
     <ClCompile Include="ListEx\ListEx.cpp">
       <Filter>ListEx</Filter>
+    </ClCompile>
+    <ClCompile Include="HexCtrl\HexCtrlDlgAbout.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="HexCtrl\HexCtrlDlgSearch.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="HexCtrl\HexCtrl.cpp">
+      <Filter>HexCtrl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -96,9 +102,6 @@
     <ClInclude Include="include\FileLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HexCtrl\HexCtrl.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
     <ClInclude Include="HexCtrl\ScrollEx.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
@@ -110,6 +113,15 @@
     </ClInclude>
     <ClInclude Include="include\libpe.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HexCtrl\HexCtrlDlgAbout.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="HexCtrl\HexCtrlDlgSearch.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="HexCtrl\HexCtrl.h">
+      <Filter>HexCtrl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

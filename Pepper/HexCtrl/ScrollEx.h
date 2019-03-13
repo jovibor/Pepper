@@ -9,10 +9,8 @@
 ****************************************************************************************/
 #pragma once
 #include <afxwin.h>
-#include "HexCtrlRes.h"
 
 namespace HEXCTRL {
-
 	class CScrollEx : public CWnd
 	{
 	public:
@@ -71,13 +69,6 @@ namespace HEXCTRL {
 		afx_msg void OnTimer(UINT_PTR nIDEvent);
 		void SendParentScrollMsg();
 	protected:
-		enum SCROLLEX_STATE
-		{
-			FIRSTBUTTON_HOVER, FIRSTBUTTON_CLICK,
-			FIRSTCHANNEL_CLICK, THUMB_HOVER,
-			THUMB_CLICK, LASTCHANNEL_CLICK,
-			LASTBUTTON_CLICK, LASTBUTTON_HOVER
-		};
 		CWnd* m_pwndParent { };
 		CScrollEx* m_pSibling { };
 		UINT m_uiScrollBarSizeWH { };
@@ -98,12 +89,6 @@ namespace HEXCTRL {
 		//Needed and very important in hit testing.
 		int m_iTopDelta { };
 		int m_iLeftDelta { };
-
-		//Timers.
-		enum SCROLLEX_TIMERS {
-			IDT_FIRSTCLICK = 0x7ff0,
-			IDT_CLICKREPEAT = 0x7ff1
-		};
 		const int m_iTimerFirstClick { 200 };
 		const int m_iTimerRepeat { 50 };
 
