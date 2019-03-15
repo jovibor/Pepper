@@ -21,7 +21,8 @@ namespace HEXCTRL {
 			SEARCH_BEGINNING, SEARCH_END
 		};
 	}
-	struct HEXSEARCH
+
+	struct HEXSEARCHSTRUCT
 	{
 		std::wstring	wstrSearch { };			//String search for.
 		DWORD			dwSearchType { };		//Hex, Ascii, Unicode, etc...
@@ -60,7 +61,7 @@ namespace HEXCTRL {
 		DECLARE_MESSAGE_MAP()
 	private:
 		CHexCtrl* m_pParent { };
-		HEXSEARCH m_stSearch { };
+		HEXSEARCHSTRUCT m_stSearch { };
 		DWORD m_dwOccurrences { };
 		int m_iRadioCurrent { };
 		COLORREF m_clrSearchFailed { RGB(200, 0, 0) };

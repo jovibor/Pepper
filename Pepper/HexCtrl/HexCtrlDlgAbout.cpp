@@ -11,80 +11,83 @@
 #include "stdafx.h"
 #include "HexCtrlDlgAbout.h"
 
+using namespace HEXCTRL;
+
 namespace HEXCTRL {
-	/****************************************************
-	* CHexDlgAbout class implementation.				*
-	****************************************************/
-	constexpr auto HEXCTRL_VERSION_WSTR = L"Hex Control for MFC, v2.1.0";
+	namespace { constexpr auto HEXCTRL_VERSION_WSTR = L"Hex Control for MFC, v2.2.0"; };
+}
 
-	BEGIN_MESSAGE_MAP(CHexDlgAbout, CDialogEx)
-		ON_WM_LBUTTONDOWN()
-		ON_WM_MOUSEMOVE()
-		ON_WM_CTLCOLOR()
-	END_MESSAGE_MAP()
+/****************************************************
+* CHexDlgAbout class implementation.				*
+****************************************************/
 
-	BOOL CHexDlgAbout::OnInitDialog()
+BEGIN_MESSAGE_MAP(CHexDlgAbout, CDialogEx)
+	ON_WM_LBUTTONDOWN()
+	ON_WM_MOUSEMOVE()
+	ON_WM_CTLCOLOR()
+END_MESSAGE_MAP()
+
+BOOL CHexDlgAbout::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	//To prevent cursor from blinking
+	SetClassLongPtrW(m_hWnd, GCLP_HCURSOR, 0);
+
+	m_fontDefault.CreateStockObject(DEFAULT_GUI_FONT);
+	LOGFONTW lf;
+	m_fontDefault.GetLogFont(&lf);
+	lf.lfUnderline = TRUE;
+	m_fontUnderline.CreateFontIndirectW(&lf);
+
+	m_stBrushDefault.CreateSolidBrush(m_clrMenu);
+
+	m_curHand = LoadCursor(nullptr, IDC_HAND);
+	m_curArrow = LoadCursor(nullptr, IDC_ARROW);
+
+	GetDlgItem(IDC_HEXCTRL_ABOUT_STATIC_VERSION)->SetWindowTextW(HEXCTRL_VERSION_WSTR);
+
+	return TRUE;
+}
+
+void CHexDlgAbout::OnMouseMove(UINT nFlags, CPoint point)
+{
+	CWnd* pWnd = ChildWindowFromPoint(point);
+	if (!pWnd)
+		return;
+
+	if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB))
 	{
-		CDialogEx::OnInitDialog();
-
-		//To prevent cursor from blinking
-		SetClassLongPtrW(m_hWnd, GCLP_HCURSOR, 0);
-
-		m_fontDefault.CreateStockObject(DEFAULT_GUI_FONT);
-		LOGFONTW lf;
-		m_fontDefault.GetLogFont(&lf);
-		lf.lfUnderline = TRUE;
-		m_fontUnderline.CreateFontIndirectW(&lf);
-
-		m_stBrushDefault.CreateSolidBrush(m_clrMenu);
-
-		m_curHand = LoadCursor(nullptr, IDC_HAND);
-		m_curArrow = LoadCursor(nullptr, IDC_ARROW);
-
-		GetDlgItem(IDC_HEXCTRL_ABOUT_STATIC_VERSION)->SetWindowTextW(HEXCTRL_VERSION_WSTR);
-
-		return TRUE;
+		m_fGithubLink = !m_fGithubLink;
+		GetDlgItem(IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)->RedrawWindow();
+		SetCursor(m_fGithubLink ? m_curArrow : m_curHand);
 	}
 
-	void CHexDlgAbout::OnMouseMove(UINT nFlags, CPoint point)
+	CDialogEx::OnMouseMove(nFlags, point);
+}
+
+void CHexDlgAbout::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	CWnd* pWnd = ChildWindowFromPoint(point);
+
+	if (!pWnd)
+		return;
+
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)
+		ShellExecute(nullptr, L"open", L"https://github.com/jovibor/Pepper", nullptr, nullptr, NULL);
+
+	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+HBRUSH CHexDlgAbout::OnCtlColor(CDC * pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)
 	{
-		CWnd* pWnd = ChildWindowFromPoint(point);
-		if (!pWnd)
-			return;
-
-		if (m_fGithubLink == (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB))
-		{
-			m_fGithubLink = !m_fGithubLink;
-			GetDlgItem(IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)->RedrawWindow();
-			SetCursor(m_fGithubLink ? m_curArrow : m_curHand);
-		}
-
-		CDialogEx::OnMouseMove(nFlags, point);
+		pDC->SetBkColor(m_clrMenu);
+		pDC->SetTextColor(RGB(0, 0, 210));
+		pDC->SelectObject(m_fGithubLink ? &m_fontDefault : &m_fontUnderline);
+		return m_stBrushDefault;
 	}
 
-	void CHexDlgAbout::OnLButtonDown(UINT nFlags, CPoint point)
-	{
-		CWnd* pWnd = ChildWindowFromPoint(point);
-
-		if (!pWnd)
-			return;
-
-		if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)
-			ShellExecute(nullptr, L"open", L"https://github.com/jovibor/Pepper", nullptr, nullptr, NULL);
-
-		CDialogEx::OnLButtonDown(nFlags, point);
-	}
-
-	HBRUSH CHexDlgAbout::OnCtlColor(CDC * pDC, CWnd* pWnd, UINT nCtlColor)
-	{
-		if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_ABOUT_STATIC_LINKGITHUB)
-		{
-			pDC->SetBkColor(m_clrMenu);
-			pDC->SetTextColor(RGB(0, 0, 210));
-			pDC->SelectObject(m_fGithubLink ? &m_fontDefault : &m_fontUnderline);
-			return m_stBrushDefault;
-		}
-
-		return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
-	}
+	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }

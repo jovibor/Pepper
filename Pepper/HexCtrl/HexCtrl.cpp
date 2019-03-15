@@ -29,8 +29,9 @@ namespace HEXCTRL {
 			IDM_MAIN_SEARCH, IDM_MAIN_COPYASHEX, IDM_MAIN_COPYASHEXFORMATTED, IDM_MAIN_COPYASASCII, IDM_MAIN_ABOUT,
 			IDM_SUB_SHOWASBYTE, IDM_SUB_SHOWASWORD, IDM_SUB_SHOWASDWORD, IDM_SUB_SHOWASQWORD
 		};
+		constexpr auto HEXCTRL_WNDCLASS_NAME = L"HexControl";
 	}
-}
+};
 
 /************************************************************************
 * CHexCtrl implementation.												*
@@ -60,6 +61,8 @@ END_MESSAGE_MAP()
 
 CHexCtrl::CHexCtrl()
 {
+	RegisterWndClass();
+
 	for (unsigned i = 0; i < m_dwCapacityMax; i++)
 	{
 		WCHAR wstr[3];
@@ -151,12 +154,15 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
 	}
 
-	HCURSOR hCur;
-	if (!(hCur = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED)))
+	//If it's custom dialog control then there is no need to create window.
+	if (!hcs.fCustomCtrl && !CWnd::CreateEx(hcs.dwExStyles, HEXCTRL_WNDCLASS_NAME, L"HexControl",
+		dwStyle, rc, m_pwndParentOwner, m_fFloat ? 0 : m_dwCtrlId))
+	{
+		CStringW ss;
+		ss.Format(L"CHexCtrl (Id:%d) CWnd::CreateEx failed.\r\nCheck HEXCREATESTRUCT filling correctness.", m_dwCtrlId);
+		MessageBoxW(ss, L"Error", MB_ICONERROR);
 		return false;
-	if (!CWnd::CreateEx(hcs.dwExStyles, AfxRegisterWndClass(CS_VREDRAW | CS_HREDRAW, hCur),
-		L"HexControl", dwStyle, rc, m_pwndParentOwner, m_fFloat ? 0 : m_dwCtrlId))
-		return false;
+	}
 
 	//Removing window's border frame.
 	MARGINS marg { 0, 0, 0, 1 };
@@ -168,8 +174,9 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 	m_pstScrollV->AddSibling(m_pstScrollH.get());
 	m_pstScrollH->AddSibling(m_pstScrollV.get());
 
-	RecalcAll();
 	m_fCreated = true;
+
+	RecalcAll();
 
 	return true;
 }
@@ -181,6 +188,9 @@ bool CHexCtrl::IsCreated()
 
 void CHexCtrl::SetData(const HEXDATASTRUCT& hds)
 {
+	if (!IsCreated())
+		return;
+
 	if (hds.pwndMsg)
 		m_pwndMsg = hds.pwndMsg;
 
@@ -293,6 +303,35 @@ int CHexCtrl::GetDlgCtrlID()const
 CWnd* CHexCtrl::GetParent()const
 {
 	return m_pwndParentOwner;
+}
+
+bool CHexCtrl::RegisterWndClass()
+{
+	WNDCLASSEXW wcls;
+	HINSTANCE hInst = AfxGetInstanceHandle();
+
+	if (!(::GetClassInfoExW(hInst, HEXCTRL_WNDCLASS_NAME, &wcls)))
+	{
+		wcls.cbSize = sizeof(WNDCLASSEXW);
+		wcls.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
+		wcls.lpfnWndProc = ::DefWindowProc;
+		wcls.cbClsExtra = wcls.cbWndExtra = 0;
+		wcls.hInstance = hInst;
+		wcls.hIcon = NULL;
+		wcls.hIconSm = NULL;
+		wcls.hCursor = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+		wcls.hbrBackground = NULL;
+		wcls.lpszMenuName = nullptr;
+		wcls.lpszClassName = HEXCTRL_WNDCLASS_NAME;
+
+		if (!RegisterClassExW(&wcls))
+		{
+			MessageBoxW(L"HexControl RegisterClassExW error.", L"Error");
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
@@ -753,6 +792,13 @@ void CHexCtrl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 void CHexCtrl::OnPaint()
 {
 	CPaintDC dc(this);
+	if (!IsCreated()) {
+		CRect rc;
+		dc.GetClipBox(rc);
+		dc.FillSolidRect(rc, RGB(250, 250, 250));
+		dc.TextOutW(1, 1, L"Call CHexCtrl::Create first.");
+		return;
+	}
 
 	int iScrollH = (int)m_pstScrollH->GetScrollPos();
 	CRect rcClient;
@@ -1473,7 +1519,7 @@ void CHexCtrl::CursorScroll()
 		m_pstScrollH->SetScrollPos(ullNewScrollH);
 }
 
-void CHexCtrl::Search(HEXSEARCH& rSearch)
+void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 {
 	rSearch.fFound = false;
 	ULONGLONG ullStartAt = rSearch.ullStartAt;
@@ -1490,7 +1536,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 
 	switch (rSearch.dwSearchType)
 	{
-	case SEARCH_HEX:
+	case HEXCTRL_SEARCH::SEARCH_HEX:
 	{
 		DWORD dwIterations = DWORD(strSearchAscii.size() / 2 + strSearchAscii.size() % 2);
 		std::string strToUL;
@@ -1520,7 +1566,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 
 		break;
 	}
-	case SEARCH_ASCII:
+	case HEXCTRL_SEARCH::SEARCH_ASCII:
 	{
 		ullSizeBytes = strSearchAscii.size();
 		if (ullSizeBytes > m_ullDataSize)
@@ -1529,7 +1575,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 		strSearch = std::move(strSearchAscii);
 		break;
 	}
-	case SEARCH_UNICODE:
+	case HEXCTRL_SEARCH::SEARCH_UNICODE:
 	{
 		ullSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
 		if (ullSizeBytes > m_ullDataSize)
@@ -1541,10 +1587,10 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 
 	///////////////Actual Search:////////////////////////////////////////////
 	switch (rSearch.dwSearchType) {
-	case SEARCH_HEX:
-	case SEARCH_ASCII:
+	case HEXCTRL_SEARCH::SEARCH_HEX:
+	case HEXCTRL_SEARCH::SEARCH_ASCII:
 	{
-		if (rSearch.iDirection == SEARCH_FORWARD)
+		if (rSearch.iDirection == HEXCTRL_SEARCH::SEARCH_FORWARD)
 		{
 			ullUntil = m_ullDataSize - strSearch.size();
 			ullStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
@@ -1568,13 +1614,13 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 					rSearch.fFound = true;
 					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = SEARCH_END;
+					rSearch.iWrap = HEXCTRL_SEARCH::SEARCH_END;
 					rSearch.fCount = true;
 					goto End;
 				}
 			}
 		}
-		if (rSearch.iDirection == SEARCH_BACKWARD)
+		if (rSearch.iDirection == HEXCTRL_SEARCH::SEARCH_BACKWARD)
 		{
 			if (rSearch.fSecondMatch && ullStartAt > 0)
 			{
@@ -1599,7 +1645,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 					rSearch.fFound = true;
 					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = SEARCH_BEGINNING;
+					rSearch.iWrap = HEXCTRL_SEARCH::SEARCH_BEGINNING;
 					rSearch.fCount = false;
 					goto End;
 				}
@@ -1607,7 +1653,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 		}
 		break;
 	}
-	case SEARCH_UNICODE:
+	case HEXCTRL_SEARCH::SEARCH_UNICODE:
 	{
 		if (rSearch.iDirection == SEARCH_FORWARD)
 		{
@@ -1632,14 +1678,14 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 				{
 					rSearch.fFound = true;
 					rSearch.ullStartAt = i;
-					rSearch.iWrap = SEARCH_END;
+					rSearch.iWrap = HEXCTRL_SEARCH::SEARCH_END;
 					rSearch.fWrap = true;
 					rSearch.fCount = true;
 					goto End;
 				}
 			}
 		}
-		else if (rSearch.iDirection == SEARCH_BACKWARD)
+		else if (rSearch.iDirection == HEXCTRL_SEARCH::SEARCH_BACKWARD)
 		{
 			if (rSearch.fSecondMatch && ullStartAt > 0)
 			{
@@ -1664,7 +1710,7 @@ void CHexCtrl::Search(HEXSEARCH& rSearch)
 					rSearch.fFound = true;
 					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = SEARCH_BEGINNING;
+					rSearch.iWrap = HEXCTRL_SEARCH::SEARCH_BEGINNING;
 					rSearch.fCount = false;
 					goto End;
 				}

@@ -34,13 +34,13 @@ namespace HEXCTRL {
 }
 
 /****************************************************
-* CScrollEx class implementation.					*
+* CScrollEx64 class implementation.					*
 ****************************************************/
-BEGIN_MESSAGE_MAP(CScrollEx, CWnd)
+BEGIN_MESSAGE_MAP(CScrollEx64, CWnd)
 	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
-bool CScrollEx::Create(CWnd * pWndParent, int iScrollType,
+bool CScrollEx64::Create(CWnd * pWndParent, int iScrollType,
 	ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax)
 {
 	if (m_fCreated || !pWndParent || (iScrollType != SB_VERT && iScrollType != SB_HORZ))
@@ -73,13 +73,13 @@ bool CScrollEx::Create(CWnd * pWndParent, int iScrollType,
 	return true;
 }
 
-void CScrollEx::AddSibling(CScrollEx* pSibling)
+void CScrollEx64::AddSibling(CScrollEx64* pSibling)
 {
 	if (pSibling)
 		m_pSibling = pSibling;
 }
 
-bool CScrollEx::IsSiblingVisible()
+bool CScrollEx64::IsSiblingVisible()
 {
 	if (m_pSibling)
 		return m_pSibling->IsVisible();
@@ -87,7 +87,7 @@ bool CScrollEx::IsSiblingVisible()
 	return false;
 }
 
-void CScrollEx::SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax)
+void CScrollEx64::SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, ULONGLONG ullScrollSizeMax)
 {
 	if (!m_fCreated)
 		return;
@@ -101,7 +101,7 @@ void CScrollEx::SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, 
 		pWnd->SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 }
 
-ULONGLONG CScrollEx::SetScrollPos(ULONGLONG ullNewPos)
+ULONGLONG CScrollEx64::SetScrollPos(ULONGLONG ullNewPos)
 {
 	if (!m_fCreated)
 		return 0;
@@ -131,7 +131,7 @@ ULONGLONG CScrollEx::SetScrollPos(ULONGLONG ullNewPos)
 	return m_ullScrollPosPrev;
 }
 
-void CScrollEx::ScrollLineDown()
+void CScrollEx64::ScrollLineDown()
 {
 	ULONGLONG ullCur = GetScrollPos();
 	ULONGLONG ullNew;
@@ -142,12 +142,12 @@ void CScrollEx::ScrollLineDown()
 	SetScrollPos(ullNew);
 }
 
-void CScrollEx::ScrollLineRight()
+void CScrollEx64::ScrollLineRight()
 {
 	ScrollLineDown();
 }
 
-void CScrollEx::ScrollLineUp()
+void CScrollEx64::ScrollLineUp()
 {
 	ULONGLONG ullCur = GetScrollPos();
 	ULONGLONG ullNew;
@@ -158,12 +158,12 @@ void CScrollEx::ScrollLineUp()
 	SetScrollPos(ullNew);
 }
 
-void CScrollEx::ScrollLineLeft()
+void CScrollEx64::ScrollLineLeft()
 {
 	ScrollLineUp();
 }
 
-void CScrollEx::ScrollPageDown()
+void CScrollEx64::ScrollPageDown()
 {
 	ULONGLONG ullCur = GetScrollPos();
 	ULONGLONG ullNew;
@@ -175,17 +175,17 @@ void CScrollEx::ScrollPageDown()
 
 }
 
-void CScrollEx::ScrollPageLeft()
+void CScrollEx64::ScrollPageLeft()
 {
 	ScrollPageUp();
 }
 
-void CScrollEx::ScrollPageRight()
+void CScrollEx64::ScrollPageRight()
 {
 	ScrollPageDown();
 }
 
-void CScrollEx::ScrollPageUp()
+void CScrollEx64::ScrollPageUp()
 {
 	ULONGLONG ullCur = GetScrollPos();
 	ULONGLONG ullNew;
@@ -196,17 +196,17 @@ void CScrollEx::ScrollPageUp()
 	SetScrollPos(ullNew);
 }
 
-void CScrollEx::ScrollHome()
+void CScrollEx64::ScrollHome()
 {
 	SetScrollPos(0);
 }
 
-void CScrollEx::ScrollEnd()
+void CScrollEx64::ScrollEnd()
 {
 	SetScrollPos(m_ullScrollSizeMax);
 }
 
-ULONGLONG CScrollEx::GetScrollPos()
+ULONGLONG CScrollEx64::GetScrollPos()
 {
 	if (!m_fCreated)
 		return 0;
@@ -214,7 +214,7 @@ ULONGLONG CScrollEx::GetScrollPos()
 	return m_ullScrollPosCur;
 }
 
-LONGLONG CScrollEx::GetScrollPosDelta()
+LONGLONG CScrollEx64::GetScrollPosDelta()
 {
 	if (!m_fCreated)
 		return 0;
@@ -222,22 +222,22 @@ LONGLONG CScrollEx::GetScrollPosDelta()
 	return LONGLONG(m_ullScrollPosCur - m_ullScrollPosPrev);
 }
 
-ULONGLONG CScrollEx::GetScrollLineSize()
+ULONGLONG CScrollEx64::GetScrollLineSize()
 {
 	return m_ullScrollLine;
 }
 
-ULONGLONG CScrollEx::GetScrollPageSize()
+ULONGLONG CScrollEx64::GetScrollPageSize()
 {
 	return m_ullScrollPage;
 }
 
-void CScrollEx::SetScrollPageSize(ULONGLONG ullSize)
+void CScrollEx64::SetScrollPageSize(ULONGLONG ullSize)
 {
 	m_ullScrollPage = ullSize;
 }
 
-BOOL CScrollEx::OnNcActivate(BOOL bActive)
+BOOL CScrollEx64::OnNcActivate(BOOL bActive)
 {
 	if (!m_fCreated)
 		return FALSE;
@@ -248,7 +248,7 @@ BOOL CScrollEx::OnNcActivate(BOOL bActive)
 	return TRUE;
 }
 
-void CScrollEx::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
+void CScrollEx64::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 {
 	if (!m_fCreated)
 		return;
@@ -299,7 +299,7 @@ void CScrollEx::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
 	}
 }
 
-void CScrollEx::OnNcPaint()
+void CScrollEx64::OnNcPaint()
 {
 	if (!m_fCreated)
 		return;
@@ -307,7 +307,7 @@ void CScrollEx::OnNcPaint()
 	DrawScrollBar();
 }
 
-void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
+void CScrollEx64::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 {
 	if (!m_fCreated || nHitTest == HTTOPLEFT || nHitTest == HTLEFT || nHitTest == HTTOPRIGHT || nHitTest == HTSIZE
 		|| nHitTest == HTBOTTOMLEFT || nHitTest == HTRIGHT || nHitTest == HTBOTTOM || nHitTest == HTBOTTOMRIGHT)
@@ -363,7 +363,7 @@ void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 	}
 }
 
-void CScrollEx::OnMouseMove(UINT nFlags, CPoint point)
+void CScrollEx64::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (!m_fCreated)
 		return;
@@ -398,7 +398,7 @@ void CScrollEx::OnMouseMove(UINT nFlags, CPoint point)
 	}
 }
 
-void CScrollEx::OnLButtonUp(UINT nFlags, CPoint point)
+void CScrollEx64::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	if (!m_fCreated)
 		return;
@@ -413,7 +413,7 @@ void CScrollEx::OnLButtonUp(UINT nFlags, CPoint point)
 	}
 }
 
-void CScrollEx::DrawScrollBar()
+void CScrollEx64::DrawScrollBar()
 {
 	if (!IsVisible())
 		return;
@@ -439,7 +439,7 @@ void CScrollEx::DrawScrollBar()
 	parentDC.BitBlt(rcSNC.left, rcSNC.top, rcSNC.Width(), rcSNC.Height(), &dcMem, rcSNC.left, rcSNC.top, SRCCOPY);
 }
 
-void CScrollEx::DrawArrows(CDC * pDC)
+void CScrollEx64::DrawArrows(CDC * pDC)
 {
 	CRect rcScroll = GetScrollRect();
 	CDC compatDC;
@@ -487,14 +487,14 @@ void CScrollEx::DrawArrows(CDC * pDC)
 		&compatDC, iLastBtnBmpOffsetX, iLastBtnBmpOffsetY, m_uiArrowSize, m_uiArrowSize, SRCCOPY);
 }
 
-void CScrollEx::DrawThumb(CDC* pDC)
+void CScrollEx64::DrawThumb(CDC* pDC)
 {
 	CRect rcThumb = GetThumbRect();
 	if (!rcThumb.IsRectNull())
 		pDC->FillSolidRect(rcThumb, m_clrThumb);
 }
 
-CRect CScrollEx::GetScrollRect(bool fWithNCArea)
+CRect CScrollEx64::GetScrollRect(bool fWithNCArea)
 {
 	if (!m_fCreated)
 		return 0;
@@ -533,7 +533,7 @@ CRect CScrollEx::GetScrollRect(bool fWithNCArea)
 	return rcScroll;
 }
 
-CRect CScrollEx::GetScrollWorkAreaRect(bool fClientCoord)
+CRect CScrollEx64::GetScrollWorkAreaRect(bool fClientCoord)
 {
 	CRect rc = GetScrollRect();
 	if (IsVert())
@@ -547,7 +547,7 @@ CRect CScrollEx::GetScrollWorkAreaRect(bool fClientCoord)
 	return rc;
 }
 
-UINT CScrollEx::GetScrollSizeWH()
+UINT CScrollEx64::GetScrollSizeWH()
 {
 	UINT uiSizeInPixels;
 
@@ -559,7 +559,7 @@ UINT CScrollEx::GetScrollSizeWH()
 	return uiSizeInPixels;
 }
 
-UINT CScrollEx::GetScrollWorkAreaSizeWH()
+UINT CScrollEx64::GetScrollWorkAreaSizeWH()
 {
 	UINT uiScrollSize = GetScrollSizeWH();
 	UINT uiScrollWorkArea;
@@ -571,7 +571,7 @@ UINT CScrollEx::GetScrollWorkAreaSizeWH()
 	return uiScrollWorkArea;
 }
 
-CRect CScrollEx::GetThumbRect(bool fClientCoord)
+CRect CScrollEx64::GetThumbRect(bool fClientCoord)
 {
 	CRect rc { };
 	UINT uiThumbSize = GetThumbSizeWH();
@@ -601,7 +601,7 @@ CRect CScrollEx::GetThumbRect(bool fClientCoord)
 	return rc;
 }
 
-UINT CScrollEx::GetThumbSizeWH()
+UINT CScrollEx64::GetThumbSizeWH()
 {
 	UINT uiScrollWorkAreaSizeWH = GetScrollWorkAreaSizeWH();
 	CRect rcParent = GetParentRect();
@@ -622,7 +622,7 @@ UINT CScrollEx::GetThumbSizeWH()
 	return uiThumbSize;
 }
 
-UINT CScrollEx::GetThumbPos()
+UINT CScrollEx64::GetThumbPos()
 {
 	ULONGLONG ullScrollPos = GetScrollPos();
 	long double dThumbScrollingSize = GetThumbScrollingSize();
@@ -636,7 +636,7 @@ UINT CScrollEx::GetThumbPos()
 	return uiThumbPos;
 }
 
-long double CScrollEx::GetThumbScrollingSize()
+long double CScrollEx64::GetThumbScrollingSize()
 {
 	if (!m_fCreated)
 		return 0;
@@ -651,7 +651,7 @@ long double CScrollEx::GetThumbScrollingSize()
 	return (m_ullScrollSizeMax - iPage) / (long double)uiWAWOThumb;
 }
 
-void CScrollEx::SetThumbPos(int iPos)
+void CScrollEx64::SetThumbPos(int iPos)
 {
 	CRect rcWorkArea = GetScrollWorkAreaRect();
 	UINT uiThumbSize = GetThumbSizeWH();
@@ -678,7 +678,7 @@ void CScrollEx::SetThumbPos(int iPos)
 	SetScrollPos(ullNewScrollPos);
 }
 
-CRect CScrollEx::GetFirstArrowRect(bool fClientCoord)
+CRect CScrollEx64::GetFirstArrowRect(bool fClientCoord)
 {
 	CRect rc = GetScrollRect();
 	if (IsVert())
@@ -692,7 +692,7 @@ CRect CScrollEx::GetFirstArrowRect(bool fClientCoord)
 	return rc;
 }
 
-CRect CScrollEx::GetLastArrowRect(bool fClientCoord)
+CRect CScrollEx64::GetLastArrowRect(bool fClientCoord)
 {
 	CRect rc = GetScrollRect();
 	if (IsVert())
@@ -706,7 +706,7 @@ CRect CScrollEx::GetLastArrowRect(bool fClientCoord)
 	return rc;
 }
 
-CRect CScrollEx::GetFirstChannelRect(bool fClientCoord)
+CRect CScrollEx64::GetFirstChannelRect(bool fClientCoord)
 {
 	CRect rcThumb = GetThumbRect();
 	CRect rcArrow = GetFirstArrowRect();
@@ -722,7 +722,7 @@ CRect CScrollEx::GetFirstChannelRect(bool fClientCoord)
 	return rc;
 }
 
-CRect CScrollEx::GetLastChannelRect(bool fClientCoord)
+CRect CScrollEx64::GetLastChannelRect(bool fClientCoord)
 {
 	CRect rcThumb = GetThumbRect();
 	CRect rcArrow = GetLastArrowRect();
@@ -738,7 +738,7 @@ CRect CScrollEx::GetLastChannelRect(bool fClientCoord)
 	return rc;
 }
 
-CRect CScrollEx::GetParentRect(bool fClient)
+CRect CScrollEx64::GetParentRect(bool fClient)
 {
 	CRect rc;
 	if (fClient)
@@ -749,17 +749,17 @@ CRect CScrollEx::GetParentRect(bool fClient)
 	return rc;
 }
 
-bool CScrollEx::IsVert()
+bool CScrollEx64::IsVert()
 {
 	return m_iScrollType == SB_VERT ? true : false;
 }
 
-bool CScrollEx::IsThumbDragging()
+bool CScrollEx64::IsThumbDragging()
 {
 	return m_iScrollBarState == SCROLLEX_STATE::THUMB_CLICK ? true : false;
 }
 
-void CScrollEx::ResetTimers()
+void CScrollEx64::ResetTimers()
 {
 	if (m_iScrollBarState > 0)
 	{
@@ -769,7 +769,7 @@ void CScrollEx::ResetTimers()
 	}
 }
 
-void CScrollEx::OnTimer(UINT_PTR nIDEvent)
+void CScrollEx64::OnTimer(UINT_PTR nIDEvent)
 {
 	switch (nIDEvent)
 	{
@@ -822,7 +822,7 @@ void CScrollEx::OnTimer(UINT_PTR nIDEvent)
 	CWnd::OnTimer(nIDEvent);
 }
 
-void CScrollEx::SendParentScrollMsg()
+void CScrollEx64::SendParentScrollMsg()
 {
 	if (!m_fCreated)
 		return;

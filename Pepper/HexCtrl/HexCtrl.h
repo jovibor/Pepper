@@ -44,6 +44,7 @@ namespace HEXCTRL {
 		const			LOGFONTW* pLogFont { };	//Font to be used, nullptr for default.
 		CWnd*			pwndMsg { };			//Window ptr that is to recieve command messages, if nullptr parent window is used.
 		PHEXCOLORSTRUCT pstColor { };			//Pointer to HEXCOLORSTRUCT, if nullptr default colors are used.
+		bool			fCustomCtrl { false };	//It's a custom dialog control.
 	};
 
 	/********************************************************************************************
@@ -73,8 +74,8 @@ namespace HEXCTRL {
 	/********************************************
 	* CHexCtrl class definition.				*
 	********************************************/
-	class CScrollEx;	//Forward declaration.
-	struct HEXSEARCH;	//Forward declaration.
+	class CScrollEx64;	//Forward declaration.
+	struct HEXSEARCHSTRUCT;	//Forward declaration.
 	class CHexCtrl : public CWnd
 	{
 	public:
@@ -95,6 +96,7 @@ namespace HEXCTRL {
 		CWnd* GetParent()const;
 	protected:
 		DECLARE_MESSAGE_MAP()
+		bool RegisterWndClass();
 		void OnDraw(CDC* pDC) {} //All drawing is in OnPaint.
 		afx_msg void OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized);
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
@@ -124,7 +126,7 @@ namespace HEXCTRL {
 		ULONGLONG HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);
 		void CopyToClipboard(UINT nType);
-		void Search(HEXSEARCH& rSearch);
+		void Search(HEXSEARCHSTRUCT& rSearch);
 		void SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullSize, bool fHighlight = false);
 		void SelectAll();
 		void UpdateInfoText();
@@ -155,8 +157,8 @@ namespace HEXCTRL {
 		CFont m_fontHexView;				//Main Hex chunks font.
 		CFont m_fontBottomRect;				//Font for bottom Info rect.
 		std::unique_ptr<CHexDlgSearch> m_pDlgSearch { std::make_unique<CHexDlgSearch>() }; //Search dialog.
-		std::unique_ptr<CScrollEx> m_pstScrollV { std::make_unique<CScrollEx>() }; //Vertical scroll object.
-		std::unique_ptr<CScrollEx> m_pstScrollH { std::make_unique<CScrollEx>() }; //Horizontal scroll object.
+		std::unique_ptr<CScrollEx64> m_pstScrollV { std::make_unique<CScrollEx64>() }; //Vertical scroll object.
+		std::unique_ptr<CScrollEx64> m_pstScrollH { std::make_unique<CScrollEx64>() }; //Horizontal scroll object.
 		CMenu m_menuMain;					//Main popup menu.
 		CMenu m_menuSubShowAs;				//Submenu "Show as..."
 		HEXCOLORSTRUCT m_stColor;			//All control related colors.
