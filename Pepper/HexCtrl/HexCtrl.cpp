@@ -906,36 +906,25 @@ void CHexCtrl::OnPaint()
 			const UINT iAsciiPosToPrintY = m_iHeightTopRect + m_sizeLetter.cy * iLine;
 
 			//Index of the next char (in m_pData) to draw.
-			const ULONGLONG ullIndexDataToPrint = iterLines * m_dwCapacity + iterChunks;
+			const ULONGLONG ullIndexByteToPrint = iterLines * m_dwCapacity + iterChunks;
 
-			if (ullIndexDataToPrint < m_ullDataSize) //Draw until reaching the end of m_dwDataCount.
+			if (ullIndexByteToPrint < m_ullDataSize) //Draw until reaching the end of m_dwDataCount.
 			{
 				//Hex chunk to print.
-				//If it's virtual data control we aquire next byte_to_print from parent window.
+				unsigned char chByteToPrint = GetByte(ullIndexByteToPrint);
 				wchar_t pwszHexToPrint[2];
-				char chByteToPrint;
-				if (m_fVirtual && m_pwndMsg)
-				{
-					HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDATA },
-						ullIndexDataToPrint, 0 };
-					m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
-					chByteToPrint = hexntfy.chByte;
-				}
-				else
-					chByteToPrint = m_pData[ullIndexDataToPrint];
-
 				pwszHexToPrint[0] = m_pwszHexMap[(chByteToPrint & 0xF0) >> 4];
 				pwszHexToPrint[1] = m_pwszHexMap[(chByteToPrint & 0x0F)];
 
 				//Selection draw with different BK color.
 				COLORREF clrBk, clrBkAscii, clrTextHex, clrTextAscii;
-				if (m_ullBytesSelected && ullIndexDataToPrint >= m_ullSelectionStart && ullIndexDataToPrint < m_ullSelectionEnd)
+				if (m_ullBytesSelected && ullIndexByteToPrint >= m_ullSelectionStart && ullIndexByteToPrint < m_ullSelectionEnd)
 				{
 					clrBk = clrBkAscii = m_stColor.clrBkSelected;
 					clrTextHex = clrTextAscii = m_stColor.clrTextSelected;
 					//Space between hex chunks (excluding last hex in a row) filling with bk_selected color.
-					if (ullIndexDataToPrint < (m_ullSelectionEnd - 1) && (ullIndexDataToPrint + 1) % m_dwCapacity &&
-						((ullIndexDataToPrint + 1) % m_dwShowAs) == 0)
+					if (ullIndexByteToPrint < (m_ullSelectionEnd - 1) && (ullIndexByteToPrint + 1) % m_dwCapacity &&
+						((ullIndexByteToPrint + 1) % m_dwShowAs) == 0)
 					{	//Rect of the space between Hex chunks. Needed for proper selection drawing.
 						rc.left = iHexPosToPrintX + m_iSizeHexByte;
 						rc.right = rc.left + m_iSpaceBetweenHexChunks;
@@ -954,7 +943,7 @@ void CHexCtrl::OnPaint()
 					clrTextAscii = m_stColor.clrTextAscii;
 				}
 				//Hex chunk printing.
-				if (m_fMutable && ullIndexDataToPrint == m_ullCursorPos)
+				if (m_fMutable && ullIndexByteToPrint == m_ullCursorPos)
 				{
 					rDC.SetBkColor(m_fCursorHigh ? m_stColor.clrBkCursor : clrBk);
 					rDC.SetTextColor(m_fCursorHigh ? m_stColor.clrTextCursor : clrTextHex);
@@ -976,7 +965,7 @@ void CHexCtrl::OnPaint()
 					wchAscii = '.';
 
 				//Ascii printing.
-				if (m_fMutable && ullIndexDataToPrint == m_ullCursorPos) {
+				if (m_fMutable && ullIndexByteToPrint == m_ullCursorPos) {
 					clrBkAscii = m_stColor.clrBkCursor;
 					clrTextAscii = m_stColor.clrTextCursor;
 				}
@@ -1188,14 +1177,15 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 	if (!m_ullBytesSelected)
 		return;
 
+	const char* const pszHexMap { "0123456789ABCDEF" };
 	std::string strToClipboard;
 	switch (nType)
 	{
 	case COPY_HEX:
 	{
 		for (unsigned i = 0; i < m_ullBytesSelected; i++) {
-			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
-			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
+			strToClipboard += pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
+			strToClipboard += pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
 		}
 		break;
 	}
@@ -1218,8 +1208,8 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 
 		for (unsigned i = 0; i < m_ullBytesSelected; i++)
 		{
-			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
-			strToClipboard += m_pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
+			strToClipboard += pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
+			strToClipboard += pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
 
 			if (i < (m_ullBytesSelected - 1) && (dwTail - 1) != 0)
 				if (m_dwShowAs == HEXCTRL_SHOWAS::ASBYTE && dwTail == dwNextBlock)
@@ -1282,14 +1272,28 @@ void CHexCtrl::UpdateInfoText()
 	RedrawWindow();
 }
 
-void CHexCtrl::ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwBytes)
+void CHexCtrl::ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwSize)
 {
-	//Converts dwBytes of ull to wchar_t*.
-	for (unsigned i = 0; i < dwBytes; i++)
+	//Converts dwSize bytes of ull to wchar_t*.
+	for (unsigned i = 0; i < dwSize; i++)
 	{
-		pwsz[i * 2] = m_pwszHexMap[((ull >> ((dwBytes - 1 - i) << 3)) & 0xF0) >> 4];
-		pwsz[i * 2 + 1] = m_pwszHexMap[(ull >> ((dwBytes - 1 - i) << 3)) & 0x0F];
+		pwsz[i * 2] = m_pwszHexMap[((ull >> ((dwSize - 1 - i) << 3)) & 0xF0) >> 4];
+		pwsz[i * 2 + 1] = m_pwszHexMap[(ull >> ((dwSize - 1 - i) << 3)) & 0x0F];
 	}
+}
+
+UCHAR CHexCtrl::GetByte(ULONGLONG ullIndex)
+{
+	//If it's virtual data control we aquire next byte_to_print from m_pwndMsg window.
+	if (m_fVirtual && m_pwndMsg)
+	{
+		HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDATA },
+			ullIndex, 0 };
+		m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
+		return hexntfy.chByte;
+	}
+	else
+		return m_pData[ullIndex];
 }
 
 void CHexCtrl::SetShowAs(DWORD dwShowAs)
@@ -1327,30 +1331,20 @@ void CHexCtrl::SetSingleByteData(ULONGLONG ullByte, BYTE chData, bool fWhole, bo
 		return;
 
 	unsigned char chByteNew;
-	if (fWhole)
-	{
+	if (fWhole) {
 		if (fMoveNext)
 			SetCursorPos(m_ullCursorPos + 1, true);
 		chByteNew = chData;
 	}
 	else
-	{	//If it's Virtual mode we first ask for this given byte. 
-		unsigned char chByte;
-		if (m_fVirtual && m_pwndMsg)
-		{
-			HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDATA },
-				ullByte, 0 };
-			m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
-			chByte = hexntfy.chByte;
-		}
-		else
-			chByte = m_pData[ullByte];
+	{	//If just one part (High/Low) of byte must be changed.
+		unsigned char chByte = GetByte(ullByte);
 
 		if (fHighPart)
 			chByteNew = (chData << 4) | (chByte & 0x0F);
 		else
-			chByteNew = chData | (chByte & 0xF0);
-		
+			chByteNew = (chData & 0x0F) | (chByte & 0xF0);
+
 		if (fMoveNext)
 		{
 			if (!fHighPart)

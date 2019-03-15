@@ -15,7 +15,7 @@ namespace HEXCTRL {
 	/****************************************************
 	* CHexDlgAbout class implementation.				*
 	****************************************************/
-	constexpr auto HEXCTRL_VERSION_WSTR = L"Hex Control for MFC, v2.0.3";
+	constexpr auto HEXCTRL_VERSION_WSTR = L"Hex Control for MFC, v2.1.0";
 
 	BEGIN_MESSAGE_MAP(CHexDlgAbout, CDialogEx)
 		ON_WM_LBUTTONDOWN()

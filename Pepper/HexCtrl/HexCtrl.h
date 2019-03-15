@@ -128,7 +128,8 @@ namespace HEXCTRL {
 		void SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullSize, bool fHighlight = false);
 		void SelectAll();
 		void UpdateInfoText();
-		void ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwBytes = 4);
+		void ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwSize = 4);
+		UCHAR GetByte(ULONGLONG ullIndex); //Get the actual byte data by index.
 		void SetShowAs(DWORD dwShowAs);
 		void SetSingleByteData(ULONGLONG ullByte, BYTE chData, bool fWhole = true, bool fHighPart = true, bool fMoveNext = true);
 		void SetCursorPos(ULONGLONG ullPos, bool fHighPart); //Sets the cursor position when in Edit mode.
@@ -178,7 +179,6 @@ namespace HEXCTRL {
 		int m_iFirstVertLine { }, m_iSecondVertLine { }, m_iThirdVertLine { }, m_iFourthVertLine { }; //Vertical lines indent.
 		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullBytesSelected { };
 		const wchar_t* const m_pwszHexMap { L"0123456789ABCDEF" };
-		const char* const m_pszHexMap { "0123456789ABCDEF" };
 		std::unordered_map<unsigned, std::wstring> m_umapCapacity;
 		std::wstring m_wstrBottomText { };  //Info text (bottom rect).
 		const std::wstring m_wstrErrVirtual { L"This function isn't supported in Virtual mode!" };
