@@ -159,7 +159,7 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 		dwStyle, rc, m_pwndParentOwner, m_fFloat ? 0 : m_dwCtrlId))
 	{
 		CStringW ss;
-		ss.Format(L"CHexCtrl (Id:%d) CWnd::CreateEx failed.\r\nCheck HEXCREATESTRUCT filling correctness.", m_dwCtrlId);
+		ss.Format(L"CHexCtrl (Id:%u) CWnd::CreateEx failed.\r\nCheck HEXCREATESTRUCT filling correctness.", m_dwCtrlId);
 		MessageBoxW(ss, L"Error", MB_ICONERROR);
 		return false;
 	}
@@ -211,7 +211,7 @@ void CHexCtrl::SetData(const HEXDATASTRUCT& hds)
 		ShowOffset(hds.ullSelectionStart, hds.ullSelectionSize);
 	else
 	{
-		m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullBytesSelected = 0;
+		m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullSelectionSize = 0;
 		m_pstScrollV->SetScrollPos(0);
 		m_pstScrollH->SetScrollPos(0);
 		UpdateInfoText();
@@ -222,7 +222,7 @@ void CHexCtrl::ClearData()
 {
 	m_ullDataSize = 0;
 	m_pData = nullptr;
-	m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullBytesSelected = 0;
+	m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullSelectionSize = 0;
 
 	m_pstScrollV->SetScrollPos(0);
 	m_pstScrollH->SetScrollPos(0);
@@ -314,7 +314,7 @@ bool CHexCtrl::RegisterWndClass()
 	{
 		wcls.cbSize = sizeof(WNDCLASSEXW);
 		wcls.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
-		wcls.lpfnWndProc = ::DefWindowProc;
+		wcls.lpfnWndProc = ::DefWindowProcW;
 		wcls.cbClsExtra = wcls.cbWndExtra = 0;
 		wcls.hInstance = hInst;
 		wcls.hIcon = NULL;
@@ -389,24 +389,23 @@ void CHexCtrl::OnMouseMove(UINT nFlags, CPoint point)
 				point.y = m_iHeightWorkArea - 1;
 			}
 		}
+
 		const ULONGLONG ullHit = HitTest(&point);
 		if (ullHit != -1)
 		{
+			ULONGLONG ullClick, ullStart, ullSize;
 			if (ullHit <= m_ullSelectionClick) {
-				m_ullSelectionStart = ullHit;
-				m_ullSelectionEnd = m_ullSelectionClick + 1;
+				ullClick = m_ullSelectionClick;
+				ullStart = ullHit;
+				ullSize = ullClick - ullStart + 1;
 			}
 			else {
-				m_ullSelectionStart = m_ullSelectionClick;
-				m_ullSelectionEnd = ullHit + 1;
+				ullClick = m_ullSelectionClick;
+				ullStart = m_ullSelectionClick;
+				ullSize = ullHit - ullClick + 1;
 			}
-
-			m_ullBytesSelected = m_ullSelectionEnd - m_ullSelectionStart;
-
-			UpdateInfoText();
+			SetSelection(ullClick, ullStart, ullSize);
 		}
-
-		RedrawWindow();
 	}
 	else
 	{
@@ -445,7 +444,7 @@ void CHexCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 		return;
 
 	SetCapture();
-	if (m_ullBytesSelected && (nFlags & MK_SHIFT))
+	if (m_ullSelectionSize && (nFlags & MK_SHIFT))
 	{
 		if (ullHit <= m_ullSelectionClick)
 		{
@@ -458,13 +457,13 @@ void CHexCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 			m_ullSelectionEnd = ullHit + 1;
 		}
 
-		m_ullBytesSelected = m_ullSelectionEnd - m_ullSelectionStart;
+		m_ullSelectionSize = m_ullSelectionEnd - m_ullSelectionStart;
 	}
 	else
 	{
 		m_ullSelectionClick = m_ullSelectionStart = ullHit;
 		m_ullSelectionEnd = m_ullSelectionStart + 1;
-		m_ullBytesSelected = 1;
+		m_ullSelectionSize = 1;
 	}
 
 	m_ullCursorPos = m_ullSelectionStart;
@@ -548,6 +547,7 @@ void CHexCtrl::OnContextMenu(CWnd* pWnd, CPoint point)
 
 void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
+	ULONGLONG ullStart, ullSize;
 	if (GetKeyState(VK_CONTROL) < 0) //With Ctrl pressed.
 	{
 		switch (nChar)
@@ -570,144 +570,130 @@ void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_RIGHT:
 			if (m_fMutable)
 			{
-				if (m_ullCursorPos == m_ullSelectionClick || m_ullCursorPos == m_ullSelectionStart || m_ullCursorPos == m_ullSelectionEnd)
+				if (m_ullCursorPos == m_ullSelectionClick || m_ullCursorPos == m_ullSelectionStart
+					|| m_ullCursorPos == m_ullSelectionEnd)
 				{
 					if (m_ullSelectionStart == m_ullSelectionClick)
-						SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullBytesSelected + 1);
+						SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullSelectionSize + 1);
 					else
-						SetSelection(m_ullSelectionClick, m_ullSelectionStart + 1, m_ullBytesSelected - 1);
+						SetSelection(m_ullSelectionClick, m_ullSelectionStart + 1, m_ullSelectionSize - 1);
 				}
 				else
-				{
-					m_ullSelectionClick = m_ullSelectionStart = m_ullCursorPos;
-					SetSelection(m_ullSelectionClick, m_ullSelectionClick, 1);
-				}
+					SetSelection(m_ullCursorPos, m_ullCursorPos, 1);
 			}
-			else if (m_ullBytesSelected)
+			else if (m_ullSelectionSize)
 			{
 				if (m_ullSelectionStart == m_ullSelectionClick)
-					SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullBytesSelected + 1);
+					SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullSelectionSize + 1);
 				else
-					SetSelection(m_ullSelectionClick, m_ullSelectionStart + 1, m_ullBytesSelected - 1);
+					SetSelection(m_ullSelectionClick, m_ullSelectionStart + 1, m_ullSelectionSize - 1);
 			}
 			break;
 		case VK_LEFT:
 			if (m_fMutable)
 			{
-				if (m_ullCursorPos == m_ullSelectionClick || m_ullCursorPos == m_ullSelectionStart || m_ullCursorPos == m_ullSelectionEnd)
+				if (m_ullCursorPos == m_ullSelectionClick || m_ullCursorPos == m_ullSelectionStart
+					|| m_ullCursorPos == m_ullSelectionEnd)
 				{
-					if (m_ullSelectionStart == m_ullSelectionClick && m_ullBytesSelected > 1)
-						SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullBytesSelected - 1);
+					if (m_ullSelectionStart == m_ullSelectionClick && m_ullSelectionSize > 1)
+						SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullSelectionSize - 1);
 					else
-						SetSelection(m_ullSelectionClick, m_ullSelectionStart - 1, m_ullBytesSelected + 1);
+						SetSelection(m_ullSelectionClick, m_ullSelectionStart - 1, m_ullSelectionSize + 1);
 				}
 				else
-				{
-					m_ullSelectionClick = m_ullSelectionStart = m_ullCursorPos;
-					SetSelection(m_ullSelectionClick, m_ullSelectionClick, 1);
-				}
+					SetSelection(m_ullCursorPos, m_ullCursorPos, 1);
 			}
-			else if (m_ullBytesSelected)
+			else if (m_ullSelectionSize)
 			{
-				if (m_ullSelectionStart == m_ullSelectionClick && m_ullBytesSelected > 1)
-					SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullBytesSelected - 1);
+				if (m_ullSelectionStart == m_ullSelectionClick && m_ullSelectionSize > 1)
+					SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullSelectionSize - 1);
 				else
-					SetSelection(m_ullSelectionClick, m_ullSelectionStart - 1, m_ullBytesSelected + 1);
+					SetSelection(m_ullSelectionClick, m_ullSelectionStart - 1, m_ullSelectionSize + 1);
 			}
 			break;
 		case VK_DOWN:
 			if (m_fMutable)
 			{
-				if (m_ullCursorPos == m_ullSelectionClick || m_ullCursorPos == m_ullSelectionStart || m_ullCursorPos == m_ullSelectionEnd)
+				if (m_ullCursorPos == m_ullSelectionClick || m_ullCursorPos == m_ullSelectionStart
+					|| m_ullCursorPos == m_ullSelectionEnd)
 				{
 					if (m_ullSelectionStart == m_ullSelectionClick)
-						SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullBytesSelected + m_dwCapacity);
+						SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullSelectionSize + m_dwCapacity);
 					else if (m_ullSelectionStart < m_ullSelectionClick)
 					{
-						ULONGLONG dwStartAt = m_ullBytesSelected > m_dwCapacity ? m_ullSelectionStart + m_dwCapacity : m_ullSelectionClick;
-						ULONGLONG dwBytes = m_ullBytesSelected >= m_dwCapacity ? m_ullBytesSelected - m_dwCapacity : m_dwCapacity;
-						SetSelection(m_ullSelectionClick, dwStartAt, dwBytes ? dwBytes : 1);
+						ullStart = m_ullSelectionSize > m_dwCapacity ? m_ullSelectionStart + m_dwCapacity : m_ullSelectionClick;
+						ullSize = m_ullSelectionSize >= m_dwCapacity ? m_ullSelectionSize - m_dwCapacity : m_dwCapacity;
+						SetSelection(m_ullSelectionClick, ullStart, ullSize ? ullSize : 1);
 					}
 				}
-				else {
-					m_ullSelectionClick = m_ullSelectionStart = m_ullCursorPos;
-					SetSelection(m_ullSelectionClick, m_ullSelectionClick, 1);
-				}
+				else
+					SetSelection(m_ullCursorPos, m_ullCursorPos, 1);
 			}
-			else if (m_ullBytesSelected)
+			else if (m_ullSelectionSize)
 			{
 				if (m_ullSelectionStart == m_ullSelectionClick)
-					SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullBytesSelected + m_dwCapacity);
+					SetSelection(m_ullSelectionClick, m_ullSelectionClick, m_ullSelectionSize + m_dwCapacity);
 				else if (m_ullSelectionStart < m_ullSelectionClick)
 				{
-					ULONGLONG dwStartAt = m_ullBytesSelected > m_dwCapacity ? m_ullSelectionStart + m_dwCapacity : m_ullSelectionClick;
-					ULONGLONG dwBytes = m_ullBytesSelected >= m_dwCapacity ? m_ullBytesSelected - m_dwCapacity : m_dwCapacity;
-					SetSelection(m_ullSelectionClick, dwStartAt, dwBytes ? dwBytes : 1);
+					ullStart = m_ullSelectionSize > m_dwCapacity ? m_ullSelectionStart + m_dwCapacity : m_ullSelectionClick;
+					ullSize = m_ullSelectionSize >= m_dwCapacity ? m_ullSelectionSize - m_dwCapacity : m_dwCapacity;
+					SetSelection(m_ullSelectionClick, ullStart, ullSize ? ullSize : 1);
 				}
 			}
 			break;
 		case VK_UP:
 			if (m_fMutable)
 			{
-				if (m_ullCursorPos == m_ullSelectionClick || m_ullCursorPos == m_ullSelectionStart || m_ullCursorPos == m_ullSelectionEnd)
+				if (m_ullCursorPos == m_ullSelectionClick || m_ullCursorPos == m_ullSelectionStart
+					|| m_ullCursorPos == m_ullSelectionEnd)
 				{
 					if (m_ullSelectionStart == 0)
 						return;
 
 					if (m_ullSelectionStart < m_ullSelectionClick)
 					{
-						ULONGLONG dwStartAt;
-						ULONGLONG dwBytes;
-						if (m_ullSelectionStart < m_dwCapacity)
-						{
-							dwStartAt = 0;
-							dwBytes = m_ullBytesSelected + m_ullSelectionStart;
+						if (m_ullSelectionStart < m_dwCapacity) {
+							ullStart = 0;
+							ullSize = m_ullSelectionSize + m_ullSelectionStart;
 						}
-						else
-						{
-							dwStartAt = m_ullSelectionStart - m_dwCapacity;
-							dwBytes = m_ullBytesSelected + m_dwCapacity;
+						else {
+							ullStart = m_ullSelectionStart - m_dwCapacity;
+							ullSize = m_ullSelectionSize + m_dwCapacity;
 						}
-						SetSelection(m_ullSelectionClick, dwStartAt, dwBytes);
+						SetSelection(m_ullSelectionClick, ullStart, ullSize);
 					}
 					else
 					{
-						ULONGLONG dwStartAt = m_ullBytesSelected >= m_dwCapacity ? m_ullSelectionClick : m_ullSelectionClick - m_dwCapacity + 1;
-						ULONGLONG dwBytes = m_ullBytesSelected >= m_dwCapacity ? m_ullBytesSelected - m_dwCapacity : m_dwCapacity;
-						SetSelection(m_ullSelectionClick, dwStartAt, dwBytes ? dwBytes : 1);
+						ullStart = m_ullSelectionSize >= m_dwCapacity ? m_ullSelectionClick : m_ullSelectionClick - m_dwCapacity + 1;
+						ullSize = m_ullSelectionSize >= m_dwCapacity ? m_ullSelectionSize - m_dwCapacity : m_dwCapacity;
+						SetSelection(m_ullSelectionClick, ullStart, ullSize ? ullSize : 1);
 					}
 				}
-				else {
-					m_ullSelectionClick = m_ullSelectionStart = m_ullCursorPos;
-					SetSelection(m_ullSelectionClick, m_ullSelectionClick, 1);
-				}
+				else
+					SetSelection(m_ullCursorPos, m_ullCursorPos, 1);
 			}
-			else if (m_ullBytesSelected)
+			else if (m_ullSelectionSize)
 			{
 				if (m_ullSelectionStart == 0)
 					return;
 
 				if (m_ullSelectionStart < m_ullSelectionClick)
 				{
-					ULONGLONG dwStartAt;
-					ULONGLONG dwBytes;
-					if (m_ullSelectionStart < m_dwCapacity)
-					{
-						dwStartAt = 0;
-						dwBytes = m_ullBytesSelected + m_ullSelectionStart;
+					if (m_ullSelectionStart < m_dwCapacity) {
+						ullStart = 0;
+						ullSize = m_ullSelectionSize + m_ullSelectionStart;
 					}
-					else
-					{
-						dwStartAt = m_ullSelectionStart - m_dwCapacity;
-						dwBytes = m_ullBytesSelected + m_dwCapacity;
+					else {
+						ullStart = m_ullSelectionStart - m_dwCapacity;
+						ullSize = m_ullSelectionSize + m_dwCapacity;
 					}
-					SetSelection(m_ullSelectionClick, dwStartAt, dwBytes);
+					SetSelection(m_ullSelectionClick, ullStart, ullSize);
 				}
 				else
 				{
-					ULONGLONG dwStartAt = m_ullBytesSelected >= m_dwCapacity ? m_ullSelectionClick : m_ullSelectionClick - m_dwCapacity + 1;
-					ULONGLONG dwBytes = m_ullBytesSelected >= m_dwCapacity ? m_ullBytesSelected - m_dwCapacity : m_dwCapacity;
-					SetSelection(m_ullSelectionClick, dwStartAt, dwBytes ? dwBytes : 1);
+					ullStart = m_ullSelectionSize >= m_dwCapacity ? m_ullSelectionClick : m_ullSelectionClick - m_dwCapacity + 1;
+					ullSize = m_ullSelectionSize >= m_dwCapacity ? m_ullSelectionSize - m_dwCapacity : m_dwCapacity;
+					SetSelection(m_ullSelectionClick, ullStart, ullSize ? ullSize : 1);
 				}
 			}
 			break;
@@ -760,7 +746,7 @@ void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 void CHexCtrl::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	if (m_fCursorAscii)
-		SetSingleByteData(m_ullCursorPos, nChar);
+		SetByteData(m_ullCursorPos, 1, nChar);	//Set single byte.
 	else
 	{
 		unsigned char chByte;
@@ -773,7 +759,7 @@ void CHexCtrl::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 		else
 			return;
 
-		SetSingleByteData(m_ullCursorPos, chByte, false, m_fCursorHigh);
+		SetByteData(m_ullCursorPos, 1, chByte, false, m_fCursorHigh);
 	}
 }
 
@@ -922,7 +908,7 @@ void CHexCtrl::OnPaint()
 	for (ULONGLONG iterLines = ullLineStart; iterLines < ullLineEnd; iterLines++)
 	{
 		//Drawing offset with bk color depending on selection range.
-		if (m_ullBytesSelected && (iterLines * m_dwCapacity + m_dwCapacity) > m_ullSelectionStart &&
+		if (m_ullSelectionSize && (iterLines * m_dwCapacity + m_dwCapacity) > m_ullSelectionStart &&
 			(iterLines * m_dwCapacity) < m_ullSelectionEnd)
 			rDC.SetBkColor(m_stColor.clrBkSelected);
 		else
@@ -964,7 +950,7 @@ void CHexCtrl::OnPaint()
 
 				//Selection draw with different BK color.
 				COLORREF clrBk, clrBkAscii, clrTextHex, clrTextAscii;
-				if (m_ullBytesSelected && ullIndexByteToPrint >= m_ullSelectionStart && ullIndexByteToPrint < m_ullSelectionEnd)
+				if (m_ullSelectionSize && ullIndexByteToPrint >= m_ullSelectionStart && ullIndexByteToPrint < m_ullSelectionEnd)
 				{
 					clrBk = clrBkAscii = m_stColor.clrBkSelected;
 					clrTextHex = clrTextAscii = m_stColor.clrTextSelected;
@@ -1220,7 +1206,7 @@ void CHexCtrl::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
 
 void CHexCtrl::CopyToClipboard(UINT nType)
 {
-	if (!m_ullBytesSelected)
+	if (!m_ullSelectionSize)
 		return;
 
 	const char* const pszHexMap { "0123456789ABCDEF" };
@@ -1229,7 +1215,7 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 	{
 	case COPY_HEX:
 	{
-		for (unsigned i = 0; i < m_ullBytesSelected; i++) {
+		for (unsigned i = 0; i < m_ullSelectionSize; i++) {
 			strToClipboard += pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
 			strToClipboard += pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
 		}
@@ -1245,24 +1231,24 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 		DWORD dwNextBlock = (m_dwCapacity % 2) ? m_dwCapacityBlockSize + 2 : m_dwCapacityBlockSize + 1;
 
 		//If at least two rows are selected.
-		if (dwModStart + m_ullBytesSelected > m_dwCapacity) {
+		if (dwModStart + m_ullSelectionSize > m_dwCapacity) {
 			size_t sCount = (dwModStart * 2) + (dwModStart / m_dwShowAs);
 			//Additional spaces between halves. Only in BYTE's view mode.
 			sCount += m_dwShowAs == HEXCTRL_SHOWAS::ASBYTE ? (dwTail <= m_dwCapacityBlockSize ? 2 : 0) : 0;
 			strToClipboard.insert(0, sCount, ' ');
 		}
 
-		for (unsigned i = 0; i < m_ullBytesSelected; i++)
+		for (unsigned i = 0; i < m_ullSelectionSize; i++)
 		{
 			strToClipboard += pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0xF0) >> 4];
 			strToClipboard += pszHexMap[((unsigned char)m_pData[m_ullSelectionStart + i] & 0x0F)];
 
-			if (i < (m_ullBytesSelected - 1) && (dwTail - 1) != 0)
+			if (i < (m_ullSelectionSize - 1) && (dwTail - 1) != 0)
 				if (m_dwShowAs == HEXCTRL_SHOWAS::ASBYTE && dwTail == dwNextBlock)
 					strToClipboard += "   "; //Additional spaces between halves. Only in BYTE's view mode.
 				else if (((m_dwCapacity - dwTail + 1) % m_dwShowAs) == 0) //Add space after hex full chunk, ShowAs_size depending.
 					strToClipboard += " ";
-			if (--dwTail == 0 && i < (m_ullBytesSelected - 1)) //Next row.
+			if (--dwTail == 0 && i < (m_ullSelectionSize - 1)) //Next row.
 			{
 				strToClipboard += "\r\n";
 				dwTail = m_dwCapacity;
@@ -1272,7 +1258,7 @@ void CHexCtrl::CopyToClipboard(UINT nType)
 	}
 	case COPY_ASCII:
 	{
-		for (unsigned i = 0; i < m_ullBytesSelected; i++)
+		for (unsigned i = 0; i < m_ullSelectionSize; i++)
 		{
 			char ch = m_pData[m_ullSelectionStart + i];
 			//If next byte is zero —> substitute it with space.
@@ -1309,9 +1295,9 @@ void CHexCtrl::UpdateInfoText()
 	else
 	{
 		m_wstrBottomText.resize(128);
-		if (m_ullBytesSelected)
+		if (m_ullSelectionSize)
 			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Selected: 0x%llX(%llu); Block: 0x%llX(%llu) - 0x%llX(%llu)",
-				m_ullBytesSelected, m_ullBytesSelected, m_ullSelectionStart, m_ullSelectionStart, m_ullSelectionEnd - 1, m_ullSelectionEnd - 1));
+				m_ullSelectionSize, m_ullSelectionSize, m_ullSelectionStart, m_ullSelectionStart, m_ullSelectionEnd - 1, m_ullSelectionEnd - 1));
 		else
 			m_wstrBottomText.resize(swprintf_s(&m_wstrBottomText[0], 128, L"Bytes total: 0x%llX(%llu)", m_ullDataSize, m_ullDataSize));
 	}
@@ -1333,8 +1319,9 @@ UCHAR CHexCtrl::GetByte(ULONGLONG ullIndex)
 	//If it's virtual data control we aquire next byte_to_print from m_pwndMsg window.
 	if (m_fVirtual && m_pwndMsg)
 	{
-		HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDATA },
-			ullIndex, 0 };
+		HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDATA } };
+		hexntfy.ullByteIndex = ullIndex;
+		hexntfy.ullSize = 1;
 		m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
 		return hexntfy.chByte;
 	}
@@ -1370,10 +1357,10 @@ void CHexCtrl::SetShowAs(DWORD dwShowAs)
 	RecalcAll();
 }
 
-void CHexCtrl::SetSingleByteData(ULONGLONG ullByte, BYTE chData, bool fWhole, bool fHighPart, bool fMoveNext)
+void CHexCtrl::SetByteData(ULONGLONG ullIndex, ULONGLONG ullSize, BYTE chData, bool fWhole, bool fHighPart, bool fMoveNext)
 {
 	//Changes single byte in memory, High or Low part of it, depending on fHighPart.
-	if (!m_fMutable || ullByte >= m_ullDataSize)
+	if (!m_fMutable || ullIndex >= m_ullDataSize)
 		return;
 
 	unsigned char chByteNew;
@@ -1384,7 +1371,7 @@ void CHexCtrl::SetSingleByteData(ULONGLONG ullByte, BYTE chData, bool fWhole, bo
 	}
 	else
 	{	//If just one part (High/Low) of byte must be changed.
-		unsigned char chByte = GetByte(ullByte);
+		unsigned char chByte = GetByte(ullIndex);
 
 		if (fHighPart)
 			chByteNew = (chData << 4) | (chByte & 0x0F);
@@ -1401,16 +1388,21 @@ void CHexCtrl::SetSingleByteData(ULONGLONG ullByte, BYTE chData, bool fWhole, bo
 	}
 
 	if (!m_fVirtual)
-		m_pData[ullByte] = chByteNew;
+		m_pData[ullIndex] = chByteNew;
 
-	if (m_pwndMsg)
-	{
-		HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_SETDATA },
-			ullByte, chByteNew };
-		m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
-	}
+	HEXNOTIFYSTRUCT hns { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_SETDATA } };
+	hns.ullByteIndex = ullIndex;
+	hns.ullSize = 1;
+	hns.chByte = chByteNew;
+	ParentNotify(hns);
 
 	RedrawWindow();
+}
+
+void CHexCtrl::ParentNotify(HEXNOTIFYSTRUCT& hns)
+{
+	if (m_pwndMsg)
+		m_pwndMsg->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hns);
 }
 
 void CHexCtrl::SetCursorPos(ULONGLONG ullPos, bool fHighPart)
@@ -1802,13 +1794,18 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	m_ullSelectionClick = ullClick;
 	m_ullSelectionStart = m_ullCursorPos = ullStart;
 	m_ullSelectionEnd = ullEnd;
-	m_ullBytesSelected = ullEnd - ullStart;
+	m_ullSelectionSize = ullEnd - ullStart;
 
 	m_pstScrollV->SetScrollPos(ullNewScrollV);
 	if (m_pstScrollH->IsVisible())
 		m_pstScrollH->SetScrollPos(ullNewScrollH);
 
 	UpdateInfoText();
+
+	HEXNOTIFYSTRUCT hns { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_SETSELECTION };
+	hns.ullByteIndex = m_ullSelectionStart;
+	hns.ullSize = m_ullSelectionSize;
+	ParentNotify(hns);
 }
 
 void CHexCtrl::SelectAll()
@@ -1817,6 +1814,6 @@ void CHexCtrl::SelectAll()
 		return;
 
 	m_ullSelectionClick = m_ullSelectionStart = 0;
-	m_ullSelectionEnd = m_ullBytesSelected = m_ullDataSize;
+	m_ullSelectionEnd = m_ullSelectionSize = m_ullDataSize;
 	UpdateInfoText();
 }

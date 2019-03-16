@@ -36,14 +36,14 @@ namespace HEXCTRL {
 	********************************************************************************************/
 	struct HEXCREATESTRUCT
 	{
+		PHEXCOLORSTRUCT pstColor { };			//Pointer to HEXCOLORSTRUCT, if nullptr default colors are used.
 		CWnd*		    pwndParent { };			//Parent window's pointer.
 		UINT		    uId { };				//Hex control Id.
 		DWORD			dwExStyles { };			//Extended window styles.
 		CRect			rect { };				//Initial rect. If null, the window is screen centered.
-		bool			fFloat { false };		//Is float or child (incorporated into another window)?.
-		const			LOGFONTW* pLogFont { };	//Font to be used, nullptr for default.
+		const LOGFONTW* pLogFont { };			//Font to be used, nullptr for default.
 		CWnd*			pwndMsg { };			//Window ptr that is to recieve command messages, if nullptr parent window is used.
-		PHEXCOLORSTRUCT pstColor { };			//Pointer to HEXCOLORSTRUCT, if nullptr default colors are used.
+		bool			fFloat { false };		//Is float or child (incorporated into another window)?.
 		bool			fCustomCtrl { false };	//It's a custom dialog control.
 	};
 
@@ -51,13 +51,13 @@ namespace HEXCTRL {
 	* HEXDATASTRUCT - for CHexCtrl::SetData method.												*
 	********************************************************************************************/
 	struct HEXDATASTRUCT {
-		ULONGLONG ullDataSize { };			//Size of the data to display, in bytes.
-		ULONGLONG ullSelectionStart { };	//Set selection at this position. Works only if ullSelectionSize > 0.
-		ULONGLONG ullSelectionSize { };		//How many bytes to set as selected.
-		CWnd* pwndMsg { };					//Window to send the control messages to. If nullptr then the parent window is used.
-		unsigned char* pData { };			//Pointer to the data. Not used if it's virtual control.
-		bool fMutable { false };			//Will data be mutable (editable) or just read mode.
-		bool fVirtual { false };			//Is Virtual data mode?.
+		ULONGLONG		ullDataSize { };		//Size of the data to display, in bytes.
+		ULONGLONG		ullSelectionStart { };	//Set selection at this position. Works only if ullSelectionSize > 0.
+		ULONGLONG		ullSelectionSize { };	//How many bytes to set as selected.
+		CWnd*			pwndMsg { };			//Window to send the control messages to. If nullptr then the parent window is used.
+		unsigned char*	pData { };				//Pointer to the data. Not used if it's virtual control.
+		bool			fMutable { false };		//Will data be mutable (editable) or just read mode.
+		bool			fVirtual { false };		//Is Virtual data mode?.
 	};
 
 	/********************************************************************************************
@@ -66,7 +66,8 @@ namespace HEXCTRL {
 	struct HEXNOTIFYSTRUCT
 	{
 		NMHDR			hdr;			//Standard Windows header. For hdr.code values see HEXCTRL_MSG_* messages.
-		ULONGLONG		ullByteIndex;	//Index of the byte to get/send.
+		ULONGLONG		ullByteIndex;	//Index of the start byte to get/send.
+		ULONGLONG		ullSize;		//Index of the last byte to get/send.
 		unsigned char	chByte;			//Value of the byte to get/send.
 	};
 	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT * ;
@@ -133,7 +134,8 @@ namespace HEXCTRL {
 		void ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwSize = 4);
 		UCHAR GetByte(ULONGLONG ullIndex); //Get the actual byte data by index.
 		void SetShowAs(DWORD dwShowAs);
-		void SetSingleByteData(ULONGLONG ullByte, BYTE chData, bool fWhole = true, bool fHighPart = true, bool fMoveNext = true);
+		void SetByteData(ULONGLONG ullIndex, ULONGLONG ullSize, BYTE chData, bool fWhole = true, bool fHighPart = true, bool fMoveNext = true);
+		void ParentNotify(HEXNOTIFYSTRUCT& hns);
 		void SetCursorPos(ULONGLONG ullPos, bool fHighPart); //Sets the cursor position when in Edit mode.
 		void CursorMoveRight();
 		void CursorMoveLeft();
@@ -179,7 +181,7 @@ namespace HEXCTRL {
 		int m_iHeightBottomOffArea { m_iHeightBottomRect + m_iIndentBottomLine }; //Height of not visible rect from window's bottom to m_iThirdHorizLine.
 		int m_iHeightWorkArea { };		    //Needed for mouse selection point.y calculation.
 		int m_iFirstVertLine { }, m_iSecondVertLine { }, m_iThirdVertLine { }, m_iFourthVertLine { }; //Vertical lines indent.
-		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullBytesSelected { };
+		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullSelectionSize { };
 		const wchar_t* const m_pwszHexMap { L"0123456789ABCDEF" };
 		std::unordered_map<unsigned, std::wstring> m_umapCapacity;
 		std::wstring m_wstrBottomText { };  //Info text (bottom rect).
@@ -200,4 +202,5 @@ namespace HEXCTRL {
 	constexpr auto HEXCTRL_MSG_DESTROY = 0x00FF;	//Inicates that HexCtrl is being destroyed.
 	constexpr auto HEXCTRL_MSG_GETDATA = 0x0100;	//Used in Virtual mode to demand the next byte to display.
 	constexpr auto HEXCTRL_MSG_SETDATA = 0x0101;	//Indicates that the byte in memory has changed, used in edit mode.
+	constexpr auto HEXCTRL_MSG_SETSELECTION = 0x0102;	//Selection has been made for some bytes.
 };
