@@ -1,7 +1,7 @@
 /****************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
 * This software is available under the "MIT License modified with The Commons Clause".  *
-* https://github.com/jovibor/Pepper/blob/master/LICENSE                                 *
+* https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                 *
 * This is a Hex control for MFC apps, implemented as CWnd derived class.			    *
 * The usage is quite simple:														    *
 * 1. Construct CHexCtrl object — HEXCTRL::CHexCtrl myHex;								*
@@ -13,27 +13,27 @@
 #include "res/HexCtrlRes.h"
 
 namespace HEXCTRL {
-	namespace {
+	namespace HEXCTRL_INTERNAL {
 		enum HEXCTRL_SEARCH {
 			SEARCH_HEX, SEARCH_ASCII, SEARCH_UNICODE,
 			SEARCH_FORWARD, SEARCH_BACKWARD,
 			SEARCH_NOTFOUND, SEARCH_FOUND,
 			SEARCH_BEGINNING, SEARCH_END
 		};
-	}
 
-	struct HEXSEARCHSTRUCT
-	{
-		std::wstring	wstrSearch { };			//String search for.
-		DWORD			dwSearchType { };		//Hex, Ascii, Unicode, etc...
-		ULONGLONG		ullStartAt { };			//An offset, search should start at.
-		int				iDirection { };			//Search direction: Forward <-> Backward.
-		bool			fWrap { false };		//Was search wrapped?
-		int				iWrap { };				//Wrap direction.
-		bool			fSecondMatch { false }; //First or subsequent match. 
-		bool			fFound { false };
-		bool			fCount { true };		//Do we count matches or just print "Found".
-	};
+		struct HEXSEARCH
+		{
+			std::wstring	wstrSearch { };			//String search for.
+			DWORD			dwSearchType { };		//Hex, Ascii, Unicode, etc...
+			ULONGLONG		ullStartAt { };			//An offset, search should start at.
+			int				iDirection { };			//Search direction: Forward <-> Backward.
+			bool			fWrap { false };		//Was search wrapped?
+			int				iWrap { };				//Wrap direction.
+			bool			fSecondMatch { false }; //First or subsequent match. 
+			bool			fFound { false };
+			bool			fCount { true };		//Do we count matches or just print "Found".
+		};
+	}
 
 	/********************************************
 	* CHexDlgSearch class definition.			*
@@ -61,7 +61,7 @@ namespace HEXCTRL {
 		DECLARE_MESSAGE_MAP()
 	private:
 		CHexCtrl* m_pParent { };
-		HEXSEARCHSTRUCT m_stSearch { };
+		HEXCTRL_INTERNAL::HEXSEARCH m_stSearch { };
 		DWORD m_dwOccurrences { };
 		int m_iRadioCurrent { };
 		COLORREF m_clrSearchFailed { RGB(200, 0, 0) };

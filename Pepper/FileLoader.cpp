@@ -242,7 +242,7 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	}
 	break;
 	case HEXCTRL_MSG_GETDATA:
-		pHexNtfy->chByte = GetByte(pHexNtfy->hdr.hwndFrom, pHexNtfy->ullByteIndex);
+		pHexNtfy->chByte = GetByte(pHexNtfy->hdr.hwndFrom, pHexNtfy->ullIndex);
 		break;
 	}
 

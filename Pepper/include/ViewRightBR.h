@@ -87,7 +87,6 @@ private:
 	bool m_fDrawRes { false };
 	COLORREF m_clrBkIcons { RGB(230, 230, 230) };
 	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
-	//HWND for RT_DIALOG.
 	BITMAP m_stBmp { };
 	int m_iResTypeToDraw { };
 	//Width and height of whole image to draw.
