@@ -404,9 +404,10 @@
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="FileLoader.cpp" />
+    <ClCompile Include="HexCtrl\Dialogs\HexCtrlDlgAbout.cpp" />
+    <ClCompile Include="HexCtrl\Dialogs\HexCtrlDlgSearch.cpp" />
+    <ClCompile Include="HexCtrl\Helper.cpp" />
     <ClCompile Include="HexCtrl\HexCtrl.cpp" />
-    <ClCompile Include="HexCtrl\HexCtrlDlgAbout.cpp" />
-    <ClCompile Include="HexCtrl\HexCtrlDlgSearch.cpp" />
     <ClCompile Include="HexCtrl\ScrollEx.cpp" />
     <ClCompile Include="ListEx\ListEx.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
@@ -440,9 +441,10 @@
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HexCtrl\Dialogs\HexCtrlDlgAbout.h" />
+    <ClInclude Include="HexCtrl\Dialogs\HexCtrlDlgSearch.h" />
+    <ClInclude Include="HexCtrl\Helper.h" />
     <ClInclude Include="HexCtrl\HexCtrl.h" />
-    <ClInclude Include="HexCtrl\HexCtrlDlgAbout.h" />
-    <ClInclude Include="HexCtrl\HexCtrlDlgSearch.h" />
     <ClInclude Include="HexCtrl\res\HexCtrlRes.h" />
     <ClInclude Include="HexCtrl\ScrollEx.h" />
     <ClInclude Include="include\ChildFrm.h" />

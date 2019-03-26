@@ -72,41 +72,63 @@ namespace HEXCTRL {
 		ULONGLONG		ullIndex { };	//Index of the start byte to get/send.
 		ULONGLONG		ullSize { };	//Size of the bytes to get/send.
 		PBYTE			pData { };		//Pointer to a data to get/send.
-		BYTE			chByte { };		//Single byte data - used for simplicity, when ullSize==1.
+		BYTE			chByte { };		//Single byte data - used for simplicity, when ullModifySize==1.
 	};
 	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT * ;
 
-	/********************************************
-	* CHexCtrl class definition.				*
-	********************************************/
-	//Forward declarations.
-	namespace HEXCTRL_INTERNAL {
-		struct HEXSEARCH;
-		struct HEXMODIFYDATA;
-		struct HEXUNDO;
+	/********************************************************************************************
+	* HEXSEARCHSTRUCT - used for search routines.												*
+	********************************************************************************************/
+	struct HEXSEARCHSTRUCT
+	{
+		std::wstring	wstrSearch { };			//String search for.
+		DWORD			dwSearchType { };		//Hex, Ascii, Unicode, etc...
+		ULONGLONG		ullStartAt { };			//An offset, search should start at.
+		int				iDirection { };			//Search direction: Forward <-> Backward.
+		bool			fWrap { false };		//Was search wrapped?
+		int				iWrap { };				//Wrap direction.
+		bool			fSecondMatch { false }; //First or subsequent match. 
+		bool			fFound { false };
+		bool			fCount { true };		//Do we count matches or just print "Found".
+	};
+
+	/************************************************
+	* Forward declarations.							*
+	************************************************/
+	class CHexDlgSearch;
+	namespace INTERNAL {
+		struct STMODIFY;
+		struct STUNDO;
+		enum ENCLIPBOARD;
+		enum ENSHOWAS;
 	}
-	namespace SCROLLEX64 {
-		class CScrollEx64;
+	namespace SCROLLEX {
+		class CScrollEx;
 	}
 
+	/********************************************************************************************
+	* CHexCtrl class declaration.																*
+	********************************************************************************************/
 	class CHexCtrl : public CWnd
 	{
 	public:
-		friend class CHexDlgSearch;
 		CHexCtrl();
 		virtual ~CHexCtrl();
 		bool Create(const HEXCREATESTRUCT& hcs); //Main initialization method, CHexCtrl::Create.
-		bool IsCreated();						 //Shows whether control created or not.
-		void SetData(const HEXDATASTRUCT& hds);  //Main method for setting data to display (and edit).																
+		bool IsCreated();						 //Shows whether control is created or not.
+		void SetData(const HEXDATASTRUCT& hds);  //Main method for setting data to display (and edit).	
+		bool IsDataSet();						 //Is data set or not.
 		void ClearData();						 //Clears all data from HexCtrl's view (not touching data itself).
+		void EnableEdit(bool fEnable);			 //Enable or disable edit mode.
 		void ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSize = 1); //Shows (selects) given offset.
 		void SetFont(const LOGFONT* pLogFontNew);//Sets the control's font.
 		void SetFontSize(UINT uiSize);			 //Sets the control's font size.
-		UINT GetFontSize();						 //Gets the control's font size.
+		long GetFontSize();						 //Gets the control's font size.
 		void SetColor(const HEXCOLORSTRUCT& clr);//Sets all the colors for the control.
 		void SetCapacity(DWORD dwCapacity);		 //Sets the control's current capacity.
 		UINT GetDlgCtrlID()const;
 		CWnd* GetParent()const;
+		void Search(HEXSEARCHSTRUCT& rSearch); //Search through currently set data.
 	protected:
 		DECLARE_MESSAGE_MAP()
 		bool RegisterWndClass();
@@ -132,34 +154,34 @@ namespace HEXCTRL {
 		afx_msg void OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp);
 		afx_msg void OnNcPaint();
 		afx_msg void OnDestroy();
+	protected:
 		void RecalcAll();
 		void RecalcWorkAreaHeight(int iClientHeight);
 		void RecalcScrollSizes(int iClientHeight = 0, int iClientWidth = 0);
-		void RecalcScrollPageSize();
 		ULONGLONG GetCurrentLineV();
 		ULONGLONG HitTest(LPPOINT); //Is any hex chunk withing given point?
 		void HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy);
-		void ClipboardCopy(DWORD dwType);
-		void ClipboardPaste(DWORD dwType);
-		void Search(HEXCTRL_INTERNAL::HEXSEARCH& rSearch);
+		void ClipboardCopy(INTERNAL::ENCLIPBOARD enType);
+		void ClipboardPaste(INTERNAL::ENCLIPBOARD enType);
 		void SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullSize, bool fHighlight = false, bool fMouse = false);
 		void SelectAll();
 		void UpdateInfoText();
-		void ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwSize = 4);
-		BYTE GetByte(ULONGLONG ullIndex); //Get the actual byte data by index.
-		void SetShowAs(DWORD dwShowAs);
-		void ModifyData(const HEXCTRL_INTERNAL::HEXMODIFYDATA& hmd); //Main routine to modify data in fMutable mode.
+		BYTE GetByte(ULONGLONG ullIndex); //Get the byte data by index.
+		void SetShowAs(INTERNAL::ENSHOWAS enShowAs);
+		void ModifyData(const INTERNAL::STMODIFY& hmd); //Main routine to modify data in fMutable mode.
 		void ParentNotify(const HEXNOTIFYSTRUCT& hns);
 		void SetCursorPos(ULONGLONG ullPos, bool fHighPart); //Sets the cursor position when in Edit mode.
 		void CursorMoveRight();
 		void CursorMoveLeft();
 		void CursorMoveUp();
 		void CursorMoveDown();
-		void CursorScroll();
+		void CursorScroll(); //Replicates SetSelection, but for cursor.
 		void Undo();
 		void Redo();
+		void SnapshotUndo(ULONGLONG ullIndex, ULONGLONG ullSize); //Takes currently modifiable data snapshot.
 	private:
 		bool m_fCreated { false };			//Is control created or not yet.
+		bool m_fDataSet { false };			//Is data set or not.
 		bool m_fFloat { false };			//Is control window float or not.
 		bool m_fVirtual { false };			//Is control works in "Virtual" mode.
 		bool m_fMutable { false };			//Is control works in Edit mode.
@@ -168,15 +190,15 @@ namespace HEXCTRL {
 		DWORD m_dwCapacity { 16 };			//How many bytes displayed in one row
 		const DWORD m_dwCapacityMax { 64 }; //Maximum capacity.
 		DWORD m_dwCapacityBlockSize { m_dwCapacity / 2 }; //Size of block before space delimiter.
-		DWORD m_dwShowAs { };				//Show data mode.
+		INTERNAL::ENSHOWAS m_enShowAs { };  //Show data mode.
 		CWnd* m_pwndParentOwner { };		//Parent or owner window pointer.
 		CWnd* m_pwndMsg { };				//Window the control messages will be sent to.
 		SIZE m_sizeLetter { 1, 1 };			//Current font's letter size (width, height).
 		CFont m_fontHexView;				//Main Hex chunks font.
 		CFont m_fontBottomRect;				//Font for bottom Info rect.
 		std::unique_ptr<CHexDlgSearch> m_pDlgSearch { std::make_unique<CHexDlgSearch>() }; //Search dialog.
-		std::unique_ptr<SCROLLEX64::CScrollEx64> m_pstScrollV { std::make_unique<SCROLLEX64::CScrollEx64>() }; //Vertical scroll object.
-		std::unique_ptr<SCROLLEX64::CScrollEx64> m_pstScrollH { std::make_unique<SCROLLEX64::CScrollEx64>() }; //Horizontal scroll object.
+		std::unique_ptr<SCROLLEX::CScrollEx> m_pstScrollV { std::make_unique<SCROLLEX::CScrollEx>() }; //Vertical scroll object.
+		std::unique_ptr<SCROLLEX::CScrollEx> m_pstScrollH { std::make_unique<SCROLLEX::CScrollEx>() }; //Horizontal scroll object.
 		CMenu m_menuMain;					//Main popup menu.
 		CMenu m_menuShowAs;					//Submenu "Show as..."
 		HEXCOLORSTRUCT m_stColor;			//All control related colors.
@@ -198,7 +220,6 @@ namespace HEXCTRL {
 		int m_iHeightWorkArea { };		    //Needed for mouse selection point.y calculation.
 		int m_iFirstVertLine { }, m_iSecondVertLine { }, m_iThirdVertLine { }, m_iFourthVertLine { }; //Vertical lines indent.
 		ULONGLONG m_ullSelectionStart { }, m_ullSelectionEnd { }, m_ullSelectionClick { }, m_ullSelectionSize { };
-		const wchar_t* const m_pwszHexMap { L"0123456789ABCDEF" };
 		std::unordered_map<unsigned, std::wstring> m_umapCapacityWstr; //"Capacity" letters for fast lookup.
 		std::wstring m_wstrBottomText { };  //Info text (bottom rect).
 		const std::wstring m_wstrErrVirtual { L"This function isn't supported in Virtual mode!" };
@@ -209,8 +230,8 @@ namespace HEXCTRL {
 		bool m_fCursorHigh { true };		//Cursor's High or Low bits position (first or last digit in hex chunk).
 		bool m_fCursorAscii { false };		//Whether cursor at Ascii or Hex chunks area.
 		DWORD m_dwUndoMax { 50 };			//How many Undo states to preserve.
-		std::deque<std::unique_ptr<HEXCTRL_INTERNAL::HEXUNDO>> m_deqUndo; //Undo deque.
-		std::deque<std::unique_ptr<HEXCTRL_INTERNAL::HEXUNDO>> m_deqRedo; //Redo deque.
+		std::deque<std::unique_ptr<INTERNAL::STUNDO>> m_deqUndo; //Undo deque.
+		std::deque<std::unique_ptr<INTERNAL::STUNDO>> m_deqRedo; //Redo deque.
 		std::unordered_map<int, HBITMAP> m_umapHBITMAP; //Images for the Menu.
 	};
 
