@@ -10,7 +10,7 @@
 ****************************************************************************************/
 #include "stdafx.h"
 #include "strsafe.h"
-#include "res/HexCtrlRes.h"
+#include "res/HexCtrlRes.h"		//Icons, for menu etc...
 #include "Dialogs/HexCtrlDlgAbout.h"
 #include "Dialogs/HexCtrlDlgSearch.h"
 #include "HexCtrl.h"
@@ -25,16 +25,16 @@ namespace HEXCTRL {
 	* Internal enums and structs.				*
 	********************************************/
 	namespace INTERNAL {
-		enum ENSHOWAS {
+		enum class ENSHOWAS : DWORD {
 			ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8
 		};
 
-		enum ENCLIPBOARD {
+		enum class ENCLIPBOARD : DWORD {
 			COPY_ASHEX, COPY_ASHEXFORMATTED, COPY_ASASCII,
 			PASTE_ASHEX, PASTE_ASASCII
 		};
 
-		enum ENMENU {
+		enum class ENMENU : UINT_PTR {
 			IDM_MAIN_SEARCH,
 			IDM_SHOWAS_ASBYTE, IDM_SHOWAS_ASWORD, IDM_SHOWAS_ASDWORD, IDM_SHOWAS_ASQWORD,
 			IDM_EDIT_UNDO, IDM_EDIT_REDO, IDM_EDIT_COPY_ASHEX, IDM_EDIT_COPY_ASHEXFORMATTED, IDM_EDIT_COPY_ASASCII,
@@ -43,24 +43,9 @@ namespace HEXCTRL {
 			IDM_MAIN_ABOUT,
 		};
 
-		enum ENMODIFYAS {
-			AS_MODIFY, AS_FILL, AS_UNDO, AS_REDO
-		};
-
 		struct STUNDO {
 			ULONGLONG ullIndex;
 			std::string strData;
-		};
-
-		struct STMODIFY {
-			ULONGLONG		ullIndex { };		//Index of the start byte to modify.
-			ULONGLONG		ullModifySize { };	//Size in bytes.
-			PBYTE			pData { };			//Pointer to data to be set.
-			ENMODIFYAS	enType { ENMODIFYAS::AS_MODIFY }; //Modify type.
-			DWORD			dwFillDataSize { }; //Size of pData if enType==AS_FILL.
-			bool			fWhole { true };	//Is a whole byte or just a part of it to be modified.
-			bool			fHighPart { true };	//Shows whether High or Low part of byte should be modified (If fWhole is false).
-			bool			fMoveNext { true };	//Should cursor be moved to the next byte.
 		};
 
 		constexpr auto WSTR_WNDCLASS_NAME = L"HexCtrl";
@@ -107,48 +92,48 @@ CHexCtrl::CHexCtrl()
 
 	//Submenu for data showing options.
 	m_menuShowAs.CreatePopupMenu();
-	m_menuShowAs.AppendMenuW(MF_STRING | MF_CHECKED, INTERNAL::ENMENU::IDM_SHOWAS_ASBYTE, L"BYTE");
-	m_menuShowAs.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_SHOWAS_ASWORD, L"WORD");
-	m_menuShowAs.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_SHOWAS_ASDWORD, L"DWORD");
-	m_menuShowAs.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_SHOWAS_ASQWORD, L"QWORD");
+	m_menuShowAs.AppendMenuW(MF_STRING | MF_CHECKED, (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASBYTE, L"BYTE");
+	m_menuShowAs.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASWORD, L"WORD");
+	m_menuShowAs.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASDWORD, L"DWORD");
+	m_menuShowAs.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASQWORD, L"QWORD");
 
 	//Main menu.
 	m_menuMain.CreatePopupMenu();
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_MAIN_SEARCH, L"Search...	Ctrl+F");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_MAIN_SEARCH, L"Search...	Ctrl+F");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
 	m_menuMain.AppendMenuW(MF_POPUP, (DWORD_PTR)m_menuShowAs.m_hMenu, L"Show data as...");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_EDIT_UNDO, L"Undo	Ctrl+Z");
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_EDIT_REDO, L"Redo	Ctrl+Y");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_UNDO, L"Undo	Ctrl+Z");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_REDO, L"Redo	Ctrl+Y");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, L"Copy as Hex...	Ctrl+C");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, L"Copy as Hex...	Ctrl+C");
 
 	//Menu icons.
 	MENUITEMINFOW mii { };
 	mii.cbSize = sizeof(MENUITEMINFOW);
 	mii.fMask = MIIM_BITMAP;
-	mii.hbmpItem = m_umapHBITMAP[INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX] =
+	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX] =
 		(HBITMAP)LoadImageW(GetModuleHandleW(0), MAKEINTRESOURCE(IDB_HEXCTRL_MENU_COPY), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-	m_menuMain.SetMenuItemInfoW(INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, &mii);
+	m_menuMain.SetMenuItemInfoW((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, &mii);
 
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEXFORMATTED, L"Copy as Formatted Hex...");
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_EDIT_COPY_ASASCII, L"Copy as Ascii...");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEXFORMATTED, L"Copy as Formatted Hex...");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASASCII, L"Copy as Ascii...");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX, L"Paste as Hex	Ctrl+V");
-	mii.hbmpItem = m_umapHBITMAP[INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX] =
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX, L"Paste as Hex	Ctrl+V");
+	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX] =
 		(HBITMAP)LoadImageW(GetModuleHandleW(0), MAKEINTRESOURCE(IDB_HEXCTRL_MENU_PASTE), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-	m_menuMain.SetMenuItemInfoW(INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX, &mii);
+	m_menuMain.SetMenuItemInfoW((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX, &mii);
 
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_EDIT_PASTE_ASASCII, L"Paste as Ascii");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASASCII, L"Paste as Ascii");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS, L"Fill with zeros");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS, L"Fill with zeros");
 
-	mii.hbmpItem = m_umapHBITMAP[INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS] =
+	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS] =
 		(HBITMAP)LoadImageW(GetModuleHandleW(0), MAKEINTRESOURCE(IDB_HEXCTRL_MENU_FILL_ZEROS), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-	m_menuMain.SetMenuItemInfoW(INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS, &mii);
+	m_menuMain.SetMenuItemInfoW((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS, &mii);
 
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, INTERNAL::ENMENU::IDM_MAIN_ABOUT, L"About");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_MAIN_ABOUT, L"About");
 
 	m_pDlgSearch->Create(IDD_HEXCTRL_SEARCH, this);
 
@@ -167,23 +152,23 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 	if (IsCreated()) //Already created.
 		return false;
 
-	m_dwCtrlId = hcs.uId;
 	m_fFloat = hcs.fFloat;
-	m_pwndParentOwner = hcs.pwndParent;
-	if (hcs.pwndMsg)
-		m_pwndMsg = hcs.pwndMsg;
-	else
-		m_pwndMsg = hcs.pwndParent;
+	m_pwndMsg = hcs.pwndParent;
 	if (hcs.pstColor)
 		m_stColor = *hcs.pstColor;
 
 	m_stBrushBkSelected.CreateSolidBrush(m_stColor.clrBkSelected);
 
-	DWORD dwStyle;
+	DWORD dwStyle = hcs.dwStyle;
+	//1. WS_POPUP style is vital for GetParent to work properly in m_fFloat mode.
+	//   Without this style GetParent/GetOwner always return 0, no matter whether pParentWnd is provided to CreateWindowEx or not.
+	//2. Created HexCtrl window will always overlap (be on top of) its parent, or owner, window 
+	//   if pParentWnd is set (not nullptr) in CreateWindowEx.
+	//3. To force HexCtrl window on taskbar the WS_EX_APPWINDOW extended window style must be set.
 	if (m_fFloat)
-		dwStyle = WS_VISIBLE | WS_OVERLAPPEDWINDOW;
+		dwStyle |= WS_VISIBLE | WS_POPUP | WS_OVERLAPPEDWINDOW;
 	else
-		dwStyle = WS_VISIBLE | WS_CHILD;
+		dwStyle |= WS_VISIBLE | WS_CHILD;
 
 	//Font related.//////////////////////////////////////////////
 	LOGFONTW lf { };
@@ -218,12 +203,12 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
 	}
 
-	//If it's custom dialog control then there is no need to create window.
-	if (!hcs.fCustomCtrl && !CWnd::CreateEx(hcs.dwExStyles, INTERNAL::WSTR_WNDCLASS_NAME, L"HexControl",
-		dwStyle, rc, m_pwndParentOwner, m_fFloat ? 0 : m_dwCtrlId))
+	//If it's a custom dialog control then there is no need to create a window.
+	if (!hcs.fCustomCtrl && !CWnd::CreateEx(hcs.dwExStyle, INTERNAL::WSTR_WNDCLASS_NAME, L"HexControl",
+		dwStyle, rc, hcs.pwndParent, m_fFloat ? 0 : hcs.uId))
 	{
 		CStringW ss;
-		ss.Format(L"CHexCtrl (Id:%u) CWnd::CreateEx failed.\r\nCheck HEXCREATESTRUCT filling correctness.", m_dwCtrlId);
+		ss.Format(L"CHexCtrl (Id:%u) CWnd::CreateEx failed.\r\nCheck HEXCREATESTRUCT filling correctness.", hcs.uId);
 		MessageBoxW(ss, L"Error", MB_ICONERROR);
 		return false;
 	}
@@ -245,6 +230,13 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
 	return true;
 }
 
+bool CHexCtrl::CreateDialogCtrl()
+{
+	HEXCREATESTRUCT hcs;
+	hcs.fCustomCtrl = true;
+	return Create(hcs);
+}
+
 bool CHexCtrl::IsCreated()
 {
 	return m_fCreated;
@@ -255,21 +247,26 @@ void CHexCtrl::SetData(const HEXDATASTRUCT& hds)
 	if (!IsCreated())
 		return;
 
+	//m_pwndMsg was previously set in Create.
 	if (hds.pwndMsg)
 		m_pwndMsg = hds.pwndMsg;
 
-	//Virtual mode is possible only when there is a msg window,
-	//a data requests will be sent to.
-	if (hds.fVirtual && !m_pwndMsg)
+	//Virtual mode is possible only when there is a msg window a data requests will be sent to.
+	if (hds.enMode == HEXDATAMODEEN::HEXMSG && !GetMsgWindow())
 	{
-		MessageBoxW(L"HexCtrl Virtual mode requires HEXCREATESTRUCT::pwndMsg or HEXDATASTRUCT::pwndMsg to be set.", L"Error", MB_ICONWARNING);
+		MessageBoxW(L"HexCtrl HEXDATAMODEEN::HEXMSG mode requires HEXDATASTRUCT::pwndMsg to be not nullptr.", L"Error", MB_ICONWARNING);
+		return;
+	}
+	else if (hds.enMode == HEXDATAMODEEN::HEXVIRTUAL && !hds.pHexVirtual)
+	{
+		MessageBoxW(L"HexCtrl HEXDATAMODEEN::HEXVIRTUAL mode requires HEXDATASTRUCT::pHexVirtual to be not nullptr.", L"Error", MB_ICONWARNING);
 		return;
 	}
 
 	m_fDataSet = true;
 	m_pData = hds.pData;
 	m_ullDataSize = hds.ullDataSize;
-	m_fVirtual = hds.fVirtual;
+	m_enMode = hds.enMode;
 	m_fMutable = hds.fMutable;
 	m_dwOffsetDigits = hds.ullDataSize <= 0xfffffffful ? 8 :
 		(hds.ullDataSize <= 0xfffffffffful ? 10 :
@@ -309,7 +306,7 @@ void CHexCtrl::ClearData()
 	UpdateInfoText();
 }
 
-void CHexCtrl::EnableEdit(bool fEnable)
+void CHexCtrl::EditEnable(bool fEnable)
 {
 	if (!IsCreated())
 		return;
@@ -370,29 +367,19 @@ void CHexCtrl::SetCapacity(DWORD dwCapacity)
 
 	//Setting capacity according to current m_enShowAs.
 	if (dwCapacity < m_dwCapacity)
-		dwCapacity -= dwCapacity % m_enShowAs;
+		dwCapacity -= dwCapacity % (DWORD)m_enShowAs;
 	else
-		dwCapacity += m_enShowAs - (dwCapacity % m_enShowAs);
+		dwCapacity += (DWORD)m_enShowAs - (dwCapacity % (DWORD)m_enShowAs);
 
 	//To prevent under/over flow.
 	if (dwCapacity < (DWORD)m_enShowAs)
-		dwCapacity = m_enShowAs;
+		dwCapacity = (DWORD)m_enShowAs;
 	else if (dwCapacity > m_dwCapacityMax)
 		dwCapacity = m_dwCapacityMax;
 
 	m_dwCapacity = dwCapacity;
 	m_dwCapacityBlockSize = m_dwCapacity / 2;
 	RecalcAll();
-}
-
-UINT CHexCtrl::GetDlgCtrlID()const
-{
-	return m_dwCtrlId;
-}
-
-CWnd* CHexCtrl::GetParent()const
-{
-	return m_pwndParentOwner;
 }
 
 bool CHexCtrl::RegisterWndClass()
@@ -407,8 +394,7 @@ bool CHexCtrl::RegisterWndClass()
 		wc.lpfnWndProc = ::DefWindowProcW;
 		wc.cbClsExtra = wc.cbWndExtra = 0;
 		wc.hInstance = hInst;
-		wc.hIcon = NULL;
-		wc.hIconSm = NULL;
+		wc.hIcon = wc.hIconSm = NULL;
 		wc.hCursor = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
 		wc.hbrBackground = NULL;
 		wc.lpszMenuName = nullptr;
@@ -429,24 +415,6 @@ void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 	SetFocus();
 
 	CWnd::OnActivate(nState, pWndOther, bMinimized);
-}
-
-void CHexCtrl::OnDestroy()
-{
-	//Send messages to both, m_pwndMsg and m_pwndParentOwner.
-	NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
-	if (m_pwndMsg)
-		m_pwndMsg->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
-	if (m_pwndParentOwner)
-	{
-		m_pwndParentOwner->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
-		m_pwndParentOwner->SetForegroundWindow();
-	}
-
-	ClearData();
-	m_fCreated = false;
-
-	CWnd::OnDestroy();
 }
 
 void CHexCtrl::OnMouseMove(UINT nFlags, CPoint point)
@@ -585,37 +553,37 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	switch (uiId)
 	{
-	case INTERNAL::ENMENU::IDM_MAIN_SEARCH:
-		if (m_fVirtual)
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_MAIN_SEARCH:
+		if (m_enMode != HEXDATAMODEEN::HEXNORMAL)
 			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		else
 			m_pDlgSearch->ShowWindow(SW_SHOW);
 		break;
-	case INTERNAL::ENMENU::IDM_EDIT_UNDO:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_UNDO:
 		Undo();
 		break;
-	case INTERNAL::ENMENU::IDM_EDIT_REDO:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_REDO:
 		Redo();
 		break;
-	case INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX:
 		ClipboardCopy(INTERNAL::ENCLIPBOARD::COPY_ASHEX);
 		break;
-	case INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEXFORMATTED:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEXFORMATTED:
 		ClipboardCopy(INTERNAL::ENCLIPBOARD::COPY_ASHEXFORMATTED);
 		break;
-	case INTERNAL::ENMENU::IDM_EDIT_COPY_ASASCII:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASASCII:
 		ClipboardCopy(INTERNAL::ENCLIPBOARD::COPY_ASASCII);
 		break;
-	case INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX:
 		ClipboardPaste(INTERNAL::ENCLIPBOARD::PASTE_ASHEX);
 		break;
-	case INTERNAL::ENMENU::IDM_EDIT_PASTE_ASASCII:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASASCII:
 		ClipboardPaste(INTERNAL::ENCLIPBOARD::PASTE_ASASCII);
 		break;
-	case INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS:
 	{
-		INTERNAL::STMODIFY hmd;
-		hmd.enType = INTERNAL::ENMODIFYAS::AS_FILL;
+		HEXMODIFYSTRUCT hmd;
+		hmd.enType = HEXMODIFYASEN::AS_FILL;
 		hmd.ullModifySize = m_ullSelectionSize;
 		hmd.ullIndex = m_ullSelectionStart;
 		hmd.fMoveNext = false;
@@ -625,22 +593,22 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 		ModifyData(hmd);
 	}
 	break;
-	case INTERNAL::ENMENU::IDM_MAIN_ABOUT:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_MAIN_ABOUT:
 	{
 		CHexDlgAbout m_dlgAbout;
 		m_dlgAbout.DoModal();
 	}
 	break;
-	case INTERNAL::ENMENU::IDM_SHOWAS_ASBYTE:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASBYTE:
 		SetShowAs(INTERNAL::ENSHOWAS::ASBYTE);
 		break;
-	case INTERNAL::ENMENU::IDM_SHOWAS_ASWORD:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASWORD:
 		SetShowAs(INTERNAL::ENSHOWAS::ASWORD);
 		break;
-	case INTERNAL::ENMENU::IDM_SHOWAS_ASDWORD:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASDWORD:
 		SetShowAs(INTERNAL::ENSHOWAS::ASDWORD);
 		break;
-	case INTERNAL::ENMENU::IDM_SHOWAS_ASQWORD:
+	case (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASQWORD:
 		SetShowAs(INTERNAL::ENSHOWAS::ASQWORD);
 		break;
 	}
@@ -658,18 +626,18 @@ void CHexCtrl::OnContextMenu(CWnd* pWnd, CPoint point)
 
 	//To not spread up the efforts through code, all the checks are done here 
 	//instead of WM_INITMENUPOPUP.
-	m_menuMain.EnableMenuItem(INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, uMenuStatus | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem(INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEXFORMATTED, uMenuStatus | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem(INTERNAL::ENMENU::IDM_EDIT_COPY_ASASCII, uMenuStatus | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem(INTERNAL::ENMENU::IDM_EDIT_UNDO, (m_deqUndo.empty() ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem(INTERNAL::ENMENU::IDM_EDIT_REDO, (m_deqRedo.empty() ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, uMenuStatus | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEXFORMATTED, uMenuStatus | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASASCII, uMenuStatus | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_UNDO, (m_deqUndo.empty() ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_REDO, (m_deqRedo.empty() ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
 
 	BOOL fFormatAvail = IsClipboardFormatAvailable(CF_TEXT);
-	m_menuMain.EnableMenuItem(INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX, ((m_fMutable && fFormatAvail) ?
+	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX, ((m_fMutable && fFormatAvail) ?
 		uMenuStatus : MF_GRAYED) | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem(INTERNAL::ENMENU::IDM_EDIT_PASTE_ASASCII, ((m_fMutable && fFormatAvail) ?
+	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASASCII, ((m_fMutable && fFormatAvail) ?
 		uMenuStatus : MF_GRAYED) | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem(INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS,
+	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS,
 		(m_fMutable ? uMenuStatus : MF_GRAYED) | MF_BYCOMMAND);
 
 	m_menuMain.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
@@ -878,8 +846,8 @@ void CHexCtrl::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 	if (GetKeyState(VK_CONTROL) < 0)
 		return;
 
-	INTERNAL::STMODIFY hmd;
-	hmd.enType = INTERNAL::ENMODIFYAS::AS_MODIFY;
+	HEXMODIFYSTRUCT hmd;
+	hmd.enType = HEXMODIFYASEN::AS_MODIFY;
 	hmd.ullIndex = m_ullCursorPos;
 	hmd.ullModifySize = 1;
 	hmd.fMoveNext = true;
@@ -1024,7 +992,7 @@ void CHexCtrl::OnPaint()
 			m_umapCapacityWstr.at(iterCapacity).data(), c, nullptr);
 
 		iIndentCapacityX += m_iSizeHexByte;
-		if (iCapacityShowAs == m_enShowAs) {
+		if (iCapacityShowAs == (DWORD)m_enShowAs) {
 			iIndentCapacityX += m_iSpaceBetweenHexChunks;
 			iCapacityShowAs = 1;
 		}
@@ -1107,7 +1075,7 @@ void CHexCtrl::OnPaint()
 					clrTextHex = clrTextAscii = m_stColor.clrTextSelected;
 					//Space between hex chunks (excluding last hex in a row) filling with bk_selected color.
 					if (ullIndexByteToPrint < (m_ullSelectionEnd - 1) && (ullIndexByteToPrint + 1) % m_dwCapacity &&
-						((ullIndexByteToPrint + 1) % m_enShowAs) == 0)
+						((ullIndexByteToPrint + 1) % (DWORD)m_enShowAs) == 0)
 					{	//Rect of the space between Hex chunks. Needed for proper selection drawing.
 						rc.left = iHexPosToPrintX + m_iSizeHexByte;
 						rc.right = rc.left + m_iSpaceBetweenHexChunks;
@@ -1158,7 +1126,7 @@ void CHexCtrl::OnPaint()
 			}
 			//Increasing indents for next print, for both - Hex and Ascii.
 			iIndentHexX += m_iSizeHexByte;
-			if (iShowAs == m_enShowAs) {
+			if (iShowAs == (DWORD)m_enShowAs) {
 				iIndentHexX += m_iSpaceBetweenHexChunks;
 				iShowAs = 1;
 			}
@@ -1216,6 +1184,152 @@ void CHexCtrl::OnNcPaint()
 	m_pstScrollH->OnNcPaint();
 }
 
+void CHexCtrl::OnDestroy()
+{
+	//Send messages to both, m_pwndMsg and pwndParent.
+	NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
+	CWnd* pwndMsg = GetMsgWindow();
+	if (pwndMsg)
+		pwndMsg->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+
+	CWnd* pwndParent = GetParent();
+	if (pwndParent)
+	{
+		pwndParent->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+		pwndParent->SetForegroundWindow();
+	}
+
+	ClearData();
+	m_fCreated = false;
+
+	CWnd::OnDestroy();
+}
+
+BYTE CHexCtrl::GetByte(ULONGLONG ullIndex)
+{
+	//If it's virtual data control we aquire next byte_to_print from m_pwndMsg window.
+	if (m_enMode == HEXDATAMODEEN::HEXNORMAL)
+		return m_pData[ullIndex];
+	else if (m_enMode == HEXDATAMODEEN::HEXMSG)
+	{
+		HEXNOTIFYSTRUCT hns { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDATA } };
+		hns.ullIndex = ullIndex;
+		hns.ullSize = 1;
+		MsgWindowNotify(hns);
+		return hns.chByte;
+	}
+	else if (m_enMode == HEXDATAMODEEN::HEXVIRTUAL)
+	{
+		if (m_pCustom)
+			return m_pCustom->GetByte(ullIndex);
+	}
+
+	return 0;
+}
+
+void CHexCtrl::ModifyData(const HEXMODIFYSTRUCT& hmd)
+{	//Changes byte(s) in memory. High or Low part, depending on hmd.fHighPart.
+	if (!m_fMutable || hmd.ullIndex >= m_ullDataSize)
+		return;
+
+	if (m_enMode == HEXDATAMODEEN::HEXNORMAL) //Modify only in non Virtual mode.
+	{
+		switch (hmd.enType)
+		{
+		case HEXMODIFYASEN::AS_MODIFY:
+		{
+			m_deqRedo.clear(); //No Redo unless we make Undo.
+			SnapshotUndo(hmd.ullIndex, hmd.ullModifySize);
+
+			if (hmd.fWhole)
+				for (ULONGLONG i = 0; i < hmd.ullModifySize; i++)
+					m_pData[hmd.ullIndex + i] = hmd.pData[i];
+			else
+			{	//If just one part (High/Low) of byte must be changed.
+				unsigned char chByte = GetByte(hmd.ullIndex);
+				if (hmd.fHighPart)
+					chByte = (*hmd.pData << 4) | (chByte & 0x0F);
+				else
+					chByte = (*hmd.pData & 0x0F) | (chByte & 0xF0);
+
+				m_pData[hmd.ullIndex] = chByte;
+			}
+		}
+		break;
+		case HEXMODIFYASEN::AS_FILL:
+		{
+			m_deqRedo.clear(); //No Redo unless we make Undo.
+			SnapshotUndo(hmd.ullIndex, hmd.ullModifySize);
+
+			ULONGLONG ullChunks = hmd.ullModifySize / hmd.dwFillDataSize;
+			for (ULONGLONG iterChunk = 0; iterChunk < ullChunks; iterChunk++)
+				for (ULONGLONG iterData = 0; iterData < hmd.dwFillDataSize; iterData++)
+					m_pData[hmd.ullIndex + hmd.dwFillDataSize * iterChunk + iterData] = hmd.pData[iterData];
+		}
+		break;
+		case HEXMODIFYASEN::AS_UNDO:
+		{
+			if (m_deqUndo.empty())
+				return;
+
+			auto& refUndo = m_deqUndo.back();
+			auto& refStr = refUndo->strData;
+
+			//Making new Redo data snapshot.
+			auto& refRedo = m_deqRedo.emplace_back(std::make_unique<INTERNAL::STUNDO>());
+			refRedo->ullIndex = refUndo->ullIndex;
+			for (unsigned i = 0; i < refStr.size(); i++)
+				refRedo->strData += GetByte(refUndo->ullIndex + i);
+
+			for (size_t i = 0; i < refStr.size(); i++)
+				m_pData[refUndo->ullIndex + i] = refStr[i];
+
+			m_deqUndo.pop_back();
+		}
+		break;
+		case HEXMODIFYASEN::AS_REDO:
+		{
+			if (m_deqRedo.empty())
+				return;
+
+			auto& refRedo = m_deqRedo.back();
+			auto& refStr = refRedo->strData;
+
+			//Making new Undo data snapshot.
+			SnapshotUndo(refRedo->ullIndex, refStr.size());
+
+			for (size_t i = 0; i < refStr.size(); i++)
+				m_pData[refRedo->ullIndex + i] = refStr[i];
+
+			m_deqRedo.pop_back();
+		}
+		break;
+		}
+	}
+	else if (m_enMode == HEXDATAMODEEN::HEXMSG)
+	{
+		//In HEXDATAMODEEN::HEXMSG mode we send hmd pointer.
+		HEXNOTIFYSTRUCT hns { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_MODIFYDATA } };
+		hns.pData = (PBYTE)&hmd;
+		MsgWindowNotify(hns);
+	}
+	else if (m_enMode == HEXDATAMODEEN::HEXVIRTUAL)
+	{
+		if (m_pCustom)
+			m_pCustom->ModifyData(hmd);
+	}
+
+	if (hmd.fMoveNext)
+		CursorMoveRight();
+
+	RedrawWindow();
+}
+
+CWnd* CHexCtrl::GetMsgWindow()
+{
+	return m_pwndMsg;
+}
+
 void CHexCtrl::RecalcAll()
 {
 	ULONGLONG ullCurLineV = GetCurrentLineV();
@@ -1234,15 +1348,15 @@ void CHexCtrl::RecalcAll()
 	m_iSizeHexByte = m_sizeLetter.cx * 2;
 	m_iSpaceBetweenBlocks = m_sizeLetter.cx * 2;
 	m_iSpaceBetweenHexChunks = m_sizeLetter.cx;
-	m_iDistanceBetweenHexChunks = m_iSizeHexByte * m_enShowAs + m_iSpaceBetweenHexChunks;
-	m_iThirdVertLine = m_iSecondVertLine + m_iDistanceBetweenHexChunks * (m_dwCapacity / m_enShowAs)
+	m_iDistanceBetweenHexChunks = m_iSizeHexByte * (DWORD)m_enShowAs + m_iSpaceBetweenHexChunks;
+	m_iThirdVertLine = m_iSecondVertLine + m_iDistanceBetweenHexChunks * (m_dwCapacity / (DWORD)m_enShowAs)
 		+ m_iSpaceBetweenBlocks + m_sizeLetter.cx;
 	m_iIndentAscii = m_iThirdVertLine + m_sizeLetter.cx;
 	m_iSpaceBetweenAscii = m_sizeLetter.cx + 1;
 	m_iFourthVertLine = m_iIndentAscii + (m_iSpaceBetweenAscii * m_dwCapacity) + m_sizeLetter.cx;
 	m_iIndentFirstHexChunk = m_iSecondVertLine + m_sizeLetter.cx;
 	m_iSizeFirstHalf = m_iIndentFirstHexChunk + m_dwCapacityBlockSize * (m_sizeLetter.cx * 2) +
-		(m_dwCapacityBlockSize / m_enShowAs - 1) * m_iSpaceBetweenHexChunks;
+		(m_dwCapacityBlockSize / (DWORD)m_enShowAs - 1) * m_iSpaceBetweenHexChunks;
 	m_iHeightTopRect = int(m_sizeLetter.cy * 1.5);
 	m_iIndentTextCapacityY = m_iHeightTopRect / 2 - (m_sizeLetter.cy / 2);
 
@@ -1304,7 +1418,7 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 		int iSpaceBetweenHexChunks = 0;
 		for (unsigned i = 1; i <= m_dwCapacity; i++)
 		{
-			if ((i % m_enShowAs) == 0)
+			if ((i % (DWORD)m_enShowAs) == 0)
 				iSpaceBetweenHexChunks += m_iSpaceBetweenHexChunks;
 			if ((m_iSizeHexByte * i + iSpaceBetweenHexChunks) > dwX)
 			{
@@ -1332,8 +1446,8 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 	return ullHexChunk;
 }
 
-void CHexCtrl::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
-{	
+void CHexCtrl::ChunkPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
+{
 	//This func computes x and y pos of given hex chunk.
 
 	int iBetweenBlocks;
@@ -1343,7 +1457,7 @@ void CHexCtrl::HexPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
 		iBetweenBlocks = 0;
 
 	ullCx = m_iIndentFirstHexChunk + iBetweenBlocks + (ullChunk % m_dwCapacity) * m_iSizeHexByte;
-	ullCx += ((ullChunk % m_dwCapacity) / m_enShowAs) * m_iSpaceBetweenHexChunks;
+	ullCx += ((ullChunk % m_dwCapacity) / (DWORD)m_enShowAs) * m_iSpaceBetweenHexChunks;
 
 	if (ullChunk % m_dwCapacity)
 		ullCy = (ullChunk / m_dwCapacity) * m_sizeLetter.cy + m_sizeLetter.cy;
@@ -1369,8 +1483,8 @@ void CHexCtrl::ClipboardCopy(INTERNAL::ENCLIPBOARD enType)
 			strToClipboard += pszHexMap[(chByte & 0xF0) >> 4];
 			strToClipboard += pszHexMap[(chByte & 0x0F)];
 		}
-		break;
 	}
+	break;
 	case INTERNAL::ENCLIPBOARD::COPY_ASHEXFORMATTED:
 	{
 		//How many spaces are needed to be inserted at the beginnig.
@@ -1383,7 +1497,7 @@ void CHexCtrl::ClipboardCopy(INTERNAL::ENCLIPBOARD enType)
 		//If at least two rows are selected.
 		if (dwModStart + m_ullSelectionSize > m_dwCapacity)
 		{
-			size_t sCount = (dwModStart * 2) + (dwModStart / m_enShowAs);
+			size_t sCount = (dwModStart * 2) + (dwModStart / (DWORD)m_enShowAs);
 			//Additional spaces between halves. Only in ASBYTE's view mode.
 			sCount += m_enShowAs == INTERNAL::ENSHOWAS::ASBYTE ? (dwTail <= m_dwCapacityBlockSize ? 2 : 0) : 0;
 			strToClipboard.insert(0, sCount, ' ');
@@ -1398,7 +1512,7 @@ void CHexCtrl::ClipboardCopy(INTERNAL::ENCLIPBOARD enType)
 			if (i < (m_ullSelectionSize - 1) && (dwTail - 1) != 0)
 				if (m_enShowAs == INTERNAL::ENSHOWAS::ASBYTE && dwTail == dwNextBlock)
 					strToClipboard += "   "; //Additional spaces between halves. Only in BYTE's view mode.
-				else if (((m_dwCapacity - dwTail + 1) % m_enShowAs) == 0) //Add space after hex full chunk, ShowAs_size depending.
+				else if (((m_dwCapacity - dwTail + 1) % (DWORD)m_enShowAs) == 0) //Add space after hex full chunk, ShowAs_size depending.
 					strToClipboard += " ";
 			if (--dwTail == 0 && i < (m_ullSelectionSize - 1)) //Next row.
 			{
@@ -1406,8 +1520,8 @@ void CHexCtrl::ClipboardCopy(INTERNAL::ENCLIPBOARD enType)
 				dwTail = m_dwCapacity;
 			}
 		}
-		break;
 	}
+	break;
 	case INTERNAL::ENCLIPBOARD::COPY_ASASCII:
 	{
 		for (unsigned i = 0; i < m_ullSelectionSize; i++)
@@ -1418,8 +1532,10 @@ void CHexCtrl::ClipboardCopy(INTERNAL::ENCLIPBOARD enType)
 				ch = ' ';
 			strToClipboard += ch;
 		}
-		break;
 	}
+	break;
+	default:
+		break;
 	}
 
 	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, strToClipboard.length() + 1);
@@ -1460,8 +1576,8 @@ void CHexCtrl::ClipboardPaste(INTERNAL::ENCLIPBOARD enType)
 	if (m_ullCursorPos + ullSize > m_ullDataSize)
 		ullSize = m_ullDataSize - m_ullCursorPos;
 
-	INTERNAL::STMODIFY hmd;
-	hmd.enType = INTERNAL::ENMODIFYAS::AS_MODIFY;
+	HEXMODIFYSTRUCT hmd;
+	hmd.enType = HEXMODIFYASEN::AS_MODIFY;
 	hmd.ullIndex = m_ullCursorPos;
 	hmd.fWhole = true;
 	hmd.fMoveNext = false;
@@ -1526,24 +1642,6 @@ void CHexCtrl::UpdateInfoText()
 	RedrawWindow();
 }
 
-BYTE CHexCtrl::GetByte(ULONGLONG ullIndex)
-{
-	//If it's virtual data control we aquire next byte_to_print from m_pwndMsg window.
-	if (m_fVirtual)
-	{
-		if (!m_pwndMsg)
-			return 0;
-
-		HEXNOTIFYSTRUCT hexntfy { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_GETDATA } };
-		hexntfy.ullIndex = ullIndex;
-		hexntfy.ullSize = 1;
-		m_pwndMsg->SendMessageW(WM_NOTIFY, hexntfy.hdr.idFrom, (LPARAM)&hexntfy);
-		return hexntfy.chByte;
-	}
-	else
-		return m_pData[ullIndex];
-}
-
 void CHexCtrl::SetShowAs(INTERNAL::ENSHOWAS enShowAs)
 {
 	//Unchecking all menus and checking only the current needed.
@@ -1572,102 +1670,11 @@ void CHexCtrl::SetShowAs(INTERNAL::ENSHOWAS enShowAs)
 	RecalcAll();
 }
 
-void CHexCtrl::ModifyData(const INTERNAL::STMODIFY& hmd)
-{	//Changes byte(s) in memory. High or Low part, depending on hmd.fHighPart.
-	if (!m_fMutable || hmd.ullIndex >= m_ullDataSize)
-		return;
-
-	if (!m_fVirtual) //Modify only in non Virtual mode.
-	{
-		switch (hmd.enType)
-		{
-		case INTERNAL::ENMODIFYAS::AS_MODIFY:
-		{
-			m_deqRedo.clear(); //No Redo unless we make Undo.
-			SnapshotUndo(hmd.ullIndex, hmd.ullModifySize);
-
-			if (hmd.fWhole)
-				for (ULONGLONG i = 0; i < hmd.ullModifySize; i++)
-					m_pData[hmd.ullIndex + i] = hmd.pData[i];
-			else
-			{	//If just one part (High/Low) of byte must be changed.
-				unsigned char chByte = GetByte(hmd.ullIndex);
-				if (hmd.fHighPart)
-					chByte = (*hmd.pData << 4) | (chByte & 0x0F);
-				else
-					chByte = (*hmd.pData & 0x0F) | (chByte & 0xF0);
-
-				m_pData[hmd.ullIndex] = chByte;
-			}
-		}
-		break;
-		case INTERNAL::ENMODIFYAS::AS_FILL:
-		{
-			m_deqRedo.clear(); //No Redo unless we make Undo.
-			SnapshotUndo(hmd.ullIndex, hmd.ullModifySize);
-
-			ULONGLONG ullChunks = hmd.ullModifySize / hmd.dwFillDataSize;
-			for (ULONGLONG iterChunk = 0; iterChunk < ullChunks; iterChunk++)
-				for (ULONGLONG iterData = 0; iterData < hmd.dwFillDataSize; iterData++)
-					m_pData[hmd.ullIndex + hmd.dwFillDataSize * iterChunk + iterData] = hmd.pData[iterData];
-		}
-		break;
-		case INTERNAL::ENMODIFYAS::AS_UNDO:
-		{
-			if (m_deqUndo.empty())
-				return;
-
-			auto& refUndo = m_deqUndo.back();
-			auto& refStr = refUndo->strData;
-
-			//Making new Redo data snapshot.
-			auto& refRedo = m_deqRedo.emplace_back(std::make_unique<INTERNAL::STUNDO>());
-			refRedo->ullIndex = refUndo->ullIndex;
-			for (unsigned i = 0; i < refStr.size(); i++)
-				refRedo->strData += GetByte(refUndo->ullIndex + i);
-
-			for (size_t i = 0; i < refStr.size(); i++)
-				m_pData[refUndo->ullIndex + i] = refStr[i];
-
-			m_deqUndo.pop_back();
-		}
-		break;
-		case INTERNAL::ENMODIFYAS::AS_REDO:
-		{
-			if (m_deqRedo.empty())
-				return;
-
-			auto& refRedo = m_deqRedo.back();
-			auto& refStr = refRedo->strData;
-
-			//Making new Undo data snapshot.
-			SnapshotUndo(refRedo->ullIndex, refStr.size());
-
-			for (size_t i = 0; i < refStr.size(); i++)
-				m_pData[refRedo->ullIndex + i] = refStr[i];
-
-			m_deqRedo.pop_back();
-		}
-		break;
-		}
-	}
-
-	if (hmd.fMoveNext)
-		CursorMoveRight();
-
-	HEXNOTIFYSTRUCT hns { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_MODIFYDATA } };
-	hns.ullIndex = hmd.ullIndex;
-	hns.ullSize = hmd.ullModifySize;
-	hns.pData = hmd.pData;
-	ParentNotify(hns);
-
-	RedrawWindow();
-}
-
-void CHexCtrl::ParentNotify(const HEXNOTIFYSTRUCT& hns)
+void CHexCtrl::MsgWindowNotify(const HEXNOTIFYSTRUCT& hns)
 {
-	if (m_pwndMsg)
-		m_pwndMsg->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hns);
+	CWnd* pwndMsg = GetMsgWindow();
+	if (pwndMsg)
+		pwndMsg->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hns);
 }
 
 void CHexCtrl::SetCursorPos(ULONGLONG ullPos, bool fHighPart)
@@ -1759,7 +1766,7 @@ void CHexCtrl::CursorScroll()
 	ULONGLONG ullCurrScrollV = m_pstScrollV->GetScrollPos();
 	ULONGLONG ullCurrScrollH = m_pstScrollH->GetScrollPos();
 	ULONGLONG ullCx, ullCy;
-	HexPoint(m_ullCursorPos, ullCx, ullCy);
+	ChunkPoint(m_ullCursorPos, ullCx, ullCy);
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
@@ -1798,16 +1805,16 @@ void CHexCtrl::CursorScroll()
 
 void CHexCtrl::Undo()
 {
-	INTERNAL::STMODIFY hmd;
-	hmd.enType = INTERNAL::ENMODIFYAS::AS_UNDO;
+	HEXMODIFYSTRUCT hmd;
+	hmd.enType = HEXMODIFYASEN::AS_UNDO;
 	hmd.fMoveNext = false;
 	ModifyData(hmd);
 }
 
 void CHexCtrl::Redo()
 {
-	INTERNAL::STMODIFY hmd;
-	hmd.enType = INTERNAL::ENMODIFYAS::AS_REDO;
+	HEXMODIFYSTRUCT hmd;
+	hmd.enType = HEXMODIFYASEN::AS_REDO;
 	hmd.fMoveNext = false;
 	ModifyData(hmd);
 }
@@ -1832,7 +1839,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 	ULONGLONG ullStartAt = rSearch.ullStartAt;
 	ULONGLONG ullSizeBytes;
 	ULONGLONG ullUntil;
-	std::string strSearch { };
+	std::string strSearch;
 
 	if (rSearch.wstrSearch.empty() || m_ullDataSize == 0 || rSearch.ullStartAt > (m_ullDataSize - 1))
 		return;
@@ -1841,9 +1848,9 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 	std::string strSearchAscii(iSizeNeeded, 0);
 	WideCharToMultiByte(CP_UTF8, 0, &rSearch.wstrSearch[0], (int)rSearch.wstrSearch.size(), &strSearchAscii[0], iSizeNeeded, nullptr, nullptr);
 
-	switch (rSearch.dwSearchType)
+	switch (rSearch.enSearchType)
 	{
-	case INTERNAL::ENSEARCH::SEARCH_HEX:
+	case HEXSEARCHTYPEEN::SEARCH_HEX:
 	{
 		DWORD dwIterations = DWORD(strSearchAscii.size() / 2 + strSearchAscii.size() % 2);
 		std::string strToUL; //String to hold currently extracted two letters.
@@ -1859,6 +1866,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 			if (!ToUl(strToUL.data(), ulNumber))
 			{
 				rSearch.fFound = false;
+				rSearch.iWrap = 1;
 				return;
 			}
 
@@ -1871,7 +1879,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 
 		break;
 	}
-	case INTERNAL::ENSEARCH::SEARCH_ASCII:
+	case HEXSEARCHTYPEEN::SEARCH_ASCII:
 	{
 		ullSizeBytes = strSearchAscii.size();
 		if (ullSizeBytes > m_ullDataSize)
@@ -1880,7 +1888,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 		strSearch = std::move(strSearchAscii);
 		break;
 	}
-	case INTERNAL::ENSEARCH::SEARCH_UNICODE:
+	case HEXSEARCHTYPEEN::SEARCH_UNICODE:
 	{
 		ullSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
 		if (ullSizeBytes > m_ullDataSize)
@@ -1891,12 +1899,12 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 	}
 
 	///////////////Actual Search:////////////////////////////////////////////
-	switch (rSearch.dwSearchType)
+	switch (rSearch.enSearchType)
 	{
-	case INTERNAL::ENSEARCH::SEARCH_HEX:
-	case INTERNAL::ENSEARCH::SEARCH_ASCII:
+	case HEXSEARCHTYPEEN::SEARCH_HEX:
+	case HEXSEARCHTYPEEN::SEARCH_ASCII:
 	{
-		if (rSearch.iDirection == INTERNAL::ENSEARCH::SEARCH_FORWARD)
+		if (rSearch.iDirection == 1)
 		{
 			ullUntil = m_ullDataSize - strSearch.size();
 			ullStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
@@ -1912,7 +1920,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 				}
 			}
 
-			ullStartAt = 0;
+			ullStartAt = 0; //Starting from the beginning.
 			for (ULONGLONG i = ullStartAt; i <= ullUntil; i++)
 			{
 				if (memcmp(m_pData + i, strSearch.data(), strSearch.size()) == 0)
@@ -1920,13 +1928,13 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 					rSearch.fFound = true;
 					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = INTERNAL::ENSEARCH::SEARCH_END;
 					rSearch.fCount = true;
 					goto End;
 				}
 			}
+			rSearch.iWrap = 1;
 		}
-		if (rSearch.iDirection == INTERNAL::ENSEARCH::SEARCH_BACKWARD)
+		else if (rSearch.iDirection == -1)
 		{
 			if (rSearch.fSecondMatch && ullStartAt > 0)
 			{
@@ -1951,7 +1959,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 					rSearch.fFound = true;
 					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = INTERNAL::ENSEARCH::SEARCH_BEGINNING;
+					rSearch.iWrap = -1;
 					rSearch.fCount = false;
 					goto End;
 				}
@@ -1959,9 +1967,9 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 		}
 		break;
 	}
-	case INTERNAL::ENSEARCH::SEARCH_UNICODE:
+	case HEXSEARCHTYPEEN::SEARCH_UNICODE:
 	{
-		if (rSearch.iDirection == INTERNAL::ENSEARCH::SEARCH_FORWARD)
+		if (rSearch.iDirection == 1)
 		{
 			ullUntil = m_ullDataSize - ullSizeBytes;
 			ullStartAt = rSearch.fSecondMatch ? rSearch.ullStartAt + 1 : 0;
@@ -1984,14 +1992,14 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 				{
 					rSearch.fFound = true;
 					rSearch.ullStartAt = i;
-					rSearch.iWrap = INTERNAL::ENSEARCH::SEARCH_END;
+					rSearch.iWrap = 1;
 					rSearch.fWrap = true;
 					rSearch.fCount = true;
 					goto End;
 				}
 			}
 		}
-		else if (rSearch.iDirection == INTERNAL::ENSEARCH::SEARCH_BACKWARD)
+		else if (rSearch.iDirection == -1)
 		{
 			if (rSearch.fSecondMatch && ullStartAt > 0)
 			{
@@ -2016,7 +2024,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 					rSearch.fFound = true;
 					rSearch.ullStartAt = i;
 					rSearch.fWrap = true;
-					rSearch.iWrap = INTERNAL::ENSEARCH::SEARCH_BEGINNING;
+					rSearch.iWrap = -1;
 					rSearch.fCount = false;
 					goto End;
 				}
@@ -2026,11 +2034,9 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 	}
 	}
 
-End:
-	{
-		if (rSearch.fFound)
-			SetSelection(rSearch.ullStartAt, rSearch.ullStartAt, ullSizeBytes, true);
-	}
+End: //Label to get out of nested loops.
+	if (rSearch.fFound)
+		SetSelection(rSearch.ullStartAt, rSearch.ullStartAt, ullSizeBytes, true);
 }
 
 void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ullSize, bool fHighlight, bool fMouse)
@@ -2043,7 +2049,7 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	ULONGLONG ullCurrScrollV = m_pstScrollV->GetScrollPos();
 	ULONGLONG ullCurrScrollH = m_pstScrollH->GetScrollPos();
 	ULONGLONG ullCx, ullCy;
-	HexPoint(ullStart, ullCx, ullCy);
+	ChunkPoint(ullStart, ullCx, ullCy);
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
@@ -2121,7 +2127,7 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	HEXNOTIFYSTRUCT hns { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_SETSELECTION };
 	hns.ullIndex = m_ullSelectionStart;
 	hns.ullSize = m_ullSelectionSize;
-	ParentNotify(hns);
+	MsgWindowNotify(hns);
 }
 
 void CHexCtrl::SelectAll()

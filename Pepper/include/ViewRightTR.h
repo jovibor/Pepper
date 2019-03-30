@@ -31,5 +31,5 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	CWnd* m_pActiveWnd { };
 	CHexCtrl m_stHexEdit;
-	HEXCREATESTRUCT m_stHC { };
+	HEXCREATESTRUCT m_hcs { };
 };

@@ -32,9 +32,9 @@ void CViewRightTR::OnInitialUpdate()
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 
 	//Hex control for Resources raw.
-	m_stHC.pwndParent = this;
-	m_stHC.uId = IDC_HEX_RIGHT_TR;
-	m_stHexEdit.Create(m_stHC);
+	m_hcs.pwndParent = this;
+	m_hcs.uId = IDC_HEX_RIGHT_TR;
+	m_stHexEdit.Create(m_hcs);
 	m_stHexEdit.ShowWindow(SW_HIDE);
 }
 

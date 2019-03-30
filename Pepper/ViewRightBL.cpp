@@ -38,9 +38,9 @@ void CViewRightBL::OnInitialUpdate()
 		return;
 
 	//Hex control for SecurityDir and TLSdir.
-	m_stHC.pwndParent = this;
-	m_stHC.uId = IDC_HEX_RIGHT_BL;
-	m_stHexEdit.Create(m_stHC);
+	m_hcs.pwndParent = this;
+	m_hcs.uId = IDC_HEX_RIGHT_BL;
+	m_stHexEdit.Create(m_hcs);
 	m_stHexEdit.ShowWindow(SW_HIDE);
 
 	m_stListInfo.clrTooltipText = RGB(255, 255, 255);

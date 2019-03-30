@@ -188,13 +188,13 @@ void CPepperApp::OnAppAbout()
 
 void CPepperApp::OnFileOpen()
 {
-	CFileDialog stFD(TRUE, NULL, NULL,
+	CFileDialog fd(TRUE, NULL, NULL,
 		OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
 		OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, L"All files (*.*)|*.*||");
 
-	if (stFD.DoModal() == IDOK)
+	if (fd.DoModal() == IDOK)
 	{
-		CComPtr<IFileOpenDialog> pIFOD = stFD.GetIFileOpenDialog();
+		CComPtr<IFileOpenDialog> pIFOD = fd.GetIFileOpenDialog();
 		CComPtr<IShellItemArray> pResults;
 		pIFOD->GetResults(&pResults);
 

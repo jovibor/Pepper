@@ -43,11 +43,10 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr))
 		return E_ABORT;
 
-	m_stHC.fFloat = true;
-	m_stHC.pwndParent = this;
-	m_stHC.uId = IDC_HEX_CTRL;
+	m_hcs.fFloat = true;
+	m_hcs.pwndParent = this;
 
-	m_stHD.pwndMsg = this;
+	m_hds.pwndMsg = this;
 
 	return S_OK;
 }
@@ -55,18 +54,18 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, CHexCtrl* pHexCtrl)
 {
 	if (!pHexCtrl) {
-		m_stHex.Create(m_stHC);
+		m_stHex.Create(m_hcs);
 		pHexCtrl = &m_stHex;
 	}
 
-	bool fVirtual;
+	HEXDATAMODEEN enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {
-		fVirtual = false;
+		enMode = HEXDATAMODEEN::HEXNORMAL;
 		pData = (PBYTE)m_lpBase;
 	}
 	else {
-		fVirtual = true;
+		enMode = HEXDATAMODEEN::HEXMSG;
 		pData = nullptr;
 	}
 
@@ -85,12 +84,12 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 		pHexCtrl->ShowOffset(ullOffset, ullSelectionSize);
 	else
 	{
-		m_stHD.pData = pData;
-		m_stHD.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
-		m_stHD.fVirtual = fVirtual;
-		m_stHD.ullSelectionStart = ullOffset;
-		m_stHD.ullSelectionSize = ullSelectionSize;
-		pHexCtrl->SetData(m_stHD);
+		m_hds.pData = pData;
+		m_hds.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
+		m_hds.enMode = enMode;
+		m_hds.ullSelectionStart = ullOffset;
+		m_hds.ullSelectionSize = ullSelectionSize;
+		pHexCtrl->SetData(m_hds);
 	}
 	//If floating HexCtrl in use - bring it to front.
 	if (pHexCtrl == &m_stHex)
@@ -105,18 +104,18 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexC
 		return E_ABORT;
 
 	if (!pHexCtrl) {
-		m_stHex.Create(m_stHC);
+		m_stHex.Create(m_hcs);
 		pHexCtrl = &m_stHex;
 	}
 
-	bool fVirtual;
+	HEXDATAMODEEN enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {
-		fVirtual = false;
+		enMode = HEXDATAMODEEN::HEXNORMAL;
 		pData = (PBYTE)((DWORD_PTR)m_lpBase + ullOffset);
 	}
 	else {
-		fVirtual = true;
+		enMode = HEXDATAMODEEN::HEXMSG;
 		pData = nullptr;
 	}
 
@@ -129,11 +128,11 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexC
 	else
 		iter->ullOffsetDelta = ullOffset;
 
-	m_stHD.pData = pData;
-	m_stHD.ullDataSize = ullSize;
-	m_stHD.fVirtual = fVirtual;
-	m_stHD.ullSelectionSize = 0;
-	pHexCtrl->SetData(m_stHD);
+	m_hds.pData = pData;
+	m_hds.ullDataSize = ullSize;
+	m_hds.enMode = enMode;
+	m_hds.ullSelectionSize = 0;
+	pHexCtrl->SetData(m_hds);
 
 	return S_OK;
 }

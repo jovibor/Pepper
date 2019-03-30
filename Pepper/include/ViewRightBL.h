@@ -55,7 +55,7 @@ private:
 	CFileLoader* m_pFileLoader { };
 	CWnd* m_pActiveWnd { };
 	CHexCtrl m_stHexEdit;
-	HEXCREATESTRUCT m_stHC { };
+	HEXCREATESTRUCT m_hcs { };
 	LISTEXINFO m_stListInfo;
 	CListEx m_listExportFuncs;
 	CListEx m_listImportEntry;
