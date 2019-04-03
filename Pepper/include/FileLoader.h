@@ -14,7 +14,7 @@
 *																*
 ****************************************************************/
 #pragma once
-#include "HexCtrl.h"
+#include "HexCtrl/HexCtrl.h"
 
 using namespace HEXCTRL;
 
@@ -29,11 +29,11 @@ public:
 
 	//Shows arbitrary offset in already loaded file (LoadFile)
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
-	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, CHexCtrl* pHexCtrl = nullptr);
+	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrlPtr pHexCtrl = nullptr);
 
 	//Shows only a piece of the whole loaded file.
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
-	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexCtrl* pHexCtrl = nullptr);
+	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrlPtr pHexCtrl = nullptr);
 
 	//Unloads loaded file and all pieces, if present.
 	HRESULT UnloadFile();
@@ -52,7 +52,7 @@ private:
 		DWORD		dwDeltaFileOffsetMapped { };
 		LPVOID		lpData { };
 	};
-	CHexCtrl m_stHex;
+	IHexCtrlPtr m_stHex { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };
 	HEXDATASTRUCT m_hds;
 	//Size of the loaded PE file.

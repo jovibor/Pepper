@@ -17,7 +17,7 @@ END_MESSAGE_MAP()
 
 BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-	if (Getlibpe(m_pLibpe) != S_OK)	{
+	if (Createlibpe(m_pLibpe) != S_OK)	{
 		MessageBoxW(nullptr, L"Getlibpe() failed.", L"Error", MB_ICONERROR);
 		return FALSE;
 	}

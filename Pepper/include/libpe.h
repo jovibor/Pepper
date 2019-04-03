@@ -5,10 +5,11 @@
 * https://github.com/jovibor/libpe	 													*
 ****************************************************************************************/
 #pragma once
-#include <vector>
-#include <memory>
-#include <Windows.h>
-#include <ImageHlp.h>
+#include <vector>		//atd::vector and related.
+#include <memory>		//std::shared_ptr and related.
+#include <string>		//std::string and related.
+#include <Windows.h>	//All standard Windows types.
+#include <ImageHlp.h>	//LPWIN_CERTIFICATE struct.
 
 #ifndef __cpp_lib_byte
 #define __cpp17_conformant 0
@@ -253,10 +254,11 @@ namespace libpe {
 	struct LIBPE_COMDESCRIPTOR { DWORD dwOffsetComDesc; IMAGE_COR20_HEADER stCorHdr; };
 	using PCLIBPE_COMDESCRIPTOR = const LIBPE_COMDESCRIPTOR*;
 
-	//Pure Virtual base class Ilibpe.
+	//Pure abstract base class Ilibpe.
 	class Ilibpe
 	{
 	public:
+		virtual ~Ilibpe() = default;
 		virtual HRESULT LoadPe(LPCWSTR) = 0;
 		virtual HRESULT GetImageInfo(DWORD&)noexcept = 0;
 		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f)noexcept = 0;
@@ -375,5 +377,5 @@ namespace libpe {
 #pragma comment(lib, LIBNAME_PROPER("libpe"))
 #endif
 
-	extern "C" HRESULT ILIBPEAPI Getlibpe(libpe_ptr& plibpe);
+	extern "C" HRESULT ILIBPEAPI Createlibpe(libpe_ptr& plibpe);
 }

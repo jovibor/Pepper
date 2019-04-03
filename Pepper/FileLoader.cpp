@@ -51,11 +51,11 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, CHexCtrl* pHexCtrl)
+HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrlPtr pHexCtrl)
 {
 	if (!pHexCtrl) {
-		m_stHex.Create(m_hcs);
-		pHexCtrl = &m_stHex;
+		m_stHex->Create(m_hcs);
+		pHexCtrl = m_stHex;
 	}
 
 	HEXDATAMODEEN enMode;
@@ -70,7 +70,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 	}
 
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[pHexCtrl](const QUERYDATA& r) {return r.hWnd == pHexCtrl->m_hWnd; });
+		[pHexCtrl](const QUERYDATA & r) {return r.hWnd == pHexCtrl->m_hWnd; });
 
 	bool fExist { false };
 	if (iter == m_vecQuery.end())
@@ -92,20 +92,20 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 		pHexCtrl->SetData(m_hds);
 	}
 	//If floating HexCtrl in use - bring it to front.
-	if (pHexCtrl == &m_stHex)
+	if (pHexCtrl == m_stHex)
 		pHexCtrl->SetForegroundWindow();
 
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexCtrl* pHexCtrl)
+HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrlPtr pHexCtrl)
 {
 	if (!IsCreated())
 		return E_ABORT;
 
 	if (!pHexCtrl) {
-		m_stHex.Create(m_hcs);
-		pHexCtrl = &m_stHex;
+		m_stHex->Create(m_hcs);
+		pHexCtrl = m_stHex;
 	}
 
 	HEXDATAMODEEN enMode;
@@ -121,7 +121,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexC
 
 	//Checking for given HWND existence in m_vecQuery. If there is no, create.
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[pHexCtrl](const QUERYDATA& rData) {return rData.hWnd == pHexCtrl->m_hWnd; });
+		[pHexCtrl](const QUERYDATA & rData) {return rData.hWnd == pHexCtrl->m_hWnd; });
 
 	if (iter == m_vecQuery.end())
 		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->m_hWnd, 0, 0, ullOffset, 0, nullptr });
@@ -137,7 +137,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, CHexC
 	return S_OK;
 }
 
-HRESULT CFileLoader::MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD dwSize)
+HRESULT CFileLoader::MapFileOffset(QUERYDATA & rData, ULONGLONG ullOffset, DWORD dwSize)
 {
 	UnmapFileOffset(rData);
 
@@ -176,7 +176,7 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD 
 	return S_OK;
 }
 
-HRESULT CFileLoader::UnmapFileOffset(QUERYDATA& rData)
+HRESULT CFileLoader::UnmapFileOffset(QUERYDATA & rData)
 {
 	if (!rData.lpData)
 		return E_ABORT;
@@ -223,7 +223,7 @@ bool CFileLoader::IsLoaded()
 	return m_fMapViewOfFileWhole;
 }
 
-BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 {
 	PHEXNOTIFYSTRUCT pHexNtfy = (PHEXNOTIFYSTRUCT)lParam;
 
@@ -234,7 +234,7 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		if (!m_fMapViewOfFileWhole)
 		{
 			auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-				[pHexNtfy](const QUERYDATA& rData) {return rData.hWnd == pHexNtfy->hdr.hwndFrom; });
+				[pHexNtfy](const QUERYDATA & rData) {return rData.hWnd == pHexNtfy->hdr.hwndFrom; });
 			if (iter != m_vecQuery.end())
 				UnmapFileOffset(*iter);
 		}
@@ -251,7 +251,7 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 unsigned char CFileLoader::GetByte(HWND hWnd, ULONGLONG ullOffset)
 {
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[hWnd](const QUERYDATA& rData) {return rData.hWnd == hWnd; });
+		[hWnd](const QUERYDATA & rData) {return rData.hWnd == hWnd; });
 	if (iter == m_vecQuery.end())
 		return 0;
 

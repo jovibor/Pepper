@@ -224,7 +224,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	m_pChildFrame->m_stSplitterRight.RecalcLayout();
 }
 
-void CViewRightTL::OnDraw(CDC* pDC)
+void CViewRightTL::OnDraw(CDC * pDC)
 {
 	//Printing app name/version info and
 	//currently oppened file's type and name.
@@ -256,7 +256,7 @@ void CViewRightTL::OnDraw(CDC* pDC)
 	}
 }
 
-BOOL CViewRightTL::OnEraseBkgnd(CDC* pDC)
+BOOL CViewRightTL::OnEraseBkgnd(CDC * pDC)
 {
 	return FALSE;
 }
@@ -413,7 +413,7 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult
 	*pResult = 0;
 }
 
-BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 {
 	CView::OnNotify(wParam, lParam, pResult);
 
@@ -590,7 +590,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 							if (!data.empty())
 								//Send data vector pointer to CViewRightTR
 								//to display raw data.
-								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), (CObject*)&data);
+								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), (CObject*)& data);
 						}
 					}
 				}
@@ -806,7 +806,7 @@ int CViewRightTL::CreateListFileHeader()
 		auto& ref = g_mapFileHeader.at(i);
 		DWORD dwOffset = ref.dwOffset;
 		DWORD dwSize = ref.dwSize;
-		DWORD dwValue = *((PDWORD)((DWORD_PTR)&pNTHdr->varHdr.stNTHdr32.FileHeader + dwOffset)) &
+		DWORD dwValue = *((PDWORD)((DWORD_PTR)& pNTHdr->varHdr.stNTHdr32.FileHeader + dwOffset)) &
 			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 		if (i == 0) { //Machine
@@ -1141,7 +1141,7 @@ int CViewRightTL::CreateListExport()
 	m_listExportDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listExportDir.InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
 
-	const IMAGE_EXPORT_DIRECTORY* pExportDesc = &pExport->stExportDesc;
+	const IMAGE_EXPORT_DIRECTORY * pExportDesc = &pExport->stExportDesc;
 	for (unsigned i = 0; i < g_mapExport.size(); i++)
 	{
 		WCHAR wstr[MAX_PATH];
@@ -1792,7 +1792,7 @@ int CViewRightTL::CreateListCOM()
 	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITPREFERRED, L"COMIMAGE_FLAGS_32BITPREFERRED" }
 	};
 
-	const IMAGE_COR20_HEADER* pCom = &pCOMDesc->stCorHdr;
+	const IMAGE_COR20_HEADER * pCom = &pCOMDesc->stCorHdr;
 	for (unsigned i = 0; i < g_mapComDir.size(); i++)
 	{
 		WCHAR wstr[9];

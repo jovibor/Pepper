@@ -10,17 +10,25 @@
 ****************************************************************************************/
 #include "stdafx.h"
 #include "strsafe.h"
-#include "res/HexCtrlRes.h"		//Icons, for menu etc...
-#include "Dialogs/HexCtrlDlgAbout.h"
-#include "Dialogs/HexCtrlDlgSearch.h"
-#include "HexCtrl.h"
-#include "ScrollEx.h"
+#include "../res/HexCtrlRes.h" //Icons, for menu, etc...
+#include "Dialogs/CHexCtrlDlgAbout.h"
+#include "Dialogs/CHexCtrlDlgSearch.h"
+#include "CHexCtrl.h"
+#include "CScrollEx.h"
 #include "Helper.h"
 #pragma comment(lib, "Dwmapi.lib")
 
 using namespace HEXCTRL;
 
 namespace HEXCTRL {
+	/********************************************
+	* CreateHexCtrl function implementation.	*
+	********************************************/
+	IHexCtrlPtr CreateHexCtrl()
+	{
+		return std::make_shared<CHexCtrl>();
+	};
+
 	/********************************************
 	* Internal enums and structs.				*
 	********************************************/
@@ -43,7 +51,7 @@ namespace HEXCTRL {
 			IDM_MAIN_ABOUT,
 		};
 
-		struct STUNDO {
+		struct UNDOSTRUCT {
 			ULONGLONG ullIndex;
 			std::string strData;
 		};
@@ -147,7 +155,7 @@ CHexCtrl::~CHexCtrl()
 		DeleteObject(i.second);
 }
 
-bool CHexCtrl::Create(const HEXCREATESTRUCT& hcs)
+bool CHexCtrl::Create(const HEXCREATESTRUCT & hcs)
 {
 	if (IsCreated()) //Already created.
 		return false;
@@ -242,7 +250,7 @@ bool CHexCtrl::IsCreated()
 	return m_fCreated;
 }
 
-void CHexCtrl::SetData(const HEXDATASTRUCT& hds)
+void CHexCtrl::SetData(const HEXDATASTRUCT & hds)
 {
 	if (!IsCreated())
 		return;
@@ -320,7 +328,7 @@ void CHexCtrl::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSize)
 	SetSelection(ullOffset, ullOffset, ullSize, true);
 }
 
-void CHexCtrl::SetFont(const LOGFONT* pLogFontNew)
+void CHexCtrl::SetFont(const LOGFONT * pLogFontNew)
 {
 	if (!pLogFontNew)
 		return;
@@ -354,7 +362,7 @@ long CHexCtrl::GetFontSize()
 	return lf.lfHeight;
 }
 
-void CHexCtrl::SetColor(const HEXCOLORSTRUCT& clr)
+void CHexCtrl::SetColor(const HEXCOLORSTRUCT & clr)
 {
 	m_stColor = clr;
 	RedrawWindow();
@@ -410,7 +418,7 @@ bool CHexCtrl::RegisterWndClass()
 	return true;
 }
 
-void CHexCtrl::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+void CHexCtrl::OnActivate(UINT nState, CWnd * pWndOther, BOOL bMinimized)
 {
 	SetFocus();
 
@@ -554,10 +562,10 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 	switch (uiId)
 	{
 	case (UINT_PTR)INTERNAL::ENMENU::IDM_MAIN_SEARCH:
-		if (m_enMode != HEXDATAMODEEN::HEXNORMAL)
-			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
-		else
+		if (m_enMode == HEXDATAMODEEN::HEXNORMAL)
 			m_pDlgSearch->ShowWindow(SW_SHOW);
+		else
+			MessageBoxW(m_wstrErrVirtual.data(), L"Error", MB_ICONEXCLAMATION);
 		break;
 	case (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_UNDO:
 		Undo();
@@ -586,7 +594,6 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 		hmd.enType = HEXMODIFYASEN::AS_FILL;
 		hmd.ullModifySize = m_ullSelectionSize;
 		hmd.ullIndex = m_ullSelectionStart;
-		hmd.fMoveNext = false;
 		unsigned char chZero { 0 };
 		hmd.pData = &chZero;
 		hmd.dwFillDataSize = 1;
@@ -616,7 +623,7 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 	return CWnd::OnCommand(wParam, lParam);
 }
 
-void CHexCtrl::OnContextMenu(CWnd* pWnd, CPoint point)
+void CHexCtrl::OnContextMenu(CWnd * pWnd, CPoint point)
 {
 	UINT uMenuStatus;
 	if (m_ullDataSize == 0 || m_ullSelectionSize == 0)
@@ -850,12 +857,11 @@ void CHexCtrl::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 	hmd.enType = HEXMODIFYASEN::AS_MODIFY;
 	hmd.ullIndex = m_ullCursorPos;
 	hmd.ullModifySize = 1;
-	hmd.fMoveNext = true;
 
-	if (m_fCursorAscii) //If cursor is at Ascii area.
+	if (IsCurTextArea()) //If cursor is in text area.
 	{
 		hmd.fWhole = true;
-		hmd.pData = (PBYTE)&nChar;
+		hmd.pData = (PBYTE)& nChar;
 	}
 	else
 	{
@@ -870,10 +876,11 @@ void CHexCtrl::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 		hmd.fWhole = false;
 		hmd.fHighPart = m_fCursorHigh;
-		hmd.pData = (PBYTE)&nChar;
+		hmd.pData = (PBYTE)& nChar;
 	}
 
 	ModifyData(hmd);
+	CursorMoveRight();
 }
 
 UINT CHexCtrl::OnGetDlgCode()
@@ -881,13 +888,13 @@ UINT CHexCtrl::OnGetDlgCode()
 	return DLGC_WANTALLKEYS;
 }
 
-void CHexCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CHexCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar * pScrollBar)
 {
 	if (m_pstScrollV->GetScrollPosDelta() != 0)
 		RedrawWindow();
 }
 
-void CHexCtrl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CHexCtrl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar * pScrollBar)
 {
 	if (m_pstScrollH->GetScrollPosDelta() != 0)
 		RedrawWindow();
@@ -922,7 +929,7 @@ void CHexCtrl::OnPaint()
 		return;
 
 	//Find the ullLineStart and ullLineEnd position, draw the visible portion.
-	const ULONGLONG ullLineStart = GetCurrentLineV();
+	const ULONGLONG ullLineStart = GetTopLine();
 	ULONGLONG ullLineEndtmp = 0;
 	if (m_ullDataSize) {
 		ullLineEndtmp = ullLineStart + (rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) / m_sizeLetter.cy;
@@ -1146,12 +1153,12 @@ void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 	m_pstScrollV->SetScrollPageSize(m_iHeightWorkArea - m_iHeightTopRect);
 }
 
-BOOL CHexCtrl::OnEraseBkgnd(CDC* pDC)
+BOOL CHexCtrl::OnEraseBkgnd(CDC * pDC)
 {
 	return FALSE;
 }
 
-BOOL CHexCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+BOOL CHexCtrl::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 {
 	m_pstScrollV->OnSetCursor(pWnd, nHitTest, message);
 	m_pstScrollH->OnSetCursor(pWnd, nHitTest, message);
@@ -1167,7 +1174,7 @@ BOOL CHexCtrl::OnNcActivate(BOOL bActive)
 	return CWnd::OnNcActivate(bActive);
 }
 
-void CHexCtrl::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS* lpncsp)
+void CHexCtrl::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS * lpncsp)
 {
 	CWnd::OnNcCalcSize(bCalcValidRects, lpncsp);
 
@@ -1190,12 +1197,12 @@ void CHexCtrl::OnDestroy()
 	NMHDR nmh { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_DESTROY };
 	CWnd* pwndMsg = GetMsgWindow();
 	if (pwndMsg)
-		pwndMsg->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+		pwndMsg->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)& nmh);
 
 	CWnd* pwndParent = GetParent();
 	if (pwndParent)
 	{
-		pwndParent->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+		pwndParent->SendMessageW(WM_NOTIFY, nmh.idFrom, (LPARAM)& nmh);
 		pwndParent->SetForegroundWindow();
 	}
 
@@ -1220,51 +1227,51 @@ BYTE CHexCtrl::GetByte(ULONGLONG ullIndex)
 	}
 	else if (m_enMode == HEXDATAMODEEN::HEXVIRTUAL)
 	{
-		if (m_pCustom)
-			return m_pCustom->GetByte(ullIndex);
+		if (m_pHexVirtual)
+			return m_pHexVirtual->GetByte(ullIndex);
 	}
 
 	return 0;
 }
 
-void CHexCtrl::ModifyData(const HEXMODIFYSTRUCT& hmd)
-{	//Changes byte(s) in memory. High or Low part, depending on hmd.fHighPart.
-	if (!m_fMutable || hmd.ullIndex >= m_ullDataSize)
+void CHexCtrl::ModifyData(const HEXMODIFYSTRUCT & hms)
+{	//Changes byte(s) in memory. High or Low part, depending on hms.fHighPart.
+	if (!m_fMutable || hms.ullIndex >= m_ullDataSize)
 		return;
 
 	if (m_enMode == HEXDATAMODEEN::HEXNORMAL) //Modify only in non Virtual mode.
 	{
-		switch (hmd.enType)
+		switch (hms.enType)
 		{
 		case HEXMODIFYASEN::AS_MODIFY:
 		{
 			m_deqRedo.clear(); //No Redo unless we make Undo.
-			SnapshotUndo(hmd.ullIndex, hmd.ullModifySize);
+			SnapshotUndo(hms.ullIndex, hms.ullModifySize);
 
-			if (hmd.fWhole)
-				for (ULONGLONG i = 0; i < hmd.ullModifySize; i++)
-					m_pData[hmd.ullIndex + i] = hmd.pData[i];
+			if (hms.fWhole)
+				for (ULONGLONG i = 0; i < hms.ullModifySize; i++)
+					m_pData[hms.ullIndex + i] = hms.pData[i];
 			else
 			{	//If just one part (High/Low) of byte must be changed.
-				unsigned char chByte = GetByte(hmd.ullIndex);
-				if (hmd.fHighPart)
-					chByte = (*hmd.pData << 4) | (chByte & 0x0F);
+				unsigned char chByte = GetByte(hms.ullIndex);
+				if (hms.fHighPart)
+					chByte = (*hms.pData << 4) | (chByte & 0x0F);
 				else
-					chByte = (*hmd.pData & 0x0F) | (chByte & 0xF0);
+					chByte = (*hms.pData & 0x0F) | (chByte & 0xF0);
 
-				m_pData[hmd.ullIndex] = chByte;
+				m_pData[hms.ullIndex] = chByte;
 			}
 		}
 		break;
 		case HEXMODIFYASEN::AS_FILL:
 		{
 			m_deqRedo.clear(); //No Redo unless we make Undo.
-			SnapshotUndo(hmd.ullIndex, hmd.ullModifySize);
+			SnapshotUndo(hms.ullIndex, hms.ullModifySize);
 
-			ULONGLONG ullChunks = hmd.ullModifySize / hmd.dwFillDataSize;
+			ULONGLONG ullChunks = hms.ullModifySize / hms.dwFillDataSize;
 			for (ULONGLONG iterChunk = 0; iterChunk < ullChunks; iterChunk++)
-				for (ULONGLONG iterData = 0; iterData < hmd.dwFillDataSize; iterData++)
-					m_pData[hmd.ullIndex + hmd.dwFillDataSize * iterChunk + iterData] = hmd.pData[iterData];
+				for (ULONGLONG iterData = 0; iterData < hms.dwFillDataSize; iterData++)
+					m_pData[hms.ullIndex + hms.dwFillDataSize * iterChunk + iterData] = hms.pData[iterData];
 		}
 		break;
 		case HEXMODIFYASEN::AS_UNDO:
@@ -1276,7 +1283,7 @@ void CHexCtrl::ModifyData(const HEXMODIFYSTRUCT& hmd)
 			auto& refStr = refUndo->strData;
 
 			//Making new Redo data snapshot.
-			auto& refRedo = m_deqRedo.emplace_back(std::make_unique<INTERNAL::STUNDO>());
+			auto& refRedo = m_deqRedo.emplace_back(std::make_unique<INTERNAL::UNDOSTRUCT>());
 			refRedo->ullIndex = refUndo->ullIndex;
 			for (unsigned i = 0; i < refStr.size(); i++)
 				refRedo->strData += GetByte(refUndo->ullIndex + i);
@@ -1308,19 +1315,16 @@ void CHexCtrl::ModifyData(const HEXMODIFYSTRUCT& hmd)
 	}
 	else if (m_enMode == HEXDATAMODEEN::HEXMSG)
 	{
-		//In HEXDATAMODEEN::HEXMSG mode we send hmd pointer.
+		//In HEXDATAMODEEN::HEXMSG mode we send hms pointer.
 		HEXNOTIFYSTRUCT hns { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_MODIFYDATA } };
-		hns.pData = (PBYTE)&hmd;
+		hns.pData = (PBYTE)& hms;
 		MsgWindowNotify(hns);
 	}
 	else if (m_enMode == HEXDATAMODEEN::HEXVIRTUAL)
 	{
-		if (m_pCustom)
-			m_pCustom->ModifyData(hmd);
+		if (m_pHexVirtual)
+			m_pHexVirtual->ModifyData(hms);
 	}
-
-	if (hmd.fMoveNext)
-		CursorMoveRight();
 
 	RedrawWindow();
 }
@@ -1332,7 +1336,7 @@ CWnd* CHexCtrl::GetMsgWindow()
 
 void CHexCtrl::RecalcAll()
 {
-	ULONGLONG ullCurLineV = GetCurrentLineV();
+	ULONGLONG ullCurLineV = GetTopLine();
 
 	//Current font size related.
 	HDC hDC = ::GetDC(m_hWnd);
@@ -1389,7 +1393,7 @@ void CHexCtrl::RecalcScrollSizes(int iClientHeight, int iClientWidth)
 	m_pstScrollH->SetScrollSizes(m_sizeLetter.cx, iClientWidth, m_iFourthVertLine + 1);
 }
 
-ULONGLONG CHexCtrl::GetCurrentLineV()
+ULONGLONG CHexCtrl::GetTopLine()
 {
 	return m_pstScrollV->GetScrollPos() / m_sizeLetter.cy;
 }
@@ -1398,9 +1402,9 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 {
 	int iY = pPoint->y;
 	int iX = pPoint->x + (int)m_pstScrollH->GetScrollPos(); //To compensate horizontal scroll.
-	ULONGLONG ullCurLine = GetCurrentLineV();
+	ULONGLONG ullCurLine = GetTopLine();
 	ULONGLONG ullHexChunk;
-	m_fCursorAscii = false;
+	m_fCursorTextArea = false;
 
 	//Checking if cursor is within hex chunks area.
 	if ((iX >= m_iIndentFirstHexChunk) && (iX < m_iThirdVertLine) && (iY >= m_iHeightTopRect) && (iY <= m_iHeightWorkArea))
@@ -1426,7 +1430,7 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 				break;
 			}
 		}
-		ullHexChunk = dwChunkX + ((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine  * m_dwCapacity);
+		ullHexChunk = dwChunkX + ((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine * m_dwCapacity);
 	}
 	else if ((iX >= m_iIndentAscii) && (iX < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwCapacity))
 		&& (iY >= m_iHeightTopRect) && iY <= m_iHeightWorkArea)
@@ -1434,7 +1438,7 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 		//Calculate ullHit Ascii symbol.
 		ullHexChunk = ((iX - m_iIndentAscii) / m_iSpaceBetweenAscii) +
 			((iY - m_iHeightTopRect) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine * m_dwCapacity);
-		m_fCursorAscii = true;
+		m_fCursorTextArea = true;
 	}
 	else
 		ullHexChunk = -1;
@@ -1446,7 +1450,7 @@ ULONGLONG CHexCtrl::HitTest(LPPOINT pPoint)
 	return ullHexChunk;
 }
 
-void CHexCtrl::ChunkPoint(ULONGLONG ullChunk, ULONGLONG& ullCx, ULONGLONG& ullCy)
+void CHexCtrl::ChunkPoint(ULONGLONG ullChunk, ULONGLONG & ullCx, ULONGLONG & ullCy)
 {
 	//This func computes x and y pos of given hex chunk.
 
@@ -1580,7 +1584,6 @@ void CHexCtrl::ClipboardPaste(INTERNAL::ENCLIPBOARD enType)
 	hmd.enType = HEXMODIFYASEN::AS_MODIFY;
 	hmd.ullIndex = m_ullCursorPos;
 	hmd.fWhole = true;
-	hmd.fMoveNext = false;
 
 	std::string strData;
 	switch (enType)
@@ -1670,11 +1673,11 @@ void CHexCtrl::SetShowAs(INTERNAL::ENSHOWAS enShowAs)
 	RecalcAll();
 }
 
-void CHexCtrl::MsgWindowNotify(const HEXNOTIFYSTRUCT& hns)
+void CHexCtrl::MsgWindowNotify(const HEXNOTIFYSTRUCT & hns)
 {
 	CWnd* pwndMsg = GetMsgWindow();
 	if (pwndMsg)
-		pwndMsg->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hns);
+		pwndMsg->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)& hns);
 }
 
 void CHexCtrl::SetCursorPos(ULONGLONG ullPos, bool fHighPart)
@@ -1696,7 +1699,7 @@ void CHexCtrl::CursorMoveRight()
 {
 	if (m_fMutable)
 	{
-		if (m_fCursorAscii)
+		if (IsCurTextArea())
 			SetCursorPos(m_ullCursorPos + 1, m_fCursorHigh);
 		else if (m_fCursorHigh)
 			SetCursorPos(m_ullCursorPos, false);
@@ -1711,7 +1714,7 @@ void CHexCtrl::CursorMoveLeft()
 {
 	if (m_fMutable)
 	{
-		if (m_fCursorAscii)
+		if (IsCurTextArea())
 		{
 			ULONGLONG ull = m_ullCursorPos;
 			if (ull > 0) //To avoid overflow.
@@ -1799,7 +1802,7 @@ void CHexCtrl::CursorScroll()
 	ullNewScrollV -= ullNewScrollV % m_sizeLetter.cy;
 
 	m_pstScrollV->SetScrollPos(ullNewScrollV);
-	if (m_pstScrollH->IsVisible())
+	if (m_pstScrollH->IsVisible() && !IsCurTextArea()) //Do not horz scroll when modifying text area (not Hex).
 		m_pstScrollH->SetScrollPos(ullNewScrollH);
 }
 
@@ -1807,7 +1810,6 @@ void CHexCtrl::Undo()
 {
 	HEXMODIFYSTRUCT hmd;
 	hmd.enType = HEXMODIFYASEN::AS_UNDO;
-	hmd.fMoveNext = false;
 	ModifyData(hmd);
 }
 
@@ -1815,7 +1817,6 @@ void CHexCtrl::Redo()
 {
 	HEXMODIFYSTRUCT hmd;
 	hmd.enType = HEXMODIFYASEN::AS_REDO;
-	hmd.fMoveNext = false;
 	ModifyData(hmd);
 }
 
@@ -1827,13 +1828,18 @@ void CHexCtrl::SnapshotUndo(ULONGLONG ullIndex, ULONGLONG ullSize)
 		m_deqUndo.pop_front();
 
 	//Making new Undo data snapshot.
-	auto& refUndo = m_deqUndo.emplace_back(std::make_unique<INTERNAL::STUNDO>());
+	auto& refUndo = m_deqUndo.emplace_back(std::make_unique<INTERNAL::UNDOSTRUCT>());
 	refUndo->ullIndex = ullIndex;
 	for (size_t i = 0; i < ullSize; i++)
 		refUndo->strData += GetByte(ullIndex + i);
 }
 
-void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
+bool CHexCtrl::IsCurTextArea()
+{
+	return m_fCursorTextArea;
+}
+
+void CHexCtrl::Search(INTERNAL::SEARCHSTRUCT & rSearch)
 {
 	rSearch.fFound = false;
 	ULONGLONG ullStartAt = rSearch.ullStartAt;
@@ -1850,7 +1856,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 
 	switch (rSearch.enSearchType)
 	{
-	case HEXSEARCHTYPEEN::SEARCH_HEX:
+	case INTERNAL::ENSEARCHTYPE::SEARCH_HEX:
 	{
 		DWORD dwIterations = DWORD(strSearchAscii.size() / 2 + strSearchAscii.size() % 2);
 		std::string strToUL; //String to hold currently extracted two letters.
@@ -1879,7 +1885,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 
 		break;
 	}
-	case HEXSEARCHTYPEEN::SEARCH_ASCII:
+	case INTERNAL::ENSEARCHTYPE::SEARCH_ASCII:
 	{
 		ullSizeBytes = strSearchAscii.size();
 		if (ullSizeBytes > m_ullDataSize)
@@ -1888,7 +1894,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 		strSearch = std::move(strSearchAscii);
 		break;
 	}
-	case HEXSEARCHTYPEEN::SEARCH_UNICODE:
+	case INTERNAL::ENSEARCHTYPE::SEARCH_UNICODE:
 	{
 		ullSizeBytes = rSearch.wstrSearch.length() * sizeof(wchar_t);
 		if (ullSizeBytes > m_ullDataSize)
@@ -1901,8 +1907,8 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 	///////////////Actual Search:////////////////////////////////////////////
 	switch (rSearch.enSearchType)
 	{
-	case HEXSEARCHTYPEEN::SEARCH_HEX:
-	case HEXSEARCHTYPEEN::SEARCH_ASCII:
+	case INTERNAL::ENSEARCHTYPE::SEARCH_HEX:
+	case INTERNAL::ENSEARCHTYPE::SEARCH_ASCII:
 	{
 		if (rSearch.iDirection == 1)
 		{
@@ -1967,7 +1973,7 @@ void CHexCtrl::Search(HEXSEARCHSTRUCT& rSearch)
 		}
 		break;
 	}
-	case HEXSEARCHTYPEEN::SEARCH_UNICODE:
+	case INTERNAL::ENSEARCHTYPE::SEARCH_UNICODE:
 	{
 		if (rSearch.iDirection == 1)
 		{
@@ -2118,7 +2124,7 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 	if (!fMouse) //Don't need to scroll if it's Mouse selection.
 	{
 		m_pstScrollV->SetScrollPos(ullNewScrollV);
-		if (m_pstScrollH->IsVisible())
+		if (m_pstScrollH->IsVisible() && !IsCurTextArea())
 			m_pstScrollH->SetScrollPos(ullNewScrollH);
 	}
 

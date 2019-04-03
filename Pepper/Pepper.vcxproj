@@ -31,20 +31,20 @@
     <ProjectGuid>{F667DFFD-7C78-478C-AEBB-B9E183D19580}</ProjectGuid>
     <Keyword>MFCProj</Keyword>
     <RootNamespace>Pepper</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
@@ -52,7 +52,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
@@ -60,14 +60,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
@@ -75,7 +75,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
@@ -404,11 +404,11 @@
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="FileLoader.cpp" />
-    <ClCompile Include="HexCtrl\Dialogs\HexCtrlDlgAbout.cpp" />
-    <ClCompile Include="HexCtrl\Dialogs\HexCtrlDlgSearch.cpp" />
-    <ClCompile Include="HexCtrl\Helper.cpp" />
-    <ClCompile Include="HexCtrl\HexCtrl.cpp" />
-    <ClCompile Include="HexCtrl\ScrollEx.cpp" />
+    <ClCompile Include="HexCtrl\src\CHexCtrl.cpp" />
+    <ClCompile Include="HexCtrl\src\CScrollEx.cpp" />
+    <ClCompile Include="HexCtrl\src\Dialogs\CHexCtrlDlgAbout.cpp" />
+    <ClCompile Include="HexCtrl\src\Dialogs\CHexCtrlDlgSearch.cpp" />
+    <ClCompile Include="HexCtrl\src\Helper.cpp" />
     <ClCompile Include="ListEx\ListEx.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
@@ -430,6 +430,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="HexCtrl\res\HexCtrlIcon.bmp" />
+    <Image Include="HexCtrl\res\MenuCopy.bmp" />
+    <Image Include="HexCtrl\res\MenuFillZeros.bmp" />
+    <Image Include="HexCtrl\res\MenuPaste.bmp" />
     <Image Include="HexCtrl\res\ScrollExH.bmp" />
     <Image Include="HexCtrl\res\ScrollExV.bmp" />
     <Image Include="res\TreeMain_Dirs.ico" />
@@ -441,12 +445,13 @@
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HexCtrl\Dialogs\HexCtrlDlgAbout.h" />
-    <ClInclude Include="HexCtrl\Dialogs\HexCtrlDlgSearch.h" />
-    <ClInclude Include="HexCtrl\Helper.h" />
     <ClInclude Include="HexCtrl\HexCtrl.h" />
     <ClInclude Include="HexCtrl\res\HexCtrlRes.h" />
-    <ClInclude Include="HexCtrl\ScrollEx.h" />
+    <ClInclude Include="HexCtrl\src\CHexCtrl.h" />
+    <ClInclude Include="HexCtrl\src\CScrollEx.h" />
+    <ClInclude Include="HexCtrl\src\Dialogs\CHexCtrlDlgAbout.h" />
+    <ClInclude Include="HexCtrl\src\Dialogs\CHexCtrlDlgSearch.h" />
+    <ClInclude Include="HexCtrl\src\Helper.h" />
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\FileLoader.h" />

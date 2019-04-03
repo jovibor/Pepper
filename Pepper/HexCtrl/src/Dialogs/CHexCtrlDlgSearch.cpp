@@ -9,7 +9,7 @@
 * 3. Call myHex.SetData method to set the data and its size to display as hex.	        *
 ****************************************************************************************/
 #include "stdafx.h"
-#include "HexCtrlDlgSearch.h"
+#include "CHexCtrlDlgSearch.h"
 
 using namespace HEXCTRL;
 
@@ -26,16 +26,11 @@ BEGIN_MESSAGE_MAP(CHexDlgSearch, CDialogEx)
 	ON_COMMAND_RANGE(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE, &CHexDlgSearch::OnRadioBnRange)
 END_MESSAGE_MAP()
 
-BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexCtrl* pParent)
+BOOL CHexDlgSearch::Create(UINT nIDTemplate, CHexCtrl* pHexCtrl)
 {
-	m_pParent = pParent;
+	m_pHexCtrl = pHexCtrl;
 
-	return CDialog::Create(nIDTemplate, m_pParent);
-}
-
-CHexCtrl* CHexDlgSearch::GetParent() const
-{
-	return m_pParent;
+	return CDialog::Create(nIDTemplate, m_pHexCtrl);
 }
 
 BOOL CHexDlgSearch::OnInitDialog()
@@ -106,19 +101,19 @@ void CHexDlgSearch::OnButtonSearchF()
 	switch (GetCheckedRadioButton(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE))
 	{
 	case IDC_HEXCTRL_SEARCH_RADIO_HEX:
-		m_stSearch.enSearchType = HEXSEARCHTYPEEN::SEARCH_HEX;
+		m_stSearch.enSearchType = INTERNAL::ENSEARCHTYPE::SEARCH_HEX;
 		break;
 	case IDC_HEXCTRL_SEARCH_RADIO_ASCII:
-		m_stSearch.enSearchType = HEXSEARCHTYPEEN::SEARCH_ASCII;
+		m_stSearch.enSearchType = INTERNAL::ENSEARCHTYPE::SEARCH_ASCII;
 		break;
 	case IDC_HEXCTRL_SEARCH_RADIO_UNICODE:
-		m_stSearch.enSearchType = HEXSEARCHTYPEEN::SEARCH_UNICODE;
+		m_stSearch.enSearchType = INTERNAL::ENSEARCHTYPE::SEARCH_UNICODE;
 		break;
 	}
 	m_stSearch.iDirection = 1;
 
 	GetDlgItem(IDC_HEXCTRL_SEARCH_EDITSEARCH)->SetFocus();
-	GetParent()->Search(m_stSearch);
+	GetHexCtrl()->Search(m_stSearch);
 	SearchCallback();
 }
 
@@ -137,23 +132,23 @@ void CHexDlgSearch::OnButtonSearchB()
 	switch (GetCheckedRadioButton(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE))
 	{
 	case IDC_HEXCTRL_SEARCH_RADIO_HEX:
-		m_stSearch.enSearchType = HEXSEARCHTYPEEN::SEARCH_HEX;
+		m_stSearch.enSearchType = INTERNAL::ENSEARCHTYPE::SEARCH_HEX;
 		break;
 	case IDC_HEXCTRL_SEARCH_RADIO_ASCII:
-		m_stSearch.enSearchType = HEXSEARCHTYPEEN::SEARCH_ASCII;
+		m_stSearch.enSearchType = INTERNAL::ENSEARCHTYPE::SEARCH_ASCII;
 		break;
 	case IDC_HEXCTRL_SEARCH_RADIO_UNICODE:
-		m_stSearch.enSearchType = HEXSEARCHTYPEEN::SEARCH_UNICODE;
+		m_stSearch.enSearchType = INTERNAL::ENSEARCHTYPE::SEARCH_UNICODE;
 		break;
 	}
 	m_stSearch.iDirection = -1;
 
 	GetDlgItem(IDC_HEXCTRL_SEARCH_EDITSEARCH)->SetFocus();
-	GetParent()->Search(m_stSearch);
+	GetHexCtrl()->Search(m_stSearch);
 	SearchCallback();
 }
 
-void CHexDlgSearch::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
+void CHexDlgSearch::OnActivate(UINT nState, CWnd * pWndOther, BOOL bMinimized)
 {
 	if (nState == WA_INACTIVE)
 		SetLayeredWindowAttributes(0, 150, LWA_ALPHA);
@@ -166,7 +161,7 @@ void CHexDlgSearch::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 	CDialogEx::OnActivate(nState, pWndOther, bMinimized);
 }
 
-BOOL CHexDlgSearch::PreTranslateMessage(MSG* pMsg)
+BOOL CHexDlgSearch::PreTranslateMessage(MSG * pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_RETURN)
 	{
@@ -183,7 +178,7 @@ void CHexDlgSearch::OnClose()
 	CDialogEx::OnClose();
 }
 
-HBRUSH CHexDlgSearch::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+HBRUSH CHexDlgSearch::OnCtlColor(CDC * pDC, CWnd * pWnd, UINT nCtlColor)
 {
 	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_SEARCH_STATIC_TEXTBOTTOM) {
 		pDC->SetBkColor(m_clrMenu);
@@ -211,4 +206,9 @@ void CHexDlgSearch::ClearAll()
 	m_stSearch.fCount = true;
 
 	GetDlgItem(IDC_HEXCTRL_SEARCH_STATIC_TEXTBOTTOM)->SetWindowTextW(L"");
+}
+
+CHexCtrl* CHexDlgSearch::GetHexCtrl()
+{
+	return m_pHexCtrl;
 }

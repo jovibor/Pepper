@@ -34,8 +34,8 @@ void CViewRightTR::OnInitialUpdate()
 	//Hex control for Resources raw.
 	m_hcs.pwndParent = this;
 	m_hcs.uId = IDC_HEX_RIGHT_TR;
-	m_stHexEdit.Create(m_hcs);
-	m_stHexEdit.ShowWindow(SW_HIDE);
+	m_stHexEdit->Create(m_hcs);
+	m_stHexEdit->ShowWindow(SW_HIDE);
 }
 
 void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
@@ -55,11 +55,11 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	switch (LOWORD(lHint))
 	{
 	case IDC_TREE_RESOURCE:
-		m_stHexEdit.ClearData();
-		m_pActiveWnd = &m_stHexEdit;
+		m_stHexEdit->ClearData();
+		m_pActiveWnd = &*m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
-		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_stHexEdit->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
 	case IDC_HEX_RIGHT_TR:
 	{
@@ -67,11 +67,11 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		HEXDATASTRUCT hds;
 		hds.pData = (PBYTE)hexData->data();
 		hds.ullDataSize = hexData->size();
-		m_stHexEdit.SetData(hds);
-		m_pActiveWnd = &m_stHexEdit;
+		m_stHexEdit->SetData(hds);
+		m_pActiveWnd = &*m_stHexEdit;
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
-		m_stHexEdit.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_stHexEdit->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
 	}
 	default:
@@ -81,7 +81,7 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	m_pChildFrame->m_stSplitterRightTop.RecalcLayout();
 }
 
-void CViewRightTR::OnDraw(CDC* pDC)
+void CViewRightTR::OnDraw(CDC * pDC)
 {
 }
 

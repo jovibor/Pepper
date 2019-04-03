@@ -30,6 +30,6 @@ private:
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CWnd* m_pActiveWnd { };
-	CHexCtrl m_stHexEdit;
+	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };
 };
