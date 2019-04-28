@@ -9,9 +9,9 @@
 /****************************************************************
 * This is a helper class for Pepper and HexCtrl routines of		*
 * showing files' offsets. It loads (maps) files into memory		*
-* by demand and unloads then. Works with big files - files that *
-* can't	be loaded fully at ones - as well.						*
-*																*
+* by demand and unloads after.									*
+* Works with big files - files that can't be loaded fully		*
+* at ones - as well.											*
 ****************************************************************/
 #pragma once
 #include "HexCtrl/HexCtrl.h"
@@ -51,10 +51,11 @@ private:
 		ULONGLONG	ullOffsetDelta { };
 		DWORD		dwDeltaFileOffsetMapped { };
 		LPVOID		lpData { };
+		bool		fShowPiece { false };
 	};
 	IHexCtrlPtr m_stHex { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };
-	HEXDATASTRUCT m_hds;
+	HEXDATASTRUCT m_hds { };
 	//Size of the loaded PE file.
 	LARGE_INTEGER m_stFileSize { };
 	HANDLE m_hFile { };

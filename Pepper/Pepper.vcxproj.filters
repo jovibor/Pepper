@@ -43,19 +43,19 @@
     <ClCompile Include="ListEx\ListEx.cpp">
       <Filter>ListEx</Filter>
     </ClCompile>
-    <ClCompile Include="HexCtrl\src\Helper.cpp">
-      <Filter>HexCtrl\src</Filter>
-    </ClCompile>
     <ClCompile Include="HexCtrl\src\CHexCtrl.cpp">
       <Filter>HexCtrl\src</Filter>
     </ClCompile>
     <ClCompile Include="HexCtrl\src\CScrollEx.cpp">
       <Filter>HexCtrl\src</Filter>
     </ClCompile>
-    <ClCompile Include="HexCtrl\src\Dialogs\CHexCtrlDlgAbout.cpp">
+    <ClCompile Include="HexCtrl\src\Helper.cpp">
+      <Filter>HexCtrl\src</Filter>
+    </ClCompile>
+    <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgAbout.cpp">
       <Filter>HexCtrl\src\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="HexCtrl\src\Dialogs\CHexCtrlDlgSearch.cpp">
+    <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgSearch.cpp">
       <Filter>HexCtrl\src\Dialogs</Filter>
     </ClCompile>
   </ItemGroup>
@@ -111,11 +111,8 @@
     <ClInclude Include="include\libpe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HexCtrl\src\Helper.h">
-      <Filter>HexCtrl\src</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\res\HexCtrlRes.h">
-      <Filter>HexCtrl\res</Filter>
+    <ClInclude Include="HexCtrl\HexCtrl.h">
+      <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="HexCtrl\src\CHexCtrl.h">
       <Filter>HexCtrl\src</Filter>
@@ -123,14 +120,17 @@
     <ClInclude Include="HexCtrl\src\CScrollEx.h">
       <Filter>HexCtrl\src</Filter>
     </ClInclude>
-    <ClInclude Include="HexCtrl\src\Dialogs\CHexCtrlDlgAbout.h">
-      <Filter>HexCtrl\src\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\src\Dialogs\CHexCtrlDlgSearch.h">
-      <Filter>HexCtrl\src\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\HexCtrl.h">
+    <ClInclude Include="HexCtrl\src\Helper.h">
       <Filter>HexCtrl\src</Filter>
+    </ClInclude>
+    <ClInclude Include="HexCtrl\src\Dialogs\CHexDlgAbout.h">
+      <Filter>HexCtrl\src\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="HexCtrl\src\Dialogs\CHexDlgSearch.h">
+      <Filter>HexCtrl\src\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="HexCtrl\res\HexCtrlRes.h">
+      <Filter>HexCtrl\res</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -183,20 +183,20 @@
     <Filter Include="Resource Files">
       <UniqueIdentifier>{1c6366ad-b8eb-472e-8430-81d16a2baf60}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HexCtrl">
-      <UniqueIdentifier>{7a123d79-a104-4209-82e8-420d65c487b1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HexCtrl\res">
-      <UniqueIdentifier>{ac287bfa-b9c0-4aae-9da1-dbbf4d373ee1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ListEx">
       <UniqueIdentifier>{0a64e748-b993-4684-bad2-e0f78d571c65}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HexCtrl">
+      <UniqueIdentifier>{1f445e25-8a4e-463b-ae4b-7b35af72631b}</UniqueIdentifier>
+    </Filter>
     <Filter Include="HexCtrl\src">
-      <UniqueIdentifier>{afd671f0-e9b3-4f5b-8e89-c65444df54ac}</UniqueIdentifier>
+      <UniqueIdentifier>{bca9a806-6fe1-4ad0-a2fd-98bafca749ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HexCtrl\res">
+      <UniqueIdentifier>{89b0a44a-cad9-4b93-a9b4-38f10d44f402}</UniqueIdentifier>
     </Filter>
     <Filter Include="HexCtrl\src\Dialogs">
-      <UniqueIdentifier>{403c26f8-0fce-421f-b773-54a9668349de}</UniqueIdentifier>
+      <UniqueIdentifier>{084fde47-fb1d-46b7-abca-69fb2b57a319}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

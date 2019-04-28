@@ -406,8 +406,8 @@
     <ClCompile Include="FileLoader.cpp" />
     <ClCompile Include="HexCtrl\src\CHexCtrl.cpp" />
     <ClCompile Include="HexCtrl\src\CScrollEx.cpp" />
-    <ClCompile Include="HexCtrl\src\Dialogs\CHexCtrlDlgAbout.cpp" />
-    <ClCompile Include="HexCtrl\src\Dialogs\CHexCtrlDlgSearch.cpp" />
+    <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgAbout.cpp" />
+    <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgSearch.cpp" />
     <ClCompile Include="HexCtrl\src\Helper.cpp" />
     <ClCompile Include="ListEx\ListEx.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
@@ -449,8 +449,8 @@
     <ClInclude Include="HexCtrl\res\HexCtrlRes.h" />
     <ClInclude Include="HexCtrl\src\CHexCtrl.h" />
     <ClInclude Include="HexCtrl\src\CScrollEx.h" />
-    <ClInclude Include="HexCtrl\src\Dialogs\CHexCtrlDlgAbout.h" />
-    <ClInclude Include="HexCtrl\src\Dialogs\CHexCtrlDlgSearch.h" />
+    <ClInclude Include="HexCtrl\src\Dialogs\CHexDlgAbout.h" />
+    <ClInclude Include="HexCtrl\src\Dialogs\CHexDlgSearch.h" />
     <ClInclude Include="HexCtrl\src\Helper.h" />
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />

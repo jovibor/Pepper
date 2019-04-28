@@ -100,7 +100,7 @@ void CScrollEx::SetScrollSizes(ULONGLONG ullScrolline, ULONGLONG ullScrollPage, 
 	m_ullScrollSizeMax = ullScrollSizeMax;
 
 	CWnd* pWnd = GetParent();
-	if (pWnd)
+	if (pWnd) //To repaint NC area.
 		pWnd->SetWindowPos(nullptr, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 }
 
@@ -175,7 +175,6 @@ void CScrollEx::ScrollPageDown()
 	else
 		ullNew = ullCur + m_ullScrollPage;
 	SetScrollPos(ullNew);
-
 }
 
 void CScrollEx::ScrollPageLeft()
@@ -807,6 +806,7 @@ void CScrollEx::OnTimer(UINT_PTR nIDEvent)
 				if (pt.x > rc.right)
 					ScrollPageDown();
 			}
+			break;
 		}
 	}
 	break;

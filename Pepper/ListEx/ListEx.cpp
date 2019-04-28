@@ -106,13 +106,13 @@ void CListExHdr::SetColor(COLORREF clrText, COLORREF clrBk)
 	RedrawWindow();
 }
 
-void CListExHdr::SetColumnColor(DWORD iColumn, COLORREF clr)
+void CListExHdr::SetColumnColor(DWORD dwColumn, COLORREF clr)
 {
-	m_umapClrColumn[iColumn] = clr;
+	m_umapClrColumn[dwColumn] = clr;
 	RedrawWindow();
 }
 
-void CListExHdr::SetFont(const LOGFONT* pLogFontNew)
+void CListExHdr::SetFont(const LOGFONTW* pLogFontNew)
 {
 	if (!pLogFontNew)
 		return;
@@ -159,7 +159,6 @@ BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
 	ON_NOTIFY(HDN_TRACKW, 0, &CListEx::OnHdnTrack)
 	ON_WM_CONTEXTMENU()
 	ON_WM_DESTROY()
-	ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, &CListEx::OnLvnColumnclick)
 END_MESSAGE_MAP()
 
 BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo)
@@ -711,10 +710,6 @@ void CListEx::OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	//*pResult = 0;
-}
-
-void CListEx::OnLvnColumnclick(NMHDR *pNMHDR, LRESULT *pResult)
-{
 }
 
 void CListEx::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)

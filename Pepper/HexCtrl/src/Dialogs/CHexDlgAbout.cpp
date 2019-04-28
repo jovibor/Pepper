@@ -9,13 +9,13 @@
 * 3. Call myHex.SetData method to set the data and its size to display as hex.	        *
 ****************************************************************************************/
 #include "stdafx.h"
-#include "CHexCtrlDlgAbout.h"
+#include "CHexDlgAbout.h"
 
 using namespace HEXCTRL;
 
 namespace HEXCTRL {
 	namespace INTERNAL {
-		constexpr auto WSTR_HEXCTRL_VERSION = L"Hex Control for MFC, v2.2.10";
+		constexpr auto WSTR_HEXCTRL_VERSION = L"Hex Control for MFC, v2.2.11";
 	};
 }
 

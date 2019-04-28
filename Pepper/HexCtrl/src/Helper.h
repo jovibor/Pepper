@@ -8,12 +8,21 @@
 * These are some helper functions for HexCtrl.											*
 ****************************************************************************************/
 #pragma once
+#include <afxwin.h>
+#include <string>
 
 namespace HEXCTRL {
 	//Converts dwSize bytes of ull to WCHAR string.
-	void ToWchars(ULONGLONG ull, wchar_t* pwsz, DWORD dwSize);
+	void UllToWchars(ULONGLONG ull, wchar_t* pwsz, size_t dwSize);
 
 	//Converts char* string to unsigned long number.
+	//Basically it's a strtoul() wrapper.
 	//Returns false if conversion is imposible, true otherwise.
-	bool ToUl(const char* pcsz, unsigned long& ul);
+	bool CharsToUl(const char* pcsz, unsigned long& ul);
+
+	//Wide string to Multibyte string convertion.
+	std::string WstrToStr(const std::wstring& wstr);
+
+	//Converts every two numbers from strNum to one respective character (56->V, 78->x).
+	bool NumStrToHex(const std::string& strNum, std::string& strHex);
 };

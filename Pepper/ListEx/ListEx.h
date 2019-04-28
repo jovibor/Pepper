@@ -8,15 +8,15 @@
 ****************************************************************************************************/
 /****************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/				*
-* This is an extended and quite featured version of CMFCListCtrl class.		*
+* This is an extended and featured version of CMFCListCtrl class.			*
 * The main difference is in CListEx::Create method, which takes one			*
 * additional arg - pointer to LISTEXINFO structure, which fields are		*
 * described below.															*
 * Also, this class has set of additional public methods to help customize	*
-* your control in many different aspects.									*
+* List control in many different aspects.									*
 ****************************************************************************/
 #pragma once
-#include <afxcontrolbars.h>
+#include <afxwin.h>
 #include <unordered_map>
 
 namespace LISTEX {
@@ -44,17 +44,17 @@ namespace LISTEX {
 	using PLISTEXINFO = LISTEXINFO * ;
 
 	/********************************************
-	* CListExHdr class definition.			*
+	* CListExHdr class definition.				*
 	********************************************/
 	class CListExHdr : public CMFCHeaderCtrl
 	{
-	public:
+	public:	
+		CListExHdr();
+		virtual ~CListExHdr() {}
 		void SetHeight(DWORD dwHeight);
 		void SetFont(const LOGFONTW* pLogFontNew);
 		void SetColor(COLORREF clrText, COLORREF clrBk);
-		void SetColumnColor(DWORD iColumn, COLORREF clr);
-		CListExHdr();
-		virtual ~CListExHdr() {}
+		void SetColumnColor(DWORD dwColumn, COLORREF clr);
 	protected:
 		afx_msg void OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted) override;
 		afx_msg LRESULT OnLayout(WPARAM wParam, LPARAM lParam);
@@ -121,7 +121,6 @@ namespace LISTEX {
 		afx_msg void OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnHdnBegintrack(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult);
-		afx_msg void OnLvnColumnclick(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnDestroy();
 	private:
 		bool m_fCreated { false };

@@ -69,28 +69,37 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 		pData = nullptr;
 	}
 
+	m_hds.pData = pData;
+	m_hds.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
+	m_hds.enMode = enMode;
+	m_hds.ullSelectionStart = ullOffset;
+	m_hds.ullSelectionSize = ullSelectionSize;
+
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
 		[pHexCtrl](const QUERYDATA & r) {return r.hWnd == pHexCtrl->m_hWnd; });
 
 	bool fExist { false };
 	if (iter == m_vecQuery.end())
 		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->m_hWnd });
-	else {
-		fExist = true;
-		iter->ullOffsetDelta = 0;
-	}
-
-	if (fExist)
-		pHexCtrl->ShowOffset(ullOffset, ullSelectionSize);
 	else
+		fExist = true;
+
+	//If fExist we additionally check whether this window was set
+	//to ShowOffset or to ShowFilePiece. If the latter we reset it to show full file. 
+	if (fExist)
 	{
-		m_hds.pData = pData;
-		m_hds.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
-		m_hds.enMode = enMode;
-		m_hds.ullSelectionStart = ullOffset;
-		m_hds.ullSelectionSize = ullSelectionSize;
-		pHexCtrl->SetData(m_hds);
+		if (!iter->fShowPiece)
+			pHexCtrl->ShowOffset(ullOffset, ullSelectionSize);
+		else
+		{
+			iter->ullOffsetDelta = 0;
+			iter->fShowPiece = false;
+			pHexCtrl->SetData(m_hds);
+		}
 	}
+	else
+		pHexCtrl->SetData(m_hds);
+
 	//If floating HexCtrl in use - bring it to front.
 	if (pHexCtrl == m_stHex)
 		pHexCtrl->SetForegroundWindow();
@@ -124,9 +133,12 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		[pHexCtrl](const QUERYDATA & rData) {return rData.hWnd == pHexCtrl->m_hWnd; });
 
 	if (iter == m_vecQuery.end())
-		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->m_hWnd, 0, 0, ullOffset, 0, nullptr });
+		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->m_hWnd, 0, 0, ullOffset, 0, nullptr, true });
 	else
+	{
 		iter->ullOffsetDelta = ullOffset;
+		iter->fShowPiece = true;
+	}
 
 	m_hds.pData = pData;
 	m_hds.ullDataSize = ullSize;
