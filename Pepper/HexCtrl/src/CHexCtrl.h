@@ -78,6 +78,7 @@ namespace HEXCTRL {
 		long GetFontSize()override;						 //Gets the control's font size.
 		void SetColor(const HEXCOLORSTRUCT& clr)override;//Sets all the colors for the control.
 		void SetCapacity(DWORD dwCapacity)override;		 //Sets the control's current capacity.
+		void Destroy();
 	protected:
 		DECLARE_MESSAGE_MAP()
 		bool RegisterWndClass();

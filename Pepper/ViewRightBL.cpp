@@ -43,19 +43,20 @@ void CViewRightBL::OnInitialUpdate()
 	m_stHexEdit->Create(m_hcs);
 	m_stHexEdit->ShowWindow(SW_HIDE);
 
-	m_stListInfo.clrTooltipText = RGB(255, 255, 255);
-	m_stListInfo.clrTooltipBk = RGB(0, 132, 132);
-	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
-	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
-	m_stListInfo.dwHeaderHeight = 35;
+	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
+	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
+	m_stlcs.stColor.clrHeaderText = RGB(255, 255, 255);
+	m_stlcs.stColor.clrHeaderBk = RGB(0, 132, 132);
+	m_stlcs.dwHeaderHeight = 35;
+	m_stlcs.pwndParent = this;
 
 	m_lf.lfHeight = 16;
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
-	m_stListInfo.pListLogFont = &m_lf;
+	m_stlcs.pListLogFont = &m_lf;
 	m_hdrlf.lfHeight = 17;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
-	m_stListInfo.pHeaderLogFont = &m_hdrlf;
+	m_stlcs.pHeaderLogFont = &m_hdrlf;
 
 	CreateListExportFuncs();
 	CreateTreeResources();
@@ -92,14 +93,14 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		CreateHexSecHeadersEntry(HIWORD(lHint));
 		break;
 	case IDC_LIST_EXPORT:
-		if (m_pActiveWnd != &m_listExportFuncs)
+		if (m_pActiveWnd != &*m_listExportFuncs)
 		{
 			if (m_pActiveWnd)
 				m_pActiveWnd->ShowWindow(SW_HIDE);
 
-			m_pActiveWnd = &m_listExportFuncs;
+			m_pActiveWnd = &*m_listExportFuncs;
 		}
-		m_listExportFuncs.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_listExportFuncs->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
 	case IDC_LIST_IMPORT_ENTRY:
 		CreateListImportEntry(HIWORD(lHint));
@@ -400,16 +401,18 @@ int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateListExportFuncs()
 {
-	if (!m_listExportFuncs.IsCreated())
+	if (!m_listExportFuncs->IsCreated())
 	{
-		m_listExportFuncs.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_EXPORT_FUNCS, &m_stListInfo);
-		m_listExportFuncs.ShowWindow(SW_HIDE);
-		m_listExportFuncs.InsertColumn(0, L"Offset", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 90);
-		m_listExportFuncs.SetHeaderColumnColor(0, g_clrOffset);
-		m_listExportFuncs.InsertColumn(1, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
-		m_listExportFuncs.InsertColumn(2, L"Ordinal", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
-		m_listExportFuncs.InsertColumn(3, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
-		m_listExportFuncs.InsertColumn(4, L"Forwarder Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 400);
+		m_stlcs.dwStyle = 0;
+		m_stlcs.nID = IDC_LIST_EXPORT_FUNCS;
+		m_listExportFuncs->Create(m_stlcs);
+		m_listExportFuncs->ShowWindow(SW_HIDE);
+		m_listExportFuncs->InsertColumn(0, L"Offset", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 90);
+		m_listExportFuncs->SetHeaderColumnColor(0, g_clrOffset);
+		m_listExportFuncs->InsertColumn(1, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
+		m_listExportFuncs->InsertColumn(2, L"Ordinal", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
+		m_listExportFuncs->InsertColumn(3, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
+		m_listExportFuncs->InsertColumn(4, L"Forwarder Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 400);
 	}
 	PCLIBPE_EXPORT pExport;
 	if (m_pLibpe->GetExport(pExport) != S_OK)
@@ -421,42 +424,44 @@ int CViewRightBL::CreateListExportFuncs()
 	DWORD dwOffset;
 	m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions, dwOffset);
 
-	m_listExportFuncs.SetRedraw(FALSE); //to increase the speed of List populating
+	m_listExportFuncs->SetRedraw(FALSE); //to increase the speed of List populating
 	for (auto& i : pExport->vecFuncs)
 	{
 		swprintf_s(wstr, 9, L"%08lX", DWORD(dwOffset + sizeof(DWORD) * i.dwOrdinal));
-		m_listExportFuncs.InsertItem(listindex, wstr);
+		m_listExportFuncs->InsertItem(listindex, wstr);
 
 		swprintf_s(wstr, 9, L"%08X", i.dwRVA);
-		m_listExportFuncs.SetItemText(listindex, 1, wstr);
+		m_listExportFuncs->SetItemText(listindex, 1, wstr);
 		swprintf_s(wstr, 9, L"%u", i.dwOrdinal);
-		m_listExportFuncs.SetItemText(listindex, 2, wstr);
+		m_listExportFuncs->SetItemText(listindex, 2, wstr);
 		swprintf_s(wstr, MAX_PATH, L"%S", i.strFuncName.data());
-		m_listExportFuncs.SetItemText(listindex, 3, wstr);
+		m_listExportFuncs->SetItemText(listindex, 3, wstr);
 		swprintf_s(wstr, MAX_PATH, L"%S", i.strForwarderName.data());
-		m_listExportFuncs.SetItemText(listindex, 4, wstr);
+		m_listExportFuncs->SetItemText(listindex, 4, wstr);
 
 		listindex++;
 	}
-	m_listExportFuncs.SetRedraw(TRUE);
+	m_listExportFuncs->SetRedraw(TRUE);
 
 	return 0;
 }
 
 int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 {
-	if (!m_listImportEntry.IsCreated())
+	if (!m_listImportEntry->IsCreated())
 	{
-		m_listImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_IMPORT_ENTRY, &m_stListInfo);
-		m_listImportEntry.InsertColumn(0, L"Offset", 0, 90);
-		m_listImportEntry.SetHeaderColumnColor(0, g_clrOffset);
-		m_listImportEntry.InsertColumn(1, L"Function Name", 0, 175);
-		m_listImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
-		m_listImportEntry.InsertColumn(3, L"AddressOfData", 0, 150);
-		m_listImportEntry.InsertColumn(4, L"Thunk RVA", 0, 150);
+		m_stlcs.dwStyle = 0;
+		m_stlcs.nID = IDC_LIST_IMPORT_ENTRY;
+		m_listImportEntry->Create(m_stlcs);
+		m_listImportEntry->InsertColumn(0, L"Offset", 0, 90);
+		m_listImportEntry->SetHeaderColumnColor(0, g_clrOffset);
+		m_listImportEntry->InsertColumn(1, L"Function Name", 0, 175);
+		m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", 0, 100);
+		m_listImportEntry->InsertColumn(3, L"AddressOfData", 0, 150);
+		m_listImportEntry->InsertColumn(4, L"Thunk RVA", 0, 150);
 	}
 	else
-		m_listImportEntry.DeleteAllItems();
+		m_listImportEntry->DeleteAllItems();
 
 	PCLIBPE_IMPORT_VEC m_pImport;
 	if (m_pLibpe->GetImport(m_pImport) != S_OK || dwEntry > m_pImport->size())
@@ -464,7 +469,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 
 	if (m_pActiveWnd)
 		m_pActiveWnd->ShowWindow(SW_HIDE);
-	m_pActiveWnd = &m_listImportEntry;
+	m_pActiveWnd = &*m_listImportEntry;
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
@@ -473,18 +478,18 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 	m_pLibpe->GetOffsetFromRVA(rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk, dwThunkOffset);
 	DWORD dwThunkRVA = rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk;
 
-	m_listImportEntry.SetRedraw(FALSE);
+	m_listImportEntry->SetRedraw(FALSE);
 	for (auto& i : m_pImport->at(dwEntry).vecImportFunc)
 	{
 		swprintf_s(wstr, 9, L"%08lX", dwThunkOffset);
-		m_listImportEntry.InsertItem(listindex, wstr);
+		m_listImportEntry->InsertItem(listindex, wstr);
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA32);
 		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA64);
 
 		swprintf_s(wstr, MAX_PATH, L"%S", i.strFuncName.data());
-		m_listImportEntry.SetItemText(listindex, 1, wstr);
+		m_listImportEntry->SetItemText(listindex, 1, wstr);
 
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 		{
@@ -500,16 +505,16 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 			else
 				swprintf_s(wstr, 5, L"%04X", i.stImpByName.Hint);
 		}
-		m_listImportEntry.SetItemText(listindex, 2, wstr);
+		m_listImportEntry->SetItemText(listindex, 2, wstr);
 
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.stThunk32.u1.AddressOfData);
 		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.stThunk64.u1.AddressOfData);
-		m_listImportEntry.SetItemText(listindex, 3, wstr);
+		m_listImportEntry->SetItemText(listindex, 3, wstr);
 
 		swprintf_s(wstr, 9, L"%08lX", dwThunkRVA);
-		m_listImportEntry.SetItemText(listindex, 4, wstr);
+		m_listImportEntry->SetItemText(listindex, 4, wstr);
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkRVA += sizeof(IMAGE_THUNK_DATA32);
 		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
@@ -517,11 +522,11 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 
 		listindex++;
 	}
-	m_listImportEntry.SetRedraw(TRUE);
+	m_listImportEntry->SetRedraw(TRUE);
 
 	CRect rect;
 	GetClientRect(&rect);
-	m_listImportEntry.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_listImportEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	return 0;
 }
@@ -552,20 +557,22 @@ int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 
 int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 {
-	if (!m_listDelayImportEntry.IsCreated())
+	if (!m_listDelayImportEntry->IsCreated())
 	{
-		m_listDelayImportEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_DELAYIMPORT_ENTRY, &m_stListInfo);
-		m_listDelayImportEntry.InsertColumn(0, L"Offset", 0, 90);
-		m_listDelayImportEntry.SetHeaderColumnColor(0, g_clrOffset);
-		m_listDelayImportEntry.InsertColumn(1, L"Function Name", 0, 300);
-		m_listDelayImportEntry.InsertColumn(2, L"Ordinal / Hint", 0, 100);
-		m_listDelayImportEntry.InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
-		m_listDelayImportEntry.InsertColumn(4, L"IAT AddresOfData", 0, 200);
-		m_listDelayImportEntry.InsertColumn(5, L"BoundIAT AddresOfData", 0, 230);
-		m_listDelayImportEntry.InsertColumn(6, L"UnloadInfoTable AddresOfData", 0, 240);
+		m_stlcs.dwStyle = 0;
+		m_stlcs.nID = IDC_LIST_DELAYIMPORT_ENTRY;
+		m_listDelayImportEntry->Create(m_stlcs);
+		m_listDelayImportEntry->InsertColumn(0, L"Offset", 0, 90);
+		m_listDelayImportEntry->SetHeaderColumnColor(0, g_clrOffset);
+		m_listDelayImportEntry->InsertColumn(1, L"Function Name", 0, 300);
+		m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", 0, 100);
+		m_listDelayImportEntry->InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
+		m_listDelayImportEntry->InsertColumn(4, L"IAT AddresOfData", 0, 200);
+		m_listDelayImportEntry->InsertColumn(5, L"BoundIAT AddresOfData", 0, 230);
+		m_listDelayImportEntry->InsertColumn(6, L"UnloadInfoTable AddresOfData", 0, 240);
 	}
 	else
-		m_listDelayImportEntry.DeleteAllItems();
+		m_listDelayImportEntry->DeleteAllItems();
 
 	PCLIBPE_DELAYIMPORT_VEC pDelayImport;
 	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK || dwEntry > pDelayImport->size())
@@ -577,18 +584,18 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 	DWORD dwThunkOffset;
 	m_pLibpe->GetOffsetFromRVA(pDelayImport->at(dwEntry).stDelayImpDesc.ImportNameTableRVA, dwThunkOffset);
 
-	m_listDelayImportEntry.SetRedraw(FALSE);
+	m_listDelayImportEntry->SetRedraw(FALSE);
 	for (auto&i : pDelayImport->at(dwEntry).vecDelayImpFunc)
 	{
 		swprintf_s(wstr, 9, L"%08lX", dwThunkOffset);
-		m_listDelayImportEntry.InsertItem(listindex, wstr);
+		m_listDelayImportEntry->InsertItem(listindex, wstr);
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA32);
 		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			dwThunkOffset += sizeof(IMAGE_THUNK_DATA64);
 
 		swprintf_s(wstr, 256, L"%S", i.strFuncName.data());
-		m_listDelayImportEntry.SetItemText(listindex, 1, wstr);
+		m_listDelayImportEntry->SetItemText(listindex, 1, wstr);
 
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 		{
@@ -604,57 +611,59 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 			else
 				swprintf_s(wstr, 5, L"%04X", i.stImpByName.Hint);
 		}
-		m_listDelayImportEntry.SetItemText(listindex, 2, wstr);
+		m_listDelayImportEntry->SetItemText(listindex, 2, wstr);
 
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stImportNameTable.u1.AddressOfData);
 		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stImportNameTable.u1.AddressOfData);
-		m_listDelayImportEntry.SetItemText(listindex, 3, wstr);
+		m_listDelayImportEntry->SetItemText(listindex, 3, wstr);
 
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stImportAddressTable.u1.AddressOfData);
 		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stImportAddressTable.u1.AddressOfData);
-		m_listDelayImportEntry.SetItemText(listindex, 4, wstr);
+		m_listDelayImportEntry->SetItemText(listindex, 4, wstr);
 
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stBoundImportAddressTable.u1.AddressOfData);
 		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stBoundImportAddressTable.u1.AddressOfData);
-		m_listDelayImportEntry.SetItemText(listindex, 5, wstr);
+		m_listDelayImportEntry->SetItemText(listindex, 5, wstr);
 
 		if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 			swprintf_s(wstr, 9, L"%08X", i.varThunk.st32.stUnloadInformationTable.u1.AddressOfData);
 		else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 			swprintf_s(wstr, 17, L"%016llX", i.varThunk.st64.stUnloadInformationTable.u1.AddressOfData);
-		m_listDelayImportEntry.SetItemText(listindex, 6, wstr);
+		m_listDelayImportEntry->SetItemText(listindex, 6, wstr);
 
 		listindex++;
 	}
-	m_listDelayImportEntry.SetRedraw(TRUE);
+	m_listDelayImportEntry->SetRedraw(TRUE);
 
 	CRect rect;
 	GetClientRect(&rect);
-	m_listDelayImportEntry.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pActiveWnd = &m_listDelayImportEntry;
+	m_listDelayImportEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_pActiveWnd = &*m_listDelayImportEntry;
 
 	return 0;
 }
 
 int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 {
-	if (!m_listRelocsEntry.IsCreated())
+	if (!m_listRelocsEntry->IsCreated())
 	{
-		m_listRelocsEntry.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_RELOCATIONS_ENTRY, &m_stListInfo);
-		m_listRelocsEntry.ShowWindow(SW_HIDE);
-		m_listRelocsEntry.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-		m_listRelocsEntry.SetHeaderColumnColor(0, g_clrOffset);
-		m_listRelocsEntry.InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
-		m_listRelocsEntry.InsertColumn(2, L"Offset to apply", LVCFMT_LEFT, 120);
+		m_stlcs.dwStyle = 0;
+		m_stlcs.nID = IDC_LIST_RELOCATIONS_ENTRY;
+		m_listRelocsEntry->Create(m_stlcs);
+		m_listRelocsEntry->ShowWindow(SW_HIDE);
+		m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+		m_listRelocsEntry->SetHeaderColumnColor(0, g_clrOffset);
+		m_listRelocsEntry->InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
+		m_listRelocsEntry->InsertColumn(2, L"Offset to apply", LVCFMT_LEFT, 120);
 	}
 	else
-		m_listRelocsEntry.DeleteAllItems();
+		m_listRelocsEntry->DeleteAllItems();
 
 	PCLIBPE_RELOCATION_VEC pReloc;
 	if (m_pLibpe->GetRelocations(pReloc) != S_OK || pReloc->empty() || pReloc->size() < dwEntry)
@@ -677,11 +686,11 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
 
-	m_listRelocsEntry.SetRedraw(FALSE);
+	m_listRelocsEntry->SetRedraw(FALSE);
 	for (auto& iterRelocs : pReloc->at(dwEntry).vecRelocData)
 	{
 		swprintf_s(wstr, 9, L"%08X", iterRelocs.dwOffsetRelocData);
-		m_listRelocsEntry.InsertItem(listindex, wstr);
+		m_listRelocsEntry->InsertItem(listindex, wstr);
 
 		auto it = mapRelocTypes.find(iterRelocs.wRelocType);
 		if (it != mapRelocTypes.end())
@@ -689,18 +698,18 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 		else
 			swprintf_s(wstr, MAX_PATH, L"%u", iterRelocs.wRelocType);
 
-		m_listRelocsEntry.SetItemText(listindex, 1, wstr);
+		m_listRelocsEntry->SetItemText(listindex, 1, wstr);
 		swprintf_s(wstr, 5, L"%04X", iterRelocs.wRelocOffset);
-		m_listRelocsEntry.SetItemText(listindex, 2, wstr);
+		m_listRelocsEntry->SetItemText(listindex, 2, wstr);
 
 		listindex++;
 	}
-	m_listRelocsEntry.SetRedraw(TRUE);
+	m_listRelocsEntry->SetRedraw(TRUE);
 
 	CRect rect;
 	GetClientRect(&rect);
-	m_listRelocsEntry.SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pActiveWnd = &m_listRelocsEntry;
+	m_listRelocsEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_pActiveWnd = &*m_listRelocsEntry;
 
 	return 0;
 }

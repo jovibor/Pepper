@@ -409,7 +409,8 @@
     <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgAbout.cpp" />
     <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgSearch.cpp" />
     <ClCompile Include="HexCtrl\src\Helper.cpp" />
-    <ClCompile Include="ListEx\ListEx.cpp" />
+    <ClCompile Include="ListEx\src\CListEx.cpp" />
+    <ClCompile Include="ListEx\src\CListExHdr.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
     <ClCompile Include="ViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
@@ -468,6 +469,8 @@
     <ClInclude Include="include\stdafx.h" />
     <ClInclude Include="include\ViewRightTR.h" />
     <ClInclude Include="ListEx\ListEx.h" />
+    <ClInclude Include="ListEx\src\CListEx.h" />
+    <ClInclude Include="ListEx\src\CListExHdr.h" />
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>

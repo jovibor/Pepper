@@ -26,7 +26,7 @@ protected:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	DECLARE_MESSAGE_MAP()
 private:
-	libpe_ptr m_pLibpe { };
+	libpe_ptr m_pLibpe;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CWnd* m_pActiveWnd { };

@@ -1,137 +1,28 @@
-/****************************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
-* This software is available under the "MIT License modified with The Commons Clause".				*
-* https://github.com/jovibor/Pepper/blob/master/LICENSE												*
-* Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
-* libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
-* https://github.com/jovibor/libpe																	*
-****************************************************************************************************/
-/****************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/				*
-* This is an extended and quite featured version of CMFCListCtrl class.		*
-* The main difference is in CListEx::Create method, which takes one			*
-* additional arg - pointer to LISTEXINFO structure, which fields are		*
-* described below.															*
-* Also, this class has set of additional public methods to help customize	*
-* your control in many different aspects.									*
-****************************************************************************/
+/********************************************************************************
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/					*
+* Github repository URL: https://github.com/jovibor/ListEx						*
+* This software is available under the "MIT License".							*
+* This is an extended and featured version of CMFCListCtrl class.				*
+* CListEx - list control class with the ability to set tooltips on arbitrary	*
+* cells, and also with a lots of other stuff to customize your control in many	*
+* different aspects. For more info see official documentation on github.		*
+********************************************************************************/
 #include "stdafx.h"
-#include "ListEx.h"
+#include "CListExHdr.h"
+#include "CListEx.h"
 #include "strsafe.h"
 
 using namespace LISTEX;
 
-/****************************************************
-* CListExHdr class implementation.				*
-****************************************************/
-BEGIN_MESSAGE_MAP(CListExHdr, CMFCHeaderCtrl)
-	ON_MESSAGE(HDM_LAYOUT, &CListExHdr::OnLayout)
-	ON_WM_HSCROLL()
-END_MESSAGE_MAP()
-
-CListExHdr::CListExHdr()
-{
-	NONCLIENTMETRICSW ncm { };
-	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
-	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-	ncm.lfMessageFont.lfHeight = 18; //For some weird reason above func returns this value as MAX_LONG.
-
-	m_fontHdr.CreateFontIndirectW(&ncm.lfMessageFont);
-
-	m_hdItem.mask = HDI_TEXT;
-	m_hdItem.cchTextMax = MAX_PATH;
-	m_hdItem.pszText = m_wstrHeaderText;
-}
-
-void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted)
-{
-	if (iItem < 0) { //Non working area, after last column.
-		pDC->FillSolidRect(&rect, m_clrBkNWA);
-		return;
+namespace LISTEX {
+	/********************************************
+	* CreateRawListEx function implementation.	*
+	********************************************/
+	IListEx* CreateRawListEx()
+	{
+		return new CListEx();
 	}
-
-	CMemDC memDC(*pDC, rect);
-	CDC& rDC = memDC.GetDC();
-
-	if (m_umapClrColumn.find(iItem) != m_umapClrColumn.end())
-		rDC.FillSolidRect(&rect, m_umapClrColumn[iItem]);
-	else
-		rDC.FillSolidRect(&rect, m_clrBk);
-	rDC.SetTextColor(m_clrText);
-	rDC.DrawEdge(&rect, EDGE_RAISED, BF_RECT);
-	rDC.SelectObject(&m_fontHdr);
-
-	//Set item's text buffer first char to zero,
-	//then getting item's text and Draw it.
-	m_wstrHeaderText[0] = L'\0';
-	GetItem(iItem, &m_hdItem);
-
-	if (StrStrW(m_wstrHeaderText, L"\n"))
-	{	//If it's multiline text, first — calculate rect for the text,
-		//with CALC_RECT flag (not drawing anything),
-		//and then calculate rect for final vertical text alignment.
-		CRect rcText;
-		rDC.DrawTextW(m_wstrHeaderText, &rcText, DT_CENTER | DT_CALCRECT);
-		rect.top = rect.Height() / 2 - rcText.Height() / 2;
-		rDC.DrawTextW(m_wstrHeaderText, &rect, DT_CENTER);
-	}
-	else
-		rDC.DrawTextW(m_wstrHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
 }
-
-LRESULT CListExHdr::OnLayout(WPARAM wParam, LPARAM lParam)
-{
-	CMFCHeaderCtrl::DefWindowProcW(HDM_LAYOUT, 0, lParam);
-
-	LPHDLAYOUT pHDL = reinterpret_cast<LPHDLAYOUT>(lParam);
-
-	//New header height.
-	pHDL->pwpos->cy = m_dwHeaderHeight;
-	//Decreasing list's height begining by the new header's height.
-	pHDL->prc->top = m_dwHeaderHeight;
-
-	return 0;
-}
-
-void CListExHdr::SetHeight(DWORD dwHeight)
-{
-	m_dwHeaderHeight = dwHeight;
-}
-
-void CListExHdr::SetColor(COLORREF clrText, COLORREF clrBk)
-{
-	m_clrText = clrText;
-	m_clrBk = clrBk;
-
-	RedrawWindow();
-}
-
-void CListExHdr::SetColumnColor(DWORD dwColumn, COLORREF clr)
-{
-	m_umapClrColumn[dwColumn] = clr;
-	RedrawWindow();
-}
-
-void CListExHdr::SetFont(const LOGFONTW* pLogFontNew)
-{
-	if (!pLogFontNew)
-		return;
-
-	m_fontHdr.DeleteObject();
-	m_fontHdr.CreateFontIndirectW(pLogFontNew);
-
-	//If new font's height is higher than current height (m_dwHeaderHeight)
-	//we adjust current height as well.
-	TEXTMETRIC tm;
-	CDC* pDC = GetDC();
-	pDC->SelectObject(&m_fontHdr);
-	GetTextMetricsW(pDC->m_hDC, &tm);
-	ReleaseDC(pDC);
-	DWORD dwHeightFont = tm.tmHeight + tm.tmExternalLeading + 1;
-	if (dwHeightFont > m_dwHeaderHeight)
-		SetHeight(dwHeightFont);
-}
-
 
 /****************************************************
 * CListEx class implementation.						*
@@ -161,65 +52,66 @@ BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-BOOL CListEx::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo)
+bool CListEx::Create(const LISTEXCREATESTRUCT & lcs)
 {
-	if (!CMFCListCtrl::Create(dwStyle | WS_CHILD | LVS_OWNERDRAWFIXED | LVS_REPORT, rect, pParentWnd, nID))
-		return FALSE;
+	if (lcs.fDialogCtrl)
+		SetWindowLongPtrW(m_hWnd, GWL_STYLE, GetWindowLongPtrW(m_hWnd, GWL_STYLE) | LVS_OWNERDRAWFIXED | LVS_REPORT);
+	else if (!CMFCListCtrl::Create(lcs.dwStyle | WS_CHILD | WS_VISIBLE | LVS_OWNERDRAWFIXED | LVS_REPORT,
+		lcs.rect, lcs.pwndParent, lcs.nID))
+		return false;
+
+	m_stColor = lcs.stColor;
 
 	m_hwndTt = CreateWindowExW(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
 		TTS_BALLOON | TTS_NOANIMATE | TTS_NOFADE | TTS_NOPREFIX | TTS_ALWAYSTIP,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		nullptr, nullptr, nullptr, nullptr);
 	if (!m_hwndTt)
-		return FALSE;
+		return false;
 	SetWindowTheme(m_hwndTt, nullptr, L""); //To prevent Windows from changing theme of Balloon window.
 
 	m_stToolInfo.cbSize = TTTOOLINFOW_V1_SIZE;
 	m_stToolInfo.uFlags = TTF_TRACK;
 	m_stToolInfo.uId = 0x1;
-	::SendMessageW(m_hwndTt, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
+	::SendMessageW(m_hwndTt, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)& m_stToolInfo);
 	::SendMessageW(m_hwndTt, TTM_SETMAXTIPWIDTH, 0, (LPARAM)400); //to allow use of newline \n.
+	::SendMessageW(m_hwndTt, TTM_SETTIPTEXTCOLOR, (WPARAM)m_stColor.clrTooltipText, 0);
+	::SendMessageW(m_hwndTt, TTM_SETTIPBKCOLOR, (WPARAM)m_stColor.clrTooltipBk, 0);
 
+	m_dwGridWidth = lcs.dwListGridWidth;
 	m_stNMII.hdr.code = LISTEX_MSG_MENUSELECTED;
 	m_stNMII.hdr.idFrom = GetDlgCtrlID();
 	m_stNMII.hdr.hwndFrom = m_hWnd;
 
-	NONCLIENTMETRICSW ncm { };
-	ncm.cbSize = sizeof(NONCLIENTMETRICSW);
-	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-	ncm.lfMessageFont.lfHeight = 18; //For some weird reason above func returns this value as MAX_LONG.
-	LOGFONTW lf = ncm.lfMessageFont;
-
-	if (pListExInfo)
+	LOGFONTW lf { };
+	if (lcs.pListLogFont)
+		lf = *lcs.pListLogFont;
+	else
 	{
-		m_clrText = pListExInfo->clrListText;
-		m_clrBkRow1 = pListExInfo->clrListBkRow1;
-		m_clrBkRow2 = pListExInfo->clrListBkRow2;
-		m_clrTextSelected = pListExInfo->clrListTextSelected;
-		m_clrBkSelected = pListExInfo->clrListBkSelected;
-		m_clrTooltipText = pListExInfo->clrTooltipText;
-		::SendMessageW(m_hwndTt, TTM_SETTIPTEXTCOLOR, (WPARAM)m_clrTooltipText, 0);
-		m_clrTooltipBk = pListExInfo->clrTooltipBk;
-		::SendMessageW(m_hwndTt, TTM_SETTIPBKCOLOR, (WPARAM)m_clrTooltipBk, 0);
-		m_clrTextCellTt = pListExInfo->clrListTextCellTt;
-		m_clrBkCellTt = pListExInfo->clrListBkCellTt;
-		m_clrGrid = pListExInfo->clrListGrid;
-		m_dwGridWidth = pListExInfo->dwListGridWidth;
-
-		if (pListExInfo->pListLogFont)
-			lf = *pListExInfo->pListLogFont;
-
-		SetHeaderColor(pListExInfo->clrHeaderText, pListExInfo->clrHeaderBk);
-		SetHeaderHeight(pListExInfo->dwHeaderHeight);
-		SetHeaderFont(pListExInfo->pHeaderLogFont);
+		NONCLIENTMETRICSW ncm { };
+		ncm.cbSize = sizeof(NONCLIENTMETRICSW);
+		SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+		ncm.lfMessageFont.lfHeight = 18; //For some weird reason above func returns this value as MAX_LONG.
+		lf = ncm.lfMessageFont;
 	}
 
+	GetHeaderCtrl().SetColor(m_stColor.clrHeaderText, m_stColor.clrHeaderBk);
+	SetHeaderHeight(lcs.dwHeaderHeight);
+	SetHeaderFont(lcs.pHeaderLogFont);
+
 	m_fontList.CreateFontIndirectW(&lf);
-	m_penGrid.CreatePen(PS_SOLID, m_dwGridWidth, m_clrGrid);
+	m_penGrid.CreatePen(PS_SOLID, m_dwGridWidth, m_stColor.clrListGrid);
 	m_fCreated = true;
 	Update(0);
 
-	return TRUE;
+	return true;
+}
+
+void CListEx::CreateDialogCtrl()
+{
+	LISTEXCREATESTRUCT lcs;
+	lcs.fDialogCtrl = true;
+	Create(lcs);
 }
 
 bool CListEx::IsCreated()
@@ -227,7 +119,14 @@ bool CListEx::IsCreated()
 	return m_fCreated;
 }
 
-void CListEx::SetFont(const LOGFONTW* pLogFontNew)
+void CListEx::SetColor(const LISTEXCOLORSTRUCT & lcs)
+{
+	m_stColor = lcs;
+	GetHeaderCtrl().SetColor(m_stColor.clrHeaderText, m_stColor.clrHeaderBk);
+	RedrawWindow();
+}
+
+void CListEx::SetFont(const LOGFONTW * pLogFontNew)
 {
 	if (!pLogFontNew)
 		return;
@@ -243,7 +142,7 @@ void CListEx::SetFont(const LOGFONTW* pLogFontNew)
 	wp.cx = rc.Width();
 	wp.cy = rc.Height();
 	wp.flags = SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER;
-	SendMessageW(WM_WINDOWPOSCHANGED, 0, (LPARAM)&wp);
+	SendMessageW(WM_WINDOWPOSCHANGED, 0, (LPARAM)& wp);
 
 	Update(0);
 }
@@ -268,7 +167,7 @@ void CListEx::SetFontSize(UINT uiSize)
 	wp.cx = rc.Width();
 	wp.cy = rc.Height();
 	wp.flags = SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER;
-	SendMessageW(WM_WINDOWPOSCHANGED, 0, (LPARAM)&wp);
+	SendMessageW(WM_WINDOWPOSCHANGED, 0, (LPARAM)& wp);
 
 	Update(0);
 }
@@ -281,16 +180,16 @@ UINT CListEx::GetFontSize()
 	return lf.lfHeight;
 }
 
-void CListEx::SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTooltip, const std::wstring& wstrCaption)
+void CListEx::SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption)
 {
 	auto it = m_umapCellTt.find(iItem);
 
 	//If there is no tooltip for such item/subitem we just set it.
-	if (it == m_umapCellTt.end() && (!wstrTooltip.empty() || !wstrCaption.empty()))
+	if (it == m_umapCellTt.end() && (pwszTooltip || pwszCaption))
 	{
 		//Initializing inner map.
 		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner {
-			{ iSubitem, { wstrTooltip, wstrCaption } } };
+			{ iSubitem, { pwszTooltip, pwszCaption } } };
 		m_umapCellTt.insert({ iItem, std::move(umapInner) });
 	}
 	else
@@ -300,17 +199,17 @@ void CListEx::SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTo
 		//If there is Item's tooltip but no Subitem's tooltip
 		//inserting new Subitem into inner map.
 		if (itInner == it->second.end())
-			it->second.insert({ iSubitem, { wstrTooltip, wstrCaption } });
+			it->second.insert({ iSubitem, { pwszTooltip, pwszCaption } });
 		else //If there is already exist this Item-Subitem's tooltip:
-			 //change or erase it, depending on wstrTooltip emptiness.
-			if (!wstrTooltip.empty())
-				itInner->second = { wstrTooltip, wstrCaption };
+			 //change or erase it, depending on pwszTooltip emptiness.
+			if (pwszTooltip)
+				itInner->second = { pwszTooltip, pwszCaption };
 			else
 				it->second.erase(itInner);
 	}
 }
 
-void CListEx::SetCellMenu(int iItem, int iSubitem, CMenu* pMenu)
+void CListEx::SetCellMenu(int iItem, int iSubitem, CMenu * pMenu)
 {
 	auto it = m_umapCellMenu.find(iItem);
 
@@ -333,7 +232,7 @@ void CListEx::SetCellMenu(int iItem, int iSubitem, CMenu* pMenu)
 	}
 }
 
-void CListEx::SetListMenu(CMenu* pMenu)
+void CListEx::SetListMenu(CMenu * pMenu)
 {
 	m_pListMenu = pMenu;
 }
@@ -375,23 +274,6 @@ DWORD_PTR CListEx::GetCellData(int iItem, int iSubitem)
 	return 0;
 }
 
-void CListEx::SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk, COLORREF clrTextCellTt, COLORREF clrBkCellTt)
-{
-	m_clrTooltipText = clrTooltipText;
-	m_clrTooltipBk = clrTooltipBk;
-	m_clrTextCellTt = clrTextCellTt;
-	m_clrBkCellTt = clrBkCellTt;
-	::SendMessage(m_hwndTt, TTM_SETTIPTEXTCOLOR, (WPARAM)m_clrTooltipText, 0);
-	::SendMessage(m_hwndTt, TTM_SETTIPBKCOLOR, (WPARAM)m_clrTooltipBk, 0);
-
-	RedrawWindow();
-}
-
-void CListEx::SetHeaderColor(COLORREF clrHdrText, COLORREF clrHdrBk)
-{
-	GetHeaderCtrl().SetColor(clrHdrText, clrHdrBk);
-}
-
 void CListEx::SetHeaderHeight(DWORD dwHeight)
 {
 	GetHeaderCtrl().SetHeight(dwHeight);
@@ -399,7 +281,7 @@ void CListEx::SetHeaderHeight(DWORD dwHeight)
 	GetHeaderCtrl().RedrawWindow();
 }
 
-void CListEx::SetHeaderFont(const LOGFONT* pLogFontNew)
+void CListEx::SetHeaderFont(const LOGFONT * pLogFontNew)
 {
 	GetHeaderCtrl().SetFont(pLogFontNew);
 	Update(0);
@@ -413,9 +295,14 @@ void CListEx::SetHeaderColumnColor(DWORD nColumn, COLORREF clr)
 	GetHeaderCtrl().RedrawWindow();
 }
 
+void CListEx::Destroy()
+{
+	delete this;
+}
+
 void CListEx::InitHeader()
 {
-	m_stListHeader.SubclassDlgItem(0, this);
+	GetHeaderCtrl().SubclassDlgItem(0, this);
 }
 
 void CListEx::MeasureItem(LPMEASUREITEMSTRUCT lpMIS)
@@ -434,10 +321,10 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	if (pDIS->itemID == -1)
 		return;
 
-	CDC* pDC = CDC::FromHandle(pDIS->hDC);
+	CDC * pDC = CDC::FromHandle(pDIS->hDC);
 	pDC->SelectObject(&m_penGrid);
 	pDC->SelectObject(&m_fontList);
-	COLORREF clrBkCurrRow = (pDIS->itemID % 2) ? m_clrBkRow2 : m_clrBkRow1;
+	COLORREF clrBkCurrRow = (pDIS->itemID % 2) ? m_stColor.clrListBkRow2 : m_stColor.clrListBkRow1;
 
 	switch (pDIS->itemAction)
 	{
@@ -446,24 +333,24 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	{
 		COLORREF clrText, clrBk;
 		CRect rc;
-		GetItemRect(pDIS->itemID, &rc, LVIR_LABEL);
+		GetItemRect(pDIS->itemID, rc, LVIR_BOUNDS);
 
 		if (pDIS->itemState & ODS_SELECTED)
 		{
 			pDIS->rcItem.left = rc.left;
-			clrText = m_clrTextSelected;
-			clrBk = m_clrBkSelected;
+			clrText = m_stColor.clrListTextSelected;
+			clrBk = m_stColor.clrListBkSelected;
 		}
 		else
 		{
 			if (HasTooltip(pDIS->itemID, 0))
 			{
-				clrText = m_clrTextCellTt;
-				clrBk = m_clrBkCellTt;
+				clrText = m_stColor.clrListTextCellTt;
+				clrBk = m_stColor.clrListBkCellTt;
 			}
 			else
 			{
-				clrText = m_clrText;
+				clrText = m_stColor.clrListText;
 				clrBk = clrBkCurrRow;
 			}
 		}
@@ -471,7 +358,7 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 		pDC->FillSolidRect(&pDIS->rcItem, clrBk);
 
 		CString strItem = GetItemText(pDIS->itemID, 0);
-		rc.left += 3; //Drawing text +-3 px from rect bounds
+		rc.left += 3; //Drawing text +-3 px from rect bounds.
 		ExtTextOutW(pDC->m_hDC, rc.left, rc.top, ETO_CLIPPED, rc, strItem, strItem.GetLength(), nullptr);
 		rc.left -= 3;
 
@@ -493,19 +380,19 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 			//and has tooltip or not.
 			if (pDIS->itemState & ODS_SELECTED)
 			{
-				clrText = m_clrTextSelected;
-				clrBk = m_clrBkSelected;
+				clrText = m_stColor.clrListTextSelected;
+				clrBk = m_stColor.clrListBkSelected;
 			}
 			else
 			{
 				if (HasTooltip(pDIS->itemID, i))
 				{
-					clrText = m_clrTextCellTt;
-					clrBk = m_clrBkCellTt;
+					clrText = m_stColor.clrListTextCellTt;
+					clrBk = m_stColor.clrListBkCellTt;
 				}
 				else
 				{
-					clrText = m_clrText;
+					clrText = m_stColor.clrListText;
 					clrBk = clrBkCurrRow;
 				}
 			}
@@ -556,8 +443,8 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint pt)
 		ClientToScreen(&pt);
 		::SendMessage(m_hwndTt, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(pt.x, pt.y));
 		::SendMessage(m_hwndTt, TTM_SETTITLE, (WPARAM)TTI_NONE, (LPARAM)pwstrCaption->data());
-		::SendMessage(m_hwndTt, TTM_UPDATETIPTEXT, 0, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
-		::SendMessage(m_hwndTt, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
+		::SendMessage(m_hwndTt, TTM_UPDATETIPTEXT, 0, (LPARAM)(LPTOOLINFO)& m_stToolInfo);
+		::SendMessage(m_hwndTt, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)(LPTOOLINFO)& m_stToolInfo);
 
 		//Timer to check whether mouse left subitem rect.
 		SetTimer(ID_TIMER_TOOLTIP, 200, 0);
@@ -571,7 +458,7 @@ void CListEx::OnMouseMove(UINT nFlags, CPoint pt)
 		if (m_fTtShown)
 		{
 			m_fTtShown = false;
-			::SendMessage(m_hwndTt, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
+			::SendMessage(m_hwndTt, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)& m_stToolInfo);
 		}
 	}
 }
@@ -610,7 +497,7 @@ void CListEx::OnRButtonDown(UINT nFlags, CPoint pt)
 	CMFCListCtrl::OnRButtonDown(nFlags, pt);
 }
 
-void CListEx::OnContextMenu(CWnd* pWnd, CPoint pt)
+void CListEx::OnContextMenu(CWnd * pWnd, CPoint pt)
 {
 	LVHITTESTINFO hi;
 	ScreenToClient(&pt);
@@ -628,7 +515,7 @@ void CListEx::OnContextMenu(CWnd* pWnd, CPoint pt)
 BOOL CListEx::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	m_stNMII.lParam = LOWORD(wParam); //lParam holds uiMenuItemId.
-	GetParent()->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&m_stNMII);
+	GetParent()->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)& m_stNMII);
 
 	return CMFCListCtrl::OnCommand(wParam, lParam);
 }
@@ -652,7 +539,7 @@ void CListEx::OnTimer(UINT_PTR nIDEvent)
 		else
 		{	//If it left.
 			m_fTtShown = false;
-			::SendMessage(m_hwndTt, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)&m_stToolInfo);
+			::SendMessage(m_hwndTt, TTM_TRACKACTIVATE, (WPARAM)FALSE, (LPARAM)(LPTOOLINFO)& m_stToolInfo);
 			KillTimer(ID_TIMER_TOOLTIP);
 			m_stCurrCell.iItem = hitInfo.iItem;
 			m_stCurrCell.iSubItem = hitInfo.iSubItem;
@@ -662,16 +549,16 @@ void CListEx::OnTimer(UINT_PTR nIDEvent)
 	CMFCListCtrl::OnTimer(nIDEvent);
 }
 
-BOOL CListEx::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+BOOL CListEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 {
 	return CMFCListCtrl::OnSetCursor(pWnd, nHitTest, message);
 }
 
-void CListEx::OnKillFocus(CWnd* pNewWnd)
+void CListEx::OnKillFocus(CWnd * pNewWnd)
 {
 }
 
-BOOL CListEx::OnEraseBkgnd(CDC* pDC)
+BOOL CListEx::OnEraseBkgnd(CDC * pDC)
 {
 	return FALSE;
 }
@@ -689,35 +576,35 @@ void CListEx::OnPaint()
 	CMemDC memDC(dc, rc);
 	CDC& rDC = memDC.GetDC();
 	rDC.GetClipBox(&rc);
-	rDC.FillSolidRect(rc, m_clrBkNWA);
+	rDC.FillSolidRect(rc, m_stColor.clrBkNWA);
 
 	DefWindowProcW(WM_PAINT, (WPARAM)rDC.m_hDC, (LPARAM)0);
 }
 
-void CListEx::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult)
+void CListEx::OnHdnDividerdblclick(NMHDR * pNMHDR, LRESULT * pResult)
 {
 	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	//*pResult = 0;
 }
 
-void CListEx::OnHdnBegintrack(NMHDR *pNMHDR, LRESULT *pResult)
+void CListEx::OnHdnBegintrack(NMHDR * pNMHDR, LRESULT * pResult)
 {
 	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	//*pResult = 0;
 }
 
-void CListEx::OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult)
+void CListEx::OnHdnTrack(NMHDR * pNMHDR, LRESULT * pResult)
 {
 	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	//*pResult = 0;
 }
 
-void CListEx::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CListEx::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar * pScrollBar)
 {
 	CMFCListCtrl::OnVScroll(nSBCode, nPos, pScrollBar);
 }
 
-void CListEx::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CListEx::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar * pScrollBar)
 {
 	GetHeaderCtrl().RedrawWindow();
 
@@ -731,7 +618,7 @@ void CListEx::OnDestroy()
 	::DestroyWindow(m_hwndTt);
 }
 
-bool CListEx::HasTooltip(int iItem, int iSubitem, std::wstring** ppwstrText, std::wstring** ppwstrCaption)
+bool CListEx::HasTooltip(int iItem, int iSubitem, std::wstring * *ppwstrText, std::wstring * *ppwstrCaption)
 {
 	//Can return true/false indicating if subitem has tooltip,
 	//or can return pointers to tooltip text as well, if poiters are not nullptr.
@@ -757,7 +644,7 @@ bool CListEx::HasTooltip(int iItem, int iSubitem, std::wstring** ppwstrText, std
 	return false;
 }
 
-bool CListEx::HasMenu(int iItem, int iSubitem, CMenu** ppMenu)
+bool CListEx::HasMenu(int iItem, int iSubitem, CMenu * *ppMenu)
 {
 	if (iItem < 0 || iSubitem < 0)
 		return false;
@@ -778,7 +665,7 @@ bool CListEx::HasMenu(int iItem, int iSubitem, CMenu** ppMenu)
 		}
 	}
 
-	//If there is no menu for cell, then checking menu for whole list.
+	//If there is no menu for cell, then checking global menu for the whole list.
 	if (m_pListMenu)
 	{
 		*ppMenu = m_pListMenu;

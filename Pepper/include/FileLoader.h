@@ -48,10 +48,10 @@ private:
 		HWND		hWnd { };
 		ULONGLONG	ullStartOffsetMapped { };
 		ULONGLONG	ullEndOffsetMapped { };
-		ULONGLONG	ullOffsetDelta { };
+		ULONGLONG	ullOffsetDelta { };		//File (piece) is shown starting from this offset, used in ShowFilePiece.
 		DWORD		dwDeltaFileOffsetMapped { };
 		LPVOID		lpData { };
-		bool		fShowPiece { false };
+		bool		fShowPiece { false };	//Whether used in ShowOffset (false) or in ShowFilePiece (true).
 	};
 	IHexCtrlPtr m_stHex { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };

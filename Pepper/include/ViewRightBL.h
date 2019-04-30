@@ -49,18 +49,18 @@ protected:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	DECLARE_MESSAGE_MAP()
 private:
-	libpe_ptr m_pLibpe { };
+	libpe_ptr m_pLibpe;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CFileLoader* m_pFileLoader { };
 	CWnd* m_pActiveWnd { };
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };
-	LISTEXINFO m_stListInfo;
-	CListEx m_listExportFuncs;
-	CListEx m_listImportEntry;
-	CListEx m_listDelayImportEntry;
-	CListEx m_listRelocsEntry;
+	LISTEXCREATESTRUCT m_stlcs;
+	IListExPtr m_listExportFuncs { CreateListEx() };
+	IListExPtr m_listImportEntry { CreateListEx() };
+	IListExPtr m_listDelayImportEntry { CreateListEx() };
+	IListExPtr m_listRelocsEntry { CreateListEx() };
 	CTreeEx m_treeResBottom;
 	DWORD m_dwFileInfo { };
 	CImageList m_imglTreeRes;

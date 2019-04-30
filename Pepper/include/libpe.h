@@ -282,8 +282,8 @@ namespace libpe {
 		virtual HRESULT GetBoundImport(PCLIBPE_BOUNDIMPORT_VEC&)noexcept = 0;
 		virtual HRESULT GetDelayImport(PCLIBPE_DELAYIMPORT_VEC&)noexcept = 0;
 		virtual HRESULT GetCOMDescriptor(PCLIBPE_COMDESCRIPTOR&)noexcept = 0;
+		virtual HRESULT Destroy() = 0;
 	};
-	using libpe_ptr = std::shared_ptr<Ilibpe>;
 
 	/*************************************************
 	* Return errors.								 *
@@ -377,5 +377,28 @@ namespace libpe {
 #pragma comment(lib, LIBNAME_PROPER("libpe"))
 #endif
 
-	extern "C" HRESULT ILIBPEAPI Createlibpe(libpe_ptr& plibpe);
+	/********************************************************************************************
+	* Factory function Createlibpe returns IlibpeUnPtr - unique_ptr with custom deleter.		*
+	* In client code you should use libpe_ptr type which is an alias to either IlibpeUnPtr -	*
+	* a unique_ptr, or IlibpeShPtr - a shared_ptr. Uncomment what serves best for you, and		*
+	* comment out the other.																	*
+	* If you, for some reason, need raw pointer, you can directly call CreateRawlibpe			*
+	* function, which returns Ilibpe interface pointer, but in this case you will need to		*
+	* call Ilibpe::Destroy method afterwards - to manually delete Ilibpe object.				*
+	********************************************************************************************/
+	extern "C" HRESULT ILIBPEAPI CreateRawlibpe(Ilibpe*&);
+	using IlibpeUnPtr = std::unique_ptr<Ilibpe, void(*)(Ilibpe*)>;
+	using IlibpeShPtr = std::shared_ptr<Ilibpe>;
+
+	inline IlibpeUnPtr Createlibpe()
+	{
+		Ilibpe* ptr { };
+		if (CreateRawlibpe(ptr) == S_OK)
+			return IlibpeUnPtr(ptr, [](Ilibpe * p) { p->Destroy(); });
+		else
+			return { nullptr, nullptr };
+	};
+
+	//using libpe_ptr = IlibpeUnPtr;
+	using libpe_ptr = IlibpeShPtr;
 }

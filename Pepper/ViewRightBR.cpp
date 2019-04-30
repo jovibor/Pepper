@@ -40,19 +40,19 @@ void CViewRightBR::OnInitialUpdate()
 	}
 	m_stEditResStrings.SetFont(&m_fontEditRes);
 
-	m_stListInfo.clrTooltipText = RGB(255, 255, 255);
-	m_stListInfo.clrTooltipBk = RGB(0, 132, 132);
-	m_stListInfo.clrHeaderText = RGB(255, 255, 255);
-	m_stListInfo.clrHeaderBk = RGB(0, 132, 132);
-	m_stListInfo.dwHeaderHeight = 35;
+	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
+	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
+	m_stlcs.stColor.clrHeaderText = RGB(255, 255, 255);
+	m_stlcs.stColor.clrHeaderBk = RGB(0, 132, 132);
+	m_stlcs.dwHeaderHeight = 35;
 
 	m_lf.lfHeight = 16;
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
-	m_stListInfo.pListLogFont = &m_lf;
+	m_stlcs.pListLogFont = &m_lf;
 	m_hdrlf.lfHeight = 17;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
-	m_stListInfo.pHeaderLogFont = &m_hdrlf;
+	m_stlcs.pHeaderLogFont = &m_hdrlf;
 
 	CreateListTLSCallbacks();
 }
@@ -75,8 +75,8 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	switch (LOWORD(lHint))
 	{
 	case IDC_LIST_TLS:
-		m_stListTLSCallbacks.SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &m_stListTLSCallbacks;
+		m_stListTLSCallbacks->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_pActiveWnd = &*m_stListTLSCallbacks;
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 2, 0);
 		break;
@@ -641,9 +641,11 @@ int CViewRightBR::CreateListTLSCallbacks()
 	PCLIBPE_TLS pTLS;
 	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
-
-	m_stListTLSCallbacks.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this, IDC_LIST_TLS_CALLBACKS, &m_stListInfo);
-	m_stListTLSCallbacks.InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
+	
+	m_stlcs.dwStyle = 0;
+	m_stlcs.nID = IDC_LIST_TLS_CALLBACKS;
+	m_stListTLSCallbacks->Create(m_stlcs);
+	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
 
 	int listindex { };
 	WCHAR wstr[9];
@@ -651,7 +653,7 @@ int CViewRightBR::CreateListTLSCallbacks()
 	for (auto& iterCallbacks : pTLS->vecTLSCallbacks)
 	{
 		swprintf_s(wstr, 9, L"%08X", iterCallbacks);
-		m_stListTLSCallbacks.InsertItem(listindex, wstr);
+		m_stListTLSCallbacks->InsertItem(listindex, wstr);
 		listindex++;
 	}
 

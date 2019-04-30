@@ -22,11 +22,11 @@ using namespace HEXCTRL;
 
 namespace HEXCTRL {
 	/********************************************
-	* CreateHexCtrl function implementation.	*
+	* CreateRawHexCtrl function implementation.	*
 	********************************************/
-	IHexCtrlPtr CreateHexCtrl()
+	IHexCtrl* CreateRawHexCtrl()
 	{
-		return std::make_shared<CHexCtrl>();
+		return new CHexCtrl();
 	};
 
 	/********************************************
@@ -162,8 +162,7 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT & hcs)
 
 	m_fFloat = hcs.fFloat;
 	m_pwndMsg = hcs.pwndParent;
-	if (hcs.pstColor)
-		m_stColor = *hcs.pstColor;
+	m_stColor = hcs.stColor;
 
 	m_stBrushBkSelected.CreateSolidBrush(m_stColor.clrBkSelected);
 
@@ -388,6 +387,11 @@ void CHexCtrl::SetCapacity(DWORD dwCapacity)
 	m_dwCapacity = dwCapacity;
 	m_dwCapacityBlockSize = m_dwCapacity / 2;
 	RecalcAll();
+}
+
+void CHexCtrl::Destroy()
+{
+	delete this;
 }
 
 bool CHexCtrl::RegisterWndClass()
@@ -1399,7 +1403,7 @@ ULONGLONG CHexCtrl::GetTopLine()
 	return m_pstScrollV->GetScrollPos() / m_sizeLetter.cy;
 }
 
-ULONGLONG CHexCtrl::HitTest(const POINT* pPoint)
+ULONGLONG CHexCtrl::HitTest(const POINT * pPoint)
 {
 	int iY = pPoint->y;
 	int iX = pPoint->x + (int)m_pstScrollH->GetScrollPos(); //To compensate horizontal scroll.

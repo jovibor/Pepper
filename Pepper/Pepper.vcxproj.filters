@@ -40,9 +40,6 @@
     <ClCompile Include="FileLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ListEx\ListEx.cpp">
-      <Filter>ListEx</Filter>
-    </ClCompile>
     <ClCompile Include="HexCtrl\src\CHexCtrl.cpp">
       <Filter>HexCtrl\src</Filter>
     </ClCompile>
@@ -57,6 +54,12 @@
     </ClCompile>
     <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgSearch.cpp">
       <Filter>HexCtrl\src\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="ListEx\src\CListEx.cpp">
+      <Filter>ListEx\src</Filter>
+    </ClCompile>
+    <ClCompile Include="ListEx\src\CListExHdr.cpp">
+      <Filter>ListEx\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -105,9 +108,6 @@
     <ClInclude Include="include\FileLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ListEx\ListEx.h">
-      <Filter>ListEx</Filter>
-    </ClInclude>
     <ClInclude Include="include\libpe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -131,6 +131,15 @@
     </ClInclude>
     <ClInclude Include="HexCtrl\res\HexCtrlRes.h">
       <Filter>HexCtrl\res</Filter>
+    </ClInclude>
+    <ClInclude Include="ListEx\ListEx.h">
+      <Filter>ListEx</Filter>
+    </ClInclude>
+    <ClInclude Include="ListEx\src\CListEx.h">
+      <Filter>ListEx\src</Filter>
+    </ClInclude>
+    <ClInclude Include="ListEx\src\CListExHdr.h">
+      <Filter>ListEx\src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -197,6 +206,9 @@
     </Filter>
     <Filter Include="HexCtrl\src\Dialogs">
       <UniqueIdentifier>{084fde47-fb1d-46b7-abca-69fb2b57a319}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ListEx\src">
+      <UniqueIdentifier>{800c295d-05bb-4244-b815-c17969a20963}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

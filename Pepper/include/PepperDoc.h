@@ -14,14 +14,14 @@ using namespace libpe;
 
 class CPepperDoc : public CDocument
 {
-public:	
+public:
 	DECLARE_DYNCREATE(CPepperDoc)
-	libpe_ptr m_pLibpe { };
+	libpe_ptr m_pLibpe {};
 	CFileLoader m_stFileLoader;
 private:
 	CPepperDoc() {}
 	virtual ~CPepperDoc() {}
-	BOOL OnOpenDocument(LPCTSTR lpszPathName) override;	
+	BOOL OnOpenDocument(LPCTSTR lpszPathName) override;
 	virtual void OnCloseDocument();
 	DECLARE_MESSAGE_MAP()
 };

@@ -19,9 +19,9 @@ class CViewRightBR : public CScrollView
 {
 	DECLARE_DYNCREATE(CViewRightBR)
 private:
-/****************************************************************
-* Struct for RT_GROUP_ICON/CURSOR.								*
-****************************************************************/
+	/****************************************************************
+	* Struct for RT_GROUP_ICON/CURSOR.								*
+	****************************************************************/
 #pragma pack( push, 2 )
 	struct GRPICONDIRENTRY
 	{
@@ -77,11 +77,11 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CWnd* m_pActiveWnd { };
-	libpe_ptr m_pLibpe { };
+	libpe_ptr m_pLibpe;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
-	LISTEXINFO m_stListInfo;
-	CListEx m_stListTLSCallbacks;
+	LISTEXCREATESTRUCT m_stlcs;
+	IListExPtr m_stListTLSCallbacks { CreateListEx() };
 	LOGFONT m_lf { }, m_hdrlf { };
 	CImageList m_stImgRes;
 	bool m_fDrawRes { false };

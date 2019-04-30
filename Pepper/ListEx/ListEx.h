@@ -1,36 +1,26 @@
-/****************************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
-* This software is available under the "MIT License modified with The Commons Clause".				*
-* https://github.com/jovibor/Pepper/blob/master/LICENSE												*
-* Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
-* libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
-* https://github.com/jovibor/libpe																	*
-****************************************************************************************************/
-/****************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/				*
-* This is an extended and featured version of CMFCListCtrl class.			*
-* The main difference is in CListEx::Create method, which takes one			*
-* additional arg - pointer to LISTEXINFO structure, which fields are		*
-* described below.															*
-* Also, this class has set of additional public methods to help customize	*
-* List control in many different aspects.									*
-****************************************************************************/
+/********************************************************************************
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/					*
+* Github repository URL: https://github.com/jovibor/ListEx						*
+* This software is available under the "MIT License".							*
+* This is an extended and featured version of CMFCListCtrl class.				*
+* CListEx - list control class with the ability to set tooltips on arbitrary	*
+* cells, and also with a lots of other stuff to customize your control in many	*
+* different aspects. For more info see official documentation on github.		*
+********************************************************************************/
 #pragma once
 #include <afxwin.h>
-#include <unordered_map>
+#include <memory>
 
 namespace LISTEX {
 	/********************************************************************************************
-	* Helper create struct for CListEx::Create method.															*
+	* LISTEXCOLORSTRUCT - All ListEx colors.													*
 	********************************************************************************************/
-	struct LISTEXINFO {
-		const LOGFONT* pListLogFont { };									//List font.
-		const LOGFONT* pHeaderLogFont { };									//List header font.
+	struct LISTEXCOLORSTRUCT
+	{
 		COLORREF clrListText { GetSysColor(COLOR_WINDOWTEXT) };				//List text color.
 		COLORREF clrListBkRow1 { GetSysColor(COLOR_WINDOW) };				//List Bk color of the odd rows.
 		COLORREF clrListBkRow2 { GetSysColor(COLOR_WINDOW) };				//List Bk color of the even rows.
 		COLORREF clrListGrid { RGB(220, 220, 220) };						//List grid color.
-		DWORD dwListGridWidth { 1 };										//Width of the list grid.
 		COLORREF clrListTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) };	//Selected item text color.
 		COLORREF clrListBkSelected { GetSysColor(COLOR_HIGHLIGHT) };		//Selected item bk color.
 		COLORREF clrTooltipText { GetSysColor(COLOR_INFOTEXT) };			//Tooltip window text color.
@@ -39,133 +29,74 @@ namespace LISTEX {
 		COLORREF clrListBkCellTt { RGB(170, 170, 230) };					//Bk color of a cell that has tooltip.
 		COLORREF clrHeaderText { GetSysColor(COLOR_WINDOWTEXT) };			//List header text color.
 		COLORREF clrHeaderBk { GetSysColor(COLOR_WINDOW) };					//List header bk color.
-		DWORD dwHeaderHeight { 20 };										//List header height.
+		COLORREF clrBkNWA { GetSysColor(COLOR_WINDOW) };					//Bk of non working area.
 	};
-	using PLISTEXINFO = LISTEXINFO * ;
 
-	/********************************************
-	* CListExHdr class definition.				*
-	********************************************/
-	class CListExHdr : public CMFCHeaderCtrl
-	{
-	public:	
-		CListExHdr();
-		virtual ~CListExHdr() {}
-		void SetHeight(DWORD dwHeight);
-		void SetFont(const LOGFONTW* pLogFontNew);
-		void SetColor(COLORREF clrText, COLORREF clrBk);
-		void SetColumnColor(DWORD dwColumn, COLORREF clr);
-	protected:
-		afx_msg void OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted) override;
-		afx_msg LRESULT OnLayout(WPARAM wParam, LPARAM lParam);
-		DECLARE_MESSAGE_MAP()
-	private:
-		CFont m_fontHdr;
-		COLORREF m_clrBkNWA { GetSysColor(COLOR_WINDOW) }; //Bk of non working area.
-		COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
-		COLORREF m_clrBk { GetSysColor(COLOR_WINDOW) };
-		HDITEMW m_hdItem { }; //For drawing.
-		WCHAR m_wstrHeaderText[MAX_PATH] { };
-		DWORD m_dwHeaderHeight { 19 }; //Standard (default) height.
-		std::unordered_map<DWORD, COLORREF> m_umapClrColumn { }; //Color of individual columns.
+	/********************************************************************************************
+	* LISTEXCREATESTRUCT - Main initialization helper struct for CListEx::Create method.		*
+	********************************************************************************************/
+	struct LISTEXCREATESTRUCT {
+		LISTEXCOLORSTRUCT	stColor { };					//All control's colors. If nullptr defaults are used.
+		DWORD				dwStyle { };					//Control's styles. Zero for default.
+		CRect				rect;							//Initial rect.
+		CWnd*				pwndParent { };					//Parent window.
+		UINT				nID { };						//Control Id.
+		const LOGFONT*		pListLogFont { };				//List font.
+		const LOGFONT*		pHeaderLogFont { };				//List header font.
+		DWORD				dwListGridWidth { 1 };			//Width of the list grid.
+		DWORD				dwHeaderHeight { 20 };			//List header height.
+		bool				fDialogCtrl { false };			//If it's a list within dialog.
 	};
 
 	/********************************************
 	* CListEx class definition.					*
 	********************************************/
-	class CListEx : public CMFCListCtrl
+	class IListEx : public CMFCListCtrl
 	{
 	public:
-		DECLARE_DYNAMIC(CListEx)
-		CListEx() {}
-		virtual ~CListEx() {}
-		BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, PLISTEXINFO pListExInfo = nullptr);
-		bool IsCreated();
-		CListExHdr& GetHeaderCtrl() override { return m_stListHeader; }
-		void SetFont(const LOGFONTW* pLogFontNew);
-		void SetFontSize(UINT uiSize);
-		UINT GetFontSize();
-		//To remove tooltip from specific subitem just set it again with empty (L"") string.
-		void SetCellTooltip(int iItem, int iSubitem, const std::wstring& wstrTooltip, const std::wstring& wstrCaption = { });
-		void SetCellMenu(int iItem, int iSubitem, CMenu* pMenu);
-		void SetListMenu(CMenu* pMenu);
-		void SetCellData(int iItem, int iSubitem, DWORD_PTR dwData);
-		DWORD_PTR GetCellData(int iItem, int iSubitem);
-		void SetTooltipColor(COLORREF clrTooltipText, COLORREF clrTooltipBk,
-			COLORREF clrTextCellTt = GetSysColor(COLOR_WINDOWTEXT), //Text color of a cell that has tooltip.
-			COLORREF clrBkCellTt = RGB(170, 170, 230)); //Bk color of a cell that has tooltip.
-		void SetHeaderColor(COLORREF clrHdrText, COLORREF clrHdrBk);
-		void SetHeaderHeight(DWORD dwHeight);
-		void SetHeaderFont(const LOGFONT* pLogFontNew);
-		void SetHeaderColumnColor(DWORD nColumn, COLORREF clr);
-		DECLARE_MESSAGE_MAP()
-	protected:
-		void InitHeader() override;
-		bool HasTooltip(int iItem, int iSubitem, std::wstring** ppwstrText = nullptr, std::wstring** ppwstrCaption = nullptr);
-		bool HasMenu(int iItem, int iSubitem, CMenu** ppMenu = nullptr);
-		void DrawItem(LPDRAWITEMSTRUCT) override;
-		afx_msg void OnPaint();
-		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-		afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
-		afx_msg void OnKillFocus(CWnd* pNewWnd);
-		afx_msg void OnLButtonDown(UINT nFlags, CPoint pt);
-		afx_msg void OnRButtonDown(UINT nFlags, CPoint pt);
-		afx_msg void OnContextMenu(CWnd* pWnd, CPoint pt);
-		virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
-		afx_msg void OnMouseMove(UINT nFlags, CPoint pt);
-		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-		afx_msg void OnTimer(UINT_PTR nIDEvent);
-		afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-		afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-		afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMIS);
-		afx_msg void OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResult);
-		afx_msg void OnHdnBegintrack(NMHDR *pNMHDR, LRESULT *pResult);
-		afx_msg void OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult);
-		afx_msg void OnDestroy();
-	private:
-		bool m_fCreated { false };
-		CListExHdr m_stListHeader;
-		CFont m_fontList;
-		CPen m_penGrid;
-		bool m_fTtShown { false };
-		HWND m_hwndTt { };
-		TOOLINFO m_stToolInfo { };
-		LVHITTESTINFO m_stCurrCell { };
-		COLORREF m_clrBkNWA { GetSysColor(COLOR_WINDOW) }; //Bk of non working area.
-		COLORREF m_clrText { GetSysColor(COLOR_WINDOWTEXT) };
-		COLORREF m_clrBkRow1 { GetSysColor(COLOR_WINDOW) };
-		COLORREF m_clrBkRow2 { GetSysColor(COLOR_WINDOW) };
-		COLORREF m_clrGrid { RGB(220, 220, 220) };
-		DWORD m_dwGridWidth { 1 };
-		COLORREF m_clrTextSelected { GetSysColor(COLOR_HIGHLIGHTTEXT) };
-		COLORREF m_clrBkSelected { GetSysColor(COLOR_HIGHLIGHT) };
-		COLORREF m_clrTooltipText { GetSysColor(COLOR_INFOTEXT) };
-		COLORREF m_clrTooltipBk { GetSysColor(COLOR_INFOBK) };
-		COLORREF m_clrTextCellTt { GetSysColor(COLOR_WINDOWTEXT) };
-		COLORREF m_clrBkCellTt { RGB(170, 170, 230) };
-		CMenu* m_pListMenu { };
-		//Container for List item's tooltips.
-		std::unordered_map<int, std::unordered_map<int, std::tuple<std::wstring/*tip text*/, std::wstring/*caption text*/>>> m_umapCellTt { };
-		std::unordered_map<int, std::unordered_map<int, CMenu*>> m_umapCellMenu { };
-		std::unordered_map<int, std::unordered_map<int, DWORD_PTR>> m_umapCellData { };
-		NMITEMACTIVATE m_stNMII { };
-		const ULONG_PTR ID_TIMER_TOOLTIP { 0x01 };
+		virtual ~IListEx() = default;
+		virtual bool Create(const LISTEXCREATESTRUCT& lcs) = 0;
+		virtual void CreateDialogCtrl() = 0;
+		virtual bool IsCreated() = 0;
+		virtual void SetColor(const LISTEXCOLORSTRUCT& lcs) = 0;
+		virtual void SetFont(const LOGFONTW* pLogFontNew) = 0;
+		virtual void SetFontSize(UINT uiSize) = 0;
+		virtual UINT GetFontSize() = 0;
+		virtual void SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption = nullptr) = 0;
+		virtual void SetCellMenu(int iItem, int iSubitem, CMenu* pMenu) = 0;
+		virtual void SetListMenu(CMenu* pMenu) = 0;
+		virtual void SetCellData(int iItem, int iSubitem, DWORD_PTR dwData) = 0;
+		virtual DWORD_PTR GetCellData(int iItem, int iSubitem) = 0;
+		virtual void SetHeaderHeight(DWORD dwHeight) = 0;
+		virtual void SetHeaderFont(const LOGFONT* pLogFontNew) = 0;
+		virtual void SetHeaderColumnColor(DWORD nColumn, COLORREF clr) = 0;
+		virtual void Destroy() = 0;
 	};
+
+	/********************************************************************************************
+	* Factory function CreateListEx returns IListExUnPtr - unique_ptr with custom deleter .		*
+	* In client code you should use IListExPtr type which is an alias to either IListExUnPtr	*
+	* - a unique_ptr, or IListExShPtr - a shared_ptr. Uncomment what serves best for you,		*
+	* and comment out the other.																*
+	* If you, for some reason, need raw pointer, you can directly call CreateRawListEx			*
+	* function, which returns IListEx interface pointer, but in this case you will need to		*
+	* call IListEx::Destroy method	afterwards - to manually delete ListEx object.				*
+	********************************************************************************************/
+	IListEx* CreateRawListEx();
+	using IListExUnPtr = std::unique_ptr<IListEx, void(*)(IListEx*)>;
+	using IListExShPtr = std::shared_ptr<IListEx>;
+
+	inline IListExUnPtr CreateListEx()
+	{
+		return IListExUnPtr(CreateRawListEx(), [](IListEx * p) { p->Destroy(); });
+	};
+
+	using IListExPtr = IListExUnPtr;
+	//using IListExPtr = IListExShPtr;
 
 	/****************************************************************************
 	* WM_NOTIFY codes (NMHDR.code values)										*
 	****************************************************************************/
 
 	constexpr auto LISTEX_MSG_MENUSELECTED = 0x00001000;
-
-	/*******************Setting the manifest for ComCtl32.dll version 6.***********************/
-#ifdef _UNICODE
-#if defined _M_IX86
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#elif defined _M_X64
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#else
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#endif
-#endif
 }
