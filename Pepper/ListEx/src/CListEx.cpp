@@ -182,6 +182,10 @@ UINT CListEx::GetFontSize()
 
 void CListEx::SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption)
 {
+	//Checking if nullptr, and assign empty string in this case.
+	const wchar_t* pCaption = pwszCaption ? pwszCaption : L"";
+	const wchar_t* pTooltip = pwszTooltip ? pwszTooltip : L"";
+
 	auto it = m_umapCellTt.find(iItem);
 
 	//If there is no tooltip for such item/subitem we just set it.
@@ -189,7 +193,7 @@ void CListEx::SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip
 	{
 		//Initializing inner map.
 		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner {
-			{ iSubitem, { pwszTooltip, pwszCaption } } };
+			{ iSubitem, { pTooltip, pCaption } } };
 		m_umapCellTt.insert({ iItem, std::move(umapInner) });
 	}
 	else
@@ -199,11 +203,11 @@ void CListEx::SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip
 		//If there is Item's tooltip but no Subitem's tooltip
 		//inserting new Subitem into inner map.
 		if (itInner == it->second.end())
-			it->second.insert({ iSubitem, { pwszTooltip, pwszCaption } });
+			it->second.insert({ iSubitem, { pTooltip, pCaption } });
 		else //If there is already exist this Item-Subitem's tooltip:
 			 //change or erase it, depending on pwszTooltip emptiness.
 			if (pwszTooltip)
-				itInner->second = { pwszTooltip, pwszCaption };
+				itInner->second = { pwszTooltip, pCaption };
 			else
 				it->second.erase(itInner);
 	}

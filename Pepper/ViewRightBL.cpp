@@ -187,10 +187,11 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 					{
 						auto& data = lvl3vec[idlvl3].vecResRawDataLvL3;
 						//Resource data and resource type to show in CViewRightBR.
-						m_stResHelper.IdResType = rootvec[idlvlRoot].stResDirEntryRoot.Id;
-						m_stResHelper.IdResName = lvl2vec[idlvl2].stResDirEntryLvL2.Id;
-						m_stResHelper.pData = (std::vector<std::byte>*) & data;
-						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&m_stResHelper));
+						RESHELPER stResHelper { };
+						stResHelper.IdResType = rootvec[idlvlRoot].stResDirEntryRoot.Id;
+						stResHelper.IdResName = lvl2vec[idlvl2].stResDirEntryLvL2.Id;
+						stResHelper.pData = (std::vector<std::byte>*) & data;
+						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&stResHelper));
 					}
 				}
 			}

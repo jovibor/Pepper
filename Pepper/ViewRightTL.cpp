@@ -79,8 +79,8 @@ void CViewRightTL::OnInitialUpdate()
 	m_stlcs.pHeaderLogFont = &m_hdrlf;
 
 	m_menuList.CreatePopupMenu();
-	m_menuList.AppendMenuW(MF_STRING, IDM_LIST_GOTODESCOFFSET, L"Go to descriptor offset...");
-	m_menuList.AppendMenuW(MF_STRING, IDM_LIST_GOTODATAOFFSET, L"Go to data offset...");
+	m_menuList.AppendMenuW(MF_STRING, IDM_LIST_GOTODESCOFFSET, L"Go to descriptor offset");
+	m_menuList.AppendMenuW(MF_STRING, IDM_LIST_GOTODATAOFFSET, L"Go to data offset");
 
 	CreateListDOSHeader();
 	CreateListRichHeader();
@@ -423,6 +423,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 		return TRUE;
 
 	bool fx32 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32);
+	bool fx64 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64);
 	DWORD dwOffset, dwSize = 0;
 	switch (pNMI->hdr.idFrom)
 	{
@@ -472,7 +473,6 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 				dwSize = sizeof(IMAGE_IMPORT_DESCRIPTOR);
 				break;
 			case IDM_LIST_GOTODATAOFFSET:
-				dwSize = 1;
 				switch (pNMI->iSubItem)
 				{
 				case 1: //Str dll name
@@ -484,7 +484,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.OriginalFirstThunk, dwOffset);
 					if (fx32)
 						dwSize = sizeof(IMAGE_THUNK_DATA32);
-					else
+					else if (fx64)
 						dwSize = sizeof(IMAGE_THUNK_DATA64);
 					break;
 				case 3: //TimeDateStamp
@@ -496,7 +496,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.FirstThunk, dwOffset);
 					if (fx32)
 						dwSize = sizeof(IMAGE_THUNK_DATA32);
-					else
+					else if (fx64)
 						dwSize = sizeof(IMAGE_THUNK_DATA64);
 					break;
 				}
@@ -519,12 +519,68 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case IDC_LIST_TLS:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
+			PCLIBPE_TLS pTLSDir;
+			if (m_pLibpe->GetTLS(pTLSDir) != S_OK)
+				return -1;
+
 			switch (pNMI->lParam)
 			{
 			case IDM_LIST_GOTODESCOFFSET:
+				dwOffset = pTLSDir->dwOffsetTLS;
+				if (fx32)
+					dwSize = sizeof(IMAGE_TLS_DIRECTORY32);
+				else if (fx64)
+					dwSize = sizeof(IMAGE_TLS_DIRECTORY64);
 				break;
 			case IDM_LIST_GOTODATAOFFSET:
-				break;
+			{
+				PCLIBPE_OPTHEADER_VAR pOpt;
+				if (m_pLibpe->GetOptionalHeader(pOpt) != S_OK)
+					return -1;
+				dwSize = 1;
+
+				if (fx32)
+				{
+					const IMAGE_TLS_DIRECTORY32* pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
+					const DWORD dwImageBase = pOpt->stOptHdr32.ImageBase;
+
+					switch (pNMI->iItem)
+					{
+					case 0: //StartAddressOfRawData
+						m_pLibpe->GetOffsetFromRVA(pTLSDir32->StartAddressOfRawData - dwImageBase, dwOffset);
+						break;
+					case 2: //AddressOfIndex
+						m_pLibpe->GetOffsetFromRVA(pTLSDir32->AddressOfIndex - dwImageBase, dwOffset);
+						break;
+					case 3: //AddressOfCallBacks
+						m_pLibpe->GetOffsetFromRVA(pTLSDir32->AddressOfCallBacks - dwImageBase, dwOffset);
+						break;
+					default:
+						dwSize = 0; //To not process other fields.
+					}
+				}
+				else if (fx64)
+				{
+					const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
+					const ULONGLONG dwImageBase = pOpt->stOptHdr64.ImageBase;
+
+					switch (pNMI->iItem)
+					{
+					case 0: //StartAddressOfRawData
+						m_pLibpe->GetOffsetFromRVA(pTLSDir64->StartAddressOfRawData - dwImageBase, dwOffset);
+						break;
+					case 2: //AddressOfIndex
+						m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfIndex - dwImageBase, dwOffset);
+						break;
+					case 3: //AddressOfCallBacks
+						m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfCallBacks - dwImageBase, dwOffset);
+						break;
+					default:
+						dwSize = 0; //To not process other fields.
+					}
+				}
+			}
+			break;
 			}
 		}
 		break;
@@ -631,6 +687,8 @@ int CViewRightTL::CreateListDOSHeader()
 		auto& ref = g_mapDOSHeader.at(i);
 		DWORD dwOffset = ref.dwOffset;
 		DWORD dwSize = ref.dwSize;
+
+		//Get a pointer to an offset and then take only needed amount of bytes (by &...).
 		DWORD dwValue = *((PDWORD)((DWORD_PTR)pDosHeader + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 		if (i == 0)
 			dwValue = (dwValue & 0xFF00) >> 8 | (dwValue & 0xFF) << 8;
@@ -1502,6 +1560,7 @@ int CViewRightTL::CreateListTLS()
 	m_listTLSDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listTLSDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 110);
 	m_listTLSDir->InsertColumn(3, L"Value", LVCFMT_LEFT, 150);
+	m_listTLSDir->SetListMenu(&m_menuList);
 
 	const std::map<DWORD, std::wstring> mapCharact {
 		{ IMAGE_SCN_ALIGN_1BYTES, L"IMAGE_SCN_ALIGN_1BYTES" },
@@ -1524,7 +1583,7 @@ int CViewRightTL::CreateListTLS()
 	WCHAR wstr[18];
 	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
-		const IMAGE_TLS_DIRECTORY32*  pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
+		const IMAGE_TLS_DIRECTORY32* pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
 		for (unsigned i = 0; i < g_mapTLS32.size(); i++)
 		{
 			auto& ref = g_mapTLS32.at(i);
@@ -1549,7 +1608,7 @@ int CViewRightTL::CreateListTLS()
 	}
 	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 	{
-		const IMAGE_TLS_DIRECTORY64*  pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
+		const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
 		for (unsigned i = 0; i < g_mapTLS64.size(); i++)
 		{
 			auto& ref = g_mapTLS64.at(i);

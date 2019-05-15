@@ -50,6 +50,7 @@ inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {
 { E_IMAGE_HAS_NO_COMDESCRIPTOR, WSTR(E_IMAGE_HAS_NO_COMDESCRIPTOR) }
 };
 
+//All possible PE Resource types.
 inline const std::map<WORD, std::wstring> g_mapResType {
 	{ 1, L"RT_CURSOR" },
 { 2, L"RT_BITMAP" },
@@ -77,15 +78,17 @@ inline const std::map<WORD, std::wstring> g_mapResType {
 { 241, L"RT_TOOLBAR" }
 };
 
-struct STRUCTHELPER
+//Helper struct for PE structs' fields offsets and sizes.
+//Reflection kind of.
+struct PESTRUCTREFLECTION
 {
-	DWORD dwSize;
-	DWORD dwOffset;
-	std::wstring wstrName;
+	DWORD dwSize;			//Struct's field size.
+	DWORD dwOffset;			//Field offset.
+	std::wstring wstrName;	//Field name.
 };
-using map_hdr = std::map<DWORD, STRUCTHELPER>;
+using map_hdr = std::map<DWORD, PESTRUCTREFLECTION>;
 
-//Standard headers maps.
+//Standard headers' maps.
 inline const map_hdr g_mapDOSHeader {
 	{ 0, { sizeof(WORD), 0, L"e_magic" } },
 { 1, { sizeof(WORD), 2, L"e_cblp" } },
@@ -364,6 +367,8 @@ inline const map_hdr g_mapComDir {
 };
 ////////////////////////////////////////////////////////////
 
+//Helper struct for resources interchange
+//between views.
 struct RESHELPER
 {
 	RESHELPER() {}
