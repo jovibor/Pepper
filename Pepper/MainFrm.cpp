@@ -8,7 +8,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "MainFrm.h"
-#include "resource.h"
+#include "res/resource.h"
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWndEx)
 

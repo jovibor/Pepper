@@ -10,7 +10,7 @@
 #include <memory>
 #include "PepperDoc.h"
 #include "ChildFrm.h"
-#include "ListEx.h"
+#include "ListEx/ListEx.h"
 #include "constants.h"
 
 using namespace LISTEX;

@@ -1,14 +1,14 @@
 /****************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/			 				*
-* This software is available under the "MIT License modified with The Commons Clause."	*
+* This software is available under the "MIT License."									*
 * Windows library for reading PE (x86) and PE+ (x64) files inner structure information.	*
-* https://github.com/jovibor/libpe	 													*
+* Project repository: https://github.com/jovibor/libpe									*
 ****************************************************************************************/
 #pragma once
-#include <vector>		//atd::vector and related.
+#include <vector>		//std::vector and related.
 #include <memory>		//std::shared_ptr and related.
 #include <string>		//std::string and related.
-#include <Windows.h>	//All standard Windows types.
+#include <Windows.h>	//All standard Windows' typedefs.
 #include <ImageHlp.h>	//LPWIN_CERTIFICATE struct.
 
 #ifndef __cpp_lib_byte
@@ -25,75 +25,85 @@ namespace libpe {
 	using PCLIBPE_DOSHEADER = const IMAGE_DOS_HEADER*;
 
 	//Rich.
-	//Vector of undocumented «Rich» struct.
-	//Struct: 1. Offset of the entry. 2. WORD - Id 3. WORD - version 4. DWORD - count of occurrences.
-	struct LIBPE_RICH { DWORD dwOffsetRich; WORD wId; WORD wVersion; DWORD dwCount; };
+	struct LIBPE_RICH {
+		DWORD dwOffsetRich; //File's raw offset of the entry.
+		WORD  wId;          //Entry Id.
+		WORD  wVersion;     //Entry version.
+		DWORD dwCount;      //Amount of occurrences.
+	};
 	using LIBPE_RICHHEADER_VEC = std::vector<LIBPE_RICH>;
 	using PCLIBPE_RICHHEADER_VEC = const LIBPE_RICHHEADER_VEC*;
 
 	//NT header.
-	//Struct: 1. Offset of the header 2. Header itself (whether x86 or x64).
 	struct LIBPE_NTHEADER {
-		DWORD dwOffsetNTHdrDesc;
-		union LIBPE_NTHEADER_VAR { IMAGE_NT_HEADERS32 stNTHdr32; IMAGE_NT_HEADERS64 stNTHdr64; } varHdr;
+		DWORD dwOffsetNTHdrDesc; //File's raw offset of the header.
+		union LIBPE_NTHEADER_VAR {
+			IMAGE_NT_HEADERS32 stNTHdr32; //x86 Header.
+			IMAGE_NT_HEADERS64 stNTHdr64; //x64 Header.
+		}varHdr;
 	};
 	using PCLIBPE_NTHEADER = const LIBPE_NTHEADER*;
 
 	//File header.
-	//Standard File header struct.
 	using PCLIBPE_FILEHEADER = const IMAGE_FILE_HEADER*;
 
 	//Optional header.
-	//Union of standard Optional header struct, depends on file type — x86 or x64.
-	union LIBPE_OPTHEADER_VAR { IMAGE_OPTIONAL_HEADER32 stOptHdr32; IMAGE_OPTIONAL_HEADER64 stOptHdr64; };
+	union LIBPE_OPTHEADER_VAR {
+		IMAGE_OPTIONAL_HEADER32 stOptHdr32; //x86 header.
+		IMAGE_OPTIONAL_HEADER64 stOptHdr64; //x64 header.
+	};
 	using PCLIBPE_OPTHEADER_VAR = const LIBPE_OPTHEADER_VAR*;
 
 	//Data directories.
-	//Vector of LIBPE_DATADIR struct.
-	//Struct: 1. Standard IMAGE_DATA_DIRECTORY 2. String with the name of the section this dir resides in (points to).
-	struct LIBPE_DATADIR { IMAGE_DATA_DIRECTORY stDataDir; std::string strSecResidesIn; };
+	struct LIBPE_DATADIR {
+		IMAGE_DATA_DIRECTORY stDataDir;       //Standard header.
+		std::string          strSecResidesIn; //Name of the section this directory resides in (points to).
+	};
 	using LIBPE_DATADIRS_VEC = std::vector<LIBPE_DATADIR>;
 	using PCLIBPE_DATADIRS_VEC = const LIBPE_DATADIRS_VEC*;
 
 	//Sections headers.
-	//Vector of LIBPE_SECHEADERS struct.
-	//Struct: 1. Section header offset 2. Standard section header struct 3. String with the section full name
 	//For more info check:
 	//docs.microsoft.com/en-us/windows/desktop/api/winnt/ns-winnt-_image_section_header#members
 	//«An 8-byte, null-padded UTF-8 string. For longer names, this member contains a forward slash (/) 
 	//followed by an ASCII representation of a decimal number that is an offset into the string table.»
-	struct LIBPE_SECHEADERS { DWORD dwOffsetSecHdrDesc; IMAGE_SECTION_HEADER stSecHdr; std::string strSecName; };
+	struct LIBPE_SECHEADERS {
+		DWORD                 dwOffsetSecHdrDesc; //File's raw offset of the section header descriptor.
+		IMAGE_SECTION_HEADER  stSecHdr;           //Standard section header.
+		std::string           strSecName;         //Section full name.
+	};
 	using LIBPE_SECHEADERS_VEC = std::vector<LIBPE_SECHEADERS>;
 	using PCLIBPE_SECHEADERS_VEC = const LIBPE_SECHEADERS_VEC*;
 
 	//Export table.
-	//LIBPE_EXPORT struct: 1 Export descriptor offset 2. Standard export header struct. 3 String of actual module name
-	//4. Vector of LIBPE_EXPORT_FUNC struct - exported functions struct.
-	//LIBPE_EXPORT_FUNC struct:
-	//1. RVA 2. Ordinal 3. Func name 4. Func forwarder name.
-	struct LIBPE_EXPORT_FUNC { DWORD dwRVA; DWORD dwOrdinal; std::string strFuncName; std::string strForwarderName; };
+	struct LIBPE_EXPORT_FUNC {
+		DWORD       dwRVA;            //Function RVA.
+		DWORD       dwOrdinal;        //Function ordinal.
+		std::string strFuncName;      //Function name.
+		std::string strForwarderName; //Function forwarder name.
+	};
 	struct LIBPE_EXPORT {
-		DWORD dwOffsetExportDesc; IMAGE_EXPORT_DIRECTORY stExportDesc;
-		std::string strModuleName; std::vector<LIBPE_EXPORT_FUNC> vecFuncs;
+		DWORD                           dwOffsetExportDesc; //File's raw offset of the Export header descriptor.
+		IMAGE_EXPORT_DIRECTORY          stExportDesc;       //Standard export header descriptor.
+		std::string                     strModuleName;      //Actual module name.
+		std::vector<LIBPE_EXPORT_FUNC>  vecFuncs;           //Array of the exported functions struct.	
 	};
 	using PCLIBPE_EXPORT = const LIBPE_EXPORT*;
 
 	//Import table:
-	//Vector of LIBPE_IMPORT_MODULE struct.
-	//Struct: 1. Offset of import descriptor 2. Standard import descriptor 3. Import module name 4. Vector of LIBPE_IMPORT_FUNC struct
-	//LIBPE_IMPORT_FUNC struct - import module funcs struct:
-	//1. Union of standard IMAGE_THUNK_DATA (x86 or x64) 2. Standard IMAGE_IMPORT_BY_NAME struct 3. String with function name.
 	struct LIBPE_IMPORT_FUNC {
 		union LIBPE_IMPORT_THUNK_VAR {
-			IMAGE_THUNK_DATA32 stThunk32;
-			IMAGE_THUNK_DATA64 stThunk64;
+			IMAGE_THUNK_DATA32 stThunk32; //x86 standard thunk.
+			IMAGE_THUNK_DATA64 stThunk64; //x64 standard thunk.
 		}varThunk;
-		IMAGE_IMPORT_BY_NAME stImpByName;
-		std::string strFuncName;
+		IMAGE_IMPORT_BY_NAME stImpByName; //Standard IMAGE_IMPORT_BY_NAME struct
+		std::string          strFuncName; //Function name.
 	};
 	struct LIBPE_IMPORT_MODULE {
-		DWORD dwOffsetImpDesc; IMAGE_IMPORT_DESCRIPTOR stImportDesc;
-		std::string strModuleName; std::vector<LIBPE_IMPORT_FUNC> vecImportFunc;
+		DWORD                          dwOffsetImpDesc; //File's raw offset of the Import descriptor.
+		IMAGE_IMPORT_DESCRIPTOR        stImportDesc;    //Standard Import descriptor.
+		std::string                    strModuleName;   //Imported module name.
+		std::vector<LIBPE_IMPORT_FUNC> vecImportFunc;   //Array of imported functions.
 	};
 	using LIBPE_IMPORT_VEC = std::vector<LIBPE_IMPORT_MODULE>;
 	using PCLIBPE_IMPORT_VEC = const LIBPE_IMPORT_VEC*;
@@ -110,148 +120,175 @@ namespace libpe {
 	* tables to reach the leaf. The first table determines Type ID, the second table (pointed to by 	*
 	* the directory entry in the first table) determines Name ID, and the third table determines 		*
 	* Language ID.»																						*
-	* Highest (root) resource structure is LIBPE_RESOURCE_ROOT. It's, in fact, an std::tuple		*
+	* Highest (root) resource structure is LIBPE_RESOURCE_ROOT. It's a struct							*
 	* that includes: an IMAGE_RESOURCE_DIRECTORY of root resource directory itself, 					*
-	* and LIBPE_RESOURCE_ROOT_DATA_VEC, that is actually an std::vector that includes std::tuple of all		*
+	* and LIBPE_RESOURCE_ROOT_DATA_VEC, that is actually an std::vector that includes structs of all	*
 	* IMAGE_RESOURCE_DIRECTORY_ENTRY structures of the root resource directory.							*
 	* It also includes: std::wstring(Resource name), IMAGE_RESOURCE_DATA_ENTRY, 						*
-	* std::vector<std::byte> (RAW resource data), and LIBPE_RESOURCE_LVL2 that is, in fact,			*
-	* a tuple of the next, second, resource level, that replicates tuple of root resource level.		*
-	* LIBPE_RESOURCE_LVL2 includes IMAGE_RESOURCE_DIRECTORY of second resource level, and 			*
-	* LIBPE_RESOURCE_LVL2_DATA_VEC that includes LIBPE_RESOURCE_LVL3	that is an std::tuple of the last,	*
-	* third, level of resources.																		*
-	* Like previous two, this last level's tuple consist of IMAGE_RESOURCE_DIRECTORY 					*
-	* and LIBPE_RESOURCE_LVL3_DATA_VEC, that is again — vector of tuples of all 								*
-	* IMAGE_RESOURCE_DIRECTORY_ENTRY of the last, third, level of resources. See code below.			*
+	* std::vector<std::byte> (RAW resource data), and LIBPE_RESOURCE_LVL2 that is, in fact,				*
+	* a struct of the next, second, resource level, that replicates struct of root resource level.		*
+	* LIBPE_RESOURCE_LVL2 includes IMAGE_RESOURCE_DIRECTORY of second resource level, and 				*
+	* LIBPE_RESOURCE_LVL2_DATA_VEC that includes LIBPE_RESOURCE_LVL3 that is a struct of the			*
+	* last, third, level of resources.																	*
+	* Like previous two, this last level's struct consist of IMAGE_RESOURCE_DIRECTORY 					*
+	* and LIBPE_RESOURCE_LVL3_DATA_VEC, that is again — vector of structs of all 						*
+	* IMAGE_RESOURCE_DIRECTORY_ENTRY of the last, third, level of resources. See the code below.		*
 	****************************************************************************************************/
 	//Level 3 (the lowest) Resources.
 	struct LIBPE_RESOURCE_LVL3_DATA {
-		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryLvL3; std::wstring wstrResNameLvL3;
-		IMAGE_RESOURCE_DATA_ENTRY stResDataEntryLvL3; std::vector<std::byte> vecResRawDataLvL3;
+		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryLvL3;   //Level 3 standard IMAGE_RESOURCE_DIRECTORY_ENTRY struct.
+		std::wstring                   wstrResNameLvL3;     //Level 3 resource name.
+		IMAGE_RESOURCE_DATA_ENTRY      stResDataEntryLvL3;  //Level 3 standard IMAGE_RESOURCE_DATA_ENTRY struct.
+		std::vector<std::byte>         vecResRawDataLvL3;   //Level 3 resource raw data.
 	};
-	struct LIBPE_RESOURCE_LVL3 { IMAGE_RESOURCE_DIRECTORY stResDirLvL3; std::vector<LIBPE_RESOURCE_LVL3_DATA> vecResLvL3; };
+	struct LIBPE_RESOURCE_LVL3 {
+		IMAGE_RESOURCE_DIRECTORY              stResDirLvL3; //Level 3 standard IMAGE_RESOURCE_DIRECTORY header.
+		std::vector<LIBPE_RESOURCE_LVL3_DATA> vecResLvL3;   //Array of level 3 resource entries.
+	};
 	using PCLIBPE_RESOURCE_LVL3 = const LIBPE_RESOURCE_LVL3*;
 
 	//Level 2 Resources — Includes LVL3 Resourses.
 	struct LIBPE_RESOURCE_LVL2_DATA {
-		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryLvL2; std::wstring wstrResNameLvL2;
-		IMAGE_RESOURCE_DATA_ENTRY stResDataEntryLvL2; std::vector<std::byte> vecResRawDataLvL2; LIBPE_RESOURCE_LVL3 stResLvL3;
+		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryLvL2;  //Level 2 standard IMAGE_RESOURCE_DIRECTORY_ENTRY struct.
+		std::wstring                   wstrResNameLvL2;	   //Level 2 resource name.
+		IMAGE_RESOURCE_DATA_ENTRY      stResDataEntryLvL2; //Level 2 standard IMAGE_RESOURCE_DATA_ENTRY struct.
+		std::vector<std::byte>         vecResRawDataLvL2;  //Level 2 resource raw data.
+		LIBPE_RESOURCE_LVL3            stResLvL3;          //Level 3 resource struct.
 	};
-	struct LIBPE_RESOURCE_LVL2 { IMAGE_RESOURCE_DIRECTORY stResDirLvL2; std::vector<LIBPE_RESOURCE_LVL2_DATA> vecResLvL2; };
+	struct LIBPE_RESOURCE_LVL2 {
+		IMAGE_RESOURCE_DIRECTORY              stResDirLvL2; //Level 2 standard IMAGE_RESOURCE_DIRECTORY header.
+		std::vector<LIBPE_RESOURCE_LVL2_DATA> vecResLvL2;   //Array of level 2 resource entries.
+	};
 	using PCLIBPE_RESOURCE_LVL2 = const LIBPE_RESOURCE_LVL2*;
 
 	//Level 1 (Root) Resources — Includes LVL2 Resources.
 	struct LIBPE_RESOURCE_ROOT_DATA {
-		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryRoot; std::wstring wstrResNameRoot;
-		IMAGE_RESOURCE_DATA_ENTRY stResDataEntryRoot; std::vector<std::byte> vecResRawDataRoot; LIBPE_RESOURCE_LVL2 stResLvL2;
+		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryRoot;  //Level 1 standard IMAGE_RESOURCE_DIRECTORY_ENTRY struct.
+		std::wstring                   wstrResNameRoot;	   //Level 1 resource name.
+		IMAGE_RESOURCE_DATA_ENTRY      stResDataEntryRoot; //Level 1 standard IMAGE_RESOURCE_DATA_ENTRY struct.
+		std::vector<std::byte>         vecResRawDataRoot;  //Level 1 resource raw data.
+		LIBPE_RESOURCE_LVL2            stResLvL2;          //Level 2 resource struct.
 	};
-	struct LIBPE_RESOURCE_ROOT { DWORD dwOffsetResRoot; IMAGE_RESOURCE_DIRECTORY stResDirRoot; std::vector<LIBPE_RESOURCE_ROOT_DATA> vecResRoot; };
+	struct LIBPE_RESOURCE_ROOT {
+		DWORD                                 dwOffsetResRoot; //File's raw offset of the level 1 IMAGE_RESOURCE_DIRECTORY descriptor.
+		IMAGE_RESOURCE_DIRECTORY              stResDirRoot;    //Level 1 standard IMAGE_RESOURCE_DIRECTORY header.
+		std::vector<LIBPE_RESOURCE_ROOT_DATA> vecResRoot;      //Array of level 1 resource entries.
+	};
 	using PCLIBPE_RESOURCE_ROOT = const LIBPE_RESOURCE_ROOT*;
 	/***************************************************************************************
 	*********************************Resources End******************************************
 	***************************************************************************************/
 
 	//Exception table.
-	//Vector of LIBPE_EXCEPTION struct.
-	//Struct: 1. Descriptor offset 2. Standard _IMAGE_RUNTIME_FUNCTION_ENTRY struct.
-	struct LIBPE_EXCEPTION { DWORD dwOffsetRuntimeFuncDesc; _IMAGE_RUNTIME_FUNCTION_ENTRY stRuntimeFuncEntry; };
+	struct LIBPE_EXCEPTION {
+		DWORD                         dwOffsetRuntimeFuncDesc; //File's raw offset of the exceptions descriptor.
+		_IMAGE_RUNTIME_FUNCTION_ENTRY stRuntimeFuncEntry;      //Standard _IMAGE_RUNTIME_FUNCTION_ENTRY header.
+	};
 	using LIBPE_EXCEPTION_VEC = std::vector<LIBPE_EXCEPTION>;
 	using PCLIBPE_EXCEPTION_VEC = const LIBPE_EXCEPTION_VEC*;
 
 	//Security table.
-	//Vector of LIBPE_SECURITY struct.
-	//Struct: 1. Descriptor offset 2. Standard WIN_CERTIFICATE struct.
-	struct LIBPE_SECURITY { DWORD dwOffsetWinCertDesc; WIN_CERTIFICATE stWinSert; };
+	struct LIBPE_SECURITY {
+		DWORD           dwOffsetWinCertDesc; //File's raw offset of the security descriptor.
+		WIN_CERTIFICATE stWinSert;           //Standard WIN_CERTIFICATE header.
+	};
 	using LIBPE_SECURITY_VEC = std::vector<LIBPE_SECURITY>;
 	using PCLIBPE_SECURITY_VEC = const LIBPE_SECURITY_VEC*;
 
 	//Relocation table.
-	//Vector of LIBPE_RELOCATION struct.
-	//Struct: 1. Descritor offset 2. Standard IMAGE_BASE_RELOCATION struct 3. Vector of the LIBPE_RELOC_DATA struct
-	//LIBPE_RELOC_DATA struct: 1. Relocation data offset 2. Relocation type 3. Relocation offset (offset reloc must be applied to)
-	struct LIBPE_RELOC_DATA { DWORD dwOffsetRelocData; WORD wRelocType; WORD wRelocOffset; };
-	struct LIBPE_RELOCATION { DWORD dwOffsetReloc; IMAGE_BASE_RELOCATION stBaseReloc; std::vector<LIBPE_RELOC_DATA> vecRelocData; };
+	struct LIBPE_RELOC_DATA {
+		DWORD dwOffsetRelocData; //File's raw offset of the Relocation data descriptor.
+		WORD  wRelocType;        //Relocation type.
+		WORD  wRelocOffset;      //Relocation offset (Offset the relocation must be applied to.)
+	};
+	struct LIBPE_RELOCATION {
+		DWORD                         dwOffsetReloc; //File's raw offset of the Relocation descriptor.
+		IMAGE_BASE_RELOCATION         stBaseReloc;   //Standard IMAGE_BASE_RELOCATION header.
+		std::vector<LIBPE_RELOC_DATA> vecRelocData;  //Array of the Relocation data struct.
+	};
 	using LIBPE_RELOCATION_VEC = std::vector<LIBPE_RELOCATION>;
 	using PCLIBPE_RELOCATION_VEC = const LIBPE_RELOCATION_VEC*;
 
 	//Debug table.
-	//Vector of LIBPE_DEBUG struct.
-	//Struct: 1. Debug descriptor offset. 2. Standard IMAGE_DEBUG_DIRECTORY struct
-	struct LIBPE_DEBUG { DWORD dwOffsetDebug; IMAGE_DEBUG_DIRECTORY stDebugDir; };
+	struct LIBPE_DEBUG {
+		DWORD                 dwOffsetDebug; //File's raw offset of the Debug descriptor.
+		IMAGE_DEBUG_DIRECTORY stDebugDir;    //Standard IMAGE_DEBUG_DIRECTORY.
+	};
 	using LIBPE_DEBUG_VEC = std::vector<LIBPE_DEBUG>;
 	using PCLIBPE_DEBUG_VEC = const LIBPE_DEBUG_VEC*;
 
 	//TLS table.
-	//LIBPE_TLS struct: 1. TLS header offset 2. Union of standard IMAGE_TLS_DIRECTORY header (x86 or x64) 
-	//3. TLS raw data offset 4. TLS raw data size 5. Vector of DWORDS of TLS Callbacks.
 	struct LIBPE_TLS {
-		DWORD dwOffsetTLS;
-		union LIBPE_TLS_VAR { IMAGE_TLS_DIRECTORY32 stTLSDir32; IMAGE_TLS_DIRECTORY64 stTLSDir64; } varTLS;
-		DWORD dwRawDataOffset; DWORD dwRawDataSize;
-		std::vector<DWORD> vecTLSCallbacks;
+		DWORD              dwOffsetTLS;       //File's raw offset of the TLS header descriptor.
+		union LIBPE_TLS_VAR {
+			IMAGE_TLS_DIRECTORY32 stTLSDir32; //x86 standard TLS header.
+			IMAGE_TLS_DIRECTORY64 stTLSDir64; //x64 TLS header.
+		}varTLS;
+		DWORD              dwRawDataOffset;   //TLS raw data offset.
+		DWORD              dwRawDataSize;     //TLS raw data size.
+		std::vector<DWORD> vecTLSCallbacks;   //Array of the TLS callbacks.
 	};
 	using PCLIBPE_TLS = const LIBPE_TLS*;
 
 	//LoadConfigDirectory.
-	//LCD struct: 1. Offset of the descriptor 2. Union of standard IMAGE_LOAD_CONFIG_DIRECTORY struct (x86 or x64)
 	struct LIBPE_LOADCONFIG {
-		DWORD dwOffsetLCD;
-		union LIBPE_LOADCONFIG_VAR { IMAGE_LOAD_CONFIG_DIRECTORY32 stLCD32; IMAGE_LOAD_CONFIG_DIRECTORY64 stLCD64; } varLCD;
+		DWORD dwOffsetLCD; //File's raw offset of the LCD descriptor.
+		union LIBPE_LOADCONFIG_VAR {
+			IMAGE_LOAD_CONFIG_DIRECTORY32 stLCD32; //x86 LCD descriptor.
+			IMAGE_LOAD_CONFIG_DIRECTORY64 stLCD64; //x64 LCD descriptor.
+		}varLCD;
 	};
 	using PCLIBPE_LOADCONFIG = const LIBPE_LOADCONFIG*;
 
 	//Bound import table.
-	//Vector of LIBPE_BOUNDIMPORT struct.
-	//Struct: 1. Descriptor offset 2. Standard bound import descriptor 3. Bound name 4. Vector of LIBPE_BOUNDFORWARDER struct
-	//LIBPE_BOUNDFORWARDER struct: 1. Descriptor offset 2. Standard IMAGE_BOUND_FORWARDER_REF struct 3. Bound forwarder name
 	struct LIBPE_BOUNDFORWARDER {
-		DWORD dwOffsetBoundForwDesc; IMAGE_BOUND_FORWARDER_REF stBoundForwarder;
-		std::string strBoundForwarderName;
+		DWORD                     dwOffsetBoundForwDesc; //File's raw offset of the Bound Forwarder descriptor.
+		IMAGE_BOUND_FORWARDER_REF stBoundForwarder;      //Standard IMAGE_BOUND_FORWARDER_REF struct.
+		std::string               strBoundForwarderName; //Bound forwarder name.
 	};
 	struct LIBPE_BOUNDIMPORT {
-		DWORD dwOffsetBoundImpDesc;	IMAGE_BOUND_IMPORT_DESCRIPTOR stBoundImpDesc; std::string strBoundName;
-		std::vector<LIBPE_BOUNDFORWARDER> vecBoundForwarder;
+		DWORD                             dwOffsetBoundImpDesc; //File's raw offset of the Bound Import descriptor.
+		IMAGE_BOUND_IMPORT_DESCRIPTOR     stBoundImpDesc;       //Standard IMAGE_BOUND_IMPORT_DESCRIPTOR struct.
+		std::string                       strBoundName;         //Bound Import name.
+		std::vector<LIBPE_BOUNDFORWARDER> vecBoundForwarder;    //Array of the Bound Forwarder structs.
 	};
 	using LIBPE_BOUNDIMPORT_VEC = std::vector<LIBPE_BOUNDIMPORT>;
 	using PCLIBPE_BOUNDIMPORT_VEC = const LIBPE_BOUNDIMPORT_VEC*;
 
 	//Delay import table.
-	//Vector of LIBPE_DELAYIMPORT struct.
-	//Struct: 1. Descriptor offset 2. Standard IMAGE_DELAYLOAD_DESCRIPTOR struct 
-	//3. Module name string 4. Vector of LIBPE_DELAYIMPORT_FUNC struct
-	//LIBPE_DELAYIMPORT_FUNC struct: 
-	//1. Union of four IMAGE_THUNK_DATA (x86 or x64) — 1) Import addres table 2) Import name table
-	//3) Bound import addres table 4) Unload information table
-	//2. Standard IMAGE_IMPORT_BY_NAME struct 3. Function name string
 	struct LIBPE_DELAYIMPORT_FUNC {
 		union LIBPE_DELAYIMPORT_THUNK_VAR
 		{
 			struct x32 {
-				IMAGE_THUNK_DATA32 stImportAddressTable;
-				IMAGE_THUNK_DATA32 stImportNameTable;
-				IMAGE_THUNK_DATA32 stBoundImportAddressTable;
-				IMAGE_THUNK_DATA32 stUnloadInformationTable;
+				IMAGE_THUNK_DATA32 stImportAddressTable;      //x86 Import Address Table struct.
+				IMAGE_THUNK_DATA32 stImportNameTable;         //x86 Import Name Table struct.
+				IMAGE_THUNK_DATA32 stBoundImportAddressTable; //x86 Bound Import Address Table struct.
+				IMAGE_THUNK_DATA32 stUnloadInformationTable;  //x86 Unload Information Table struct.
 			}st32;
 			struct x64 {
-				IMAGE_THUNK_DATA64 stImportAddressTable;
-				IMAGE_THUNK_DATA64 stImportNameTable;
-				IMAGE_THUNK_DATA64 stBoundImportAddressTable;
-				IMAGE_THUNK_DATA64 stUnloadInformationTable;
+				IMAGE_THUNK_DATA64 stImportAddressTable;      //x64 Import Address Table struct.
+				IMAGE_THUNK_DATA64 stImportNameTable;         //x64 Import Name Table struct.
+				IMAGE_THUNK_DATA64 stBoundImportAddressTable; //x64 Bound Import Address Table struct
+				IMAGE_THUNK_DATA64 stUnloadInformationTable;  //x64 Unload Information Table struct.
 			}st64;
 		}varThunk;
-		IMAGE_IMPORT_BY_NAME stImpByName;
-		std::string strFuncName;
+		IMAGE_IMPORT_BY_NAME stImpByName; //Standard IMAGE_IMPORT_BY_NAME struct.
+		std::string          strFuncName; //Function name.
 	};
 	struct LIBPE_DELAYIMPORT {
-		DWORD dwOffsetDelayImpDesc;	IMAGE_DELAYLOAD_DESCRIPTOR stDelayImpDesc; std::string strModuleName;
-		std::vector<LIBPE_DELAYIMPORT_FUNC> vecDelayImpFunc;
+		DWORD                               dwOffsetDelayImpDesc; //File's raw offset of the Delay Import descriptor.
+		IMAGE_DELAYLOAD_DESCRIPTOR          stDelayImpDesc;       //Standard IMAGE_DELAYLOAD_DESCRIPTOR struct.
+		std::string                         strModuleName;        //Import module name.
+		std::vector<LIBPE_DELAYIMPORT_FUNC> vecDelayImpFunc;      //Array of the Delay Import module functions.
 	};
 	using LIBPE_DELAYIMPORT_VEC = std::vector<LIBPE_DELAYIMPORT>;
 	using PCLIBPE_DELAYIMPORT_VEC = const LIBPE_DELAYIMPORT_VEC*;
 
 	//COM descriptor table.
-	//LIBPE_COMDESCRIPTOR struct: 1. Offset of the header 2. Standard IMAGE_COR20_HEADER struct
-	struct LIBPE_COMDESCRIPTOR { DWORD dwOffsetComDesc; IMAGE_COR20_HEADER stCorHdr; };
+	struct LIBPE_COMDESCRIPTOR {
+		DWORD              dwOffsetComDesc; //File's raw offset of the IMAGE_COR20_HEADER descriptor.
+		IMAGE_COR20_HEADER stCorHdr;        //Standard IMAGE_COR20_HEADER struct.
+	};
 	using PCLIBPE_COMDESCRIPTOR = const LIBPE_COMDESCRIPTOR*;
 
 	//Pure abstract base class Ilibpe.
@@ -260,28 +297,29 @@ namespace libpe {
 	public:
 		virtual ~Ilibpe() = default;
 		virtual HRESULT LoadPe(LPCWSTR) = 0;
-		virtual HRESULT GetImageInfo(DWORD&)noexcept = 0;
-		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f)noexcept = 0;
-		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset)noexcept = 0;
-		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&)noexcept = 0;
-		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&)noexcept = 0;
-		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER&)noexcept = 0;
-		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER&)noexcept = 0;
-		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR&)noexcept = 0;
-		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC&)noexcept = 0;
-		virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC&)noexcept = 0;
-		virtual HRESULT GetExport(PCLIBPE_EXPORT&)noexcept = 0;
-		virtual HRESULT GetImport(PCLIBPE_IMPORT_VEC&)noexcept = 0;
-		virtual HRESULT GetResources(PCLIBPE_RESOURCE_ROOT&)noexcept = 0;
-		virtual HRESULT GetExceptions(PCLIBPE_EXCEPTION_VEC&)noexcept = 0;
-		virtual HRESULT GetSecurity(PCLIBPE_SECURITY_VEC&)noexcept = 0;
-		virtual HRESULT GetRelocations(PCLIBPE_RELOCATION_VEC&)noexcept = 0;
-		virtual HRESULT GetDebug(PCLIBPE_DEBUG_VEC&)noexcept = 0;
-		virtual HRESULT GetTLS(PCLIBPE_TLS&)noexcept = 0;
-		virtual HRESULT GetLoadConfig(PCLIBPE_LOADCONFIG&)noexcept = 0;
-		virtual HRESULT GetBoundImport(PCLIBPE_BOUNDIMPORT_VEC&)noexcept = 0;
-		virtual HRESULT GetDelayImport(PCLIBPE_DELAYIMPORT_VEC&)noexcept = 0;
-		virtual HRESULT GetCOMDescriptor(PCLIBPE_COMDESCRIPTOR&)noexcept = 0;
+		virtual HRESULT GetImageInfo(DWORD&)const noexcept = 0;
+		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f)const noexcept = 0;
+		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset)const noexcept = 0;
+		virtual HRESULT GetOffsetFromVA(ULONGLONG ullVA, DWORD& dwOffset)const noexcept = 0;
+		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&)const noexcept = 0;
+		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&)const noexcept = 0;
+		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER&)const noexcept = 0;
+		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER&)const noexcept = 0;
+		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR&)const noexcept = 0;
+		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC&)const noexcept = 0;
+		virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC&)const noexcept = 0;
+		virtual HRESULT GetExport(PCLIBPE_EXPORT&)const noexcept = 0;
+		virtual HRESULT GetImport(PCLIBPE_IMPORT_VEC&)const noexcept = 0;
+		virtual HRESULT GetResources(PCLIBPE_RESOURCE_ROOT&)const noexcept = 0;
+		virtual HRESULT GetExceptions(PCLIBPE_EXCEPTION_VEC&)const noexcept = 0;
+		virtual HRESULT GetSecurity(PCLIBPE_SECURITY_VEC&)const noexcept = 0;
+		virtual HRESULT GetRelocations(PCLIBPE_RELOCATION_VEC&)const noexcept = 0;
+		virtual HRESULT GetDebug(PCLIBPE_DEBUG_VEC&)const noexcept = 0;
+		virtual HRESULT GetTLS(PCLIBPE_TLS&)const noexcept = 0;
+		virtual HRESULT GetLoadConfig(PCLIBPE_LOADCONFIG&)const noexcept = 0;
+		virtual HRESULT GetBoundImport(PCLIBPE_BOUNDIMPORT_VEC&)const noexcept = 0;
+		virtual HRESULT GetDelayImport(PCLIBPE_DELAYIMPORT_VEC&)const noexcept = 0;
+		virtual HRESULT GetCOMDescriptor(PCLIBPE_COMDESCRIPTOR&)const noexcept = 0;
 		virtual HRESULT Destroy() = 0;
 	};
 
@@ -382,9 +420,9 @@ namespace libpe {
 	* In client code you should use libpe_ptr type which is an alias to either IlibpeUnPtr -	*
 	* a unique_ptr, or IlibpeShPtr - a shared_ptr. Uncomment what serves best for you, and		*
 	* comment out the other.																	*
-	* If you, for some reason, need raw pointer, you can directly call CreateRawlibpe			*
+	* If you, for some reason, need a raw pointer, you can directly call CreateRawlibpe			*
 	* function, which returns Ilibpe interface pointer, but in this case you will need to		*
-	* call Ilibpe::Destroy method afterwards - to manually delete Ilibpe object.				*
+	* call Ilibpe::Destroy method afterwards manually - to delete Ilibpe object.				*
 	********************************************************************************************/
 	extern "C" HRESULT ILIBPEAPI CreateRawlibpe(Ilibpe*&);
 	using IlibpeUnPtr = std::unique_ptr<Ilibpe, void(*)(Ilibpe*)>;

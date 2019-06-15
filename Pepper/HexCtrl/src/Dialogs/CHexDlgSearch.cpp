@@ -1,7 +1,7 @@
 /****************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
 * This software is available under the "MIT License modified with The Commons Clause".  *
-* https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                 *
+* https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
 * This is a Hex control for MFC apps, implemented as CWnd derived class.			    *
 * The usage is quite simple:														    *
 * 1. Construct CHexCtrl object — HEXCTRL::CHexCtrl myHex;								*
@@ -40,7 +40,7 @@ BOOL CHexDlgSearch::OnInitDialog()
 	CDialogEx::OnInitDialog();
 	m_iRadioCurrent = IDC_HEXCTRL_SEARCH_RADIO_HEX;
 	CheckRadioButton(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE, m_iRadioCurrent);
-	m_stBrushDefault.CreateSolidBrush(m_clrMenu);
+	m_stBrushDefault.CreateSolidBrush(m_clrBkTextArea);
 
 	return TRUE;
 }
@@ -187,6 +187,11 @@ void CHexDlgSearch::OnActivate(UINT nState, CWnd * pWndOther, BOOL bMinimized)
 	{
 		SetLayeredWindowAttributes(0, 255, LWA_ALPHA);
 		GetDlgItem(IDC_HEXCTRL_SEARCH_EDIT_SEARCH)->SetFocus();
+		
+		bool fMutable = GetHexCtrl()->IsMutable();
+		GetDlgItem(IDC_HEXCTRL_SEARCH_EDIT_REPLACE)->EnableWindow(fMutable);
+		GetDlgItem(IDC_HEXCTRL_SEARCH_BUTTON_REPLACE)->EnableWindow(fMutable);
+		GetDlgItem(IDC_HEXCTRL_SEARCH_BUTTON_REPLACE_ALL)->EnableWindow(fMutable);
 	}
 
 	CDialogEx::OnActivate(nState, pWndOther, bMinimized);
@@ -215,7 +220,7 @@ HBRUSH CHexDlgSearch::OnCtlColor(CDC * pDC, CWnd * pWnd, UINT nCtlColor)
 {
 	if (pWnd->GetDlgCtrlID() == IDC_HEXCTRL_SEARCH_STATIC_TEXTBOTTOM)
 	{
-		pDC->SetBkColor(m_clrMenu);
+		pDC->SetBkColor(m_clrBkTextArea);
 		pDC->SetTextColor(m_stSearch.fFound ? m_clrSearchFound : m_clrSearchFailed);
 		return m_stBrushDefault;
 	}
@@ -237,7 +242,7 @@ void CHexDlgSearch::ClearAll()
 	GetDlgItem(IDC_HEXCTRL_SEARCH_STATIC_TEXTBOTTOM)->SetWindowTextW(L"");
 }
 
-CHexCtrl* CHexDlgSearch::GetHexCtrl()
+CHexCtrl* CHexDlgSearch::GetHexCtrl()const
 {
 	return m_pHexCtrl;
 }

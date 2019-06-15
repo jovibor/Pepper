@@ -9,7 +9,7 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "HexCtrl.h"
+#include "HexCtrl/HexCtrl.h"
 
 using namespace HEXCTRL;
 

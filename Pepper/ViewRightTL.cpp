@@ -542,18 +542,17 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 				if (fx32)
 				{
 					const IMAGE_TLS_DIRECTORY32* pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
-					const DWORD dwImageBase = pOpt->stOptHdr32.ImageBase;
 
 					switch (pNMI->iItem)
 					{
 					case 0: //StartAddressOfRawData
-						m_pLibpe->GetOffsetFromRVA(pTLSDir32->StartAddressOfRawData - dwImageBase, dwOffset);
+						m_pLibpe->GetOffsetFromVA(pTLSDir32->StartAddressOfRawData, dwOffset);
 						break;
 					case 2: //AddressOfIndex
-						m_pLibpe->GetOffsetFromRVA(pTLSDir32->AddressOfIndex - dwImageBase, dwOffset);
+						m_pLibpe->GetOffsetFromVA(pTLSDir32->AddressOfIndex, dwOffset);
 						break;
 					case 3: //AddressOfCallBacks
-						m_pLibpe->GetOffsetFromRVA(pTLSDir32->AddressOfCallBacks - dwImageBase, dwOffset);
+						m_pLibpe->GetOffsetFromVA(pTLSDir32->AddressOfCallBacks, dwOffset);
 						break;
 					default:
 						dwSize = 0; //To not process other fields.
@@ -562,18 +561,17 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 				else if (fx64)
 				{
 					const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
-					const ULONGLONG dwImageBase = pOpt->stOptHdr64.ImageBase;
 
 					switch (pNMI->iItem)
 					{
 					case 0: //StartAddressOfRawData
-						m_pLibpe->GetOffsetFromRVA(pTLSDir64->StartAddressOfRawData - dwImageBase, dwOffset);
+						m_pLibpe->GetOffsetFromRVA(pTLSDir64->StartAddressOfRawData, dwOffset);
 						break;
 					case 2: //AddressOfIndex
-						m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfIndex - dwImageBase, dwOffset);
+						m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfIndex, dwOffset);
 						break;
 					case 3: //AddressOfCallBacks
-						m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfCallBacks - dwImageBase, dwOffset);
+						m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfCallBacks, dwOffset);
 						break;
 					default:
 						dwSize = 0; //To not process other fields.

@@ -8,7 +8,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "ViewRightBL.h"
-#include "resource.h"
+#include "res/resource.h"
 
 IMPLEMENT_DYNCREATE(CViewRightBL, CView)
 

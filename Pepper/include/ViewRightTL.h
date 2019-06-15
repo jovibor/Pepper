@@ -9,9 +9,9 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "ListEx.h"
+#include "HexCtrl/HexCtrl.h"
+#include "ListEx/ListEx.h"
 #include "TreeEx.h"
-#include "HexCtrl.h"
 #include "FileLoader.h"
 #include "constants.h"
 

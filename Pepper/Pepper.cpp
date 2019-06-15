@@ -11,7 +11,7 @@
 #include "MainFrm.h"
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "resource.h"
+#include "res/resource.h"
 #include "constants.h"
 
 class CAboutDlg : public CDialogEx

@@ -42,8 +42,9 @@ namespace HEXCTRL {
 			PASTE_ASHEX, PASTE_ASASCII
 		};
 
+		//Internal menu IDs, start from 0x8001.
 		enum class ENMENU : UINT_PTR {
-			IDM_MAIN_SEARCH,
+			IDM_MAIN_SEARCH = 0x8001,
 			IDM_SHOWAS_ASBYTE, IDM_SHOWAS_ASWORD, IDM_SHOWAS_ASDWORD, IDM_SHOWAS_ASQWORD,
 			IDM_EDIT_UNDO, IDM_EDIT_REDO, IDM_EDIT_COPY_ASHEX, IDM_EDIT_COPY_ASHEXFORMATTED, IDM_EDIT_COPY_ASASCII,
 			IDM_EDIT_PASTE_ASHEX, IDM_EDIT_PASTE_ASASCII,
@@ -91,10 +92,11 @@ CHexCtrl::CHexCtrl()
 {
 	RegisterWndClass();
 
+	//Filling capacity numbers.
 	for (unsigned i = 0; i < m_dwCapacityMax; i++)
 	{
-		WCHAR wstr[3];
-		swprintf_s(wstr, 3, L"%X", i);
+		WCHAR wstr[4];
+		swprintf_s(wstr, 4, L"%X", i);
 		m_umapCapacityWstr[i] = wstr;
 	}
 
@@ -114,7 +116,7 @@ CHexCtrl::CHexCtrl()
 	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_UNDO, L"Undo	Ctrl+Z");
 	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_REDO, L"Redo	Ctrl+Y");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, L"Copy as Hex...	Ctrl+C");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, L"Copy as Hex	Ctrl+C");
 
 	//Menu icons.
 	MENUITEMINFOW mii { };
@@ -124,8 +126,8 @@ CHexCtrl::CHexCtrl()
 		(HBITMAP)LoadImageW(GetModuleHandleW(0), MAKEINTRESOURCE(IDB_HEXCTRL_MENU_COPY), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
 	m_menuMain.SetMenuItemInfoW((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEX, &mii);
 
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEXFORMATTED, L"Copy as Formatted Hex...");
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASASCII, L"Copy as Ascii...");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASHEXFORMATTED, L"Copy as Formatted Hex");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_COPY_ASASCII, L"Copy as Ascii");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
 	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX, L"Paste as Hex	Ctrl+V");
 	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_PASTE_ASHEX] =
@@ -157,7 +159,7 @@ CHexCtrl::~CHexCtrl()
 
 bool CHexCtrl::Create(const HEXCREATESTRUCT & hcs)
 {
-	if (IsCreated()) //Already created.
+	if (m_fCreated) //Already created.
 		return false;
 
 	m_fFloat = hcs.fFloat;
@@ -244,21 +246,16 @@ bool CHexCtrl::CreateDialogCtrl()
 	return Create(hcs);
 }
 
-bool CHexCtrl::IsCreated()
-{
-	return m_fCreated;
-}
-
 void CHexCtrl::SetData(const HEXDATASTRUCT & hds)
 {
-	if (!IsCreated())
+	if (!m_fCreated)
 		return;
 
 	//m_pwndMsg was previously set in Create.
 	if (hds.pwndMsg)
 		m_pwndMsg = hds.pwndMsg;
 
-	//Virtual mode is possible only when there is a msg window a data requests will be sent to.
+	//Virtual mode is possible only when there is a MSG window, a data requests will be sent to.
 	if (hds.enMode == HEXDATAMODEEN::HEXMSG && !GetMsgWindow())
 	{
 		MessageBoxW(L"HexCtrl HEXDATAMODEEN::HEXMSG mode requires HEXDATASTRUCT::pwndMsg to be not nullptr.", L"Error", MB_ICONWARNING);
@@ -292,19 +289,15 @@ void CHexCtrl::SetData(const HEXDATASTRUCT & hds)
 	}
 }
 
-bool CHexCtrl::IsDataSet()
-{
-	return m_fDataSet;
-}
-
 void CHexCtrl::ClearData()
 {
-	if (!IsDataSet())
+	if (!m_fDataSet)
 		return;
 
 	m_fDataSet = false;
 	m_ullDataSize = 0;
 	m_pData = nullptr;
+	m_fMutable = false;
 	m_ullSelectionClick = m_ullSelectionStart = m_ullSelectionEnd = m_ullSelectionSize = 0;
 
 	m_pstScrollV->SetScrollPos(0);
@@ -313,9 +306,9 @@ void CHexCtrl::ClearData()
 	UpdateInfoText();
 }
 
-void CHexCtrl::EditEnable(bool fEnable)
+void CHexCtrl::SetEditMode(bool fEnable)
 {
-	if (!IsCreated())
+	if (!m_fCreated)
 		return;
 
 	m_fMutable = fEnable;
@@ -327,7 +320,7 @@ void CHexCtrl::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSize)
 	SetSelection(ullOffset, ullOffset, ullSize, true);
 }
 
-void CHexCtrl::SetFont(const LOGFONT * pLogFontNew)
+void CHexCtrl::SetFont(const LOGFONTW * pLogFontNew)
 {
 	if (!pLogFontNew)
 		return;
@@ -351,14 +344,6 @@ void CHexCtrl::SetFontSize(UINT uiSize)
 	m_fontHexView.CreateFontIndirectW(&lf);
 
 	RecalcAll();
-}
-
-long CHexCtrl::GetFontSize()
-{
-	LOGFONT lf;
-	m_fontHexView.GetLogFont(&lf);
-
-	return lf.lfHeight;
 }
 
 void CHexCtrl::SetColor(const HEXCOLORSTRUCT & clr)
@@ -387,6 +372,42 @@ void CHexCtrl::SetCapacity(DWORD dwCapacity)
 	m_dwCapacity = dwCapacity;
 	m_dwCapacityBlockSize = m_dwCapacity / 2;
 	RecalcAll();
+}
+
+bool CHexCtrl::IsCreated()const
+{
+	return m_fCreated;
+}
+
+bool CHexCtrl::IsDataSet()const
+{
+	return m_fDataSet;
+}
+
+bool CHexCtrl::IsMutable()const
+{
+	return m_fMutable;
+}
+
+long CHexCtrl::GetFontSize()
+{
+	if (!IsCreated())
+		return 0;
+
+	LOGFONTW lf;
+	m_fontHexView.GetLogFont(&lf);
+	return lf.lfHeight;
+}
+
+void CHexCtrl::GetSelection(ULONGLONG& ullOffset, ULONGLONG& ullSize)const
+{
+	ullOffset = m_ullSelectionStart;
+	ullSize = m_ullSelectionSize;
+}
+
+HMENU CHexCtrl::GetMenuHandle()const
+{
+	return m_menuMain.m_hMenu;
 }
 
 void CHexCtrl::Destroy()
@@ -493,7 +514,7 @@ BOOL CHexCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		SetFontSize(GetFontSize() + zDelta / WHEEL_DELTA * 2);
 		return TRUE;
 	}
-	else if (nFlags & (MK_CONTROL | MK_SHIFT))
+	else if (nFlags == (MK_CONTROL | MK_SHIFT))
 	{
 		SetCapacity(m_dwCapacity + zDelta / WHEEL_DELTA);
 		return TRUE;
@@ -542,6 +563,7 @@ void CHexCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 	m_fCursorHigh = true;
 	m_fLMousePressed = true;
 	UpdateInfoText();
+	MsgWindowNotify(HEXCTRL_MSG_SETSELECTION);
 }
 
 void CHexCtrl::OnLButtonUp(UINT nFlags, CPoint point)
@@ -561,9 +583,9 @@ void CHexCtrl::OnMButtonDown(UINT nFlags, CPoint point)
 
 BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 {
-	UINT uiId = LOWORD(wParam);
+	UINT_PTR uId = LOWORD(wParam);
 
-	switch (uiId)
+	switch (uId)
 	{
 	case (UINT_PTR)INTERNAL::ENMENU::IDM_MAIN_SEARCH:
 		if (m_enMode == HEXDATAMODEEN::HEXNORMAL)
@@ -600,7 +622,7 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 		hmd.ullIndex = m_ullSelectionStart;
 		unsigned char chZero { 0 };
 		hmd.pData = &chZero;
-		hmd.dwFillDataSize = 1;
+		hmd.ullFillDataSize = 1;
 		ModifyData(hmd);
 	}
 	break;
@@ -622,6 +644,11 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 	case (UINT_PTR)INTERNAL::ENMENU::IDM_SHOWAS_ASQWORD:
 		SetShowAs(INTERNAL::ENSHOWAS::ASQWORD);
 		break;
+	default:
+		//For user defined custom menu, we notify parent window.
+		HEXNOTIFYSTRUCT hns { { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_MENUCLICK } };
+		hns.uMenuId = uId;
+		MsgWindowNotify(hns);
 	}
 
 	return CWnd::OnCommand(wParam, lParam);
@@ -650,6 +677,9 @@ void CHexCtrl::OnContextMenu(CWnd * pWnd, CPoint point)
 		uMenuStatus : MF_GRAYED) | MF_BYCOMMAND);
 	m_menuMain.EnableMenuItem((UINT_PTR)INTERNAL::ENMENU::IDM_EDIT_FILL_ZEROS,
 		(m_fMutable ? uMenuStatus : MF_GRAYED) | MF_BYCOMMAND);
+
+	//Notifying parent that we are about to display context menu.
+	MsgWindowNotify(HEXCTRL_MSG_ONCONTEXTMENU);
 
 	m_menuMain.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
 }
@@ -908,7 +938,8 @@ void CHexCtrl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar * pScrollBar)
 void CHexCtrl::OnPaint()
 {
 	CPaintDC dc(this);
-	if (!IsCreated()) {
+	if (!m_fCreated)
+	{
 		CRect rc;
 		dc.GetClipBox(rc);
 		dc.FillSolidRect(rc, RGB(250, 250, 250));
@@ -971,13 +1002,16 @@ void CHexCtrl::OnPaint()
 	rDC.SetTextColor(m_stColor.clrTextCaption);
 	rDC.DrawTextW(L"Offset", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
-	//«Bytes total:» text.
-	rc.left = m_iFirstVertLine + 5;	rc.top = iThirdHorizLine + 1;
-	rc.right = rcClient.right > m_iFourthVertLine ? rcClient.right : m_iFourthVertLine;
-	rc.bottom = iFourthHorizLine;
+	//Info rect's text.
+	rc.left = m_iFirstVertLine;
+	rc.top = iThirdHorizLine + 1;
+	rc.right = m_iFourthVertLine;
+	rc.bottom = iFourthHorizLine;	//Fill bottom rect until iFourthHorizLine.
 	rDC.FillSolidRect(&rc, m_stColor.clrBkInfoRect);
 	rDC.SetTextColor(m_stColor.clrTextInfoRect);
 	rDC.SelectObject(&m_fontBottomRect);
+	rc.left += 5;					//Draw text beginning with little indent.
+	rc.right = rcClient.right;		//Draw text to the end of the client area, even if it pass iFourthHorizLine.
 	rDC.DrawTextW(m_wstrBottomText.data(), (int)m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
 
 	rDC.SelectObject(&m_fontHexView);
@@ -1040,14 +1074,18 @@ void CHexCtrl::OnPaint()
 		//Drawing offset with bk color depending on selection range.
 		if (m_ullSelectionSize && (iterLines * m_dwCapacity + m_dwCapacity) > m_ullSelectionStart &&
 			(iterLines * m_dwCapacity) < m_ullSelectionEnd)
+		{
+			rDC.SetTextColor(m_stColor.clrTextSelected);
 			rDC.SetBkColor(m_stColor.clrBkSelected);
+		}
 		else
+		{
+			rDC.SetTextColor(m_stColor.clrTextCaption);
 			rDC.SetBkColor(m_stColor.clrBk);
-
+		}
 		//Left column offset printing (00000001...0000FFFF...).
 		wchar_t pwszOffset[16];
 		UllToWchars(iterLines * m_dwCapacity, pwszOffset, m_dwOffsetDigits / 2);
-		rDC.SetTextColor(m_stColor.clrTextCaption);
 		ExtTextOutW(rDC.m_hDC, m_sizeLetter.cx - iScrollH, m_iHeightTopRect + (m_sizeLetter.cy * iLine),
 			NULL, nullptr, pwszOffset, m_dwOffsetDigits, nullptr);
 
@@ -1080,13 +1118,15 @@ void CHexCtrl::OnPaint()
 				pwszHexToPrint[1] = pwszHexMap[(chByteToPrint & 0x0F)];
 
 				//Selection draw with different BK color.
-				COLORREF clrBk, clrBkAscii, clrTextHex, clrTextAscii;
+				COLORREF clrBk, clrBkAscii, clrTextHex, clrTextAscii, clrBkCursor;
 				if (m_ullSelectionSize && ullIndexByteToPrint >= m_ullSelectionStart && ullIndexByteToPrint < m_ullSelectionEnd)
 				{
 					clrBk = clrBkAscii = m_stColor.clrBkSelected;
 					clrTextHex = clrTextAscii = m_stColor.clrTextSelected;
+					clrBkCursor = m_stColor.clrBkCursorSelected;
 					//Space between hex chunks (excluding last hex in a row) filling with bk_selected color.
-					if (ullIndexByteToPrint < (m_ullSelectionEnd - 1) && (ullIndexByteToPrint + 1) % m_dwCapacity &&
+					if (ullIndexByteToPrint < (m_ullSelectionEnd - 1) &&
+						(ullIndexByteToPrint + 1) % m_dwCapacity &&
 						((ullIndexByteToPrint + 1) % (DWORD)m_enShowAs) == 0)
 					{	//Rect of the space between Hex chunks. Needed for proper selection drawing.
 						rc.left = iHexPosToPrintX + m_iSizeHexByte;
@@ -1104,14 +1144,15 @@ void CHexCtrl::OnPaint()
 					clrBk = clrBkAscii = m_stColor.clrBk;
 					clrTextHex = m_stColor.clrTextHex;
 					clrTextAscii = m_stColor.clrTextAscii;
+					clrBkCursor = m_stColor.clrBkCursor;
 				}
 				//Hex chunk printing.
-				if (m_fMutable && ullIndexByteToPrint == m_ullCursorPos)
+				if (m_fMutable && (ullIndexByteToPrint == m_ullCursorPos))
 				{
-					rDC.SetBkColor(m_fCursorHigh ? m_stColor.clrBkCursor : clrBk);
+					rDC.SetBkColor(m_fCursorHigh ? clrBkCursor : clrBk);
 					rDC.SetTextColor(m_fCursorHigh ? m_stColor.clrTextCursor : clrTextHex);
 					ExtTextOutW(rDC.m_hDC, iHexPosToPrintX, iHexPosToPrintY, 0, nullptr, &pwszHexToPrint[0], 1, nullptr);
-					rDC.SetBkColor(!m_fCursorHigh ? m_stColor.clrBkCursor : clrBk);
+					rDC.SetBkColor(!m_fCursorHigh ? clrBkCursor : clrBk);
 					rDC.SetTextColor(!m_fCursorHigh ? m_stColor.clrTextCursor : clrTextHex);
 					ExtTextOutW(rDC.m_hDC, iHexPosToPrintX + m_sizeLetter.cx, iHexPosToPrintY, 0, nullptr, &pwszHexToPrint[1], 1, nullptr);
 				}
@@ -1128,8 +1169,9 @@ void CHexCtrl::OnPaint()
 					wchAscii = '.';
 
 				//Ascii printing.
-				if (m_fMutable && ullIndexByteToPrint == m_ullCursorPos) {
-					clrBkAscii = m_stColor.clrBkCursor;
+				if (m_fMutable && (ullIndexByteToPrint == m_ullCursorPos))
+				{
+					clrBkAscii = clrBkCursor;
 					clrTextAscii = m_stColor.clrTextCursor;
 				}
 				rDC.SetBkColor(clrBkAscii);
@@ -1217,7 +1259,7 @@ void CHexCtrl::OnDestroy()
 	CWnd::OnDestroy();
 }
 
-BYTE CHexCtrl::GetByte(ULONGLONG ullIndex)
+BYTE CHexCtrl::GetByte(ULONGLONG ullIndex)const
 {
 	//If it's virtual data control we aquire next byte_to_print from m_pwndMsg window.
 	if (m_enMode == HEXDATAMODEEN::HEXNORMAL)
@@ -1273,10 +1315,10 @@ void CHexCtrl::ModifyData(const HEXMODIFYSTRUCT & hms)
 			m_deqRedo.clear(); //No Redo unless we make Undo.
 			SnapshotUndo(hms.ullIndex, hms.ullModifySize);
 
-			ULONGLONG ullChunks = hms.ullModifySize / hms.dwFillDataSize;
+			ULONGLONG ullChunks = hms.ullModifySize / hms.ullFillDataSize;
 			for (ULONGLONG iterChunk = 0; iterChunk < ullChunks; iterChunk++)
-				for (ULONGLONG iterData = 0; iterData < hms.dwFillDataSize; iterData++)
-					m_pData[hms.ullIndex + hms.dwFillDataSize * iterChunk + iterData] = hms.pData[iterData];
+				for (ULONGLONG iterData = 0; iterData < hms.ullFillDataSize; iterData++)
+					m_pData[hms.ullIndex + hms.ullFillDataSize * iterChunk + iterData] = hms.pData[iterData];
 		}
 		break;
 		case HEXMODIFYASEN::AS_UNDO:
@@ -1334,7 +1376,7 @@ void CHexCtrl::ModifyData(const HEXMODIFYSTRUCT & hms)
 		RedrawWindow();
 }
 
-CWnd* CHexCtrl::GetMsgWindow()
+CWnd* CHexCtrl::GetMsgWindow()const
 {
 	return m_pwndMsg;
 }
@@ -1398,7 +1440,7 @@ void CHexCtrl::RecalcScrollSizes(int iClientHeight, int iClientWidth)
 	m_pstScrollH->SetScrollSizes(m_sizeLetter.cx, iClientWidth, m_iFourthVertLine + 1);
 }
 
-ULONGLONG CHexCtrl::GetTopLine()
+ULONGLONG CHexCtrl::GetTopLine()const
 {
 	return m_pstScrollV->GetScrollPos() / m_sizeLetter.cy;
 }
@@ -1455,7 +1497,7 @@ ULONGLONG CHexCtrl::HitTest(const POINT * pPoint)
 	return ullHexChunk;
 }
 
-void CHexCtrl::ChunkPoint(ULONGLONG ullChunk, ULONGLONG & ullCx, ULONGLONG & ullCy)
+void CHexCtrl::ChunkPoint(ULONGLONG ullChunk, ULONGLONG & ullCx, ULONGLONG & ullCy)const
 {
 	//This func computes x and y pos of given hex chunk.
 
@@ -1549,12 +1591,12 @@ void CHexCtrl::ClipboardCopy(INTERNAL::ENCLIPBOARD enType)
 
 	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, strToClipboard.length() + 1);
 	if (!hMem) {
-		MessageBox(L"GlobalAlloc error.", L"Error", MB_ICONERROR);
+		MessageBoxW(L"GlobalAlloc error.", L"Error", MB_ICONERROR);
 		return;
 	}
 	LPVOID hMemLock = GlobalLock(hMem);
 	if (!hMemLock) {
-		MessageBox(L"GlobalLock error.", L"Error", MB_ICONERROR);
+		MessageBoxW(L"GlobalLock error.", L"Error", MB_ICONERROR);
 		return;
 	}
 	memcpy(hMemLock, strToClipboard.data(), strToClipboard.length() + 1);
@@ -1678,11 +1720,22 @@ void CHexCtrl::SetShowAs(INTERNAL::ENSHOWAS enShowAs)
 	RecalcAll();
 }
 
-void CHexCtrl::MsgWindowNotify(const HEXNOTIFYSTRUCT & hns)
+void CHexCtrl::MsgWindowNotify(const HEXNOTIFYSTRUCT & hns)const
 {
-	CWnd* pwndMsg = GetMsgWindow();
-	if (pwndMsg)
-		pwndMsg->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)& hns);
+	//Send notification to the Message window if it was set.
+	//Otherwise send to Parent window.
+	CWnd* pwndSend = GetMsgWindow();
+	if (!pwndSend)
+		pwndSend = GetParent();
+
+	if (pwndSend)
+		pwndSend->SendMessageW(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)& hns);
+}
+
+void CHexCtrl::MsgWindowNotify(UINT uCode)const
+{
+	HEXNOTIFYSTRUCT hns { { m_hWnd, (UINT)GetDlgCtrlID(), uCode } };
+	MsgWindowNotify(hns);
 }
 
 void CHexCtrl::SetCursorPos(ULONGLONG ullPos, bool fHighPart)
@@ -1696,7 +1749,44 @@ void CHexCtrl::SetCursorPos(ULONGLONG ullPos, bool fHighPart)
 	else
 		m_fCursorHigh = fHighPart;
 
-	CursorScroll();
+	ULONGLONG ullCurrScrollV = m_pstScrollV->GetScrollPos();
+	ULONGLONG ullCurrScrollH = m_pstScrollH->GetScrollPos();
+	ULONGLONG ullCx, ullCy;
+	ChunkPoint(m_ullCursorPos, ullCx, ullCy);
+	CRect rcClient;
+	GetClientRect(&rcClient);
+
+	//New scroll depending on selection direction: top <-> bottom.
+	ULONGLONG ullMaxV = ullCurrScrollV + rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
+		((rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
+	ULONGLONG ullNewStartV = m_ullCursorPos / m_dwCapacity * m_sizeLetter.cy;
+	ULONGLONG ullNewEndV = m_ullCursorPos / m_dwCapacity * m_sizeLetter.cy;
+
+	ULONGLONG ullNewScrollV { }, ullNewScrollH { };
+	if (ullNewEndV >= ullMaxV)
+		ullNewScrollV = ullCurrScrollV + m_sizeLetter.cy;
+	else
+	{
+		if (ullNewEndV >= ullCurrScrollV)
+			ullNewScrollV = ullCurrScrollV;
+		else if (ullNewStartV <= ullCurrScrollV)
+			ullNewScrollV = ullCurrScrollV - m_sizeLetter.cy;
+	}
+
+	ULONGLONG ullMaxClient = ullCurrScrollH + rcClient.Width() - m_iSizeHexByte;
+	if (ullCx >= ullMaxClient)
+		ullNewScrollH = ullCurrScrollH + (ullCx - ullMaxClient);
+	else if (ullCx < ullCurrScrollH)
+		ullNewScrollH = ullCx;
+	else
+		ullNewScrollH = ullCurrScrollH;
+
+	ullNewScrollV -= ullNewScrollV % m_sizeLetter.cy;
+
+	m_pstScrollV->SetScrollPos(ullNewScrollV);
+	if (m_pstScrollH->IsVisible() && !IsCurTextArea()) //Do not horz scroll when modifying text area (not Hex).
+		m_pstScrollH->SetScrollPos(ullNewScrollH);
+
 	RedrawWindow();
 }
 
@@ -1769,48 +1859,6 @@ void CHexCtrl::CursorMoveDown()
 		SetSelection(ullNewPos, ullNewPos, 1);
 }
 
-void CHexCtrl::CursorScroll()
-{
-	ULONGLONG ullCurrScrollV = m_pstScrollV->GetScrollPos();
-	ULONGLONG ullCurrScrollH = m_pstScrollH->GetScrollPos();
-	ULONGLONG ullCx, ullCy;
-	ChunkPoint(m_ullCursorPos, ullCx, ullCy);
-	CRect rcClient;
-	GetClientRect(&rcClient);
-
-	//New scroll depending on selection direction: top <-> bottom.
-	ULONGLONG ullEnd = m_ullCursorPos; //ullEnd is inclusive here.
-	ULONGLONG ullMaxV = ullCurrScrollV + rcClient.Height() - m_iHeightBottomOffArea - m_iHeightTopRect -
-		((rcClient.Height() - m_iHeightTopRect - m_iHeightBottomOffArea) % m_sizeLetter.cy);
-	ULONGLONG ullNewStartV = m_ullCursorPos / m_dwCapacity * m_sizeLetter.cy;
-	ULONGLONG ullNewEndV = ullEnd / m_dwCapacity * m_sizeLetter.cy;
-
-	ULONGLONG ullNewScrollV { }, ullNewScrollH { };
-	if (ullNewEndV >= ullMaxV)
-		ullNewScrollV = ullCurrScrollV + m_sizeLetter.cy;
-	else
-	{
-		if (ullNewEndV >= ullCurrScrollV)
-			ullNewScrollV = ullCurrScrollV;
-		else if (ullNewStartV <= ullCurrScrollV)
-			ullNewScrollV = ullCurrScrollV - m_sizeLetter.cy;
-	}
-
-	ULONGLONG ullMaxClient = ullCurrScrollH + rcClient.Width() - m_iSizeHexByte;
-	if (ullCx >= ullMaxClient)
-		ullNewScrollH = ullCurrScrollH + (ullCx - ullMaxClient);
-	else if (ullCx < ullCurrScrollH)
-		ullNewScrollH = ullCx;
-	else
-		ullNewScrollH = ullCurrScrollH;
-
-	ullNewScrollV -= ullNewScrollV % m_sizeLetter.cy;
-
-	m_pstScrollV->SetScrollPos(ullNewScrollV);
-	if (m_pstScrollH->IsVisible() && !IsCurTextArea()) //Do not horz scroll when modifying text area (not Hex).
-		m_pstScrollH->SetScrollPos(ullNewScrollH);
-}
-
 void CHexCtrl::Undo()
 {
 	HEXMODIFYSTRUCT hmd;
@@ -1839,7 +1887,7 @@ void CHexCtrl::SnapshotUndo(ULONGLONG ullIndex, ULONGLONG ullSize)
 		refUndo->strData += GetByte(ullIndex + i);
 }
 
-bool CHexCtrl::IsCurTextArea()
+bool CHexCtrl::IsCurTextArea()const
 {
 	return m_fCursorTextArea;
 }
@@ -1849,7 +1897,7 @@ bool CHexCtrl::Replace(ULONGLONG ullIndex, PBYTE pData, size_t nSizeData, size_t
 	HEXMODIFYSTRUCT hms;
 	hms.enType = HEXMODIFYASEN::AS_FILL;
 	hms.ullModifySize = nSizeData;
-	hms.dwFillDataSize = nSizeData;
+	hms.ullFillDataSize = nSizeData;
 	hms.ullIndex = ullIndex;
 	hms.pData = pData;
 	hms.fRedraw = fRedraw;
@@ -2253,10 +2301,7 @@ void CHexCtrl::SetSelection(ULONGLONG ullClick, ULONGLONG ullStart, ULONGLONG ul
 
 	UpdateInfoText();
 
-	HEXNOTIFYSTRUCT hns { m_hWnd, (UINT)GetDlgCtrlID(), HEXCTRL_MSG_SETSELECTION };
-	hns.ullIndex = m_ullSelectionStart;
-	hns.ullSize = m_ullSelectionSize;
-	MsgWindowNotify(hns);
+	MsgWindowNotify(HEXCTRL_MSG_SETSELECTION);
 }
 
 void CHexCtrl::SelectAll()
