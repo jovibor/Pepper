@@ -424,7 +424,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 
 	bool fx32 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32);
 	bool fx64 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64);
-	DWORD dwOffset, dwSize = 0;
+	DWORD dwOffset { }, dwSize = 0;
 	switch (pNMI->hdr.idFrom)
 	{
 	case IDC_LIST_DOSHEADER:

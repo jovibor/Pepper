@@ -1,8 +1,10 @@
 /****************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/                         *
+* This is a Hex Control for MFC applications.                                           *
+* Official git repository of the project: https://github.com/jovibor/HexCtrl/           *
 * This software is available under the "MIT License modified with The Commons Clause".  *
 * https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
-* This is a Hex control for MFC apps, implemented as CWnd derived class.			    *
+* For more information visit the project's official repository.      *
 ****************************************************************************************/
 /****************************************************************************************
 * These are some helper functions for HexCtrl.											*
@@ -23,6 +25,6 @@ namespace HEXCTRL {
 	//Wide string to Multibyte string convertion.
 	std::string WstrToStr(const std::wstring& wstr);
 
-	//Converts every two numbers from strNum to one respective character (56->V, 78->x).
-	bool NumStrToHex(const std::string& strNum, std::string& strHex);
+	//Converts every two numeric chars to one respective hex character: "56"->V(0x56), "7A"->z(0x7A)
+	bool StrToHex(const std::string& strFrom, std::string& strToHex);
 };

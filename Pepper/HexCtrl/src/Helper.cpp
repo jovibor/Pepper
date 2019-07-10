@@ -1,8 +1,10 @@
 /****************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/                         *
+* This is a Hex Control for MFC applications.                                           *
+* Official git repository of the project: https://github.com/jovibor/HexCtrl/           *
 * This software is available under the "MIT License modified with The Commons Clause".  *
 * https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
-* This is a Hex control for MFC apps, implemented as CWnd derived class.			    *
+* For more information visit the project's official repository.      *
 ****************************************************************************************/
 /****************************************************************************************
 * These are some helper functions for HexCtrl.											*
@@ -19,7 +21,7 @@ namespace HEXCTRL {
 		//Converts dwSize bytes of ull to wchar_t*.
 		for (size_t i = 0; i < dwSize; i++)
 		{
-			pwsz[i * 2] = pwszHexMap[((ull >> ((dwSize - 1 - i) << 3)) & 0xF0) >> 4];
+			pwsz[i * 2] = pwszHexMap[((ull >> ((dwSize - 1 - i) << 3)) >> 4) & 0x0F];
 			pwsz[i * 2 + 1] = pwszHexMap[(ull >> ((dwSize - 1 - i) << 3)) & 0x0F];
 		}
 	}
@@ -43,25 +45,26 @@ namespace HEXCTRL {
 		return str;
 	}
 
-	bool NumStrToHex(const std::string & strNum, std::string & strHex)
+	bool StrToHex(const std::string & strFrom, std::string & strToHex)
 	{
-		size_t dwIterations = strNum.size() / 2 + strNum.size() % 2;
-
+		size_t dwIterations = strFrom.size() / 2 + strFrom.size() % 2;
+		std::string strTmp;
 		for (size_t i = 0; i < dwIterations; i++)
 		{
 			std::string strToUL; //String to hold currently extracted two letters.
 
-			if (i + 2 <= strNum.size())
-				strToUL = strNum.substr(i * 2, 2);
+			if (i + 2 <= strFrom.size())
+				strToUL = strFrom.substr(i * 2, 2);
 			else
-				strToUL = strNum.substr(i * 2, 1);
+				strToUL = strFrom.substr(i * 2, 1);
 
 			unsigned long ulNumber;
 			if (!CharsToUl(strToUL.data(), ulNumber))
 				return false;
 
-			strHex += (unsigned char)ulNumber;
+			strTmp += (unsigned char)ulNumber;
 		}
+		strToHex = std::move(strTmp);
 
 		return true;
 	}

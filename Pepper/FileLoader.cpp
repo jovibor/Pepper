@@ -58,14 +58,14 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 		pHexCtrl = m_stHex;
 	}
 
-	HEXDATAMODEEN enMode;
+	HEXDATAMODE enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {
-		enMode = HEXDATAMODEEN::HEXNORMAL;
+		enMode = HEXDATAMODE::DATA_DEFAULT;
 		pData = (PBYTE)m_lpBase;
 	}
 	else {
-		enMode = HEXDATAMODEEN::HEXMSG;
+		enMode = HEXDATAMODE::DATA_MSG;
 		pData = nullptr;
 	}
 
@@ -117,14 +117,14 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		pHexCtrl = m_stHex;
 	}
 
-	HEXDATAMODEEN enMode;
+	HEXDATAMODE enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {
-		enMode = HEXDATAMODEEN::HEXNORMAL;
+		enMode = HEXDATAMODE::DATA_DEFAULT;
 		pData = (PBYTE)((DWORD_PTR)m_lpBase + ullOffset);
 	}
 	else {
-		enMode = HEXDATAMODEEN::HEXMSG;
+		enMode = HEXDATAMODE::DATA_MSG;
 		pData = nullptr;
 	}
 
@@ -158,7 +158,6 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA & rData, ULONGLONG ullOffset, DWORD
 		dwSizeToMap = dwSize;
 	else
 		dwSizeToMap = 0x01900000; //25MB.
-
 
 	ULONGLONG ullStartOffsetMapped;
 	if (ullOffset > (ULONGLONG)dwSizeToMap)
@@ -245,6 +244,7 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	{
 		if (!m_fMapViewOfFileWhole)
 		{
+			//Look for given HWND in m_vecQuery and if exist Unmap all its data.
 			auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
 				[pHexNtfy](const QUERYDATA & rData) {return rData.hWnd == pHexNtfy->hdr.hwndFrom; });
 			if (iter != m_vecQuery.end())

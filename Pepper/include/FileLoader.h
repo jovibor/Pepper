@@ -44,14 +44,15 @@ private:
 	* So we can map different parts, of the big file,							*
 	* for different windows (CHexCtrl instances) simultaneously.				*
 	****************************************************************************/
-	struct QUERYDATA {
-		HWND		hWnd { };
-		ULONGLONG	ullStartOffsetMapped { };
-		ULONGLONG	ullEndOffsetMapped { };
-		ULONGLONG	ullOffsetDelta { };		//File (piece) is shown starting from this offset, used in ShowFilePiece.
-		DWORD		dwDeltaFileOffsetMapped { };
-		LPVOID		lpData { };
-		bool		fShowPiece { false };	//Whether used in ShowOffset (false) or in ShowFilePiece (true).
+	struct QUERYDATA 
+	{
+		HWND		hWnd { };                    //IHexCtrl HWND which is querying the file's data.
+		ULONGLONG	ullStartOffsetMapped { };    //File is mapped starting from this raw offset.
+		ULONGLONG	ullEndOffsetMapped { };      //File's raw offset where mapping ends.
+		ULONGLONG	ullOffsetDelta { };          //File (or piece) is shown starting from this offset, used in ShowFilePiece.
+		DWORD		dwDeltaFileOffsetMapped { }; //Delta after ullStartOffsetMapped % m_stSysInfo.dwAllocationGranularity.
+		LPVOID		lpData { };                  //File's Mapped data.
+		bool		fShowPiece { false };        //Whether used in ShowOffset (false) or in ShowFilePiece (true).
 	};
 	IHexCtrlPtr m_stHex { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };
