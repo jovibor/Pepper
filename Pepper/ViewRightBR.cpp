@@ -40,6 +40,7 @@ void CViewRightBR::OnInitialUpdate()
 	}
 	m_stEditResStrings.SetFont(&m_fontEditRes);
 
+	m_stlcs.pwndParent = this;
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
 	m_stlcs.stColor.clrHeaderText = RGB(255, 255, 255);
@@ -64,8 +65,8 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	if (LOWORD(lHint) == IDC_HEX_RIGHT_TR)
 		return;
 
-	if (m_pActiveWnd)
-		m_pActiveWnd->ShowWindow(SW_HIDE);
+	if (m_hwndActive)
+		::ShowWindow(m_hwndActive, SW_HIDE);
 
 	CRect rcParent, rcClient;
 	GetParent()->GetWindowRect(&rcParent);
@@ -76,7 +77,7 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	{
 	case IDC_LIST_TLS:
 		m_stListTLSCallbacks->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_stListTLSCallbacks;
+		m_hwndActive = m_stListTLSCallbacks->m_hWnd;
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 2, 0);
 		break;
@@ -300,16 +301,16 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			std::wstring wstrTmp;
 			for (int i = 0; i < 16; i++)
 			{
-				m_wstrRes += wstrTmp.assign(pwszResString + 1, (UINT)*pwszResString);
+				m_wstrRes += wstrTmp.assign(pwszResString + 1, (UINT)* pwszResString);
 				if (i != 15)
 					m_wstrRes += L"\r\n";
-				pwszResString += 1 + (UINT)*pwszResString;
+				pwszResString += 1 + (UINT)* pwszResString;
 			}
 
 			m_stEditResStrings.SetWindowTextW(m_wstrRes.data());
 			m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
-			m_pActiveWnd = &m_stEditResStrings;
+			m_hwndActive = m_stEditResStrings.m_hWnd;
 			break;
 		}
 		case 12: //RT_GROUP_CURSOR
@@ -451,7 +452,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			UINT dwBytesOut;
 
 			//Read the list of languages and code pages.
-			VerQueryValueW(pRes->pData->data(), L"\\VarFileInfo\\Translation", (LPVOID*)&pLangAndCP, &dwBytesOut);
+			VerQueryValueW(pRes->pData->data(), L"\\VarFileInfo\\Translation", (LPVOID*)& pLangAndCP, &dwBytesOut);
 
 			WCHAR wstrSubBlock[50];
 			DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
@@ -467,7 +468,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 					m_wstrRes += L" - ";
 
 					WCHAR* pszBufferOut;
-					if (VerQueryValueW(pRes->pData->data(), wstrSubBlock, (LPVOID*)&pszBufferOut, &dwBytesOut))
+					if (VerQueryValueW(pRes->pData->data(), wstrSubBlock, (LPVOID*)& pszBufferOut, &dwBytesOut))
 						if (dwBytesOut)
 							m_wstrRes += pszBufferOut;
 					m_wstrRes += L"\r\n";
@@ -476,7 +477,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			m_stEditResStrings.SetWindowTextW(m_wstrRes.data());
 			m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
-			m_pActiveWnd = &m_stEditResStrings;
+			m_hwndActive = m_stEditResStrings.m_hWnd;
 			break;
 		}
 		case 24: //RT_MANIFEST
@@ -490,7 +491,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			m_stEditResStrings.SetWindowTextW(m_wstrRes.data());
 			m_stEditResStrings.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
-			m_pActiveWnd = &m_stEditResStrings;
+			m_hwndActive = m_stEditResStrings.m_hWnd;
 
 			break;
 		}
@@ -518,7 +519,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 							{
 								auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 								if (!data.empty())
-									ShowResource(&RESHELPER(2, pRes->IdResName, (std::vector<std::byte>*)&data));
+									ShowResource(&RESHELPER(2, pRes->IdResName, (std::vector<std::byte>*) & data));
 							}
 						}
 					}
@@ -632,8 +633,8 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 
-	if (m_pActiveWnd)
-		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	if (m_hwndActive)
+		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 int CViewRightBR::CreateListTLSCallbacks()
@@ -641,7 +642,7 @@ int CViewRightBR::CreateListTLSCallbacks()
 	PCLIBPE_TLS pTLS;
 	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
-	
+
 	m_stlcs.dwStyle = 0;
 	m_stlcs.nID = IDC_LIST_TLS_CALLBACKS;
 	m_stListTLSCallbacks->Create(m_stlcs);

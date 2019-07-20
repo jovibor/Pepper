@@ -20,29 +20,27 @@
 #include "../res/HexCtrlRes.h"
 #include <cmath>
 
-using namespace HEXCTRL;
-using namespace SCROLLEX;
+using namespace HEXCTRL::INTERNAL::SCROLLEX;
 
 namespace HEXCTRL {
-	/********************************************
-	* Internal enums.							*
-	********************************************/
-	namespace SCROLLEX {
-		enum class ENSTATE : DWORD
-		{
-			STATE_DEFAULT,
-			FIRSTBUTTON_HOVER, FIRSTBUTTON_CLICK,
-			FIRSTCHANNEL_CLICK,
-			THUMB_HOVER, THUMB_CLICK,
-			LASTCHANNEL_CLICK,
-			LASTBUTTON_CLICK, LASTBUTTON_HOVER
-		};
-		enum class ENTIMER : UINT_PTR {
-			IDT_FIRSTCLICK = 0x7ff0,
-			IDT_CLICKREPEAT = 0x7ff1
-		};
+	namespace INTERNAL {
+		namespace SCROLLEX {
+			enum class EState : DWORD
+			{
+				STATE_DEFAULT,
+				FIRSTBUTTON_HOVER, FIRSTBUTTON_CLICK,
+				FIRSTCHANNEL_CLICK,
+				THUMB_HOVER, THUMB_CLICK,
+				LASTCHANNEL_CLICK,
+				LASTBUTTON_CLICK, LASTBUTTON_HOVER
+			};
+			enum class ETimer : UINT_PTR {
+				IDT_FIRSTCLICK = 0x7ff0,
+				IDT_CLICKREPEAT = 0x7ff1
+			};
 
-		constexpr auto THUMB_POS_MAX = 0x7fffffff;
+			constexpr auto THUMB_POS_MAX = 0x7fffffff;
+		}
 	}
 }
 
@@ -343,36 +341,36 @@ void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 			if (GetThumbRect(true).PtInRect(pt))
 			{
 				m_ptCursorCur = pt;
-				m_enState = ENSTATE::THUMB_CLICK;
+				m_enState = EState::THUMB_CLICK;
 				GetParent()->SetCapture();
 			}
 			else if (GetFirstArrowRect(true).PtInRect(pt))
 			{
 				ScrollLineUp();
-				m_enState = ENSTATE::FIRSTBUTTON_CLICK;
+				m_enState = EState::FIRSTBUTTON_CLICK;
 				GetParent()->SetCapture();
-				SetTimer((UINT_PTR)ENTIMER::IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
+				SetTimer((UINT_PTR)ETimer::IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetLastArrowRect(true).PtInRect(pt))
 			{
 				ScrollLineDown();
-				m_enState = ENSTATE::LASTBUTTON_CLICK;
+				m_enState = EState::LASTBUTTON_CLICK;
 				GetParent()->SetCapture();
-				SetTimer((UINT_PTR)ENTIMER::IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
+				SetTimer((UINT_PTR)ETimer::IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetFirstChannelRect(true).PtInRect(pt))
 			{
 				ScrollPageUp();
-				m_enState = ENSTATE::FIRSTCHANNEL_CLICK;
+				m_enState = EState::FIRSTCHANNEL_CLICK;
 				GetParent()->SetCapture();
-				SetTimer((UINT_PTR)ENTIMER::IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
+				SetTimer((UINT_PTR)ETimer::IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 			else if (GetLastChannelRect(true).PtInRect(pt))
 			{
 				ScrollPageDown();
-				m_enState = ENSTATE::LASTCHANNEL_CLICK;
+				m_enState = EState::LASTCHANNEL_CLICK;
 				GetParent()->SetCapture();
-				SetTimer((UINT_PTR)ENTIMER::IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
+				SetTimer((UINT_PTR)ETimer::IDT_FIRSTCLICK, m_iTimerFirstClick, nullptr);
 			}
 		}
 	}
@@ -435,11 +433,11 @@ void CScrollEx::OnLButtonUp(UINT nFlags, CPoint point)
 	if (!m_fCreated)
 		return;
 
-	if (m_enState != ENSTATE::STATE_DEFAULT)
+	if (m_enState != EState::STATE_DEFAULT)
 	{
-		m_enState = ENSTATE::STATE_DEFAULT;
-		KillTimer((UINT_PTR)ENTIMER::IDT_FIRSTCLICK);
-		KillTimer((UINT_PTR)ENTIMER::IDT_CLICKREPEAT);
+		m_enState = EState::STATE_DEFAULT;
+		KillTimer((UINT_PTR)ETimer::IDT_FIRSTCLICK);
+		KillTimer((UINT_PTR)ETimer::IDT_CLICKREPEAT);
 		ReleaseCapture();
 		DrawScrollBar();
 	}
@@ -450,8 +448,8 @@ void CScrollEx::DrawScrollBar()const
 	if (!IsVisible())
 		return;
 
-	CWnd* pwndParent = GetParent();
-	CWindowDC parentDC(pwndParent);
+	CWnd* hwndParent = GetParent();
+	CWindowDC parentDC(hwndParent);
 
 	CDC dcMem;
 	CBitmap bitmap;
@@ -532,10 +530,10 @@ CRect CScrollEx::GetScrollRect(bool fWithNCArea)const
 	if (!m_fCreated)
 		return 0;
 
-	CWnd* pwndParent = GetParent();
+	CWnd* hwndParent = GetParent();
 	CRect rcClient = GetParentRect();
 	CRect rcWnd = GetParentRect(false);
-	pwndParent->MapWindowPoints(nullptr, &rcClient);
+	hwndParent->MapWindowPoints(nullptr, &rcClient);
 
 	int iTopDelta = GetTopDelta();
 	int iLeftDelta = GetLeftDelta();
@@ -546,7 +544,7 @@ CRect CScrollEx::GetScrollRect(bool fWithNCArea)const
 		rcScroll.left = rcClient.right + iLeftDelta;
 		rcScroll.top = rcClient.top + iTopDelta;
 		rcScroll.right = rcScroll.left + m_uiScrollBarSizeWH;
-		if (fWithNCArea) //Adding difference here to gain equality in coords when call to pwndParent->ScreenToClient below.
+		if (fWithNCArea) //Adding difference here to gain equality in coords when call to hwndParent->ScreenToClient below.
 			rcScroll.bottom = rcWnd.bottom + iTopDelta;
 		else
 			rcScroll.bottom = rcScroll.top + rcClient.Height();
@@ -561,7 +559,7 @@ CRect CScrollEx::GetScrollRect(bool fWithNCArea)const
 		else
 			rcScroll.right = rcScroll.left + rcClient.Width();
 	}
-	pwndParent->ScreenToClient(&rcScroll);
+	hwndParent->ScreenToClient(&rcScroll);
 
 	return rcScroll;
 }
@@ -808,7 +806,7 @@ bool CScrollEx::IsVert()const
 
 bool CScrollEx::IsThumbDragging()const
 {
-	return m_enState == ENSTATE::THUMB_CLICK;
+	return m_enState == EState::THUMB_CLICK;
 }
 
 bool CScrollEx::IsSiblingVisible()const
@@ -832,21 +830,21 @@ void CScrollEx::OnTimer(UINT_PTR nIDEvent)
 {
 	switch (nIDEvent)
 	{
-	case (UINT_PTR)ENTIMER::IDT_FIRSTCLICK:
-		KillTimer((UINT_PTR)ENTIMER::IDT_FIRSTCLICK);
-		SetTimer((UINT_PTR)ENTIMER::IDT_CLICKREPEAT, m_iTimerRepeat, nullptr);
+	case (UINT_PTR)ETimer::IDT_FIRSTCLICK:
+		KillTimer((UINT_PTR)ETimer::IDT_FIRSTCLICK);
+		SetTimer((UINT_PTR)ETimer::IDT_CLICKREPEAT, m_iTimerRepeat, nullptr);
 		break;
-	case (UINT_PTR)ENTIMER::IDT_CLICKREPEAT:
+	case (UINT_PTR)ETimer::IDT_CLICKREPEAT:
 	{
 		switch (m_enState)
 		{
-		case ENSTATE::FIRSTBUTTON_CLICK:
+		case EState::FIRSTBUTTON_CLICK:
 			ScrollLineUp();
 			break;
-		case ENSTATE::LASTBUTTON_CLICK:
+		case EState::LASTBUTTON_CLICK:
 			ScrollLineDown();
 			break;
-		case ENSTATE::FIRSTCHANNEL_CLICK:
+		case EState::FIRSTCHANNEL_CLICK:
 		{
 			CPoint pt;
 			GetCursorPos(&pt);
@@ -862,7 +860,7 @@ void CScrollEx::OnTimer(UINT_PTR nIDEvent)
 			}
 		}
 		break;
-		case ENSTATE::LASTCHANNEL_CLICK:
+		case EState::LASTCHANNEL_CLICK:
 			CPoint pt;
 			GetCursorPos(&pt);
 			CRect rc = GetThumbRect(true);

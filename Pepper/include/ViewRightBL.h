@@ -9,7 +9,7 @@
 #pragma once
 #include "PepperDoc.h"
 #include "ChildFrm.h"
-#include "HexCtrl/HexCtrl.h"
+#include "..\HexCtrl\HexCtrl.h"
 #include "ListEx/ListEx.h"
 #include "TreeEx.h"
 #include "FileLoader.h"
@@ -53,7 +53,7 @@ private:
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CFileLoader* m_pFileLoader { };
-	CWnd* m_pActiveWnd { };
+	HWND m_hwndActive { };
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };
 	LISTEXCREATESTRUCT m_stlcs;

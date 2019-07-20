@@ -9,7 +9,7 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "HexCtrl/HexCtrl.h"
+#include "..\HexCtrl\HexCtrl.h"
 
 using namespace HEXCTRL;
 
@@ -29,7 +29,7 @@ private:
 	libpe_ptr m_pLibpe;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
-	CWnd* m_pActiveWnd { };
+	HWND m_hwndActive { };
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };
 };

@@ -9,7 +9,7 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "HexCtrl/HexCtrl.h"
+#include "..\HexCtrl\HexCtrl.h"
 #include "ListEx/ListEx.h"
 #include "TreeEx.h"
 #include "FileLoader.h"
@@ -73,7 +73,7 @@ private:
 	PCLIBPE_IMPORT_VEC m_pImport { };
 	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
 	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
-	CWnd* m_pActiveWnd { };
+	CWnd* m_hwndActive { };
 	//Resource id for given treeCtrl node.
 	//Used in treeCtrl.SetItemData(...), so that we associate tree item
 	//with corresponding Resource index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).

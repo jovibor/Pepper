@@ -7,8 +7,8 @@
 * For more information, or any questions, visit the project's official repository.      *
 ****************************************************************************************/
 #pragma once
-#include <memory>   //std::shared_ptr and related.
-#include <afxwin.h> //MFC core and standard components.
+#include <Windows.h> //Standard Windows header.
+#include <memory>    //std::shared/unique_ptr and related.
 
 namespace HEXCTRL
 {
@@ -17,21 +17,21 @@ namespace HEXCTRL
 	********************************************************************************************/
 	struct HEXMODIFYSTRUCT
 	{
-		ULONGLONG ullIndex { };         //Index of the starting byte to modify.
-		ULONGLONG ullSize { };          //Size in bytes.
-		ULONGLONG ullpDataFillSize { }; //Size of pData if we want to fill ullSize of bytes with some pattern.
-		PBYTE     pData { };            //Pointer to a data to be set.
-		bool      fWhole { true };      //Is a whole byte or just a part of it to be modified.
-		bool      fHighPart { true };   //Shows whether high or low part of the byte should be modified (if the fWhole flag is false).
-		bool      fRedraw { true };     //Redraw view after modification or not.
+		ULONGLONG ullIndex { };       //Index of the starting byte to modify.
+		ULONGLONG ullSize { };        //Size to be modified.
+		ULONGLONG ullDataSize { };    //Size of pData.
+		PBYTE     pData { };          //Pointer to a data to be set.
+		bool      fWhole { true };    //Is a whole byte or just a part of it to be modified.
+		bool      fHighPart { true }; //Shows whether high or low part of the byte should be modified (if the fWhole flag is false).
+		bool      fRepeat { false };  //If ullDataSize < ullSize should data be replaced just one time or ullSize/ullDataSize times.
 	};
 
 	/********************************************************************************************
 	* IHexVirtual - Pure abstract data handler class, that can be implemented by client,        *
-	* to set its own data handler routines.	Works in HEXDATAMODE::DATA_VIRTUAL mode.            *
-	* Pointer to this class can be set in SetData method.                                       *
-	* Its usage is very similar to pwndMsg logic, where control sends WM_NOTIFY messages        *
-	* to CWnd* class to get/set data. But in this case it's just a pointer to a custom          *
+	* to set its own data handler routines.	Works in EHexDataMode::DATA_VIRTUAL mode.           *
+	* Pointer to this class can be set in IHexCtrl::SetData method.                             *
+	* Its usage is very similar to DATA_MSG logic, where control sends WM_NOTIFY messages       *
+	* to set window to get/set data. But in this case it's just a pointer to a custom           *
 	* routine's implementation.                                                                 *
 	* All virtual functions must be defined in client's derived class.                          *
 	********************************************************************************************/
@@ -69,10 +69,10 @@ namespace HEXCTRL
 	struct HEXCREATESTRUCT
 	{
 		HEXCOLORSTRUCT  stColor { };           //All the control's colors.
-		CWnd*           pwndParent { };        //Parent window pointer.
-		const LOGFONTW* pLogFont { };          //Font to be used, nullptr for default.
-		CRect           rect { };              //Initial rect. If null, the window is screen centered.
-		UINT            uId { };               //HexCtrl Id.
+		HWND            hwndParent { };        //Parent window pointer.
+		const LOGFONTW* pLogFont { };          //Font to be used, nullptr for default. This font has to be monospaced.
+		RECT            rect { };              //Initial rect. If null, the window is screen centered.
+		UINT            uId { };               //Control Id.
 		DWORD           dwStyle { };           //Window styles, 0 for default.
 		DWORD           dwExStyle { };         //Extended window styles, 0 for default.
 		bool            fFloat { false };      //Is float or child (incorporated into another window)?
@@ -80,12 +80,12 @@ namespace HEXCTRL
 	};
 
 	/********************************************************************************************
-	* HEXDATAMODE - Enum of the working data mode, used in HEXDATASTRUCT in SetData.            *
+	* EHexDataMode - Enum of the working data mode, used in HEXDATASTRUCT in SetData.            *
 	* DATA_DEFAULT: Default, standard data mode.                                                *
 	* DATA_MSG: Data is handled through WM_NOTIFY messages to handler window.				    *
 	* DATA_VIRTUAL: Data is handled through IHexVirtual interface derived class.                *
 	********************************************************************************************/
-	enum class HEXDATAMODE : DWORD
+	enum class EHexDataMode : DWORD
 	{
 		DATA_DEFAULT, DATA_MSG, DATA_VIRTUAL
 	};
@@ -95,14 +95,14 @@ namespace HEXCTRL
 	********************************************************************************************/
 	struct HEXDATASTRUCT
 	{
-		ULONGLONG    ullDataSize { };                      //Size of the data to display, in bytes.
-		ULONGLONG    ullSelectionStart { };                //Set selection at this position. Works only if ullSelectionSize > 0.
-		ULONGLONG    ullSelectionSize { };                 //How many bytes to set as selected.
-		CWnd*        pwndMsg { };                          //Window to send the control messages to. Parent window is used by default.
-		IHexVirtual* pHexVirtual { };                      //Pointer to IHexVirtual data class for custom data handling.
-		PBYTE        pData { };                            //Pointer to the data. Not used if it's virtual control.
-		HEXDATAMODE  enMode { HEXDATAMODE::DATA_DEFAULT }; //Working data mode of the control.
-		bool         fMutable { false };                   //Will data be mutable (editable) or just read mode.
+		ULONGLONG    ullDataSize { };                       //Size of the data to display, in bytes.
+		ULONGLONG    ullSelectionStart { };                 //Set selection at this position. Works only if ullSelectionSize > 0.
+		ULONGLONG    ullSelectionSize { };                  //How many bytes to set as selected.
+		HWND         hwndMsg { };                           //Window to send the control messages to. Parent window is used by default.
+		IHexVirtual* pHexVirtual { };                       //Pointer to IHexVirtual data class for custom data handling.
+		PBYTE        pData { };                             //Pointer to the data. Not used if it's virtual control.
+		EHexDataMode enMode { EHexDataMode::DATA_DEFAULT }; //Working data mode of the control.
+		bool         fMutable { false };                    //Will data be mutable (editable) or just read mode.
 	};
 
 	/********************************************************************************************
@@ -122,12 +122,12 @@ namespace HEXCTRL
 	/********************************************************************************************
 	* IHexCtrl - pure abstract base class.                                                      *
 	********************************************************************************************/
-	class IHexCtrl : public CWnd
+	class IHexCtrl
 	{
 	public:
 		virtual ~IHexCtrl() = default;
 		virtual bool Create(const HEXCREATESTRUCT& hcs) = 0;   //Main initialization method.
-		virtual bool CreateDialogCtrl() = 0;                   //Сreates custom dialog control.
+		virtual bool CreateDialogCtrl(UINT uCtrlID, HWND hwndDlg) = 0; //Сreates custom dialog control.
 		virtual void SetData(const HEXDATASTRUCT& hds) = 0;    //Main method for setting data to display (and edit).	
 		virtual void ClearData() = 0;                          //Clears all data from HexCtrl's view (not touching data itself).
 		virtual void SetEditMode(bool fEnable) = 0;            //Enable or disable edit mode.
@@ -141,6 +141,7 @@ namespace HEXCTRL
 		virtual bool IsMutable()const = 0;                     //Is edit mode enabled or not.
 		virtual long GetFontSize()const = 0;                   //Current font size.
 		virtual void GetSelection(ULONGLONG& ullOffset, ULONGLONG& ullSize)const = 0; //Current selection.
+		virtual HWND GetWindowHandle()const = 0;               //Retrieves control's window handle.
 		virtual HMENU GetMenuHandle()const = 0;                //Context menu handle.
 		virtual void Destroy() = 0;                            //Deleter.
 	};
@@ -154,7 +155,33 @@ namespace HEXCTRL
 	* function, which returns IHexCtrl interface pointer, but in this case you will need to     *
 	* call IHexCtrl::Destroy method	afterwards - to manually delete HexCtrl object.             *
 	********************************************************************************************/
-	IHexCtrl* CreateRawHexCtrl();
+#ifdef HEXCTRL_SHARED_DLL
+#ifdef HEXCTRL_EXPORT
+#define HEXCTRLAPI extern "C" IHexCtrl __declspec(dllexport)* __cdecl
+#else
+#define HEXCTRLAPI extern "C" IHexCtrl __declspec(dllimport)* __cdecl
+
+#ifdef _WIN64
+#ifdef _DEBUG
+#define LIBNAME_PROPER(x) x"64d.lib"
+#else
+#define LIBNAME_PROPER(x) x"64.lib"
+#endif
+#else
+#ifdef _DEBUG
+#define LIBNAME_PROPER(x) x"d.lib"
+#else
+#define LIBNAME_PROPER(x) x".lib"
+#endif
+#endif
+
+#pragma comment(lib, LIBNAME_PROPER("HexCtrl"))
+#endif
+#else
+#define	HEXCTRLAPI IHexCtrl*
+#endif
+
+	HEXCTRLAPI CreateRawHexCtrl();
 	using IHexCtrlUnPtr = std::unique_ptr<IHexCtrl, void(*)(IHexCtrl*)>;
 	using IHexCtrlShPtr = std::shared_ptr<IHexCtrl>;
 
@@ -168,7 +195,7 @@ namespace HEXCTRL
 
 	/********************************************************************************************
 	* WM_NOTIFY message codes (NMHDR.code values).                                              *
-	* These codes are used to notify m_pwndMsg window about control's states.                   *
+	* These codes are used to notify m_hwndMsg window about control's states.                   *
 	********************************************************************************************/
 
 	constexpr auto HEXCTRL_MSG_DESTROY { 0xFFFF };       //Indicates that HexCtrl is being destroyed.

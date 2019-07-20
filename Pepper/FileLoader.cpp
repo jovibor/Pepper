@@ -44,9 +44,9 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 		return E_ABORT;
 
 	m_hcs.fFloat = true;
-	m_hcs.pwndParent = this;
+	m_hcs.hwndParent = m_hWnd;
 
-	m_hds.pwndMsg = this;
+	m_hds.hwndMsg = m_hWnd;
 
 	return S_OK;
 }
@@ -58,14 +58,14 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 		pHexCtrl = m_stHex;
 	}
 
-	HEXDATAMODE enMode;
+	EHexDataMode enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {
-		enMode = HEXDATAMODE::DATA_DEFAULT;
+		enMode = EHexDataMode::DATA_DEFAULT;
 		pData = (PBYTE)m_lpBase;
 	}
 	else {
-		enMode = HEXDATAMODE::DATA_MSG;
+		enMode = EHexDataMode::DATA_MSG;
 		pData = nullptr;
 	}
 
@@ -76,11 +76,11 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 	m_hds.ullSelectionSize = ullSelectionSize;
 
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[pHexCtrl](const QUERYDATA & r) {return r.hWnd == pHexCtrl->m_hWnd; });
+		[pHexCtrl](const QUERYDATA & r) {return r.hWnd == pHexCtrl->GetWindowHandle(); });
 
 	bool fExist { false };
 	if (iter == m_vecQuery.end())
-		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->m_hWnd });
+		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->GetWindowHandle() });
 	else
 		fExist = true;
 
@@ -102,7 +102,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 
 	//If floating HexCtrl in use - bring it to front.
 	if (pHexCtrl == m_stHex)
-		pHexCtrl->SetForegroundWindow();
+		::SetForegroundWindow(pHexCtrl->GetWindowHandle());
 
 	return S_OK;
 }
@@ -117,23 +117,23 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		pHexCtrl = m_stHex;
 	}
 
-	HEXDATAMODE enMode;
+	EHexDataMode enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {
-		enMode = HEXDATAMODE::DATA_DEFAULT;
+		enMode = EHexDataMode::DATA_DEFAULT;
 		pData = (PBYTE)((DWORD_PTR)m_lpBase + ullOffset);
 	}
 	else {
-		enMode = HEXDATAMODE::DATA_MSG;
+		enMode = EHexDataMode::DATA_MSG;
 		pData = nullptr;
 	}
 
 	//Checking for given HWND existence in m_vecQuery. If there is no, create.
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[pHexCtrl](const QUERYDATA & rData) {return rData.hWnd == pHexCtrl->m_hWnd; });
+		[pHexCtrl](const QUERYDATA & rData) {return rData.hWnd == pHexCtrl->GetWindowHandle(); });
 
 	if (iter == m_vecQuery.end())
-		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->m_hWnd, 0, 0, ullOffset, 0, nullptr, true });
+		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->GetWindowHandle(), 0, 0, ullOffset, 0, nullptr, true });
 	else
 	{
 		iter->ullOffsetDelta = ullOffset;

@@ -38,10 +38,10 @@ void CViewRightBL::OnInitialUpdate()
 		return;
 
 	//Hex control for SecurityDir and TLSdir.
-	m_hcs.pwndParent = this;
+	m_hcs.hwndParent = m_hWnd;
 	m_hcs.uId = IDC_HEX_RIGHT_BL;
 	m_stHexEdit->Create(m_hcs);
-	m_stHexEdit->ShowWindow(SW_HIDE);
+	::ShowWindow(m_stHexEdit->GetWindowHandle(), SW_HIDE);
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
@@ -66,6 +66,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 {
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR)
 		return;
+	::ShowWindow(m_stHexEdit->GetWindowHandle(), SW_SHOW);
 
 	CRect rc;
 	GetClientRect(&rc);
@@ -93,12 +94,12 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		CreateHexSecHeadersEntry(HIWORD(lHint));
 		break;
 	case IDC_LIST_EXPORT:
-		if (m_pActiveWnd != &*m_listExportFuncs)
+		if (m_hwndActive != m_listExportFuncs->m_hWnd)
 		{
-			if (m_pActiveWnd)
-				m_pActiveWnd->ShowWindow(SW_HIDE);
+			if (m_hwndActive)
+				::ShowWindow(m_hwndActive, SW_HIDE);
 
-			m_pActiveWnd = &*m_listExportFuncs;
+			m_hwndActive = m_listExportFuncs->m_hWnd;
 		}
 		m_listExportFuncs->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
@@ -106,12 +107,12 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		CreateListImportEntry(HIWORD(lHint));
 		break;
 	case IDC_TREE_RESOURCE:
-		if (m_pActiveWnd != &m_treeResBottom)
+		if (m_hwndActive != m_treeResBottom.m_hWnd)
 		{
-			if (m_pActiveWnd)
-				m_pActiveWnd->ShowWindow(SW_HIDE);
+			if (m_hwndActive)
+				::ShowWindow(m_hwndActive, SW_HIDE);
 
-			m_pActiveWnd = &m_treeResBottom;
+			m_hwndActive = m_treeResBottom.m_hWnd;
 		}
 		m_treeResBottom.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
@@ -134,8 +135,8 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		CreateHexDebugEntry(HIWORD(lHint));
 		break;
 	default:
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
 	}
 }
 
@@ -143,8 +144,8 @@ void CViewRightBL::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
 
-	if (m_pActiveWnd)
-		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	if (m_hwndActive)
+		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 void CViewRightBL::OnDraw(CDC * pDC)
@@ -206,15 +207,15 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 
 int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 {
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	auto & ref = g_mapDOSHeader.at(dwEntry);
 	m_pFileLoader->ShowOffset(ref.dwOffset, ref.dwSize, m_stHexEdit);
 
@@ -227,9 +228,15 @@ int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK)
 		return -1;
 
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	{
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
+	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	//Each «Rich» takes 8 bytes (two DWORDs).
 	m_pFileLoader->ShowOffset(pRichHeader->at(dwEntry).dwOffsetRich, 8, m_stHexEdit);
 
@@ -242,15 +249,15 @@ int CViewRightBL::CreateHexNtHeaderEntry(DWORD dwEntry)
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_pFileLoader->ShowOffset(pNTHdr->dwOffsetNTHdrDesc, sizeof(DWORD), m_stHexEdit); //Shows NTHDR signature.
 
 	return 0;
@@ -262,15 +269,15 @@ int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	DWORD dwOffset = pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + g_mapFileHeader.at(dwEntry).dwOffset;
 	m_pFileLoader->ShowOffset(dwOffset, g_mapFileHeader.at(dwEntry).dwSize, m_stHexEdit);
 
@@ -286,11 +293,11 @@ int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 
 	DWORD dwOffset { }, dwSize { };
@@ -307,7 +314,7 @@ int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_pFileLoader->ShowOffset(dwOffset, dwSize, m_stHexEdit);
 
 	return 0;
@@ -322,11 +329,11 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 
 	DWORD dwOffset { }, dwSize = sizeof(IMAGE_DATA_DIRECTORY);
@@ -339,7 +346,7 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_pFileLoader->ShowOffset(dwOffset, dwSize, m_stHexEdit);
 
 	return 0;
@@ -351,15 +358,15 @@ int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 	if (m_pLibpe->GetSectionsHeaders(pSecHeaders) != S_OK)
 		return -1;
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	auto & rImageSecHeader = pSecHeaders->at(dwEntry).stSecHdr;
 	m_pFileLoader->ShowFilePiece(rImageSecHeader.PointerToRawData, rImageSecHeader.SizeOfRawData, m_stHexEdit);
@@ -373,15 +380,15 @@ int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK)
 		return -1;
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	DWORD dwOffset = pLCD->dwOffsetLCD;
 	DWORD dwSize;
@@ -468,9 +475,9 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 	if (m_pLibpe->GetImport(m_pImport) != S_OK || dwEntry > m_pImport->size())
 		return -1;
 
-	if (m_pActiveWnd)
-		m_pActiveWnd->ShowWindow(SW_HIDE);
-	m_pActiveWnd = &*m_listImportEntry;
+	if (m_hwndActive)
+		::ShowWindow(m_hwndActive, SW_HIDE);
+	m_hwndActive = m_listImportEntry->m_hWnd;
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
@@ -543,15 +550,15 @@ int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 	DWORD dwCertSize = (DWORD_PTR)secEntry.dwLength - offsetof(WIN_CERTIFICATE, bCertificate);
 	m_pFileLoader->ShowFilePiece(dwStart, dwCertSize, m_stHexEdit);
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	return 0;
 }
@@ -645,7 +652,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 	CRect rect;
 	GetClientRect(&rect);
 	m_listDelayImportEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pActiveWnd = &*m_listDelayImportEntry;
+	m_hwndActive = m_listDelayImportEntry->m_hWnd;
 
 	return 0;
 }
@@ -710,7 +717,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	CRect rect;
 	GetClientRect(&rect);
 	m_listRelocsEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pActiveWnd = &*m_listRelocsEntry;
+	m_hwndActive = m_listRelocsEntry->m_hWnd;
 
 	return 0;
 }
@@ -724,15 +731,15 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	auto & rDebugDir = pDebug->at(dwEntry).stDebugDir;
 	m_pFileLoader->ShowFilePiece(rDebugDir.PointerToRawData, rDebugDir.SizeOfData, m_stHexEdit);
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	return 0;
 }
@@ -811,15 +818,15 @@ int CViewRightBL::CreateHexTLS()
 	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
 
-	if (m_pActiveWnd != &*m_stHexEdit)
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
-		if (m_pActiveWnd)
-			m_pActiveWnd->ShowWindow(SW_HIDE);
-		m_pActiveWnd = &*m_stHexEdit;
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
 	CRect rc;
 	GetClientRect(&rc);
-	m_stHexEdit->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_pFileLoader->ShowFilePiece(pTLS->dwRawDataOffset, pTLS->dwRawDataSize, m_stHexEdit);
 
 	return 0;

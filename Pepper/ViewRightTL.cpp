@@ -110,8 +110,8 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
 		return;
 
-	if (m_pActiveWnd)
-		m_pActiveWnd->ShowWindow(SW_HIDE);
+	if (m_hwndActive)
+		m_hwndActive->ShowWindow(SW_HIDE);
 
 	m_fFileSummaryShow = false;
 
@@ -127,98 +127,98 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		break;
 	case IDC_LIST_DOSHEADER:
 		m_listDOSHeader->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listDOSHeader;
+		m_hwndActive = &*m_listDOSHeader;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_RICHHEADER:
 		m_listRichHdr->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listRichHdr;
+		m_hwndActive = &*m_listRichHdr;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_NTHEADER:
 		m_listNTHeader->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listNTHeader;
+		m_hwndActive = &*m_listNTHeader;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_FILEHEADER:
 		m_listFileHeader->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listFileHeader;
+		m_hwndActive = &*m_listFileHeader;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_OPTIONALHEADER:
 		m_listOptHeader->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listOptHeader;
+		m_hwndActive = &*m_listOptHeader;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_DATADIRECTORIES:
 		m_listDataDirs->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listDataDirs;
+		m_hwndActive = &*m_listDataDirs;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_SECHEADERS:
 		m_listSecHeaders->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listSecHeaders;
+		m_hwndActive = &*m_listSecHeaders;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_EXPORT:
 		m_listExportDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listExportDir;
+		m_hwndActive = &*m_listExportDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_IAT:
 	case IDC_LIST_IMPORT:
 		m_listImport->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listImport;
+		m_hwndActive = &*m_listImport;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_TREE_RESOURCE:
 		m_treeResTop.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &m_treeResTop;
+		m_hwndActive = &m_treeResTop;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_EXCEPTION:
 		m_listExceptionDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listExceptionDir;
+		m_hwndActive = &*m_listExceptionDir;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		break;
 	case IDC_LIST_SECURITY:
 		m_listSecurityDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listSecurityDir;
+		m_hwndActive = &*m_listSecurityDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_RELOCATIONS:
 		m_listRelocDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listRelocDir;
+		m_hwndActive = &*m_listRelocDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_DEBUG:
 		m_listDebugDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listDebugDir;
+		m_hwndActive = &*m_listDebugDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_TLS:
 		m_listTLSDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listTLSDir;
+		m_hwndActive = &*m_listTLSDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_LOADCONFIG:
 		m_listLCD->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listLCD;
+		m_hwndActive = &*m_listLCD;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_BOUNDIMPORT:
 		m_listBoundImportDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height() / 2, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listBoundImportDir;
+		m_hwndActive = &*m_listBoundImportDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_DELAYIMPORT:
 		m_listDelayImportDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listDelayImportDir;
+		m_hwndActive = &*m_listDelayImportDir;
 		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_COMDESCRIPTOR:
 		m_listCOMDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_pActiveWnd = &*m_listCOMDir;
+		m_hwndActive = &*m_listCOMDir;
 		m_pChildFrame->m_stSplitterRight.HideRow(1);
 		break;
 	}
@@ -266,8 +266,8 @@ void CViewRightTL::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
 
-	if (m_pActiveWnd)
-		m_pActiveWnd->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	if (m_hwndActive)
+		m_hwndActive->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 void CViewRightTL::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
@@ -722,7 +722,7 @@ int CViewRightTL::CreateListRichHeader()
 
 	WCHAR wstr[18];
 	int listindex = 0;
-	for (auto& i : *pRichHeader)
+	for (const auto& i : *pRichHeader)
 	{
 		swprintf_s(wstr, 9, L"%08X", i.dwOffsetRich);
 		m_listRichHdr->InsertItem(listindex, wstr);

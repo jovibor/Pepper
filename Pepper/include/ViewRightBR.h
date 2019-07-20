@@ -76,7 +76,7 @@ protected:
 	void ResLoadError();
 	DECLARE_MESSAGE_MAP()
 private:
-	CWnd* m_pActiveWnd { };
+	HWND m_hwndActive { };
 	libpe_ptr m_pLibpe;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
