@@ -73,6 +73,7 @@ private:
 	bool m_fCreated { false };
 	std::vector<QUERYDATA> m_vecQuery;
 	const int IDC_HEX_CTRL = 0xFF; //Id of inner CHexCtrl.
+	BYTE m_byte { };
 private:
 	unsigned char GetByte(HWND hWnd, ULONGLONG ullOffset); //For Virtual HexCtrl retrives next byte on demand.
 	HRESULT MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD dwSize = 0); //Main routine for mapping big file's parts.

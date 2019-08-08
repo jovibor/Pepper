@@ -66,7 +66,6 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 {
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR)
 		return;
-	::ShowWindow(m_stHexEdit->GetWindowHandle(), SW_SHOW);
 
 	CRect rc;
 	GetClientRect(&rc);

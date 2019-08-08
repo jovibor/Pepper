@@ -60,9 +60,7 @@ void CViewRightBR::OnInitialUpdate()
 
 void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
-	if (!m_pChildFrame)
-		return;
-	if (LOWORD(lHint) == IDC_HEX_RIGHT_TR)
+	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR)
 		return;
 
 	if (m_hwndActive)

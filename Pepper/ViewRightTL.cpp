@@ -458,6 +458,22 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case IDC_LIST_EXPORT:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
+			switch (pNMI->lParam)
+			{
+			case IDM_LIST_GOTODESCOFFSET:
+			{
+				PCLIBPE_EXPORT pExport;
+				if (m_pLibpe->GetExport(pExport) != S_OK)
+					return -1;
+
+				dwOffset = pExport->dwOffsetExportDesc;
+				dwSize = sizeof(IMAGE_EXPORT_DIRECTORY);
+			}
+			break;
+			case IDM_LIST_GOTODATAOFFSET:
+				//not yet implemented.
+				break;
+			}
 		}
 		break;
 	case IDC_LIST_IAT:
@@ -585,18 +601,50 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case IDC_LIST_LOADCONFIG:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_LOADCONFIG_ENTRY, pNMI->iItem));
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
 		}
 		break;
 	case IDC_LIST_BOUNDIMPORT:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
+			switch (pNMI->lParam)
+			{
+			case IDM_LIST_GOTODESCOFFSET:
+			{
+				PCLIBPE_BOUNDIMPORT_VEC pBoundImp;
+				if (m_pLibpe->GetBoundImport(pBoundImp) != S_OK)
+					return -1;
+
+				dwOffset = pBoundImp->at(pNMI->iItem).dwOffsetBoundImpDesc;
+				dwSize = sizeof(IMAGE_BOUND_IMPORT_DESCRIPTOR);
+			}
+			break;
+			case IDM_LIST_GOTODATAOFFSET:
+				//not yet implemented.
+				break;
+			}
 		}
 		break;
 	case IDC_LIST_COMDESCRIPTOR:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
+			switch (pNMI->lParam)
+			{
+			case IDM_LIST_GOTODESCOFFSET:
+			{
+				PCLIBPE_COMDESCRIPTOR pCOMDesc;
+				if (m_pLibpe->GetCOMDescriptor(pCOMDesc) != S_OK)
+					return -1;
+
+				dwOffset = pCOMDesc->dwOffsetComDesc;
+				dwSize = sizeof(IMAGE_COR20_HEADER);
+			}
+			break;
+			case IDM_LIST_GOTODATAOFFSET:
+				//not yet implemented.
+				break;
+			}
 		}
 		break;
 	case IDC_LIST_SECURITY:
@@ -1213,6 +1261,7 @@ int CViewRightTL::CreateListExport()
 	m_listExportDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listExportDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listExportDir->InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
+	m_listExportDir->SetListMenu(&m_menuList);
 
 	const IMAGE_EXPORT_DIRECTORY * pExportDesc = &pExport->stExportDesc;
 	for (unsigned i = 0; i < g_mapExport.size(); i++)
@@ -1768,6 +1817,7 @@ int CViewRightTL::CreateListBoundImport()
 	m_listBoundImportDir->InsertColumn(2, L"TimeDateStamp", LVCFMT_LEFT, 130);
 	m_listBoundImportDir->InsertColumn(3, L"OffsetModuleName", LVCFMT_LEFT, 140);
 	m_listBoundImportDir->InsertColumn(4, L"NumberOfModuleForwarderRefs", LVCFMT_LEFT, 220);
+	m_listBoundImportDir->SetListMenu(&m_menuList);
 
 	WCHAR wstr[MAX_PATH];
 	int listindex = 0;
@@ -1875,6 +1925,7 @@ int CViewRightTL::CreateListCOM()
 	m_listCOMDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 300);
 	m_listCOMDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listCOMDir->InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
+	m_listCOMDir->SetListMenu(&m_menuList);
 
 	const std::map<DWORD, std::wstring> mapFlags {
 		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_ILONLY, L"COMIMAGE_FLAGS_ILONLY" },

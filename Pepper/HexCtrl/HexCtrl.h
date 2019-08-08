@@ -115,7 +115,6 @@ namespace HEXCTRL
 		ULONGLONG ullIndex { }; //Index of the start byte to get/send.
 		ULONGLONG ullSize { };  //Size of the bytes to get/send.
 		PBYTE     pData { };    //Pointer to a data to get/send.
-		BYTE      chByte { };   //Single byte data - used for simplicity, when ullSize == 1.
 	};
 	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT *;
 
