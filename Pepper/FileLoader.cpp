@@ -61,7 +61,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 	EHexDataMode enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {
-		enMode = EHexDataMode::DATA_DEFAULT;
+		enMode = EHexDataMode::DATA_MEMORY;
 		pData = (PBYTE)m_lpBase;
 	}
 	else {
@@ -120,7 +120,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	EHexDataMode enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {
-		enMode = EHexDataMode::DATA_DEFAULT;
+		enMode = EHexDataMode::DATA_MEMORY;
 		pData = (PBYTE)((DWORD_PTR)m_lpBase + ullOffset);
 	}
 	else {
@@ -246,7 +246,7 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 		{
 			//Look for given HWND in m_vecQuery and if exist Unmap all its data.
 			auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-				[pHexNtfy](const QUERYDATA & rData) {return rData.hWnd == pHexNtfy->hdr.hwndFrom; });
+				[pHexNtfy](const QUERYDATA & rData) { return rData.hWnd == pHexNtfy->hdr.hwndFrom; });
 			if (iter != m_vecQuery.end())
 				UnmapFileOffset(*iter);
 		}

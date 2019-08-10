@@ -39,7 +39,7 @@ void CViewRightBL::OnInitialUpdate()
 
 	//Hex control for SecurityDir and TLSdir.
 	m_hcs.hwndParent = m_hWnd;
-	m_hcs.uId = IDC_HEX_RIGHT_BL;
+	m_hcs.uID = IDC_HEX_RIGHT_BL;
 	m_stHexEdit->Create(m_hcs);
 	::ShowWindow(m_stHexEdit->GetWindowHandle(), SW_HIDE);
 
@@ -544,7 +544,7 @@ int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 	if (m_pLibpe->GetSecurity(pSec) != S_OK || nSertId > pSec->size())
 		return -1;
 
-	const auto & secEntry = pSec->at(nSertId).stWinSert;
+	const auto& secEntry = pSec->at(nSertId).stWinSert;
 	DWORD dwStart = pSec->at(nSertId).dwOffsetWinCertDesc + offsetof(WIN_CERTIFICATE, bCertificate);
 	DWORD dwCertSize = (DWORD_PTR)secEntry.dwLength - offsetof(WIN_CERTIFICATE, bCertificate);
 	m_pFileLoader->ShowFilePiece(dwStart, dwCertSize, m_stHexEdit);

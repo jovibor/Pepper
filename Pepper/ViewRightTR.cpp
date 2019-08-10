@@ -33,7 +33,7 @@ void CViewRightTR::OnInitialUpdate()
 
 	//Hex control for Resources raw.
 	m_hcs.hwndParent = m_hWnd;
-	m_hcs.uId = IDC_HEX_RIGHT_TR;
+	m_hcs.uID = IDC_HEX_RIGHT_TR;
 	m_stHexEdit->Create(m_hcs);
 	::ShowWindow(m_stHexEdit->GetWindowHandle(), SW_HIDE);
 }

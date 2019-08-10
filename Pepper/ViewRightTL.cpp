@@ -1471,6 +1471,18 @@ int CViewRightTL::CreateListSecurity()
 	m_listSecurityDir->InsertColumn(2, L"wRevision", LVCFMT_LEFT, 100);
 	m_listSecurityDir->InsertColumn(3, L"wCertificateType", LVCFMT_LEFT, 180);
 
+	const std::map<WORD, std::wstring> mapSertRevision {
+		TO_WSTR_MAP(WIN_CERT_REVISION_1_0),
+		TO_WSTR_MAP(WIN_CERT_REVISION_2_0)
+	};
+
+	const std::map<WORD, std::wstring> mapSertType {
+		TO_WSTR_MAP(WIN_CERT_TYPE_X509),
+		TO_WSTR_MAP(WIN_CERT_TYPE_PKCS_SIGNED_DATA),
+		TO_WSTR_MAP(WIN_CERT_TYPE_RESERVED_1),
+		TO_WSTR_MAP(WIN_CERT_TYPE_TS_STACK_SIGNED),
+	};
+
 	int listindex = 0;
 	WCHAR wstr[9];
 	for (auto& i : *pSecurityDir)
@@ -1481,10 +1493,18 @@ int CViewRightTL::CreateListSecurity()
 		const WIN_CERTIFICATE* pSert = &i.stWinSert;
 		swprintf_s(wstr, 9, L"%08X", pSert->dwLength);
 		m_listSecurityDir->SetItemText(listindex, 1, wstr);
+		
 		swprintf_s(wstr, 5, L"%04X", pSert->wRevision);
 		m_listSecurityDir->SetItemText(listindex, 2, wstr);
+		auto iterRevision = mapSertRevision.find(pSert->wRevision);
+		if (iterRevision != mapSertRevision.end())
+			m_listSecurityDir->SetCellTooltip(listindex, 2, iterRevision->second.data(), L"Certificate revision:");
+		
 		swprintf_s(wstr, 5, L"%04X", pSert->wCertificateType);
 		m_listSecurityDir->SetItemText(listindex, 3, wstr);
+		auto iterType = mapSertType.find(pSert->wCertificateType);
+		if (iterType != mapSertType.end())
+			m_listSecurityDir->SetCellTooltip(listindex, 3, iterType->second.data(), L"Certificate type:");
 
 		listindex++;
 	}

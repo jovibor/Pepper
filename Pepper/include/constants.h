@@ -15,8 +15,9 @@ using namespace libpe;
 #define PEPPER_VERSION_WSTR TO_WSTR_STRING(PRODUCT_NAME) ", v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MAINTENANCE_VERSION)
 #endif
 
-//Errors, that might come from libpe.
 #define TO_WSTR_MAP(x) {x, L## #x}
+
+//Errors, that might come from libpe.
 inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {
 	TO_WSTR_MAP(E_CALL_LOADPE_FIRST),
 	TO_WSTR_MAP(E_FILE_CREATEFILE_FAILED),

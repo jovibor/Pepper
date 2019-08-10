@@ -10,6 +10,19 @@
 #include <Windows.h> //Standard Windows header.
 #include <memory>    //std::shared/unique_ptr and related.
 
+/**********************************************************************
+* If HexCtrl is to be used as a .dll, then include this header,       *
+* and uncomment the line below.                                       *
+**********************************************************************/
+//#define HEXCTRL_SHARED_DLL
+
+/**********************************************************************
+* For manually initialize MFC.                                        *
+* This macro is used only for Win32 non MFC projects, built with      *
+* Use MFC in a Shared DLL option.                                     *
+**********************************************************************/
+//#define HEXCTRL_MANUAL_MFC_INIT
+
 namespace HEXCTRL
 {
 	/********************************************************************************************
@@ -23,7 +36,7 @@ namespace HEXCTRL
 		PBYTE     pData { };          //Pointer to a data to be set.
 		bool      fWhole { true };    //Is a whole byte or just a part of it to be modified.
 		bool      fHighPart { true }; //Shows whether high or low part of the byte should be modified (if the fWhole flag is false).
-		bool      fRepeat { false };  //If ullDataSize < ullSize should data be replaced just one time or ullSize/ullDataSize times.
+		bool      fRepeat { false };  //If ullDataSize < ullSize, should data be replaced only one time or ullSize/ullDataSize times.
 	};
 
 	/********************************************************************************************
@@ -72,7 +85,7 @@ namespace HEXCTRL
 		HWND            hwndParent { };        //Parent window pointer.
 		const LOGFONTW* pLogFont { };          //Font to be used, nullptr for default. This font has to be monospaced.
 		RECT            rect { };              //Initial rect. If null, the window is screen centered.
-		UINT            uId { };               //Control Id.
+		UINT            uID { };               //Control ID.
 		DWORD           dwStyle { };           //Window styles, 0 for default.
 		DWORD           dwExStyle { };         //Extended window styles, 0 for default.
 		bool            fFloat { false };      //Is float or child (incorporated into another window)?
@@ -80,14 +93,14 @@ namespace HEXCTRL
 	};
 
 	/********************************************************************************************
-	* EHexDataMode - Enum of the working data mode, used in HEXDATASTRUCT in SetData.            *
-	* DATA_DEFAULT: Default, standard data mode.                                                *
-	* DATA_MSG: Data is handled through WM_NOTIFY messages to handler window.				    *
-	* DATA_VIRTUAL: Data is handled through IHexVirtual interface derived class.                *
+	* EHexDataMode - Enum of the working data mode, used in HEXDATASTRUCT in SetData.           *
+	* DATA_MEMORY: Default standard data mode.                                                  *
+	* DATA_MSG: Data is handled through WM_NOTIFY messages in handler window.				    *
+	* DATA_VIRTUAL: Data is handled through IHexVirtual interface by derived class.             *
 	********************************************************************************************/
 	enum class EHexDataMode : DWORD
 	{
-		DATA_DEFAULT, DATA_MSG, DATA_VIRTUAL
+		DATA_MEMORY, DATA_MSG, DATA_VIRTUAL
 	};
 
 	/********************************************************************************************
@@ -101,7 +114,7 @@ namespace HEXCTRL
 		HWND         hwndMsg { };                           //Window to send the control messages to. Parent window is used by default.
 		IHexVirtual* pHexVirtual { };                       //Pointer to IHexVirtual data class for custom data handling.
 		PBYTE        pData { };                             //Pointer to the data. Not used if it's virtual control.
-		EHexDataMode enMode { EHexDataMode::DATA_DEFAULT }; //Working data mode of the control.
+		EHexDataMode enMode { EHexDataMode::DATA_MEMORY };  //Working data mode of the control.
 		bool         fMutable { false };                    //Will data be mutable (editable) or just read mode.
 	};
 
@@ -205,4 +218,16 @@ namespace HEXCTRL
 	constexpr auto HEXCTRL_MSG_ONCONTEXTMENU { 0x0104 }; //OnContextMenu triggered.
 	constexpr auto HEXCTRL_MSG_UNDO { 0x0105 };          //Undo command triggered.
 	constexpr auto HEXCTRL_MSG_REDO { 0x0106 };          //Redo command triggered.
+
+
+/*******************Setting a manifest for ComCtl32.dll version 6.***********************/
+#ifdef _UNICODE
+#if defined _M_IX86
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_X64
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#else
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+#endif
 }

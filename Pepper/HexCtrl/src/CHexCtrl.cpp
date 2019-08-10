@@ -4,7 +4,7 @@
 * Official git repository of the project: https://github.com/jovibor/HexCtrl/           *
 * This software is available under the "MIT License modified with The Commons Clause".  *
 * https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
-* For more information, or any questions, visit the project's official repository.      *
+* For more information visit the project's official repository.                         *
 ****************************************************************************************/
 #include "stdafx.h"
 #include "strsafe.h"
@@ -34,7 +34,7 @@ namespace HEXCTRL {
 	namespace INTERNAL {
 		enum class EClipboard : DWORD
 		{
-			COPY_HEX, COPY_HEXFORMATTED, COPY_ASCII,
+			COPY_HEX, COPY_HEXFORMATTED, COPY_ASCII, COPY_BASE64,
 			PASTE_HEX, PASTE_ASCII
 		};
 
@@ -43,10 +43,10 @@ namespace HEXCTRL {
 		{
 			IDM_MAIN_SEARCH = 0x8001,
 			IDM_SHOWAS_BYTE, IDM_SHOWAS_WORD, IDM_SHOWAS_DWORD, IDM_SHOWAS_QWORD,
-			IDM_EDIT_UNDO, IDM_EDIT_REDO,
-			IDM_EDIT_COPY_HEX, IDM_EDIT_COPY_HEXFORMATTED, IDM_EDIT_COPY_ASCII,
-			IDM_EDIT_PASTE_HEX, IDM_EDIT_PASTE_ASCII,
-			IDM_EDIT_FILL_ZEROS,
+			IDM_CLIPBOARD_COPY_HEX, IDM_CLIPBOARD_COPY_HEXFORMATTED, IDM_CLIPBOARD_COPY_ASCII, IDM_CLIPBOARD_COPY_BASE64,
+			IDM_CLIPBOARD_PASTE_HEX, IDM_CLIPBOARD_PASTE_ASCII,
+			IDM_MAIN_UNDO, IDM_MAIN_REDO,
+			IDM_MAIN_FILL_ZEROS,
 			IDM_MAIN_ABOUT,
 		};
 
@@ -87,16 +87,69 @@ BEGIN_MESSAGE_MAP(CHexCtrl, CWnd)
 	ON_WM_GETDLGCODE()
 END_MESSAGE_MAP()
 
+#if defined HEXCTRL_SHARED_DLL || defined HEXCTRL_MANUAL_MFC_INIT
+CWinApp theApp;
+#endif
+
 CHexCtrl::CHexCtrl()
 {
-	RegisterWndClass();
+	//MFC initialization, if HexCtrl is used in non MFC project, with Shared MFC linking.
+#if defined HEXCTRL_MANUAL_MFC_INIT
+	if (!AfxGetModuleState()->m_lpszCurrentAppName)
+		AfxWinInit(::GetModuleHandleW(NULL), NULL, ::GetCommandLineW(), 0);
+#endif
 
-	//Submenu for data showing options.
+	HINSTANCE hInst = AfxGetInstanceHandle();
+
+	WNDCLASSEXW wc { };
+	if (!(::GetClassInfoExW(hInst, WSTR_HEXCTRL_CLASSNAME, &wc)))
+	{
+		wc.cbSize = sizeof(WNDCLASSEXW);
+		wc.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
+		wc.lpfnWndProc = ::DefWindowProcW;
+		wc.cbClsExtra = wc.cbWndExtra = 0;
+		wc.hInstance = hInst;
+		wc.hIcon = wc.hIconSm = nullptr;
+		wc.hCursor = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+		wc.hbrBackground = nullptr;
+		wc.lpszMenuName = nullptr;
+		wc.lpszClassName = WSTR_HEXCTRL_CLASSNAME;
+		if (!RegisterClassExW(&wc))
+		{
+			MessageBoxW(L"HexControl RegisterClassExW error.", L"Error");
+			return;
+		}
+	}
+
+	/***************************************
+	* Menus                                *
+	***************************************/
+	MENUITEMINFOW mii { };
+
+	//"Show As..." Submenu.
 	m_menuShowAs.CreatePopupMenu();
 	m_menuShowAs.AppendMenuW(MF_STRING | MF_CHECKED, (UINT_PTR)EMenu::IDM_SHOWAS_BYTE, L"BYTE");
 	m_menuShowAs.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_SHOWAS_WORD, L"WORD");
 	m_menuShowAs.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_SHOWAS_DWORD, L"DWORD");
 	m_menuShowAs.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_SHOWAS_QWORD, L"QWORD");
+
+	//"Clipboard" Submenu.
+	m_menuClipboard.CreatePopupMenu();
+	m_menuClipboard.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_HEX, L"Copy as Hex	Ctrl+C");
+	mii.cbSize = sizeof(MENUITEMINFOW);
+	mii.fMask = MIIM_BITMAP;
+	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_HEX] =
+		(HBITMAP)LoadImageW(hInst, MAKEINTRESOURCE(IDB_HEXCTRL_MENU_COPY), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+	m_menuClipboard.SetMenuItemInfoW((UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_HEX, &mii);
+	m_menuClipboard.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_HEXFORMATTED, L"Copy as Formatted Hex");
+	m_menuClipboard.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_ASCII, L"Copy as Ascii");
+	m_menuClipboard.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_BASE64, L"Copy as Base64");
+	m_menuClipboard.AppendMenuW(MF_SEPARATOR);
+	m_menuClipboard.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_CLIPBOARD_PASTE_HEX, L"Paste as Hex	Ctrl+V");
+	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)EMenu::IDM_CLIPBOARD_PASTE_HEX] =
+		(HBITMAP)LoadImageW(hInst, MAKEINTRESOURCE(IDB_HEXCTRL_MENU_PASTE), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+	m_menuClipboard.SetMenuItemInfoW((UINT_PTR)EMenu::IDM_CLIPBOARD_PASTE_HEX, &mii);
+	m_menuClipboard.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_CLIPBOARD_PASTE_ASCII, L"Paste as Ascii");
 
 	//Main menu.
 	m_menuMain.CreatePopupMenu();
@@ -104,42 +157,22 @@ CHexCtrl::CHexCtrl()
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
 	m_menuMain.AppendMenuW(MF_POPUP, (DWORD_PTR)m_menuShowAs.m_hMenu, L"Show data as...");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_EDIT_UNDO, L"Undo	Ctrl+Z");
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_EDIT_REDO, L"Redo	Ctrl+Y");
+	m_menuMain.AppendMenuW(MF_POPUP, (DWORD_PTR)m_menuClipboard.m_hMenu, L"Clipboard...");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_EDIT_COPY_HEX, L"Copy as Hex	Ctrl+C");
-
-	HINSTANCE hInst = AfxGetInstanceHandle();
-	//Menu icons.
-	MENUITEMINFOW mii { };
-	mii.cbSize = sizeof(MENUITEMINFOW);
-	mii.fMask = MIIM_BITMAP;
-	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)EMenu::IDM_EDIT_COPY_HEX] =
-		(HBITMAP)LoadImageW(hInst, MAKEINTRESOURCE(IDB_HEXCTRL_MENU_COPY), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-	m_menuMain.SetMenuItemInfoW((UINT_PTR)EMenu::IDM_EDIT_COPY_HEX, &mii);
-
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_EDIT_COPY_HEXFORMATTED, L"Copy as Formatted Hex");
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_EDIT_COPY_ASCII, L"Copy as Ascii");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_MAIN_UNDO, L"Undo	Ctrl+Z");
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_MAIN_REDO, L"Redo	Ctrl+Y");
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_EDIT_PASTE_HEX, L"Paste as Hex	Ctrl+V");
-	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)EMenu::IDM_EDIT_PASTE_HEX] =
-		(HBITMAP)LoadImageW(hInst, MAKEINTRESOURCE(IDB_HEXCTRL_MENU_PASTE), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-	m_menuMain.SetMenuItemInfoW((UINT_PTR)EMenu::IDM_EDIT_PASTE_HEX, &mii);
-
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_EDIT_PASTE_ASCII, L"Paste as Ascii");
-	m_menuMain.AppendMenuW(MF_SEPARATOR);
-	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_EDIT_FILL_ZEROS, L"Fill with zeros");
-
-	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)EMenu::IDM_EDIT_FILL_ZEROS] =
+	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_MAIN_FILL_ZEROS, L"Fill with zeros");
+	mii.hbmpItem = m_umapHBITMAP[(UINT_PTR)EMenu::IDM_MAIN_FILL_ZEROS] =
 		(HBITMAP)LoadImageW(hInst, MAKEINTRESOURCE(IDB_HEXCTRL_MENU_FILL_ZEROS), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-	m_menuMain.SetMenuItemInfoW((UINT_PTR)EMenu::IDM_EDIT_FILL_ZEROS, &mii);
-
+	m_menuMain.SetMenuItemInfoW((UINT_PTR)EMenu::IDM_MAIN_FILL_ZEROS, &mii);
 	m_menuMain.AppendMenuW(MF_SEPARATOR);
 	m_menuMain.AppendMenuW(MF_STRING, (UINT_PTR)EMenu::IDM_MAIN_ABOUT, L"About");
+	/* Menus end. */
 
 	m_pDlgSearch->Create(IDD_HEXCTRL_SEARCH, this);
 
-	FillWstrCapacity();
+	WstrCapacityFill();
 }
 
 CHexCtrl::~CHexCtrl()
@@ -154,11 +187,8 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT & hcs)
 	if (m_fCreated) //Already created.
 		return false;
 
-	m_fFloat = hcs.fFloat;
 	m_hwndMsg = hcs.hwndParent;
 	m_stColor = hcs.stColor;
-
-	m_stBrushBkSelected.CreateSolidBrush(m_stColor.clrBkSelected);
 
 	DWORD dwStyle = hcs.dwStyle;
 	//1. WS_POPUP style is vital for GetParent to work properly in m_fFloat mode.
@@ -166,10 +196,40 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT & hcs)
 	//2. Created HexCtrl window will always overlap (be on top of) its parent, or owner, window 
 	//   if pParentWnd is set (not nullptr) in CreateWindowEx.
 	//3. To force HexCtrl window on taskbar the WS_EX_APPWINDOW extended window style must be set.
-	if (m_fFloat)
+	if (hcs.fFloat)
 		dwStyle |= WS_VISIBLE | WS_POPUP | WS_OVERLAPPEDWINDOW;
 	else
 		dwStyle |= WS_VISIBLE | WS_CHILD;
+
+	CRect rc = hcs.rect;
+	if (rc.IsRectNull() && hcs.fFloat)
+	{	//If initial rect is null, and it's a float window HexCtrl, then place it at screen center.
+
+		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
+		int iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
+		int iPosCX = iPosX * 3;
+		int iPosCY = iPosY * 3;
+		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
+	}
+
+	CStringW strError;
+	if (!hcs.fCustomCtrl)
+	{
+		if (!CWnd::CreateEx(hcs.dwExStyle, WSTR_HEXCTRL_CLASSNAME, L"HexControl",
+			dwStyle, rc, CWnd::FromHandle(hcs.hwndParent), hcs.fFloat ? 0 : hcs.uID))
+			strError.Format(L"HexCtrl (Id:%u) CreateEx failed.\r\nCheck HEXCREATESTRUCT parameters.", hcs.uID);
+	}
+	else //If it's a Custom Control in dialog, there is no need to create a window, just subclassing.
+	{
+		if (!SubclassDlgItem(hcs.uID, CWnd::FromHandle(hcs.hwndParent)))
+			strError.Format(L"HexCtrl (Id:%u) SubclassDlgItem failed.\r\nCheck CreateDialogCtrl parameters.", hcs.uID);
+	}
+
+	if (strError.GetLength()) //If there was some Creation error.
+	{
+		MessageBoxW(strError, L"Error", MB_ICONERROR);
+		return false;
+	}
 
 	//Font related.//////////////////////////////////////////////
 	LOGFONTW lf { };
@@ -180,47 +240,12 @@ bool CHexCtrl::Create(const HEXCREATESTRUCT & hcs)
 		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
 		lf.lfHeight = 18;
 	}
-
-	m_fontHexView.CreateFontIndirectW(&lf);
 	m_lFontSize = lf.lfHeight;
+	m_fontHexView.CreateFontIndirectW(&lf);
 
 	lf.lfHeight = 16;
 	m_fontBottomRect.CreateFontIndirectW(&lf);
 	//End of font related.///////////////////////////////////////
-
-	CRect rc = hcs.rect;
-	if (rc.IsRectNull() && m_fFloat)
-	{	//If initial rect is null, and it's a float window HexCtrl, then place it at screen center.
-
-		int iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
-		int iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
-		int iPosCX = iPosX * 3;
-		int iPosCY = iPosY * 3;
-		rc.SetRect(iPosX, iPosY, iPosCX, iPosCY);
-	}
-
-	//If it's a custom dialog control, there is no need to create a window.
-	if (!hcs.fCustomCtrl)
-	{
-		if (!CWnd::CreateEx(hcs.dwExStyle, WSTR_HEXCTRL_CLASSNAME, L"HexControl",
-			dwStyle, rc, CWnd::FromHandle(hcs.hwndParent), m_fFloat ? 0 : hcs.uId))
-		{
-			CStringW ss;
-			ss.Format(L"HexCtrl (Id:%u) CreateEx failed.\r\nCheck HEXCREATESTRUCT parameters.", hcs.uId);
-			MessageBoxW(ss, L"Error", MB_ICONERROR);
-			return false;
-		}
-	}
-	else
-	{
-		if (!SubclassDlgItem(hcs.uId, CWnd::FromHandle(hcs.hwndParent)))
-		{
-			CStringW ss;
-			ss.Format(L"HexCtrl (Id:%u) SubclassDlgItem failed.\r\nCheck CreateDialogCtrl parameters.", hcs.uId);
-			MessageBoxW(ss, L"Error", MB_ICONERROR);
-			return false;
-		}
-	}
 
 	//Removing window's border frame.
 	MARGINS marg { 0, 0, 0, 1 };
@@ -243,7 +268,7 @@ bool CHexCtrl::CreateDialogCtrl(UINT uCtrlID, HWND hwndDlg)
 {
 	HEXCREATESTRUCT hcs;
 	hcs.hwndParent = hwndDlg;
-	hcs.uId = uCtrlID;
+	hcs.uID = uCtrlID;
 	hcs.fCustomCtrl = true;
 
 	return Create(hcs);
@@ -373,7 +398,7 @@ void CHexCtrl::SetCapacity(DWORD dwCapacity)
 	m_dwCapacity = dwCapacity;
 	m_dwCapacityBlockSize = m_dwCapacity / 2;
 
-	FillWstrCapacity();
+	WstrCapacityFill();
 	RecalcAll();
 }
 
@@ -419,37 +444,6 @@ HMENU CHexCtrl::GetMenuHandle()const
 void CHexCtrl::Destroy()
 {
 	delete this;
-}
-
-bool CHexCtrl::RegisterWndClass()
-{
-	//MFC initialization check, if Control is used outside MFC apps.
-	if (!AfxGetAppModuleState()->m_pCurrentWinApp)
-		AfxWinInit(::GetModuleHandleW(NULL), NULL, ::GetCommandLineW(), 0);
-
-	HINSTANCE hInst = AfxGetInstanceHandle();
-	WNDCLASSEXW wc { };
-
-	if (!(::GetClassInfoExW(hInst, WSTR_HEXCTRL_CLASSNAME, &wc)))
-	{
-		wc.cbSize = sizeof(WNDCLASSEXW);
-		wc.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
-		wc.lpfnWndProc = ::DefWindowProcW;
-		wc.cbClsExtra = wc.cbWndExtra = 0;
-		wc.hInstance = hInst;
-		wc.hIcon = wc.hIconSm = nullptr;
-		wc.hCursor = (HCURSOR)LoadImageW(0, IDC_ARROW, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
-		wc.hbrBackground = nullptr;
-		wc.lpszMenuName = nullptr;
-		wc.lpszClassName = WSTR_HEXCTRL_CLASSNAME;
-		if (!RegisterClassExW(&wc))
-		{
-			MessageBoxW(L"HexControl RegisterClassExW error.", L"Error");
-			return false;
-		}
-	}
-
-	return true;
 }
 
 void CHexCtrl::OnActivate(UINT nState, CWnd * pWndOther, BOOL bMinimized)
@@ -593,39 +587,41 @@ void CHexCtrl::OnMButtonDown(UINT nFlags, CPoint point)
 BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	static const wchar_t* const pwszErrVirtual { L"This function isn't supported in Virtual mode!" };
-
 	UINT_PTR uId = LOWORD(wParam);
 
 	switch (uId)
 	{
 	case (UINT_PTR)EMenu::IDM_MAIN_SEARCH:
-		if (m_enMode == EHexDataMode::DATA_DEFAULT)
+		if (m_enMode == EHexDataMode::DATA_MEMORY)
 			m_pDlgSearch->ShowWindow(SW_SHOW);
 		else
 			MessageBoxW(pwszErrVirtual, L"Error", MB_ICONEXCLAMATION);
 		break;
-	case (UINT_PTR)EMenu::IDM_EDIT_UNDO:
+	case (UINT_PTR)EMenu::IDM_MAIN_UNDO:
 		Undo();
 		break;
-	case (UINT_PTR)EMenu::IDM_EDIT_REDO:
+	case (UINT_PTR)EMenu::IDM_MAIN_REDO:
 		Redo();
 		break;
-	case (UINT_PTR)EMenu::IDM_EDIT_COPY_HEX:
+	case (UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_HEX:
 		ClipboardCopy(EClipboard::COPY_HEX);
 		break;
-	case (UINT_PTR)EMenu::IDM_EDIT_COPY_HEXFORMATTED:
+	case (UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_HEXFORMATTED:
 		ClipboardCopy(EClipboard::COPY_HEXFORMATTED);
 		break;
-	case (UINT_PTR)EMenu::IDM_EDIT_COPY_ASCII:
+	case (UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_ASCII:
 		ClipboardCopy(EClipboard::COPY_ASCII);
 		break;
-	case (UINT_PTR)EMenu::IDM_EDIT_PASTE_HEX:
+	case (UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_BASE64:
+		ClipboardCopy(EClipboard::COPY_BASE64);
+		break;
+	case (UINT_PTR)EMenu::IDM_CLIPBOARD_PASTE_HEX:
 		ClipboardPaste(EClipboard::PASTE_HEX);
 		break;
-	case (UINT_PTR)EMenu::IDM_EDIT_PASTE_ASCII:
+	case (UINT_PTR)EMenu::IDM_CLIPBOARD_PASTE_ASCII:
 		ClipboardPaste(EClipboard::PASTE_ASCII);
 		break;
-	case (UINT_PTR)EMenu::IDM_EDIT_FILL_ZEROS:
+	case (UINT_PTR)EMenu::IDM_MAIN_FILL_ZEROS:
 		FillWithZeros();
 		break;
 	case (UINT_PTR)EMenu::IDM_MAIN_ABOUT:
@@ -664,20 +660,20 @@ void CHexCtrl::OnContextMenu(CWnd * pWnd, CPoint point)
 	else
 		uMenuStatus = MF_ENABLED;
 
-	//To not spread up the efforts through code, all the checks are done here 
-	//instead of WM_INITMENUPOPUP.
-	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_EDIT_COPY_HEX, uMenuStatus | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_EDIT_COPY_HEXFORMATTED, uMenuStatus | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_EDIT_COPY_ASCII, uMenuStatus | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_EDIT_UNDO, (m_deqUndo.empty() ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_EDIT_REDO, (m_deqRedo.empty() ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
+	//To not spread up the efforts through code, all the checks are done here instead of WM_INITMENUPOPUP.
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_HEX, uMenuStatus | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_HEXFORMATTED, uMenuStatus | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_ASCII, uMenuStatus | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_CLIPBOARD_COPY_BASE64, uMenuStatus | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_MAIN_UNDO, (m_deqUndo.empty() ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_MAIN_REDO, (m_deqRedo.empty() ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
 
 	BOOL fFormatAvail = IsClipboardFormatAvailable(CF_TEXT);
-	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_EDIT_PASTE_HEX, ((m_fMutable && fFormatAvail) ?
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_CLIPBOARD_PASTE_HEX, ((m_fMutable && fFormatAvail) ?
 		uMenuStatus : MF_GRAYED) | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_EDIT_PASTE_ASCII, ((m_fMutable && fFormatAvail) ?
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_CLIPBOARD_PASTE_ASCII, ((m_fMutable && fFormatAvail) ?
 		uMenuStatus : MF_GRAYED) | MF_BYCOMMAND);
-	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_EDIT_FILL_ZEROS,
+	m_menuMain.EnableMenuItem((UINT_PTR)EMenu::IDM_MAIN_FILL_ZEROS,
 		(m_fMutable ? uMenuStatus : MF_GRAYED) | MF_BYCOMMAND);
 
 	//Notifying parent that we are about to display context menu.
@@ -803,8 +799,6 @@ void CHexCtrl::OnPaint()
 	RECT rc; //Used for all local rect related drawings.
 	pDC->GetClipBox(&rc);
 	pDC->FillSolidRect(&rc, m_stColor.clrBk);
-	pDC->SelectObject(m_penLines);
-	pDC->SelectObject(m_fontHexView);
 
 	//Find the ullLineStart and ullLineEnd position, draw the visible part.
 	const auto ullLineStart = GetTopLine();
@@ -817,16 +811,19 @@ void CHexCtrl::OnPaint()
 			ullLineEnd = (m_ullDataSize % m_dwCapacity) ? m_ullDataSize / m_dwCapacity + 1 : m_ullDataSize / m_dwCapacity;
 	}
 
+	const auto iSecondHorizLine = m_iStartWorkAreaY - 1;
 	const auto iThirdHorizLine = rcClient.Height() - m_iHeightBottomOffArea;
 	const auto iFourthHorizLine = iThirdHorizLine + m_iHeightBottomRect;
+
+	pDC->SelectObject(m_penLines);
 
 	//First horizontal line.
 	pDC->MoveTo(m_iFirstVertLine - iScrollH, m_iFirstHorizLine);
 	pDC->LineTo(m_iFourthVertLine, m_iFirstHorizLine);
 
 	//Second horizontal line.
-	pDC->MoveTo(m_iFirstVertLine - iScrollH, m_iSecondHorizLine);
-	pDC->LineTo(m_iFourthVertLine, m_iSecondHorizLine);
+	pDC->MoveTo(m_iFirstVertLine - iScrollH, iSecondHorizLine);
+	pDC->LineTo(m_iFourthVertLine, iSecondHorizLine);
 
 	//Third horizontal line.
 	pDC->MoveTo(m_iFirstVertLine - iScrollH, iThirdHorizLine);
@@ -835,38 +832,6 @@ void CHexCtrl::OnPaint()
 	//Fourth horizontal line.
 	pDC->MoveTo(m_iFirstVertLine - iScrollH, iFourthHorizLine);
 	pDC->LineTo(m_iFourthVertLine, iFourthHorizLine);
-
-	//«Offset» text.
-	rc.left = m_iFirstVertLine - iScrollH;
-	rc.top = m_iFirstHorizLine;
-	rc.right = m_iSecondVertLine - iScrollH;
-	rc.bottom = m_iSecondHorizLine;
-	pDC->SetTextColor(m_stColor.clrTextCaption);
-	pDC->DrawTextW(L"Offset", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-	//Info rect's text.
-	rc.left = m_iFirstVertLine - iScrollH;
-	rc.top = iThirdHorizLine + 1;
-	rc.right = m_iFourthVertLine;
-	rc.bottom = iFourthHorizLine;	//Fill bottom rect until iFourthHorizLine.
-	pDC->FillSolidRect(&rc, m_stColor.clrBkInfoRect);
-	rc.left = m_iFirstVertLine + 5; //Draw text beginning with little indent.
-	rc.right = rcClient.right;		//Draw text to the end of the client area, even if it pass iFourthHorizLine.
-	pDC->SetTextColor(m_stColor.clrTextInfoRect);
-	pDC->SelectObject(m_fontBottomRect);
-	pDC->DrawTextW(m_wstrBottomText.data(), (int)m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-
-	//Capacity numbers.
-	pDC->SelectObject(m_fontHexView);
-	pDC->SetTextColor(m_stColor.clrTextCaption);
-	pDC->SetBkColor(m_stColor.clrBk);
-	ExtTextOutW(pDC->m_hDC, m_iIndentFirstHexChunk - iScrollH, m_iFirstHorizLine + m_iIndentTextCapacityY, NULL, nullptr,
-		m_wstrCapacity.data(), (UINT)m_wstrCapacity.size(), nullptr);
-
-	//"Ascii" text.
-	rc.left = m_iThirdVertLine - iScrollH; rc.top = m_iFirstHorizLine;
-	rc.right = m_iFourthVertLine - iScrollH; rc.bottom = m_iSecondHorizLine;
-	pDC->DrawTextW(L"Ascii", 5, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
 
 	//First Vertical line.
 	pDC->MoveTo(m_iFirstVertLine - iScrollH, m_iFirstHorizLine);
@@ -884,7 +849,41 @@ void CHexCtrl::OnPaint()
 	pDC->MoveTo(m_iFourthVertLine - iScrollH, m_iFirstHorizLine);
 	pDC->LineTo(m_iFourthVertLine - iScrollH, iFourthHorizLine);
 
-	int iLine = 0;        //Current line to print.
+	//Bottom "Info" rect.
+	rc.left = m_iFirstVertLine + 1 - iScrollH;
+	rc.top = iThirdHorizLine + 1;
+	rc.right = m_iFourthVertLine;
+	rc.bottom = iFourthHorizLine;	//Fill bottom rect until iFourthHorizLine.
+	pDC->FillSolidRect(&rc, m_stColor.clrBkInfoRect);
+	rc.left = m_iFirstVertLine + 5; //Draw text beginning with little indent.
+	rc.right = rcClient.right;		//Draw text to the end of the client area, even if it pass iFourthHorizLine.
+	pDC->SelectObject(m_fontBottomRect);
+	pDC->SetTextColor(m_stColor.clrTextInfoRect);
+	pDC->SetBkColor(m_stColor.clrBkInfoRect);
+	pDC->DrawTextW(m_wstrBottomText.data(), (int)m_wstrBottomText.size(), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
+	//«Offset» text.
+	rc.left = m_iFirstVertLine - iScrollH;
+	rc.top = m_iFirstHorizLine;
+	rc.right = m_iSecondVertLine - iScrollH;
+	rc.bottom = iSecondHorizLine;
+	pDC->SelectObject(m_fontHexView);
+	pDC->SetTextColor(m_stColor.clrTextCaption);
+	pDC->SetBkColor(m_stColor.clrBk);
+	pDC->DrawTextW(L"Offset", 6, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+	//Capacity numbers.
+	ExtTextOutW(pDC->m_hDC, m_iIndentFirstHexChunk - iScrollH, m_iFirstHorizLine + m_iIndentTextCapacityY, NULL, nullptr,
+		m_wstrCapacity.data(), (UINT)m_wstrCapacity.size(), nullptr);
+
+	//"Ascii" text.
+	rc.left = m_iThirdVertLine - iScrollH;
+	rc.top = m_iFirstHorizLine;
+	rc.right = m_iFourthVertLine - iScrollH;
+	rc.bottom = iSecondHorizLine;
+	pDC->DrawTextW(L"Ascii", 5, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+	int iLine = 0; //Current line to print.
 	std::vector<POLYTEXTW> vecPolyHex, vecPolyAscii, vecPolySelHex, vecPolySelAscii, vecPolyCursor;
 	std::list<std::wstring> listWstrHex, listWstrAscii, listWstrSelHex, listWstrSelAscii, listWstrCursor;
 	COLORREF clrBkCursor; //Cursor color.
@@ -893,21 +892,24 @@ void CHexCtrl::OnPaint()
 	for (ULONGLONG iterLines = ullLineStart; iterLines < ullLineEnd; iterLines++, iLine++)
 	{
 		//Drawing offset with bk color depending on selection range.
-		if (m_ullSelectionSize && (iterLines * m_dwCapacity + m_dwCapacity) > m_ullSelectionStart &&
-			(iterLines * m_dwCapacity) < m_ullSelectionEnd)
+		COLORREF clrTextOffset, clrBkOffset;
+		if (m_ullSelectionSize && (iterLines * m_dwCapacity + m_dwCapacity) > m_ullSelectionStart
+			&& (iterLines * m_dwCapacity) < m_ullSelectionEnd)
 		{
-			pDC->SetTextColor(m_stColor.clrTextSelected);
-			pDC->SetBkColor(m_stColor.clrBkSelected);
+			clrTextOffset = m_stColor.clrTextSelected;
+			clrBkOffset = m_stColor.clrBkSelected;
 		}
 		else
 		{
-			pDC->SetTextColor(m_stColor.clrTextCaption);
-			pDC->SetBkColor(m_stColor.clrBk);
+			clrTextOffset = m_stColor.clrTextCaption;
+			clrBkOffset = m_stColor.clrBk;
 		}
 
 		//Left column offset printing (00000001...0000FFFF).
 		wchar_t pwszOffset[16];
 		UllToWchars(iterLines * m_dwCapacity, pwszOffset, (size_t)m_dwOffsetDigits / 2);
+		pDC->SetTextColor(clrTextOffset);
+		pDC->SetBkColor(clrBkOffset);
 		ExtTextOutW(pDC->m_hDC, m_iFirstVertLine + m_sizeLetter.cx - iScrollH, m_iStartWorkAreaY + (m_sizeLetter.cy * iLine),
 			NULL, nullptr, pwszOffset, m_dwOffsetDigits, nullptr);
 
@@ -1034,8 +1036,8 @@ void CHexCtrl::OnPaint()
 	}
 
 	//Hex printing.
-	pDC->SetBkColor(m_stColor.clrBk);
 	pDC->SetTextColor(m_stColor.clrTextHex);
+	pDC->SetBkColor(m_stColor.clrBk);
 	PolyTextOutW(pDC->m_hDC, vecPolyHex.data(), (UINT)vecPolyHex.size());
 
 	//Ascii printing.
@@ -1043,18 +1045,21 @@ void CHexCtrl::OnPaint()
 	PolyTextOutW(pDC->m_hDC, vecPolyAscii.data(), (UINT)vecPolyAscii.size());
 
 	//Hex selected printing.
-	pDC->SetBkColor(m_stColor.clrBkSelected);
-	pDC->SetTextColor(m_stColor.clrTextSelected);
-	PolyTextOutW(pDC->m_hDC, vecPolySelHex.data(), (UINT)vecPolySelHex.size());
+	if (!vecPolySelHex.empty())
+	{
+		pDC->SetTextColor(m_stColor.clrTextSelected);
+		pDC->SetBkColor(m_stColor.clrBkSelected);
+		PolyTextOutW(pDC->m_hDC, vecPolySelHex.data(), (UINT)vecPolySelHex.size());
 
-	//Ascii selected printing.
-	PolyTextOutW(pDC->m_hDC, vecPolySelAscii.data(), (UINT)vecPolySelAscii.size());
+		//Ascii selected printing.
+		PolyTextOutW(pDC->m_hDC, vecPolySelAscii.data(), (UINT)vecPolySelAscii.size());
+	}
 
 	//Cursor printing.
 	if (!vecPolyCursor.empty())
 	{
-		pDC->SetBkColor(clrBkCursor);
 		pDC->SetTextColor(m_stColor.clrTextCursor);
+		pDC->SetBkColor(clrBkCursor);
 		PolyTextOutW(pDC->m_hDC, vecPolyCursor.data(), (UINT)vecPolyCursor.size());
 	}
 }
@@ -1131,7 +1136,7 @@ BYTE CHexCtrl::GetByte(ULONGLONG ullIndex)const
 	//If it's virtual data control we aquire next byte_to_print from m_hwndMsg window.
 	switch (m_enMode)
 	{
-	case EHexDataMode::DATA_DEFAULT:
+	case EHexDataMode::DATA_MEMORY:
 	{
 		return m_pData[ullIndex];
 	}
@@ -1163,7 +1168,7 @@ void CHexCtrl::ModifyData(const HEXMODIFYSTRUCT & hms, bool fRedraw)
 
 	switch (m_enMode)
 	{
-	case EHexDataMode::DATA_DEFAULT: //Modify only in non Virtual mode.
+	case EHexDataMode::DATA_MEMORY: //Modify only in non Virtual mode.
 	{
 		if (hms.ullSize == hms.ullDataSize)
 		{
@@ -1249,7 +1254,6 @@ void CHexCtrl::RecalcAll()
 		(m_dwCapacityBlockSize / (DWORD)m_enShowMode - 1) * m_iSpaceBetweenHexChunks;
 	m_iHeightTopRect = std::lround(m_sizeLetter.cy * 1.5);
 	m_iStartWorkAreaY = m_iFirstHorizLine + m_iHeightTopRect;
-	m_iSecondHorizLine = m_iStartWorkAreaY - 1;
 	m_iIndentTextCapacityY = m_iHeightTopRect / 2 - (m_sizeLetter.cy / 2);
 
 	RecalcScrollSizes();
@@ -1371,6 +1375,7 @@ void CHexCtrl::ClipboardCopy(EClipboard enType)
 		MessageBoxW(L"Selection size is too big to copy.\r\nTry to select less.", L"Error", MB_ICONERROR);
 		return;
 	}
+
 	const char* const pszHexMap { "0123456789ABCDEF" };
 	std::string strToClipboard;
 
@@ -1403,7 +1408,7 @@ void CHexCtrl::ClipboardCopy(EClipboard enType)
 		{
 			DWORD dwCount = dwModStart * 2 + dwModStart / (DWORD)m_enShowMode;
 			//Additional spaces between halves. Only in ASBYTE's view mode.
-			dwCount += m_enShowMode == EShowMode::ASBYTE ? (dwTail <= m_dwCapacityBlockSize ? 2 : 0) : 0;
+			dwCount += (m_enShowMode == EShowMode::ASBYTE) ? (dwTail <= m_dwCapacityBlockSize ? 2 : 0) : 0;
 			strToClipboard.insert(0, (size_t)dwCount, ' ');
 		}
 
@@ -1415,7 +1420,7 @@ void CHexCtrl::ClipboardCopy(EClipboard enType)
 
 			if (i < (m_ullSelectionSize - 1) && (dwTail - 1) != 0)
 				if (m_enShowMode == EShowMode::ASBYTE && dwTail == dwNextBlock)
-					strToClipboard += "   "; //Additional spaces between halves. Only in BYTE's view mode.
+					strToClipboard += "   "; //Additional spaces between halves. Only in ASBYTE view mode.
 				else if (((m_dwCapacity - dwTail + 1) % (DWORD)m_enShowMode) == 0) //Add space after hex full chunk, ShowAs_size depending.
 					strToClipboard += " ";
 			if (--dwTail == 0 && i < (m_ullSelectionSize - 1)) //Next row.
@@ -1437,6 +1442,28 @@ void CHexCtrl::ClipboardCopy(EClipboard enType)
 				ch = ' ';
 			strToClipboard += ch;
 		}
+	}
+	break;
+	case EClipboard::COPY_BASE64:
+	{
+		const char* const pszBase64Map { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" };
+		unsigned int uValA = 0;
+		int iValB = -6;
+		for (unsigned i = 0; i < m_ullSelectionSize; i++)
+		{
+			uValA = (uValA << 8) + GetByte(m_ullSelectionStart + i);
+			iValB += 8;
+			while (iValB >= 0)
+			{
+				strToClipboard += pszBase64Map[(uValA >> iValB) & 0x3F];
+				iValB -= 6;
+			}
+		}
+
+		if (iValB > -6)
+			strToClipboard += pszBase64Map[((uValA << 8) >> (iValB + 8)) & 0x3F];
+		while (strToClipboard.size() % 4)
+			strToClipboard += '=';
 	}
 	break;
 	default: //default.
@@ -1875,7 +1902,7 @@ void CHexCtrl::Undo()
 {
 	switch (m_enMode)
 	{
-	case EHexDataMode::DATA_DEFAULT:
+	case EHexDataMode::DATA_MEMORY:
 	{
 		if (m_deqUndo.empty())
 			return;
@@ -1916,7 +1943,7 @@ void CHexCtrl::Redo()
 {
 	switch (m_enMode)
 	{
-	case EHexDataMode::DATA_DEFAULT:
+	case EHexDataMode::DATA_MEMORY:
 	{
 		if (m_deqRedo.empty())
 			return;
@@ -2395,7 +2422,7 @@ void CHexCtrl::FillWithZeros()
 	ModifyData(hms);
 }
 
-void CHexCtrl::FillWstrCapacity()
+void CHexCtrl::WstrCapacityFill()
 {
 	m_wstrCapacity.clear();
 	m_wstrCapacity.reserve((size_t)m_dwCapacity * 3);
@@ -2413,7 +2440,7 @@ void CHexCtrl::FillWstrCapacity()
 		}
 
 		//Additional space between hex chunk blocks.
-		if (((iter + 1) % (DWORD)m_enShowMode) == 0)
+		if ((((iter + 1) % (DWORD)m_enShowMode) == 0) && (iter < (m_dwCapacity - 1)))
 			m_wstrCapacity += L" ";
 
 		//Additional space between hex halves.
