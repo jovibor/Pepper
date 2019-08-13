@@ -52,12 +52,15 @@ BEGIN_MESSAGE_MAP(CListEx, CMFCListCtrl)
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-bool CListEx::Create(const LISTEXCREATESTRUCT & lcs)
+bool CListEx::Create(const LISTEXCREATESTRUCT& lcs)
 {
 	if (lcs.fDialogCtrl)
+	{
+		SubclassDlgItem(lcs.uID, lcs.pwndParent);
 		SetWindowLongPtrW(m_hWnd, GWL_STYLE, GetWindowLongPtrW(m_hWnd, GWL_STYLE) | LVS_OWNERDRAWFIXED | LVS_REPORT);
+	}
 	else if (!CMFCListCtrl::Create(lcs.dwStyle | WS_CHILD | WS_VISIBLE | LVS_OWNERDRAWFIXED | LVS_REPORT,
-		lcs.rect, lcs.pwndParent, lcs.nID))
+		lcs.rect, lcs.pwndParent, lcs.uID))
 		return false;
 
 	m_stColor = lcs.stColor;
@@ -68,6 +71,7 @@ bool CListEx::Create(const LISTEXCREATESTRUCT & lcs)
 		nullptr, nullptr, nullptr, nullptr);
 	if (!m_hwndTt)
 		return false;
+	
 	SetWindowTheme(m_hwndTt, nullptr, L""); //To prevent Windows from changing theme of Balloon window.
 
 	m_stToolInfo.cbSize = TTTOOLINFOW_V1_SIZE;
@@ -107,10 +111,13 @@ bool CListEx::Create(const LISTEXCREATESTRUCT & lcs)
 	return true;
 }
 
-void CListEx::CreateDialogCtrl()
+void CListEx::CreateDialogCtrl(UINT uCtrlID, CWnd* pwndDlg)
 {
 	LISTEXCREATESTRUCT lcs;
+	lcs.pwndParent = pwndDlg;
+	lcs.uID = uCtrlID;
 	lcs.fDialogCtrl = true;
+
 	Create(lcs);
 }
 
@@ -182,19 +189,21 @@ UINT CListEx::GetFontSize()
 
 void CListEx::SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption)
 {
-	//Checking if nullptr, and assign empty string in this case.
+	//Checking for nullptr, and assign empty string in such case.
 	const wchar_t* pCaption = pwszCaption ? pwszCaption : L"";
 	const wchar_t* pTooltip = pwszTooltip ? pwszTooltip : L"";
 
 	auto it = m_umapCellTt.find(iItem);
 
 	//If there is no tooltip for such item/subitem we just set it.
-	if (it == m_umapCellTt.end() && (pwszTooltip || pwszCaption))
+	if (it == m_umapCellTt.end())
 	{
-		//Initializing inner map.
-		std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner {
-			{ iSubitem, { pTooltip, pCaption } } };
-		m_umapCellTt.insert({ iItem, std::move(umapInner) });
+		if (pwszTooltip || pwszCaption)
+		{	//Initializing inner map.
+			std::unordered_map<int, std::tuple< std::wstring, std::wstring>> umapInner {
+				{ iSubitem, { pTooltip, pCaption } } };
+			m_umapCellTt.insert({ iItem, std::move(umapInner) });
+		}
 	}
 	else
 	{
@@ -203,13 +212,18 @@ void CListEx::SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip
 		//If there is Item's tooltip but no Subitem's tooltip
 		//inserting new Subitem into inner map.
 		if (itInner == it->second.end())
-			it->second.insert({ iSubitem, { pTooltip, pCaption } });
-		else //If there is already exist this Item-Subitem's tooltip:
-			 //change or erase it, depending on pwszTooltip emptiness.
+		{
+			if (pwszTooltip || pwszCaption)
+				it->second.insert({ iSubitem, { pTooltip, pCaption } });
+		}
+		else
+		{	//If there is already exist this Item-Subitem's tooltip:
+			//change or erase it, depending on pwszTooltip emptiness.
 			if (pwszTooltip)
 				itInner->second = { pwszTooltip, pCaption };
 			else
 				it->second.erase(itInner);
+		}
 	}
 }
 
@@ -425,7 +439,7 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	}
 }
 
-void CListEx::OnMouseMove(UINT nFlags, CPoint pt)
+void CListEx::OnMouseMove(UINT /*nFlags*/, CPoint pt)
 {
 	LVHITTESTINFO hi { };
 	hi.pt = pt;
@@ -501,7 +515,7 @@ void CListEx::OnRButtonDown(UINT nFlags, CPoint pt)
 	CMFCListCtrl::OnRButtonDown(nFlags, pt);
 }
 
-void CListEx::OnContextMenu(CWnd * pWnd, CPoint pt)
+void CListEx::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 {
 	LVHITTESTINFO hi;
 	ScreenToClient(&pt);
@@ -553,16 +567,16 @@ void CListEx::OnTimer(UINT_PTR nIDEvent)
 	CMFCListCtrl::OnTimer(nIDEvent);
 }
 
-BOOL CListEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
+BOOL CListEx::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 {
 	return CMFCListCtrl::OnSetCursor(pWnd, nHitTest, message);
 }
 
-void CListEx::OnKillFocus(CWnd * pNewWnd)
+void CListEx::OnKillFocus(CWnd* /*pNewWnd*/)
 {
 }
 
-BOOL CListEx::OnEraseBkgnd(CDC * pDC)
+BOOL CListEx::OnEraseBkgnd(CDC* /*pDC*/)
 {
 	return FALSE;
 }
@@ -585,19 +599,19 @@ void CListEx::OnPaint()
 	DefWindowProcW(WM_PAINT, (WPARAM)rDC.m_hDC, (LPARAM)0);
 }
 
-void CListEx::OnHdnDividerdblclick(NMHDR * pNMHDR, LRESULT * pResult)
+void CListEx::OnHdnDividerdblclick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 {
 	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	//*pResult = 0;
 }
 
-void CListEx::OnHdnBegintrack(NMHDR * pNMHDR, LRESULT * pResult)
+void CListEx::OnHdnBegintrack(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 {
 	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	//*pResult = 0;
 }
 
-void CListEx::OnHdnTrack(NMHDR * pNMHDR, LRESULT * pResult)
+void CListEx::OnHdnTrack(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 {
 	//LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	//*pResult = 0;

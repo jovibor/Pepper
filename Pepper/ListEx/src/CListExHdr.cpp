@@ -34,7 +34,7 @@ CListExHdr::CListExHdr()
 	m_hdItem.pszText = m_wstrHeaderText;
 }
 
-void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BOOL bIsHighlighted)
+void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL /*bIsPressed*/, BOOL /*bIsHighlighted*/)
 {
 	if (iItem < 0) { //Non working area, after last column.
 		pDC->FillSolidRect(&rect, m_clrBkNWA);
@@ -70,7 +70,7 @@ void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BO
 		rDC.DrawTextW(m_wstrHeaderText, &rect, DT_VCENTER | DT_CENTER | DT_SINGLELINE);
 }
 
-LRESULT CListExHdr::OnLayout(WPARAM wParam, LPARAM lParam)
+LRESULT CListExHdr::OnLayout(WPARAM /*wParam*/, LPARAM lParam)
 {
 	CMFCHeaderCtrl::DefWindowProcW(HDM_LAYOUT, 0, lParam);
 

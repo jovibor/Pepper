@@ -1,6 +1,6 @@
 /****************************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
-* This software is available under the "MIT License modified with The Commons Clause".				*
+* This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
 * libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
@@ -81,7 +81,7 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	m_pChildFrame->m_stSplitterRightTop.RecalcLayout();
 }
 
-void CViewRightTR::OnDraw(CDC * pDC)
+void CViewRightTR::OnDraw(CDC* /*pDC*/)
 {
 }
 

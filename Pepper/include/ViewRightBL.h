@@ -1,6 +1,6 @@
 /****************************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
-* This software is available under the "MIT License modified with The Commons Clause".				*
+* This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
 * libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
@@ -31,7 +31,7 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	int CreateHexDosHeaderEntry(DWORD dwEntry);
 	int CreateHexRichHeaderEntry(DWORD dwEntry);
-	int CreateHexNtHeaderEntry(DWORD dwEntry);
+	int CreateHexNtHeaderEntry(); //There is only one entry in this header, no dwEntry needed.
 	int CreateHexFileHeaderEntry(DWORD dwEntry);
 	int CreateHexOptHeaderEntry(DWORD dwEntry);
 	int CreateHexDataDirsEntry(DWORD dwEntry);

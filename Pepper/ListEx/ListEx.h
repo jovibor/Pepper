@@ -36,16 +36,16 @@ namespace LISTEX {
 	* LISTEXCREATESTRUCT - Main initialization helper struct for CListEx::Create method.		*
 	********************************************************************************************/
 	struct LISTEXCREATESTRUCT {
-		LISTEXCOLORSTRUCT	stColor { };					//All control's colors. If nullptr defaults are used.
-		DWORD				dwStyle { };					//Control's styles. Zero for default.
-		CRect				rect;							//Initial rect.
-		CWnd*				pwndParent { };					//Parent window.
-		UINT				nID { };						//Control Id.
-		const LOGFONT*		pListLogFont { };				//List font.
-		const LOGFONT*		pHeaderLogFont { };				//List header font.
-		DWORD				dwListGridWidth { 1 };			//Width of the list grid.
-		DWORD				dwHeaderHeight { 20 };			//List header height.
-		bool				fDialogCtrl { false };			//If it's a list within dialog.
+		LISTEXCOLORSTRUCT stColor { };           //All control's colors.
+		CWnd*             pwndParent { };        //Parent window.
+		const LOGFONTW*   pListLogFont { };      //List font.
+		const LOGFONTW*   pHeaderLogFont { };    //List header font.
+		DWORD             dwStyle { };           //Control's styles. Zero for default.
+		CRect             rect;                  //Initial rect.
+		UINT              uID { };               //Control Id.
+		DWORD             dwListGridWidth { 1 }; //Width of the list grid.
+		DWORD             dwHeaderHeight { 20 }; //List header height.
+		bool              fDialogCtrl { false }; //If it's a list within dialog.
 	};
 
 	/********************************************
@@ -56,7 +56,7 @@ namespace LISTEX {
 	public:
 		virtual ~IListEx() = default;
 		virtual bool Create(const LISTEXCREATESTRUCT& lcs) = 0;
-		virtual void CreateDialogCtrl() = 0;
+		virtual void CreateDialogCtrl(UINT uCtrlID, CWnd* pwndDlg) = 0;
 		virtual bool IsCreated() = 0;
 		virtual void SetColor(const LISTEXCOLORSTRUCT& lcs) = 0;
 		virtual void SetFont(const LOGFONTW* pLogFontNew) = 0;

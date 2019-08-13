@@ -1,6 +1,6 @@
 /****************************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
-* This software is available under the "MIT License modified with The Commons Clause".				*
+* This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
 * libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "ViewRightBL.h"
 #include "res/resource.h"
+#include "constants.h"
 
 IMPLEMENT_DYNCREATE(CViewRightBL, CView)
 
@@ -78,7 +79,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		CreateHexRichHeaderEntry(HIWORD(lHint));
 		break;
 	case IDC_LIST_NTHEADER_ENTRY:
-		CreateHexNtHeaderEntry(HIWORD(lHint));
+		CreateHexNtHeaderEntry();
 		break;
 	case IDC_LIST_FILEHEADER_ENTRY:
 		CreateHexFileHeaderEntry(HIWORD(lHint));
@@ -147,11 +148,11 @@ void CViewRightBL::OnSize(UINT nType, int cx, int cy)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBL::OnDraw(CDC * pDC)
+void CViewRightBL::OnDraw(CDC* /*pDC*/)
 {
 }
 
-BOOL CViewRightBL::OnEraseBkgnd(CDC * pDC)
+BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 {
 	return CView::OnEraseBkgnd(pDC);
 }
@@ -242,7 +243,7 @@ int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 	return 0;
 }
 
-int CViewRightBL::CreateHexNtHeaderEntry(DWORD dwEntry)
+int CViewRightBL::CreateHexNtHeaderEntry()
 {
 	PCLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
@@ -411,7 +412,7 @@ int CViewRightBL::CreateListExportFuncs()
 	if (!m_listExportFuncs->IsCreated())
 	{
 		m_stlcs.dwStyle = 0;
-		m_stlcs.nID = IDC_LIST_EXPORT_FUNCS;
+		m_stlcs.uID = IDC_LIST_EXPORT_FUNCS;
 		m_listExportFuncs->Create(m_stlcs);
 		m_listExportFuncs->ShowWindow(SW_HIDE);
 		m_listExportFuncs->InsertColumn(0, L"Offset", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 90);
@@ -458,7 +459,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 	if (!m_listImportEntry->IsCreated())
 	{
 		m_stlcs.dwStyle = 0;
-		m_stlcs.nID = IDC_LIST_IMPORT_ENTRY;
+		m_stlcs.uID = IDC_LIST_IMPORT_ENTRY;
 		m_listImportEntry->Create(m_stlcs);
 		m_listImportEntry->InsertColumn(0, L"Offset", 0, 90);
 		m_listImportEntry->SetHeaderColumnColor(0, g_clrOffset);
@@ -567,7 +568,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 	if (!m_listDelayImportEntry->IsCreated())
 	{
 		m_stlcs.dwStyle = 0;
-		m_stlcs.nID = IDC_LIST_DELAYIMPORT_ENTRY;
+		m_stlcs.uID = IDC_LIST_DELAYIMPORT_ENTRY;
 		m_listDelayImportEntry->Create(m_stlcs);
 		m_listDelayImportEntry->InsertColumn(0, L"Offset", 0, 90);
 		m_listDelayImportEntry->SetHeaderColumnColor(0, g_clrOffset);
@@ -661,7 +662,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	if (!m_listRelocsEntry->IsCreated())
 	{
 		m_stlcs.dwStyle = 0;
-		m_stlcs.nID = IDC_LIST_RELOCATIONS_ENTRY;
+		m_stlcs.uID = IDC_LIST_RELOCATIONS_ENTRY;
 		m_listRelocsEntry->Create(m_stlcs);
 		m_listRelocsEntry->ShowWindow(SW_HIDE);
 		m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
@@ -677,17 +678,17 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 		return -1;
 
 	const std::map<WORD, std::wstring> mapRelocTypes {
-		{ IMAGE_REL_BASED_ABSOLUTE, L"IMAGE_REL_BASED_ABSOLUTE" },
-	{ IMAGE_REL_BASED_HIGH, L"IMAGE_REL_BASED_HIGH" },
-	{ IMAGE_REL_BASED_LOW, L"IMAGE_REL_BASED_LOW" },
-	{ IMAGE_REL_BASED_HIGHLOW, L"IMAGE_REL_BASED_HIGHLOW" },
-	{ IMAGE_REL_BASED_HIGHADJ, L"IMAGE_REL_BASED_HIGHADJ" },
-	{ IMAGE_REL_BASED_MACHINE_SPECIFIC_5, L"IMAGE_REL_BASED_MACHINE_SPECIFIC_5" },
-	{ IMAGE_REL_BASED_RESERVED, L"IMAGE_REL_BASED_RESERVED" },
-	{ IMAGE_REL_BASED_MACHINE_SPECIFIC_7, L"IMAGE_REL_BASED_MACHINE_SPECIFIC_7" },
-	{ IMAGE_REL_BASED_MACHINE_SPECIFIC_8, L"IMAGE_REL_BASED_MACHINE_SPECIFIC_8" },
-	{ IMAGE_REL_BASED_MACHINE_SPECIFIC_9, L"IMAGE_REL_BASED_MACHINE_SPECIFIC_9" },
-	{ IMAGE_REL_BASED_DIR64, L"IMAGE_REL_BASED_DIR64" }
+		TO_WSTR_MAP(IMAGE_REL_BASED_ABSOLUTE),
+		TO_WSTR_MAP(IMAGE_REL_BASED_HIGH),
+		TO_WSTR_MAP(IMAGE_REL_BASED_LOW),
+		TO_WSTR_MAP(IMAGE_REL_BASED_HIGHLOW),
+		TO_WSTR_MAP(IMAGE_REL_BASED_HIGHADJ),
+		TO_WSTR_MAP(IMAGE_REL_BASED_MACHINE_SPECIFIC_5),
+		TO_WSTR_MAP(IMAGE_REL_BASED_RESERVED),
+		TO_WSTR_MAP(IMAGE_REL_BASED_MACHINE_SPECIFIC_7),
+		TO_WSTR_MAP(IMAGE_REL_BASED_MACHINE_SPECIFIC_8),
+		TO_WSTR_MAP(IMAGE_REL_BASED_MACHINE_SPECIFIC_9),
+		TO_WSTR_MAP(IMAGE_REL_BASED_DIR64)
 	};
 
 	int listindex = 0;

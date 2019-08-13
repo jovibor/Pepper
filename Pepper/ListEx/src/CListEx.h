@@ -22,22 +22,22 @@ namespace LISTEX {
 		DECLARE_DYNAMIC(CListEx)
 		CListEx() {}
 		virtual ~CListEx() {}
-		bool Create(const LISTEXCREATESTRUCT& lcs);
-		void CreateDialogCtrl();
-		bool IsCreated();
-		void SetColor(const LISTEXCOLORSTRUCT& lcs);
-		void SetFont(const LOGFONTW* pLogFontNew);
-		void SetFontSize(UINT uiSize);
-		UINT GetFontSize();
-		void SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption = nullptr);
-		void SetCellMenu(int iItem, int iSubitem, CMenu* pMenu);
-		void SetListMenu(CMenu* pMenu);
-		void SetCellData(int iItem, int iSubitem, DWORD_PTR dwData);
-		DWORD_PTR GetCellData(int iItem, int iSubitem);
-		void SetHeaderHeight(DWORD dwHeight);
-		void SetHeaderFont(const LOGFONT* pLogFontNew);
-		void SetHeaderColumnColor(DWORD nColumn, COLORREF clr);
-		void Destroy() override;
+		bool Create(const LISTEXCREATESTRUCT& lcs)override;
+		void CreateDialogCtrl(UINT uCtrlID, CWnd* pwndDlg)override;
+		bool IsCreated()override;
+		void SetColor(const LISTEXCOLORSTRUCT& lcs)override;
+		void SetFont(const LOGFONTW* pLogFontNew)override;
+		void SetFontSize(UINT uiSize)override;
+		UINT GetFontSize()override;
+		void SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption = nullptr)override;
+		void SetCellMenu(int iItem, int iSubitem, CMenu* pMenu)override;
+		void SetListMenu(CMenu* pMenu)override;
+		void SetCellData(int iItem, int iSubitem, DWORD_PTR dwData)override;
+		DWORD_PTR GetCellData(int iItem, int iSubitem)override;
+		void SetHeaderHeight(DWORD dwHeight)override;
+		void SetHeaderFont(const LOGFONT* pLogFontNew)override;
+		void SetHeaderColumnColor(DWORD nColumn, COLORREF clr)override;
+		void Destroy()override;
 		DECLARE_MESSAGE_MAP()
 	protected:
 		CListExHdr& GetHeaderCtrl() override { return m_stListHeader; }

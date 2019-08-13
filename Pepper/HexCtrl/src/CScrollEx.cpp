@@ -2,13 +2,13 @@
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/                         *
 * This is a Hex Control for MFC applications.                                           *
 * Official git repository of the project: https://github.com/jovibor/HexCtrl/           *
-* This software is available under the "MIT License modified with The Commons Clause".  *
+* This software is available under the "MIT License".  *
 * https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
 * For more information visit the project's official repository.                         *
 ****************************************************************************************/
 /****************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						    *
-* This code is available under the "MIT License modified with The Commons Clause"		*
+* This code is available under the "MIT License"		*
 * Scroll bar control class for MFC apps.												*
 * The main creation purpose of this control is the innate 32-bit range limitation		*
 * of the standard Windows' scrollbars.													*
@@ -252,7 +252,7 @@ void CScrollEx::SetScrollPageSize(ULONGLONG ullSize)
 	m_ullScrollPage = ullSize;
 }
 
-BOOL CScrollEx::OnNcActivate(BOOL bActive)const
+BOOL CScrollEx::OnNcActivate(BOOL /*bActive*/)const
 {
 	if (!m_fCreated)
 		return FALSE;
@@ -263,7 +263,7 @@ BOOL CScrollEx::OnNcActivate(BOOL bActive)const
 	return TRUE;
 }
 
-void CScrollEx::OnNcCalcSize(BOOL bCalcValidRects, NCCALCSIZE_PARAMS * lpncsp)
+void CScrollEx::OnNcCalcSize(BOOL /*bCalcValidRects*/, NCCALCSIZE_PARAMS * lpncsp)
 {
 	if (!m_fCreated)
 		return;
@@ -322,7 +322,7 @@ void CScrollEx::OnNcPaint()const
 	DrawScrollBar();
 }
 
-void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
+void CScrollEx::OnSetCursor(CWnd * /*pWnd*/, UINT nHitTest, UINT message)
 {
 	if (!m_fCreated || nHitTest == HTTOPLEFT || nHitTest == HTLEFT || nHitTest == HTTOPRIGHT || nHitTest == HTSIZE
 		|| nHitTest == HTBOTTOMLEFT || nHitTest == HTRIGHT || nHitTest == HTBOTTOM || nHitTest == HTBOTTOMRIGHT)
@@ -378,7 +378,7 @@ void CScrollEx::OnSetCursor(CWnd * pWnd, UINT nHitTest, UINT message)
 	}
 }
 
-void CScrollEx::OnMouseMove(UINT nFlags, CPoint point)
+void CScrollEx::OnMouseMove(UINT /*nFlags*/, CPoint point)
 {
 	if (!m_fCreated || !IsThumbDragging())
 		return;
@@ -428,7 +428,7 @@ void CScrollEx::OnMouseMove(UINT nFlags, CPoint point)
 		SetThumbPos(iNewPos);
 }
 
-void CScrollEx::OnLButtonUp(UINT nFlags, CPoint point)
+void CScrollEx::OnLButtonUp(UINT /*nFlags*/, CPoint /*point*/)
 {
 	if (!m_fCreated)
 		return;

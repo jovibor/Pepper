@@ -1,6 +1,6 @@
 /****************************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
-* This software is available under the "MIT License modified with The Commons Clause".				*
+* This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
 * libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
@@ -33,12 +33,12 @@ void CTreeEx::OnPaint()
 	DefWindowProcW(WM_PAINT, (WPARAM)rDC.m_hDC, (LPARAM)0);
 }
 
-BOOL CTreeEx::OnEraseBkgnd(CDC * pDC)
+BOOL CTreeEx::OnEraseBkgnd(CDC* /*pDC*/)
 {
 	return FALSE;
 }
 
-void CTreeEx::OnKillFocus(CWnd* pNewWnd)
+void CTreeEx::OnKillFocus(CWnd* /*pNewWnd*/)
 {
 	//CTreeCtrl::OnKillFocus(pNewWnd);
 }

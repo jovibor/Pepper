@@ -1,6 +1,6 @@
 /****************************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
-* This software is available under the "MIT License modified with The Commons Clause".				*
+* This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
 * libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
@@ -99,50 +99,4 @@ private:
 	SIZE m_sizeLetter { }, m_sizeStrStyles { };
 	const int m_iResDlgIndentToDrawX { 10 };
 	const int m_iResDlgIndentToDrawY { 2 };
-	const std::map<int, std::wstring> m_mapVerInfoStrings {
-		{ 0, L"FileDescription" },
-	{ 1, L"FileVersion" },
-	{ 2, L"InternalName" },
-	{ 3, L"CompanyName" },
-	{ 4, L"LegalCopyright" },
-	{ 5, L"OriginalFilename" },
-	{ 6, L"ProductName" },
-	{ 7, L"ProductVersion" }
-	};
-	const std::map<DWORD, std::wstring> m_mapDlgStyles {
-		{ DS_ABSALIGN, L"DS_ABSALIGN" },
-	{ DS_SYSMODAL, L"DS_SYSMODAL" },
-	{ DS_LOCALEDIT, L"DS_LOCALEDIT" },
-	{ DS_SETFONT, L"DS_SETFONT" },
-	{ DS_MODALFRAME, L"DS_MODALFRAME" },
-	{ DS_NOIDLEMSG, L"DS_NOIDLEMSG" },
-	{ DS_SETFOREGROUND, L"DS_SETFOREGROUND" },
-	{ DS_3DLOOK, L"DS_3DLOOK" },
-	{ DS_FIXEDSYS, L"DS_FIXEDSYS" },
-	{ DS_NOFAILCREATE, L"DS_NOFAILCREATE" },
-	{ DS_CONTROL, L"DS_CONTROL" },
-	{ DS_CENTER, L"DS_CENTER" },
-	{ DS_CENTERMOUSE, L"DS_CENTERMOUSE" },
-	{ DS_CONTEXTHELP, L"DS_CONTEXTHELP" },
-	{ 0x8000L, L"DS_USEPIXELS" },
-	{ WS_OVERLAPPED, L"WS_OVERLAPPED" },
-	{ WS_POPUP, L"WS_POPUP" },
-	{ WS_CHILD, L"WS_CHILD" },
-	{ WS_MINIMIZE, L"WS_MINIMIZE" },
-	{ WS_VISIBLE, L"WS_VISIBLE" },
-	{ WS_DISABLED, L"WS_DISABLED" },
-	{ WS_CLIPSIBLINGS, L"WS_CLIPSIBLINGS" },
-	{ WS_CLIPCHILDREN, L"WS_CLIPCHILDREN" },
-	{ WS_MAXIMIZE, L"WS_MAXIMIZE" },
-	{ WS_CAPTION, L"WS_CAPTION" },
-	{ WS_BORDER, L"WS_BORDER" },
-	{ WS_DLGFRAME, L"WS_DLGFRAME" },
-	{ WS_VSCROLL, L"WS_VSCROLL" },
-	{ WS_HSCROLL, L"WS_HSCROLL" },
-	{ WS_SYSMENU, L"WS_SYSMENU" },
-	{ WS_THICKFRAME, L"WS_THICKFRAME" },
-	{ WS_MINIMIZEBOX, L"WS_MINIMIZEBOX" },
-	{ WS_MAXIMIZEBOX, L"WS_MAXIMIZEBOX" },
-	{ WS_TILEDWINDOW, L"WS_TILEDWINDOW" }
-	};
 };

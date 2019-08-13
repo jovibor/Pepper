@@ -2,7 +2,7 @@
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/                         *
 * This is a Hex Control for MFC applications.                                           *
 * Official git repository of the project: https://github.com/jovibor/HexCtrl/           *
-* This software is available under the "MIT License modified with The Commons Clause".  *
+* This software is available under the "MIT License".  *
 * https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
 * For more information visit the project's official repository.                         *
 ****************************************************************************************/
@@ -487,7 +487,7 @@ void CHexCtrl::OnMouseMove(UINT nFlags, CPoint point)
 		}
 
 		const ULONGLONG ullHit = HitTest(&point);
-		if (ullHit != -1)
+		if (ullHit != 0xFFFFFFFFFFFFFFFFull)
 		{
 			ULONGLONG ullClick, ullStart, ullSize;
 			if (ullHit <= m_ullSelectionClick) {
@@ -536,10 +536,11 @@ void CHexCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 	SetFocus();
 
 	const ULONGLONG ullHit = HitTest(&point);
-	if (ullHit == -1)
+	if (ullHit == 0xFFFFFFFFFFFFFFFFull)
 		return;
 
 	SetCapture();
+
 	if (m_ullSelectionSize && (nFlags & MK_SHIFT))
 	{
 		if (ullHit <= m_ullSelectionClick)
@@ -580,7 +581,7 @@ void CHexCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 	CWnd::OnLButtonUp(nFlags, point);
 }
 
-void CHexCtrl::OnMButtonDown(UINT nFlags, CPoint point)
+void CHexCtrl::OnMButtonDown(UINT /*nFlags*/, CPoint /*point*/)
 {
 }
 
@@ -626,7 +627,7 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 	case (UINT_PTR)EMenu::IDM_MAIN_ABOUT:
 	{
-		CHexDlgAbout m_dlgAbout;
+		CHexDlgAbout m_dlgAbout(this);
 		m_dlgAbout.DoModal();
 	}
 	break;
@@ -652,7 +653,7 @@ BOOL CHexCtrl::OnCommand(WPARAM wParam, LPARAM lParam)
 	return CWnd::OnCommand(wParam, lParam);
 }
 
-void CHexCtrl::OnContextMenu(CWnd * pWnd, CPoint point)
+void CHexCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 {
 	UINT uMenuStatus;
 	if (m_ullDataSize == 0 || m_ullSelectionSize == 0)
@@ -682,7 +683,7 @@ void CHexCtrl::OnContextMenu(CWnd * pWnd, CPoint point)
 	m_menuMain.TrackPopupMenu(TPM_LEFTALIGN | TPM_TOPALIGN | TPM_LEFTBUTTON, point.x, point.y, this);
 }
 
-void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CHexCtrl::OnKeyDown(UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/)
 {
 	if (GetKeyState(VK_CONTROL) < 0) //With Ctrl pressed.
 		OnKeyDownCtrl(nChar);
@@ -720,7 +721,7 @@ void CHexCtrl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	}
 }
 
-void CHexCtrl::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CHexCtrl::OnChar(UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/)
 {
 	if (!m_fMutable || (GetKeyState(VK_CONTROL) < 0))
 		return;
@@ -729,20 +730,17 @@ void CHexCtrl::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
 	hmd.ullIndex = m_ullCursorPos;
 	hmd.ullSize = hmd.ullDataSize = 1;
 
-	BYTE chByte;
+	BYTE chByte = nChar & 0xFF;
 	if (IsCurTextArea()) //If cursor is in text area.
-	{
 		hmd.fWhole = true;
-		chByte = nChar;
-	}
 	else
 	{
-		if (nChar >= 0x30 && nChar <= 0x39)      //Digits.
-			chByte = nChar - 0x30;
-		else if (nChar >= 0x41 && nChar <= 0x46) //Hex letters uppercase.
-			chByte = nChar - 0x37;
-		else if (nChar >= 0x61 && nChar <= 0x66) //Hex letters lowercase.
-			chByte = nChar - 0x57;
+		if (chByte >= 0x30 && chByte <= 0x39)      //Digits.
+			chByte -= 0x30;
+		else if (chByte >= 0x41 && chByte <= 0x46) //Hex letters uppercase.
+			chByte -= 0x37;
+		else if (chByte >= 0x61 && chByte <= 0x66) //Hex letters lowercase.
+			chByte -= 0x57;
 		else
 			return;
 
@@ -760,13 +758,13 @@ UINT CHexCtrl::OnGetDlgCode()
 	return DLGC_WANTALLKEYS;
 }
 
-void CHexCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar * pScrollBar)
+void CHexCtrl::OnVScroll(UINT /*nSBCode*/, UINT /*nPos*/, CScrollBar* /*pScrollBar*/)
 {
 	if (m_pScrollV->GetScrollPosDelta() != 0)
 		RedrawWindow();
 }
 
-void CHexCtrl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar * pScrollBar)
+void CHexCtrl::OnHScroll(UINT /*nSBCode*/, UINT /*nPos*/, CScrollBar* /*pScrollBar*/)
 {
 	if (m_pScrollH->GetScrollPosDelta() != 0)
 		RedrawWindow();
@@ -1072,7 +1070,7 @@ void CHexCtrl::OnSize(UINT nType, int cx, int cy)
 	m_pScrollV->SetScrollPageSize(m_iHeightWorkArea);
 }
 
-BOOL CHexCtrl::OnEraseBkgnd(CDC * pDC)
+BOOL CHexCtrl::OnEraseBkgnd(CDC* /*pDC*/)
 {
 	return FALSE;
 }
@@ -1297,7 +1295,6 @@ ULONGLONG CHexCtrl::HitTest(const POINT * pPoint)
 	int iX = pPoint->x + (int)m_pScrollH->GetScrollPos(); //To compensate horizontal scroll.
 	ULONGLONG ullCurLine = GetTopLine();
 	ULONGLONG ullHexChunk;
-	m_fCursorTextArea = false;
 
 	//Checking if cursor is within hex chunks area.
 	if ((iX >= m_iIndentFirstHexChunk) && (iX < m_iThirdVertLine) && (iY >= m_iStartWorkAreaY) && (iY <= m_iEndWorkArea))
@@ -1324,6 +1321,7 @@ ULONGLONG CHexCtrl::HitTest(const POINT * pPoint)
 			}
 		}
 		ullHexChunk = dwChunkX + ((iY - m_iStartWorkAreaY) / m_sizeLetter.cy) * m_dwCapacity + (ullCurLine * m_dwCapacity);
+		m_fCursorTextArea = false;
 	}
 	else if ((iX >= m_iIndentAscii) && (iX < (m_iIndentAscii + m_iSpaceBetweenAscii * (int)m_dwCapacity))
 		&& (iY >= m_iStartWorkAreaY) && iY <= m_iEndWorkArea)
@@ -1334,11 +1332,11 @@ ULONGLONG CHexCtrl::HitTest(const POINT * pPoint)
 		m_fCursorTextArea = true;
 	}
 	else
-		ullHexChunk = -1;
+		ullHexChunk = 0xFFFFFFFFFFFFFFFFull;
 
 	//If cursor is out of end-bound of hex chunks or Ascii chars.
 	if (ullHexChunk >= m_ullDataSize)
-		ullHexChunk = -1;
+		ullHexChunk = 0xFFFFFFFFFFFFFFFFull;
 
 	return ullHexChunk;
 }

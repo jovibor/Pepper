@@ -2,7 +2,7 @@
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/                         *
 * This is a Hex Control for MFC applications.                                           *
 * Official git repository of the project: https://github.com/jovibor/HexCtrl/           *
-* This software is available under the "MIT License modified with The Commons Clause".  *
+* This software is available under the "MIT License".  *
 * https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
 * For more information visit the project's official repository.                         *
 ****************************************************************************************/
@@ -38,8 +38,8 @@ BOOL CHexDlgSearch::OnInitDialog()
 {	
 	CDialogEx::OnInitDialog();
 
-	m_iRadioCurrent = IDC_HEXCTRL_SEARCH_RADIO_HEX;
-	CheckRadioButton(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE, m_iRadioCurrent);
+	m_uRadioCurrent = IDC_HEXCTRL_SEARCH_RADIO_HEX;
+	CheckRadioButton(IDC_HEXCTRL_SEARCH_RADIO_HEX, IDC_HEXCTRL_SEARCH_RADIO_UNICODE, m_uRadioCurrent);
 	m_stBrushDefault.CreateSolidBrush(m_clrBkTextArea);
 
 	return TRUE;
@@ -230,9 +230,9 @@ HBRUSH CHexDlgSearch::OnCtlColor(CDC * pDC, CWnd * pWnd, UINT nCtlColor)
 
 void CHexDlgSearch::OnRadioBnRange(UINT nID)
 {
-	if (nID != m_iRadioCurrent)
+	if (nID != m_uRadioCurrent)
 		ClearAll();
-	m_iRadioCurrent = nID;
+	m_uRadioCurrent = nID;
 }
 
 void CHexDlgSearch::ClearAll()

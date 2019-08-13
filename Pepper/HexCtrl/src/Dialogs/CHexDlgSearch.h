@@ -2,7 +2,7 @@
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/                         *
 * This is a Hex Control for MFC applications.                                           *
 * Official git repository of the project: https://github.com/jovibor/HexCtrl/           *
-* This software is available under the "MIT License modified with The Commons Clause".  *
+* This software is available under the "MIT License".  *
 * https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
 * For more information visit the project's official repository.                         *
 ****************************************************************************************/
@@ -42,7 +42,7 @@ namespace HEXCTRL {
 		private:
 			CHexCtrl* m_pHexCtrl { };
 			SEARCHSTRUCT m_stSearch { };
-			int m_iRadioCurrent { };
+			UINT m_uRadioCurrent { };
 			const COLORREF m_clrSearchFailed { RGB(200, 0, 0) };
 			const COLORREF m_clrSearchFound { RGB(0, 200, 0) };
 			const COLORREF m_clrBkTextArea { GetSysColor(COLOR_MENU) };

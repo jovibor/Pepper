@@ -134,6 +134,7 @@ namespace libpe {
 	* and LIBPE_RESOURCE_LVL3_DATA_VEC, that is again — vector of structs of all 						*
 	* IMAGE_RESOURCE_DIRECTORY_ENTRY of the last, third, level of resources. See the code below.		*
 	****************************************************************************************************/
+	
 	//Level 3 (the lowest) Resources.
 	struct LIBPE_RESOURCE_LVL3_DATA {
 		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryLvL3;   //Level 3 standard IMAGE_RESOURCE_DIRECTORY_ENTRY struct.
@@ -142,8 +143,9 @@ namespace libpe {
 		std::vector<std::byte>         vecResRawDataLvL3;   //Level 3 resource raw data.
 	};
 	struct LIBPE_RESOURCE_LVL3 {
-		IMAGE_RESOURCE_DIRECTORY              stResDirLvL3; //Level 3 standard IMAGE_RESOURCE_DIRECTORY header.
-		std::vector<LIBPE_RESOURCE_LVL3_DATA> vecResLvL3;   //Array of level 3 resource entries.
+		DWORD                                 dwOffsetResLvL3; //File's raw offset of the level 3 IMAGE_RESOURCE_DIRECTORY descriptor.
+		IMAGE_RESOURCE_DIRECTORY              stResDirLvL3;    //Level 3 standard IMAGE_RESOURCE_DIRECTORY header.
+		std::vector<LIBPE_RESOURCE_LVL3_DATA> vecResLvL3;      //Array of level 3 resource entries.
 	};
 	using PCLIBPE_RESOURCE_LVL3 = const LIBPE_RESOURCE_LVL3*;
 
@@ -156,17 +158,18 @@ namespace libpe {
 		LIBPE_RESOURCE_LVL3            stResLvL3;          //Level 3 resource struct.
 	};
 	struct LIBPE_RESOURCE_LVL2 {
-		IMAGE_RESOURCE_DIRECTORY              stResDirLvL2; //Level 2 standard IMAGE_RESOURCE_DIRECTORY header.
-		std::vector<LIBPE_RESOURCE_LVL2_DATA> vecResLvL2;   //Array of level 2 resource entries.
+		DWORD                                 dwOffsetResLvL2; //File's raw offset of the level 2 IMAGE_RESOURCE_DIRECTORY descriptor.
+		IMAGE_RESOURCE_DIRECTORY              stResDirLvL2;    //Level 2 standard IMAGE_RESOURCE_DIRECTORY header.
+		std::vector<LIBPE_RESOURCE_LVL2_DATA> vecResLvL2;      //Array of level 2 resource entries.
 	};
 	using PCLIBPE_RESOURCE_LVL2 = const LIBPE_RESOURCE_LVL2*;
 
 	//Level 1 (Root) Resources — Includes LVL2 Resources.
 	struct LIBPE_RESOURCE_ROOT_DATA {
-		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryRoot;  //Level 1 standard IMAGE_RESOURCE_DIRECTORY_ENTRY struct.
-		std::wstring                   wstrResNameRoot;	   //Level 1 resource name.
-		IMAGE_RESOURCE_DATA_ENTRY      stResDataEntryRoot; //Level 1 standard IMAGE_RESOURCE_DATA_ENTRY struct.
-		std::vector<std::byte>         vecResRawDataRoot;  //Level 1 resource raw data.
+		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryRoot;  //Level root standard IMAGE_RESOURCE_DIRECTORY_ENTRY struct.
+		std::wstring                   wstrResNameRoot;	   //Level root resource name.
+		IMAGE_RESOURCE_DATA_ENTRY      stResDataEntryRoot; //Level root standard IMAGE_RESOURCE_DATA_ENTRY struct.
+		std::vector<std::byte>         vecResRawDataRoot;  //Level root resource raw data.
 		LIBPE_RESOURCE_LVL2            stResLvL2;          //Level 2 resource struct.
 	};
 	struct LIBPE_RESOURCE_ROOT {
@@ -176,7 +179,6 @@ namespace libpe {
 	};
 	using PCLIBPE_RESOURCE_ROOT = const LIBPE_RESOURCE_ROOT*;
 	/*********************************Resources End*****************************************/
-	/////////////////////////////////////////////////////////////////////////////////////////
 
 	//Exception table.
 	struct LIBPE_EXCEPTION {
@@ -397,9 +399,9 @@ namespace libpe {
 	* call Ilibpe::Destroy method afterwards manually - to delete Ilibpe object.                *
 	********************************************************************************************/
 #ifdef ILIBPE_EXPORT
-#define ILIBPEAPI __declspec(dllexport) __cdecl
+#define ILIBPEAPI extern "C" HRESULT __declspec(dllexport) __cdecl
 #else
-#define ILIBPEAPI __declspec(dllimport) __cdecl
+#define ILIBPEAPI extern "C" HRESULT __declspec(dllimport) __cdecl
 	/********************************************************
 	* Platform and configuration specific .lib name macros.	*
 	********************************************************/
@@ -417,12 +419,12 @@ namespace libpe {
 #endif
 #endif
 	/********************************************************
-	* End. //////////////////////////////////////////////// *
+	* End of .lib name macros.                              *
 	********************************************************/
 #pragma comment(lib, LIBNAME_PROPER("libpe"))
 #endif
 
-	extern "C" HRESULT ILIBPEAPI CreateRawlibpe(Ilibpe*&);
+	ILIBPEAPI CreateRawlibpe(Ilibpe*&);
 	using IlibpeUnPtr = std::unique_ptr<Ilibpe, void(*)(Ilibpe*)>;
 	using IlibpeShPtr = std::shared_ptr<Ilibpe>;
 
@@ -432,7 +434,7 @@ namespace libpe {
 		if (CreateRawlibpe(ptr) == S_OK)
 			return IlibpeUnPtr(ptr, [](Ilibpe * p) { p->Destroy(); });
 		else
-			return { nullptr, nullptr };
+			return IlibpeUnPtr(nullptr, nullptr);
 	};
 
 	//using libpe_ptr = IlibpeUnPtr;

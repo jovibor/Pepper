@@ -1,6 +1,6 @@
 /****************************************************************************************************
 * Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
-* This software is available under the "MIT License modified with The Commons Clause".				*
+* This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
 * libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
@@ -8,6 +8,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "ViewRightBR.h"
+#include "constants.h"
 
 IMPLEMENT_DYNCREATE(CViewRightBR, CScrollView)
 
@@ -58,7 +59,7 @@ void CViewRightBR::OnInitialUpdate()
 	CreateListTLSCallbacks();
 }
 
-void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 {
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR)
 		return;
@@ -97,6 +98,54 @@ void CViewRightBR::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 void CViewRightBR::ShowResource(RESHELPER* pRes)
 {
+	static const std::map<int, std::wstring> mapVerInfoStrings {
+		{ 0, L"FileDescription" },
+	{ 1, L"FileVersion" },
+	{ 2, L"InternalName" },
+	{ 3, L"CompanyName" },
+	{ 4, L"LegalCopyright" },
+	{ 5, L"OriginalFilename" },
+	{ 6, L"ProductName" },
+	{ 7, L"ProductVersion" }
+	};
+
+	static const std::map<DWORD, std::wstring> mapDlgStyles {
+		TO_WSTR_MAP(DS_ABSALIGN),
+		TO_WSTR_MAP(DS_SYSMODAL),
+		TO_WSTR_MAP(DS_LOCALEDIT),
+		TO_WSTR_MAP(DS_SETFONT),
+		TO_WSTR_MAP(DS_MODALFRAME),
+		TO_WSTR_MAP(DS_NOIDLEMSG),
+		TO_WSTR_MAP(DS_SETFOREGROUND),
+		TO_WSTR_MAP(DS_3DLOOK),
+		TO_WSTR_MAP(DS_FIXEDSYS),
+		TO_WSTR_MAP(DS_NOFAILCREATE),
+		TO_WSTR_MAP(DS_CONTROL),
+		TO_WSTR_MAP(DS_CENTER),
+		TO_WSTR_MAP(DS_CENTERMOUSE),
+		TO_WSTR_MAP(DS_CONTEXTHELP),
+	{ 0x8000L, L"DS_USEPIXELS" },
+	TO_WSTR_MAP(WS_OVERLAPPED),
+	TO_WSTR_MAP(WS_POPUP),
+	TO_WSTR_MAP(WS_CHILD),
+	TO_WSTR_MAP(WS_MINIMIZE),
+	TO_WSTR_MAP(WS_VISIBLE),
+	TO_WSTR_MAP(WS_DISABLED),
+	TO_WSTR_MAP(WS_CLIPSIBLINGS),
+	TO_WSTR_MAP(WS_CLIPCHILDREN),
+	TO_WSTR_MAP(WS_MAXIMIZE),
+	TO_WSTR_MAP(WS_CAPTION),
+	TO_WSTR_MAP(WS_BORDER),
+	TO_WSTR_MAP(WS_DLGFRAME),
+	TO_WSTR_MAP(WS_VSCROLL),
+	TO_WSTR_MAP(WS_HSCROLL),
+	TO_WSTR_MAP(WS_SYSMENU),
+	TO_WSTR_MAP(WS_THICKFRAME),
+	TO_WSTR_MAP(WS_MINIMIZEBOX),
+	TO_WSTR_MAP(WS_MAXIMIZEBOX),
+	TO_WSTR_MAP(WS_TILEDWINDOW)
+	};
+
 	m_stEditResStrings.ShowWindow(SW_HIDE);
 	m_stImgRes.DeleteImageList();
 	m_iResTypeToDraw = -1;
@@ -231,7 +280,7 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 				else //DLGTEMPLATE
 					dwStyle = ((DLGTEMPLATE*)pRes->pData->data())->style;
 
-				for (auto& i : m_mapDlgStyles)
+				for (auto& i : mapDlgStyles)
 					if (i.first & dwStyle)
 						if (!m_wstrRes.empty())
 							m_wstrRes += L" | " + i.second;
@@ -457,12 +506,12 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 			//Read the file description for each language and code page.
 			for (unsigned iterCodePage = 0; iterCodePage < dwLangCount; iterCodePage++)
 			{
-				for (unsigned i = 0; i < m_mapVerInfoStrings.size(); i++) //sizeof pstrVerInfoStrings [];
+				for (unsigned i = 0; i < mapVerInfoStrings.size(); i++) //sizeof pstrVerInfoStrings [];
 				{
 					swprintf_s(wstrSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
-						pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, m_mapVerInfoStrings.at(i).data());
+						pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(i).data());
 
-					m_wstrRes += m_mapVerInfoStrings.at(i).data();
+					m_wstrRes += mapVerInfoStrings.at(i).data();
 					m_wstrRes += L" - ";
 
 					WCHAR* pszBufferOut;
@@ -517,7 +566,10 @@ void CViewRightBR::ShowResource(RESHELPER* pRes)
 							{
 								auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 								if (!data.empty())
-									ShowResource(&RESHELPER(2, pRes->IdResName, (std::vector<std::byte>*) & data));
+								{
+									RESHELPER rh(2, pRes->IdResName, (std::vector<std::byte>*) & data);
+									ShowResource(&rh);
+								}
 							}
 						}
 					}
@@ -642,7 +694,7 @@ int CViewRightBR::CreateListTLSCallbacks()
 		return -1;
 
 	m_stlcs.dwStyle = 0;
-	m_stlcs.nID = IDC_LIST_TLS_CALLBACKS;
+	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
 	m_stListTLSCallbacks->Create(m_stlcs);
 	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
 
