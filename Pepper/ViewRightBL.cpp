@@ -481,7 +481,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
-	auto & rImp = m_pImport->at(dwEntry).stImportDesc;
+	auto& rImp = m_pImport->at(dwEntry).stImportDesc;
 	DWORD dwThunkOffset;
 	m_pLibpe->GetOffsetFromRVA(rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk, dwThunkOffset);
 	DWORD dwThunkRVA = rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk;
@@ -728,7 +728,7 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	if (m_pLibpe->GetDebug(pDebug) != S_OK)
 		return -1;
 
-	auto & rDebugDir = pDebug->at(dwEntry).stDebugDir;
+	auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
 	m_pFileLoader->ShowFilePiece(rDebugDir.PointerToRawData, rDebugDir.SizeOfData, m_stHexEdit);
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
@@ -782,17 +782,15 @@ int CViewRightBL::CreateTreeResources()
 		m_vecResId.emplace_back(ilvlRoot, -1, -1);
 		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
 		long ilvl2 = 0;
-		LIBPE_RESOURCE_LVL2 pstResLvL2 = iterRoot.stResLvL2;
+		auto& refResLvL2 = iterRoot.stResLvL2;
 
-		for (auto& iterLvL2 : pstResLvL2.vecResLvL2)
+		for (auto& iterLvL2 : refResLvL2.vecResLvL2)
 		{
 			m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
 			long ilvl3 = 0;
+			auto& refResLvL3 = iterLvL2.stResLvL3;
 
-			//			pResDirEntry = &std::get<0>(iterLvL2);
-			LIBPE_RESOURCE_LVL3 pstResLvL3 = iterLvL2.stResLvL3;
-
-			for (auto& iterLvL3 : pstResLvL3.vecResLvL3)
+			for (auto& iterLvL3 : refResLvL3.vecResLvL3)
 			{
 				pResDirEntry = &iterLvL3.stResDirEntryLvL3;
 				if (pResDirEntry->NameIsString)
@@ -827,7 +825,22 @@ int CViewRightBL::CreateHexTLS()
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pFileLoader->ShowFilePiece(pTLS->dwRawDataOffset, pTLS->dwRawDataSize, m_stHexEdit);
+	DWORD dwOffset, dwSize;
+	ULONGLONG ullStartAdr { }, ullEndAdr { };
+	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
+	{
+		ullStartAdr = pTLS->varTLS.stTLSDir32.StartAddressOfRawData;
+		ullEndAdr = pTLS->varTLS.stTLSDir32.EndAddressOfRawData;
+	}
+	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
+	{
+		ullStartAdr = pTLS->varTLS.stTLSDir64.StartAddressOfRawData;
+		ullEndAdr = pTLS->varTLS.stTLSDir64.EndAddressOfRawData;
+	}
+	m_pLibpe->GetOffsetFromVA(ullStartAdr, dwOffset);
+	m_pLibpe->GetOffsetFromVA(ullEndAdr, dwSize);
+	dwSize -= dwOffset;
+	m_pFileLoader->ShowFilePiece(dwOffset, dwSize, m_stHexEdit);
 
 	return 0;
 }

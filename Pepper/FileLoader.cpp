@@ -45,6 +45,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 
 	m_hcs.fFloat = true;
 	m_hcs.hwndParent = m_hWnd;
+	m_hcs.dwExStyle = WS_EX_APPWINDOW; //To force to the taskbar.
 
 	m_hds.hwndMsg = m_hWnd;
 
@@ -89,7 +90,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 	if (fExist)
 	{
 		if (!iter->fShowPiece)
-			pHexCtrl->ShowOffset(ullOffset, ullSelectionSize);
+			pHexCtrl->GoToOffset(ullOffset, true, ullSelectionSize);
 		else
 		{
 			iter->ullOffsetDelta = 0;
@@ -187,7 +188,7 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA & rData, ULONGLONG ullOffset, DWORD
 	return S_OK;
 }
 
-HRESULT CFileLoader::UnmapFileOffset(QUERYDATA & rData)
+HRESULT CFileLoader::UnmapFileOffset(QUERYDATA& rData)
 {
 	if (!rData.lpData)
 		return E_ABORT;

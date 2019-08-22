@@ -40,6 +40,7 @@ local.properties
 .vs/
 
 # User-specific files
+*solution_suppressions.cfg
 *.suppress
 *.suo
 *.user

@@ -14,7 +14,7 @@
 * at ones - as well.											*
 ****************************************************************/
 #pragma once
-#include "..\HexCtrl\HexCtrl.h"
+#include "HexCtrl.h"
 
 using namespace HEXCTRL;
 

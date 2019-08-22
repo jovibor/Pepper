@@ -112,7 +112,7 @@ void CViewLeft::OnInitialUpdate()
 		}
 		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_EXCEPTION)) {
 			const HTREEITEM hTreeExceptionDir = m_stTreeMain.InsertItem(L"Exception Directory", iconDirs, iconDirs, hTreeRoot);
-			m_stTreeMain.SetItemData(hTreeExceptionDir, IDC_LIST_EXCEPTION);
+			m_stTreeMain.SetItemData(hTreeExceptionDir, IDC_LIST_EXCEPTIONS);
 		}
 		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_SECURITY)) {
 			const HTREEITEM hTreeSecurityDir = m_stTreeMain.InsertItem(L"Security Directory", iconDirs, iconDirs, hTreeRoot);

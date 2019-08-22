@@ -400,7 +400,7 @@ constexpr auto IDC_LIST_EXPORT = 0x000F;
 constexpr auto IDC_LIST_EXPORT_FUNCS = 0x0010;
 constexpr auto IDC_LIST_IMPORT = 0x0011;
 constexpr auto IDC_LIST_IMPORT_ENTRY = 0x0012;
-constexpr auto IDC_LIST_EXCEPTION = 0x0013;
+constexpr auto IDC_LIST_EXCEPTIONS = 0x0013;
 constexpr auto IDC_LIST_EXCEPTION_ENTRY = 0x0014;
 constexpr auto IDC_LIST_SECURITY = 0x0015;
 constexpr auto IDC_LIST_SECURITY_ENTRY = 0x0016;
@@ -444,3 +444,13 @@ constexpr auto IDM_LIST_GOTODATAOFFSET = 0x8002;
 
 //Color of the list's "Offset" column
 constexpr COLORREF g_clrOffset = RGB(150, 150, 150);
+inline const wchar_t* const g_pwszHexMap { L"0123456789ABCDEF" };
+
+inline void DwordToWchars(DWORD dw, wchar_t* pwsz)
+{
+	for (size_t i = 0; i < sizeof(DWORD); i++)
+	{
+		pwsz[i * 2] = g_pwszHexMap[((dw >> ((4 - 1 - i) << 3)) >> 4) & 0x0F];
+		pwsz[i * 2 + 1] = g_pwszHexMap[(dw >> ((4 - 1 - i) << 3)) & 0x0F];
+	}
+}

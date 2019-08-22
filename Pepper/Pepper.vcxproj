@@ -146,7 +146,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>
@@ -174,7 +174,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -258,7 +258,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -324,7 +324,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -367,7 +367,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -404,11 +404,6 @@
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="FileLoader.cpp" />
-    <ClCompile Include="HexCtrl\src\CHexCtrl.cpp" />
-    <ClCompile Include="HexCtrl\src\CScrollEx.cpp" />
-    <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgAbout.cpp" />
-    <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgSearch.cpp" />
-    <ClCompile Include="HexCtrl\src\Helper.cpp" />
     <ClCompile Include="ListEx\src\CListEx.cpp" />
     <ClCompile Include="ListEx\src\CListExHdr.cpp" />
     <ClCompile Include="SplitterEx.cpp" />
@@ -431,12 +426,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="HexCtrl\res\HexCtrlIcon.bmp" />
-    <Image Include="HexCtrl\res\MenuCopy.bmp" />
-    <Image Include="HexCtrl\res\MenuFillZeros.bmp" />
-    <Image Include="HexCtrl\res\MenuPaste.bmp" />
-    <Image Include="HexCtrl\res\ScrollExH.bmp" />
-    <Image Include="HexCtrl\res\ScrollExV.bmp" />
     <Image Include="res\TreeMain_Dirs.ico" />
     <Image Include="res\TreeMain_Header.ico" />
     <Image Include="res\Pepper.ico" />
@@ -446,16 +435,10 @@
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HexCtrl\HexCtrl.h" />
-    <ClInclude Include="HexCtrl\res\HexCtrlRes.h" />
-    <ClInclude Include="HexCtrl\src\CHexCtrl.h" />
-    <ClInclude Include="HexCtrl\src\CScrollEx.h" />
-    <ClInclude Include="HexCtrl\src\Dialogs\CHexDlgAbout.h" />
-    <ClInclude Include="HexCtrl\src\Dialogs\CHexDlgSearch.h" />
-    <ClInclude Include="HexCtrl\src\Helper.h" />
     <ClInclude Include="include\ChildFrm.h" />
     <ClInclude Include="include\constants.h" />
     <ClInclude Include="include\FileLoader.h" />
+    <ClInclude Include="include\HexCtrl.h" />
     <ClInclude Include="include\libpe.h" />
     <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />
@@ -474,7 +457,6 @@
     <ClInclude Include="res\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="HexCtrl\res\HexCtrl.rc" />
     <ResourceCompile Include="res\Pepper.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

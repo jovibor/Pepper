@@ -46,21 +46,6 @@
     <ClCompile Include="ListEx\src\CListExHdr.cpp">
       <Filter>ListEx\src</Filter>
     </ClCompile>
-    <ClCompile Include="HexCtrl\src\CHexCtrl.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="HexCtrl\src\CScrollEx.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="HexCtrl\src\Helper.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgAbout.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="HexCtrl\src\Dialogs\CHexDlgSearch.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ChildFrm.h">
@@ -120,34 +105,13 @@
     <ClInclude Include="ListEx\src\CListExHdr.h">
       <Filter>ListEx\src</Filter>
     </ClInclude>
-    <ClInclude Include="HexCtrl\res\HexCtrlRes.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\src\CHexCtrl.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\src\CScrollEx.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\src\Helper.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\src\Dialogs\CHexDlgAbout.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\src\Dialogs\CHexDlgSearch.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="HexCtrl\HexCtrl.h">
-      <Filter>HexCtrl</Filter>
+    <ClInclude Include="include\HexCtrl.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\Pepper.rc">
       <Filter>Resource Files</Filter>
-    </ResourceCompile>
-    <ResourceCompile Include="HexCtrl\res\HexCtrl.rc">
-      <Filter>HexCtrl</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
@@ -162,24 +126,6 @@
     </Image>
     <Image Include="res\TreeMain_Header.ico">
       <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="HexCtrl\res\HexCtrlIcon.bmp">
-      <Filter>HexCtrl</Filter>
-    </Image>
-    <Image Include="HexCtrl\res\MenuCopy.bmp">
-      <Filter>HexCtrl</Filter>
-    </Image>
-    <Image Include="HexCtrl\res\MenuFillZeros.bmp">
-      <Filter>HexCtrl</Filter>
-    </Image>
-    <Image Include="HexCtrl\res\MenuPaste.bmp">
-      <Filter>HexCtrl</Filter>
-    </Image>
-    <Image Include="HexCtrl\res\ScrollExH.bmp">
-      <Filter>HexCtrl</Filter>
-    </Image>
-    <Image Include="HexCtrl\res\ScrollExV.bmp">
-      <Filter>HexCtrl</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -197,9 +143,6 @@
     </Filter>
     <Filter Include="ListEx\src">
       <UniqueIdentifier>{800c295d-05bb-4244-b815-c17969a20963}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HexCtrl">
-      <UniqueIdentifier>{6be453da-79d0-4a8c-91a1-5dd25176041b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

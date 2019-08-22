@@ -211,9 +211,16 @@ namespace libpe {
 	using PCLIBPE_RELOCATION_VEC = const LIBPE_RELOCATION_VEC*;
 
 	//Debug table.
+	struct LIBPE_DEBUG_DBGHDR
+	{
+		DWORD       dwArr[6];   //First six DWORDs of IMAGE_DEBUG_DIRECTORY::PointerToRawData data (Debug info header).
+								//Their meaning vary depending on dwArr[0] (Signature) value.
+		std::string strPDBName; //PDB file name/path.
+	}; 
 	struct LIBPE_DEBUG {
-		DWORD                 dwOffsetDebug; //File's raw offset of the Debug descriptor.
-		IMAGE_DEBUG_DIRECTORY stDebugDir;    //Standard IMAGE_DEBUG_DIRECTORY.
+		DWORD                 dwOffsetDebug;  //File's raw offset of the Debug descriptor.
+		IMAGE_DEBUG_DIRECTORY stDebugDir;     //Standard IMAGE_DEBUG_DIRECTORY.
+		LIBPE_DEBUG_DBGHDR    stDebugHdrInfo; //Debug info header.
 	};
 	using LIBPE_DEBUG_VEC = std::vector<LIBPE_DEBUG>;
 	using PCLIBPE_DEBUG_VEC = const LIBPE_DEBUG_VEC*;
@@ -225,8 +232,6 @@ namespace libpe {
 			IMAGE_TLS_DIRECTORY32 stTLSDir32; //x86 standard TLS header.
 			IMAGE_TLS_DIRECTORY64 stTLSDir64; //x64 TLS header.
 		}varTLS;
-		DWORD              dwRawDataOffset;   //TLS raw data offset.
-		DWORD              dwRawDataSize;     //TLS raw data size.
 		std::vector<DWORD> vecTLSCallbacks;   //Array of the TLS callbacks.
 	};
 	using PCLIBPE_TLS = const LIBPE_TLS*;

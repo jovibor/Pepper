@@ -9,7 +9,7 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "..\HexCtrl\HexCtrl.h"
+#include "HexCtrl.h"
 #include "ListEx/ListEx.h"
 #include "TreeEx.h"
 #include "FileLoader.h"
@@ -65,6 +65,11 @@ private:
 	IListExPtr m_listTLSDir { CreateListEx() };
 	IListExPtr m_listCOMDir { CreateListEx() };
 	CTreeEx m_treeResTop;
+
+	//Resource id for given treeCtrl node.
+	//Used in treeCtrl.SetItemData(...), so that we associate tree item with the corresponding 
+	//resource's index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).
+	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	HTREEITEM m_hTreeResDir { };
 	bool m_fFileSummaryShow { true };
 	ULONG m_dwPeStart { };
@@ -73,12 +78,8 @@ private:
 	PCLIBPE_IMPORT_VEC m_pImport { };
 	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
 	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
-	CWnd* m_hwndActive { };
-	//Resource id for given treeCtrl node.
-	//Used in treeCtrl.SetItemData(...), so that we associate tree item
-	//with corresponding Resource index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).
-	std::vector<std::tuple<long, long, long>> m_vecResId { };
-	LOGFONT m_lf { }, m_hdrlf { };
+	CWnd* m_pwndActive { };
+	LOGFONTW m_lf { }, m_hdrlf { };
 	CMenu m_menuList;
 	CFileLoader* m_pFileLoader { };
 
