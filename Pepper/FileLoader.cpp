@@ -43,7 +43,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr))
 		return E_ABORT;
 
-	m_hcs.fFloat = true;
+	m_hcs.enMode = EHexCreateMode::CREATE_FLOAT;
 	m_hcs.hwndParent = m_hWnd;
 	m_hcs.dwExStyle = WS_EX_APPWINDOW; //To force to the taskbar.
 

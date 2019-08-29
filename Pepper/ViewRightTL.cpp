@@ -476,7 +476,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 				{
 				case 4: //Name
 					m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.Name, dwOffset);
-					dwSize = pExport->strModuleName.size();
+					dwSize = (DWORD)pExport->strModuleName.size();
 					break;
 				case 8: //AddressOfFunctions
 					m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions, dwOffset);
@@ -643,7 +643,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 				{
 				case 3: //OffsetModuleName
 					dwOffset = m_pLibpe->GetOffsetFromRVA(pBoundImp->at(pNMI->iItem).stBoundImpDesc.OffsetModuleName, dwOffset);
-					dwSize = pBoundImp->at(pNMI->iItem).strBoundName.size();
+					dwSize = (DWORD)pBoundImp->at(pNMI->iItem).strBoundName.size();
 					break;
 				}
 			}

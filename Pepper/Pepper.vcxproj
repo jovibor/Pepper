@@ -243,7 +243,7 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>powershell.exe $(ProjectDir)verinfo\set_verinfo.ps1 $(TargetDir)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe $(ProjectDir)\verinfo\VerInfoRun.ps1 -versionFile $(ProjectDir)\verinfo\version.h -patchFile $(TargetDir)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
     <Xdcmake>
       <OutputFile />
@@ -361,7 +361,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>powershell.exe $(ProjectDir)verinfo\set_verinfo.ps1 $(TargetDir)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe $(ProjectDir)\verinfo\VerInfoRun.ps1 -versionFile $(ProjectDir)\verinfo\version.h -patchFile $(TargetDir)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Static|x64'">

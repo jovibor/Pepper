@@ -763,7 +763,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 	}
 	else //Class name is WString.
 	{
-		pDataHdr += (sizeof(WORD) - (((DWORD)pDataHdr - (DWORD)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+		pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 		pwstrClassName = (WCHAR*)pDataHdr;
 		if (StringCbLengthW(pwstrClassName, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthClassName) != S_OK)
 			return ResLoadError();
@@ -775,7 +775,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		pDataHdr += sizeof(WORD);
 	else
 	{
-		pDataHdr += (sizeof(WORD) - (((DWORD)pDataHdr - (DWORD)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+		pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 		pwstrTitle = (WCHAR*)pDataHdr;
 		if (StringCbLengthW(pwstrTitle, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTitle) != S_OK)
 			return ResLoadError();
@@ -804,7 +804,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 				pDataHdr += sizeof(WORD); //Null WORD
 			else
 			{
-				pDataHdr += (sizeof(WORD) - (((DWORD)pDataHdr - (DWORD)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+				pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 				pwstrTypeFace = (WCHAR*)pDataHdr;
 				if (StringCbLengthW(pwstrTypeFace, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTypeFace) != S_OK)
 					return ResLoadError();
@@ -823,7 +823,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 				pDataHdr += sizeof(WORD); //Null WORD
 			else
 			{
-				pDataHdr += (sizeof(WORD) - (((DWORD)pDataHdr - (DWORD)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+				pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 				pwstrTypeFace = (WCHAR*)pDataHdr;
 				if (StringCbLengthW(pwstrTypeFace, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTypeFace) != S_OK)
 					return ResLoadError();
@@ -939,7 +939,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		WCHAR* pwstrTitleItem { }; size_t lengthTitleItem { }; WORD wTitleOrdinalItem { };
 		WORD wExtraCountItem;
 
-		pDataItems += (sizeof(DWORD) - (((DWORD)pDataItems - (DWORD)pDataDlgRes) & 3)) & 3; //DWORD Aligning.
+		pDataItems += (sizeof(DWORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 3)) & 3; //DWORD Aligning.
 
 		//Out of bounds checking.
 		if ((DWORD_PTR)pDataItems >= (DWORD_PTR)((PBYTE)pDataDlgRes) + nSize)
@@ -978,7 +978,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		}
 		else //Class name is Wstring.
 		{
-			pDataItems += (sizeof(WORD) - (((DWORD)pDataItems - (DWORD)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 			pwstrClassNameItem = (WCHAR*)pDataItems;
 			if (StringCbLengthW(pwstrClassNameItem, nSize - ((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes), &lengthClassNameItem) != S_OK)
 				return ResLoadError();
@@ -993,7 +993,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		}
 		else //Title is wstring.
 		{
-			pDataItems += (sizeof(WORD) - (((DWORD)pDataItems - (DWORD)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 			pwstrTitleItem = (WCHAR*)pDataItems;
 			if (StringCbLengthW(pwstrTitleItem, nSize - ((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes), &lengthTitleItem) != S_OK)
 				return ResLoadError();
@@ -1005,7 +1005,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		pDataItems += sizeof(WORD);
 		if (wExtraCountItem)
 		{
-			pDataItems += (sizeof(WORD) - (((DWORD)pDataItems - (DWORD)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 			pDataItems += wExtraCountItem;
 		}
 
