@@ -156,7 +156,7 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA & rData, ULONGLONG ullOffset, DWORD
 
 	DWORD_PTR dwSizeToMap;
 	if (dwSize > 0)
-		dwSizeToMap = dwSize;
+		dwSizeToMap = (DWORD_PTR)dwSize;
 	else
 		dwSizeToMap = 0x01900000; //25MB.
 
@@ -172,7 +172,7 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA & rData, ULONGLONG ullOffset, DWORD
 		(ullStartOffsetMapped - dwDelta);
 
 	if ((LONGLONG)(ullStartOffsetMapped + dwSizeToMap) > m_stFileSize.QuadPart)
-		dwSizeToMap = (DWORD)(m_stFileSize.QuadPart - (LONGLONG)ullStartOffsetMapped);
+		dwSizeToMap = (DWORD_PTR)(m_stFileSize.QuadPart - (LONGLONG)ullStartOffsetMapped);
 
 	DWORD dwOffsetHigh = (ullStartOffsetMapped >> 32) & 0xFFFFFFFFul;
 	DWORD dwOffsetLow = ullStartOffsetMapped & 0xFFFFFFFFul;

@@ -18,7 +18,7 @@ using namespace LISTEX;
 class CWndDlgSample : public CWnd
 {
 public:
-	CWndDlgSample(CImageList* pImgList) { m_pImgRes = pImgList; }
+	explicit CWndDlgSample(CImageList* pImgList) { m_pImgRes = pImgList; }
 	virtual	~CWndDlgSample() {}
 	DECLARE_MESSAGE_MAP()
 private:
@@ -30,64 +30,6 @@ private:
 class CViewRightBR : public CScrollView
 {
 	DECLARE_DYNCREATE(CViewRightBR)
-private:
-	/****************************************************************
-	* Struct for RT_GROUP_ICON/CURSOR.								*
-	****************************************************************/
-#pragma pack(push, 2)
-	struct GRPICONDIRENTRY
-	{
-		BYTE   bWidth;               // Width, in pixels, of the image
-		BYTE   bHeight;              // Height, in pixels, of the image
-		BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
-		BYTE   bReserved;            // Reserved
-		WORD   wPlanes;              // Color Planes
-		WORD   wBitCount;            // Bits per pixel
-		DWORD  dwBytesInRes;         // how many bytes in this resource?
-		WORD   nID;                  // the ID
-	};
-	struct GRPICONDIR
-	{
-		WORD			  idReserved;   // Reserved (must be 0)
-		WORD			  idType;	    // Resource type (1 for icons)
-		WORD			  idCount;	    // How many images?
-		GRPICONDIRENTRY   idEntries[1]; // The entries for each image
-	};
-	using LPGRPICONDIR = const GRPICONDIR*;
-#pragma pack(pop)
-#pragma pack(push, 4)
-	struct LANGANDCODEPAGE
-	{
-		WORD wLanguage;
-		WORD wCodePage;
-	};
-	struct DLGTEMPLATEEX //Helper struct. Not completed.
-	{
-		WORD      dlgVer;
-		WORD      signature;
-		DWORD     helpID;
-		DWORD     exStyle;
-		DWORD     style;
-		WORD      cDlgItems;
-		short     x;
-		short     y;
-		short     cx;
-		short     cy;
-		WORD      menu;
-	};
-	struct DLGITEMTEMPLATEEX //Helper struct. Not completed.
-	{
-		DWORD     helpID;
-		DWORD     exStyle;
-		DWORD     style;
-		short     x;
-		short     y;
-		short     cx;
-		short     cy;
-		DWORD     id;
-	};
-#pragma pack(pop)
-
 protected:
 	CViewRightBR() :m_wndDlgSample(&m_stImgRes) {} //Initializing Dialog Sample Window's image list.
 	virtual ~CViewRightBR() {}
@@ -95,8 +37,16 @@ protected:
 	virtual void OnInitialUpdate();     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
-	void ShowResource(RESHELPER*);
+	void ShowResource(const RESHELPER*);
+	void CreateIconCursor(const RESHELPER* pResHelper);
+	void CreateBitmap(const RESHELPER* pResHelper);
+	void CreateDlg(const RESHELPER* pResHelper);
 	void ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize);
+	void CreateStrings(const RESHELPER* pResHelper);
+	void CreateGroupIconCursor(const RESHELPER* pResHelper);
+	void CreateVersion(const RESHELPER* pResHelper);
+	void CreateManifest(const RESHELPER* pResHelper);
+	void CreateToolbar(const RESHELPER* pResHelper);
 	int CreateListTLSCallbacks();
 	void ResLoadError();
 	void CreateDebugEntry(DWORD dwEntry);

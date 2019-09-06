@@ -13,6 +13,7 @@
 #include "ViewRightBL.h"
 #include "ViewRightTR.h"
 #include "ViewRightBR.h"
+#include <cmath>
 
 IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWndEx)
 
@@ -73,28 +74,28 @@ void CChildFrame::OnSize(UINT nType, int cx, int cy)
 
 			m_stSplitterMain.GetColumnInfo(0, cxCurr, min);
 			ratio = (double)m_cx / cxCurr;
-			m_stSplitterMain.SetColumnInfo(0, int(cx / ratio + 0.5), min);
+			m_stSplitterMain.SetColumnInfo(0, std::lround(cx / ratio), min);
 
 			m_stSplitterRight.GetRowInfo(0, cyCurr, min);
 			ratio = (double)m_cy / cyCurr;
-			m_stSplitterRight.SetRowInfo(0, int(cy / ratio + 0.5), min);
+			m_stSplitterRight.SetRowInfo(0, std::lround(cy / ratio), min);
 			m_stSplitterRight.GetRowInfo(1, cyCurr, min);
 			ratio = (double)m_cy / cyCurr;
-			m_stSplitterRight.SetRowInfo(1, int(cy / ratio + 0.5), min);
+			m_stSplitterRight.SetRowInfo(1, std::lround(cy / ratio), min);
 
 			m_stSplitterRightTop.GetColumnInfo(0, cxCurr, min);
 			ratio = (double)m_cx / cxCurr;
-			m_stSplitterRightTop.SetColumnInfo(0, int(cx / ratio + 0.5), min);
+			m_stSplitterRightTop.SetColumnInfo(0, std::lround(cx / ratio), min);
 			m_stSplitterRightTop.GetColumnInfo(1, cyCurr, min);
 			ratio = (double)m_cx / cxCurr;
-			m_stSplitterRightTop.SetColumnInfo(1, int(cx / ratio + 0.5), min);
+			m_stSplitterRightTop.SetColumnInfo(1, std::lround(cx / ratio), min);
 
 			m_stSplitterRightBottom.GetColumnInfo(0, cxCurr, min);
 			ratio = (double)m_cx / cxCurr;
-			m_stSplitterRightBottom.SetColumnInfo(0, int(cx / ratio + 0.5), min);
+			m_stSplitterRightBottom.SetColumnInfo(0, std::lround(cx / ratio), min);
 			m_stSplitterRightBottom.GetColumnInfo(1, cyCurr, min);
 			ratio = (double)m_cx / cxCurr;
-			m_stSplitterRightBottom.SetColumnInfo(1, int(cx / ratio + 0.5), min);
+			m_stSplitterRightBottom.SetColumnInfo(1, std::lround(cx / ratio), min);
 		}
 		else
 		{
