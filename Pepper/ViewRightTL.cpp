@@ -54,7 +54,7 @@ void CViewRightTL::OnInitialUpdate()
 	else
 		m_wstrFileType = L"File type: unknown";
 
-	m_wstrAppVersion = PEPPER_VERSION_WSTR;
+	m_wstrPepperVersion = PEPPER_VERSION_WSTR;
 
 	//There can be the absence of some structures in PE.
 	//So it's ok to return not S_OK here.
@@ -238,22 +238,25 @@ void CViewRightTL::OnDraw(CDC * pDC)
 		rDC.GetClipBox(rc);
 		rDC.FillSolidRect(rc, RGB(255, 255, 255));
 		rDC.SelectObject(m_fontSummary);
-		GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), (int)m_wstrFullPath.size(), &m_sizeTextToDraw);
-		rc.left = 20;
-		rc.top = 20;
-		rc.right = rc.left + m_sizeTextToDraw.cx + 40;
-		rc.bottom = m_sizeTextToDraw.cy * 6;
+		SIZE sizeTextToDraw;
+		if (m_wstrPepperVersion.size() > m_wstrFullPath.size())
+			GetTextExtentPoint32W(rDC.m_hDC, m_wstrPepperVersion.data(), (int)m_wstrPepperVersion.size(), &sizeTextToDraw);
+		else
+			GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), (int)m_wstrFullPath.size(), &sizeTextToDraw);
+		int iRectLeft = 20;
+		int iRectTop = 20;
+		rc.SetRect(iRectLeft, iRectTop, iRectLeft + sizeTextToDraw.cx + 40, sizeTextToDraw.cy * 6);
 		rDC.Rectangle(&rc);
 
 		rDC.SetTextColor(RGB(200, 50, 30));
-		GetTextExtentPoint32W(rDC.m_hDC, m_wstrAppVersion.data(), (int)m_wstrAppVersion.size(), &m_sizeTextToDraw);
-		ExtTextOutW(rDC.m_hDC, (rc.Width() - m_sizeTextToDraw.cx) / 2 + rc.left, 10, 0, nullptr,
-			m_wstrAppVersion.data(), (int)m_wstrAppVersion.size(), nullptr);
+		GetTextExtentPoint32W(rDC.m_hDC, m_wstrPepperVersion.data(), (int)m_wstrPepperVersion.size(), &sizeTextToDraw);
+		ExtTextOutW(rDC.m_hDC, (rc.Width() - sizeTextToDraw.cx) / 2 + rc.left, 10, 0, nullptr,
+			m_wstrPepperVersion.data(), (int)m_wstrPepperVersion.size(), nullptr);
 
 		rDC.SetTextColor(RGB(0, 0, 255));
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + m_sizeTextToDraw.cy, 0, nullptr, m_wstrFileType.data(), (int)m_wstrFileType.size(), nullptr);
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + 2 * m_sizeTextToDraw.cy, 0, nullptr, m_wstrFileName.data(), (int)m_wstrFileName.size(), nullptr);
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + 3 * m_sizeTextToDraw.cy, 0, nullptr, m_wstrFullPath.data(), (int)m_wstrFullPath.size(), nullptr);
+		ExtTextOutW(rDC.m_hDC, 35, rc.top + sizeTextToDraw.cy, 0, nullptr, m_wstrFileType.data(), (int)m_wstrFileType.size(), nullptr);
+		ExtTextOutW(rDC.m_hDC, 35, rc.top + 2 * sizeTextToDraw.cy, 0, nullptr, m_wstrFileName.data(), (int)m_wstrFileName.size(), nullptr);
+		ExtTextOutW(rDC.m_hDC, 35, rc.top + 3 * sizeTextToDraw.cy, 0, nullptr, m_wstrFullPath.data(), (int)m_wstrFullPath.size(), nullptr);
 	}
 }
 
@@ -693,11 +696,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 			if (m_pLibpe->GetResources(pResRoot) != S_OK)
 				return -1;
 
-			const DWORD_PTR dwResId = m_treeResTop.GetItemData(pTree->itemNew.hItem);
-			const long idlvlRoot = std::get<0>(m_vecResId.at(dwResId));
-			const long idlvl2 = std::get<1>(m_vecResId.at(dwResId));
-			const long idlvl3 = std::get<2>(m_vecResId.at(dwResId));
-
+			const auto [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResTop.GetItemData(pTree->itemNew.hItem));
 			if (idlvl2 >= 0)
 			{
 				auto& lvl2st = pResRoot->vecResRoot.at(idlvlRoot).stResLvL2;
@@ -1366,37 +1365,37 @@ int CViewRightTL::CreateTreeResources()
 		CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_TOP);
 	m_treeResTop.ShowWindow(SW_HIDE);
 
-	m_hTreeResDir = m_treeResTop.InsertItem(L"Resource tree.");
+	m_hTreeResDir = m_treeResTop.InsertItem(L"Resources tree");
 
 	WCHAR wstr[MAX_PATH];
-	HTREEITEM treeRoot { }, treeLvL2 { };
+	HTREEITEM htreeRoot { }, htreeLvL2 { };
 	long ilvlRoot = 0, ilvl2 = 0, ilvl3 = 0;
 
-	//Main loop to extract Resources from tuple.
+	//Main loop to extract Resources.
 	for (auto& iterRoot : pResRoot->vecResRoot)
 	{
-		const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry = &iterRoot.stResDirEntryRoot;
+		auto pResDirEntry = &iterRoot.stResDirEntryRoot; //Level Root IMAGE_RESOURCE_DIRECTORY_ENTRY
 		if (pResDirEntry->DataIsDirectory)
 		{
 			if (pResDirEntry->NameIsString)
 				swprintf(wstr, MAX_PATH, L"Entry: %li [Name: %s]", ilvlRoot, iterRoot.wstrResNameRoot.data());
 			else
 			{
-				if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
-					swprintf(wstr, MAX_PATH, L"Entry: %li [Id: %u, %s]",
-						ilvlRoot, pResDirEntry->Id, g_mapResType.at(pResDirEntry->Id).data());
+				auto iter = g_mapResType.find(pResDirEntry->Id);
+				if (iter != g_mapResType.end())
+					swprintf(wstr, MAX_PATH, L"Entry: %li [Id: %u, %s]", ilvlRoot, pResDirEntry->Id, iter->second.data());
 				else
 					swprintf(wstr, MAX_PATH, L"Entry: %li [Id: %u]", ilvlRoot, pResDirEntry->Id);
 			}
-			treeRoot = m_treeResTop.InsertItem(wstr, m_hTreeResDir);
+			htreeRoot = m_treeResTop.InsertItem(wstr, m_hTreeResDir);
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
-			m_treeResTop.SetItemData(treeRoot, m_vecResId.size() - 1);
+			m_treeResTop.SetItemData(htreeRoot, m_vecResId.size() - 1);
 			ilvl2 = 0;
 
-			const PCLIBPE_RESOURCE_LVL2 pstResLvL2 = &iterRoot.stResLvL2;
+			auto pstResLvL2 = &iterRoot.stResLvL2;
 			for (auto& iterLvL2 : pstResLvL2->vecResLvL2)
 			{
-				pResDirEntry = &iterLvL2.stResDirEntryLvL2;
+				pResDirEntry = &iterLvL2.stResDirEntryLvL2; //Level 2 IMAGE_RESOURCE_DIRECTORY_ENTRY
 				if (pResDirEntry->DataIsDirectory)
 				{
 					if (pResDirEntry->NameIsString)
@@ -1404,40 +1403,37 @@ int CViewRightTL::CreateTreeResources()
 					else
 						swprintf(wstr, MAX_PATH, L"Entry: %li, Id: %u", ilvl2, pResDirEntry->Id);
 
-					treeLvL2 = m_treeResTop.InsertItem(wstr, treeRoot);
+					htreeLvL2 = m_treeResTop.InsertItem(wstr, htreeRoot);
 					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
-					m_treeResTop.SetItemData(treeLvL2, m_vecResId.size() - 1);
+					m_treeResTop.SetItemData(htreeLvL2, m_vecResId.size() - 1);
 					ilvl3 = 0;
 
-					const PCLIBPE_RESOURCE_LVL3 pstResLvL3 = &iterLvL2.stResLvL3;
+					auto pstResLvL3 = &iterLvL2.stResLvL3;
 					for (auto& iterLvL3 : pstResLvL3->vecResLvL3)
 					{
-						pResDirEntry = &iterLvL3.stResDirEntryLvL3;
-
+						pResDirEntry = &iterLvL3.stResDirEntryLvL3; //Level 3 IMAGE_RESOURCE_DIRECTORY_ENTRY
 						if (pResDirEntry->NameIsString)
 							swprintf(wstr, MAX_PATH, L"Entry: %li, Name: %s", ilvl3, iterLvL3.wstrResNameLvL3.data());
 						else
 							swprintf(wstr, MAX_PATH, L"Entry: %li, lang: %u", ilvl3, pResDirEntry->Id);
 
-						const HTREEITEM treeLvL3 = m_treeResTop.InsertItem(wstr, treeLvL2);
+						auto htreeLvL3 = m_treeResTop.InsertItem(wstr, htreeLvL2);
 						m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
-						m_treeResTop.SetItemData(treeLvL3, m_vecResId.size() - 1);
-
+						m_treeResTop.SetItemData(htreeLvL3, m_vecResId.size() - 1);
 						ilvl3++;
 					}
 				}
 				else
 				{	//DATA lvl2
 					pResDirEntry = &iterLvL2.stResDirEntryLvL2;
-
 					if (pResDirEntry->NameIsString)
 						swprintf(wstr, MAX_PATH, L"Entry: %li, Name: %s", ilvl2, iterLvL2.wstrResNameLvL2.data());
 					else
 						swprintf(wstr, MAX_PATH, L"Entry: %li, lang: %u", ilvl2, pResDirEntry->Id);
 
-					treeLvL2 = m_treeResTop.InsertItem(wstr, treeRoot);
+					htreeLvL2 = m_treeResTop.InsertItem(wstr, htreeRoot);
 					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
-					m_treeResTop.SetItemData(treeLvL2, m_vecResId.size() - 1);
+					m_treeResTop.SetItemData(htreeLvL2, m_vecResId.size() - 1);
 				}
 				ilvl2++;
 			}
@@ -1451,9 +1447,9 @@ int CViewRightTL::CreateTreeResources()
 			else
 				swprintf(wstr, MAX_PATH, L"Entry: %li, lang: %u", ilvlRoot, pResDirEntry->Id);
 
-			treeRoot = m_treeResTop.InsertItem(wstr, m_hTreeResDir);
+			htreeRoot = m_treeResTop.InsertItem(wstr, m_hTreeResDir);
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
-			m_treeResTop.SetItemData(treeRoot, m_vecResId.size() - 1);
+			m_treeResTop.SetItemData(htreeRoot, m_vecResId.size() - 1);
 		}
 		ilvlRoot++;
 	}

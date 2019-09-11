@@ -29,7 +29,13 @@ END_MESSAGE_MAP()
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	GetDlgItem(IDC_STATIC_VERSION)->SetWindowTextW(PEPPER_VERSION_WSTR);
+	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(PEPPER_VERSION_WSTR);
+	std::wstring wstrlibpeVer = L"libpe - PE/PE+ binaries library v";
+	wstrlibpeVer += libpeInfo()->pwszVersion;
+	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrlibpeVer.data());
+	wstrlibpeVer = L"HexCtrl - Hex Control for MFC/Win32 v";
+	wstrlibpeVer += HexCtrlInfo()->pwszVersion;
+	GetDlgItem(IDC_LINK_HEXCTRL)->SetWindowTextW(wstrlibpeVer.data());
 
 	return TRUE;
 }

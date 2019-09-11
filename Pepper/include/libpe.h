@@ -134,7 +134,7 @@ namespace libpe {
 	* and LIBPE_RESOURCE_LVL3_DATA_VEC, that is again — vector of structs of all 						*
 	* IMAGE_RESOURCE_DIRECTORY_ENTRY of the last, third, level of resources. See the code below.		*
 	****************************************************************************************************/
-	
+
 	//Level 3 (the lowest) Resources.
 	struct LIBPE_RESOURCE_LVL3_DATA {
 		IMAGE_RESOURCE_DIRECTORY_ENTRY stResDirEntryLvL3;   //Level 3 standard IMAGE_RESOURCE_DIRECTORY_ENTRY struct.
@@ -213,13 +213,18 @@ namespace libpe {
 	//Debug table.
 	struct LIBPE_DEBUG_DBGHDR
 	{
-		DWORD       dwArr[6];   //First six DWORDs of IMAGE_DEBUG_DIRECTORY::PointerToRawData data (Debug info header).
-								//Their meaning vary depending on dwArr[0] (Signature) value.
+		//dwHdr[6] is an array of the first six DWORDs of IMAGE_DEBUG_DIRECTORY::PointerToRawData data (Debug info header).
+		//Their meaning varies depending on dwHdr[0] (Signature) value.
+		//If dwHdr[0] == 0x53445352 (Ascii "RSDS") it's PDB 7.0 file:
+		// Then dwHdr[1]-dwHdr[4] is GUID (*((GUID*)&dwHdr[1])). dwHdr[5] is Counter/Age.
+		//If dwHdr[0] == 0x3031424E (Ascii "NB10") it's PDB 2.0 file:
+		// Then dwHdr[1] is Offset. dwHdr[2] is Time/Signature. dwHdr[3] is Counter/Age.
+		DWORD       dwHdr[6];
 		std::string strPDBName; //PDB file name/path.
-	}; 
+	};
 	struct LIBPE_DEBUG {
 		DWORD                 dwOffsetDebug;  //File's raw offset of the Debug descriptor.
-		IMAGE_DEBUG_DIRECTORY stDebugDir;     //Standard IMAGE_DEBUG_DIRECTORY.
+		IMAGE_DEBUG_DIRECTORY stDebugDir;     //Standard IMAGE_DEBUG_DIRECTORY header.
 		LIBPE_DEBUG_DBGHDR    stDebugHdrInfo; //Debug info header.
 	};
 	using LIBPE_DEBUG_VEC = std::vector<LIBPE_DEBUG>;
@@ -333,66 +338,66 @@ namespace libpe {
 	* Return errors.                                 *
 	*************************************************/
 
-	constexpr auto E_CALL_LOADPE_FIRST = 0xFFFF;
-	constexpr auto E_FILE_CREATEFILE_FAILED = 0x0010;
-	constexpr auto E_FILE_SIZE_TOO_SMALL = 0x0011;
-	constexpr auto E_FILE_CREATEFILEMAPPING_FAILED = 0x0012;
+	constexpr auto E_CALL_LOADPE_FIRST = 0xFFFFu;
+	constexpr auto E_FILE_CREATEFILE_FAILED = 0x0010u;
+	constexpr auto E_FILE_SIZE_TOO_SMALL = 0x0011u;
+	constexpr auto E_FILE_CREATEFILEMAPPING_FAILED = 0x0012u;
 	constexpr auto E_FILE_MAPVIEWOFFILE_FAILED = 0x0013;
-	constexpr auto E_FILE_MAPVIEWOFFILE_SECTION_FAILED = 0x0014;
-	constexpr auto E_FILE_SECTION_DATA_CORRUPTED = 0x0015;
-	constexpr auto E_IMAGE_TYPE_UNSUPPORTED = 0x0016;
-	constexpr auto E_IMAGE_HAS_NO_DOSHEADER = 0x0017;
-	constexpr auto E_IMAGE_HAS_NO_RICHHEADER = 0x0018;
-	constexpr auto E_IMAGE_HAS_NO_NTHEADER = 0x0019;
-	constexpr auto E_IMAGE_HAS_NO_FILEHEADER = 0x001A;
-	constexpr auto E_IMAGE_HAS_NO_OPTHEADER = 0x001B;
-	constexpr auto E_IMAGE_HAS_NO_DATADIRECTORIES = 0x001C;
-	constexpr auto E_IMAGE_HAS_NO_SECTIONS = 0x001D;
-	constexpr auto E_IMAGE_HAS_NO_EXPORT = 0x001E;
-	constexpr auto E_IMAGE_HAS_NO_IMPORT = 0x001F;
-	constexpr auto E_IMAGE_HAS_NO_RESOURCE = 0x0020;
-	constexpr auto E_IMAGE_HAS_NO_EXCEPTION = 0x0021;
-	constexpr auto E_IMAGE_HAS_NO_SECURITY = 0x0022;
-	constexpr auto E_IMAGE_HAS_NO_BASERELOC = 0x0023;
-	constexpr auto E_IMAGE_HAS_NO_DEBUG = 0x0024;
-	constexpr auto E_IMAGE_HAS_NO_ARCHITECTURE = 0x0025;
-	constexpr auto E_IMAGE_HAS_NO_GLOBALPTR = 0x0026;
-	constexpr auto E_IMAGE_HAS_NO_TLS = 0x0027;
-	constexpr auto E_IMAGE_HAS_NO_LOADCONFIG = 0x0028;
-	constexpr auto E_IMAGE_HAS_NO_BOUNDIMPORT = 0x0029;
-	constexpr auto E_IMAGE_HAS_NO_IAT = 0x002A;
-	constexpr auto E_IMAGE_HAS_NO_DELAYIMPORT = 0x002B;
-	constexpr auto E_IMAGE_HAS_NO_COMDESCRIPTOR = 0x002C;
+	constexpr auto E_FILE_MAPVIEWOFFILE_SECTION_FAILED = 0x0014u;
+	constexpr auto E_FILE_SECTION_DATA_CORRUPTED = 0x0015u;
+	constexpr auto E_IMAGE_TYPE_UNSUPPORTED = 0x0016u;
+	constexpr auto E_IMAGE_HAS_NO_DOSHEADER = 0x0017u;
+	constexpr auto E_IMAGE_HAS_NO_RICHHEADER = 0x0018u;
+	constexpr auto E_IMAGE_HAS_NO_NTHEADER = 0x0019u;
+	constexpr auto E_IMAGE_HAS_NO_FILEHEADER = 0x001Au;
+	constexpr auto E_IMAGE_HAS_NO_OPTHEADER = 0x001Bu;
+	constexpr auto E_IMAGE_HAS_NO_DATADIRECTORIES = 0x001Cu;
+	constexpr auto E_IMAGE_HAS_NO_SECTIONS = 0x001Du;
+	constexpr auto E_IMAGE_HAS_NO_EXPORT = 0x001Eu;
+	constexpr auto E_IMAGE_HAS_NO_IMPORT = 0x001Fu;
+	constexpr auto E_IMAGE_HAS_NO_RESOURCE = 0x0020u;
+	constexpr auto E_IMAGE_HAS_NO_EXCEPTION = 0x0021u;
+	constexpr auto E_IMAGE_HAS_NO_SECURITY = 0x0022u;
+	constexpr auto E_IMAGE_HAS_NO_BASERELOC = 0x0023u;
+	constexpr auto E_IMAGE_HAS_NO_DEBUG = 0x0024u;
+	constexpr auto E_IMAGE_HAS_NO_ARCHITECTURE = 0x0025u;
+	constexpr auto E_IMAGE_HAS_NO_GLOBALPTR = 0x0026u;
+	constexpr auto E_IMAGE_HAS_NO_TLS = 0x0027u;
+	constexpr auto E_IMAGE_HAS_NO_LOADCONFIG = 0x0028u;
+	constexpr auto E_IMAGE_HAS_NO_BOUNDIMPORT = 0x0029u;
+	constexpr auto E_IMAGE_HAS_NO_IAT = 0x002Au;
+	constexpr auto E_IMAGE_HAS_NO_DELAYIMPORT = 0x002Bu;
+	constexpr auto E_IMAGE_HAS_NO_COMDESCRIPTOR = 0x002Cu;
 
 	/*****************************************************
 	* Flags according to loaded PE file properties.      *
 	*****************************************************/
 	//Tiny function shows whether given DWORD has given flag.
 	constexpr bool ImageHasFlag(DWORD dwFileInfo, DWORD dwFlag) { return dwFileInfo & dwFlag; };
-	constexpr DWORD IMAGE_FLAG_PE32 = 0x00000001;
-	constexpr DWORD IMAGE_FLAG_PE64 = 0x00000002;
-	constexpr DWORD IMAGE_FLAG_DOSHEADER = 0x00000004;
-	constexpr DWORD IMAGE_FLAG_RICHHEADER = 0x00000008;
-	constexpr DWORD IMAGE_FLAG_NTHEADER = 0x00000010;
-	constexpr DWORD IMAGE_FLAG_FILEHEADER = 0x00000020;
-	constexpr DWORD IMAGE_FLAG_OPTHEADER = 0x00000040;
-	constexpr DWORD IMAGE_FLAG_DATADIRECTORIES = 0x00000080;
-	constexpr DWORD IMAGE_FLAG_SECTIONS = 0x00000100;
-	constexpr DWORD IMAGE_FLAG_EXPORT = 0x00000200;
-	constexpr DWORD IMAGE_FLAG_IMPORT = 0x00000400;
-	constexpr DWORD IMAGE_FLAG_RESOURCE = 0x00000800;
-	constexpr DWORD IMAGE_FLAG_EXCEPTION = 0x00001000;
-	constexpr DWORD IMAGE_FLAG_SECURITY = 0x00002000;
-	constexpr DWORD IMAGE_FLAG_BASERELOC = 0x00004000;
-	constexpr DWORD IMAGE_FLAG_DEBUG = 0x00008000;
-	constexpr DWORD IMAGE_FLAG_ARCHITECTURE = 0x00010000;
-	constexpr DWORD IMAGE_FLAG_GLOBALPTR = 0x00020000;
-	constexpr DWORD IMAGE_FLAG_TLS = 0x00040000;
-	constexpr DWORD IMAGE_FLAG_LOADCONFIG = 0x00080000;
-	constexpr DWORD IMAGE_FLAG_BOUNDIMPORT = 0x00100000;
-	constexpr DWORD IMAGE_FLAG_IAT = 0x00200000;
-	constexpr DWORD IMAGE_FLAG_DELAYIMPORT = 0x00400000;
-	constexpr DWORD IMAGE_FLAG_COMDESCRIPTOR = 0x00800000;
+	constexpr auto IMAGE_FLAG_PE32 = 0x00000001ul;
+	constexpr auto IMAGE_FLAG_PE64 = 0x00000002ul;
+	constexpr auto IMAGE_FLAG_DOSHEADER = 0x00000004ul;
+	constexpr auto IMAGE_FLAG_RICHHEADER = 0x00000008ul;
+	constexpr auto IMAGE_FLAG_NTHEADER = 0x00000010ul;
+	constexpr auto IMAGE_FLAG_FILEHEADER = 0x00000020ul;
+	constexpr auto IMAGE_FLAG_OPTHEADER = 0x00000040ul;
+	constexpr auto IMAGE_FLAG_DATADIRECTORIES = 0x00000080ul;
+	constexpr auto IMAGE_FLAG_SECTIONS = 0x00000100ul;
+	constexpr auto IMAGE_FLAG_EXPORT = 0x00000200ul;
+	constexpr auto IMAGE_FLAG_IMPORT = 0x00000400ul;
+	constexpr auto IMAGE_FLAG_RESOURCE = 0x00000800ul;
+	constexpr auto IMAGE_FLAG_EXCEPTION = 0x00001000ul;
+	constexpr auto IMAGE_FLAG_SECURITY = 0x00002000ul;
+	constexpr auto IMAGE_FLAG_BASERELOC = 0x00004000ul;
+	constexpr auto IMAGE_FLAG_DEBUG = 0x00008000ul;
+	constexpr auto IMAGE_FLAG_ARCHITECTURE = 0x00010000ul;
+	constexpr auto IMAGE_FLAG_GLOBALPTR = 0x00020000ul;
+	constexpr auto IMAGE_FLAG_TLS = 0x00040000ul;
+	constexpr auto IMAGE_FLAG_LOADCONFIG = 0x00080000ul;
+	constexpr auto IMAGE_FLAG_BOUNDIMPORT = 0x00100000ul;
+	constexpr auto IMAGE_FLAG_IAT = 0x00200000ul;
+	constexpr auto IMAGE_FLAG_DELAYIMPORT = 0x00400000ul;
+	constexpr auto IMAGE_FLAG_COMDESCRIPTOR = 0x00800000ul;
 
 	/********************************************************************************************
 	* Factory function Createlibpe returns IlibpeUnPtr - unique_ptr with custom deleter.        *
@@ -404,9 +409,9 @@ namespace libpe {
 	* call Ilibpe::Destroy method afterwards manually - to delete Ilibpe object.                *
 	********************************************************************************************/
 #ifdef ILIBPE_EXPORT
-#define ILIBPEAPI extern "C" HRESULT __declspec(dllexport) __cdecl
+#define ILIBPEAPI __declspec(dllexport)
 #else
-#define ILIBPEAPI extern "C" HRESULT __declspec(dllimport) __cdecl
+#define ILIBPEAPI __declspec(dllimport)
 	/********************************************************
 	* Platform and configuration specific .lib name macros.	*
 	********************************************************/
@@ -429,7 +434,7 @@ namespace libpe {
 #pragma comment(lib, LIBNAME_PROPER("libpe"))
 #endif
 
-	ILIBPEAPI CreateRawlibpe(Ilibpe*&);
+	extern "C" ILIBPEAPI HRESULT __cdecl CreateRawlibpe(Ilibpe*&);
 	using IlibpeUnPtr = std::unique_ptr<Ilibpe, void(*)(Ilibpe*)>;
 	using IlibpeShPtr = std::shared_ptr<Ilibpe>;
 
@@ -444,4 +449,28 @@ namespace libpe {
 
 	//using libpe_ptr = IlibpeUnPtr;
 	using libpe_ptr = IlibpeShPtr;
+
+	/********************************************
+	* LIBPE_INFO: service info structure.       *
+	********************************************/
+	struct LIBPE_INFO
+	{
+		const wchar_t* pwszVersion { };        //WCHAR version string.
+		union {
+			unsigned long long ullVersion { }; //ULONGLONG version number.
+			struct {
+				short wMajor;
+				short wMinor;
+				short wMaintenance;
+				short wRevision;
+			}stVersion;
+		};
+	};
+	using PCLIBPE_INFO = const LIBPE_INFO*;
+
+	/*********************************************
+	* Service info export/import function.       *
+	* Returns pointer to LIBPE_INFO struct.      *
+	*********************************************/
+	extern "C" ILIBPEAPI PCLIBPE_INFO __cdecl libpeInfo();
 }

@@ -167,10 +167,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 		if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 			return -1;
 
-		const DWORD_PTR dwResId = m_treeResBottom.GetItemData(pTree->itemNew.hItem);
-		const long idlvlRoot = std::get<0>(m_vecResId.at(dwResId));
-		const long idlvl2 = std::get<1>(m_vecResId.at(dwResId));
-		const long idlvl3 = std::get<2>(m_vecResId.at(dwResId));
+		const auto [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
 		if (idlvl2 >= 0)
 		{
 			auto& rootvec = pstResRoot->vecResRoot;
@@ -772,8 +769,9 @@ int CViewRightBL::CreateTreeResources()
 			swprintf_s(wstr, MAX_PATH, L"\u00AB%s\u00BB", iterRoot.wstrResNameRoot.data());
 		else
 		{	//Setting Treectrl root node name depending on Resource typeID.
-			if (g_mapResType.find(pResDirEntry->Id) != g_mapResType.end())
-				swprintf_s(wstr, MAX_PATH, L"%s [Id: %u]", g_mapResType.at(pResDirEntry->Id).data(), pResDirEntry->Id);
+			auto iter = g_mapResType.find(pResDirEntry->Id);
+			if (iter != g_mapResType.end())
+				swprintf_s(wstr, MAX_PATH, L"%s [Id: %u]", iter->second.data(), pResDirEntry->Id);
 			else
 				swprintf_s(wstr, MAX_PATH, L"%u", pResDirEntry->Id);
 		}
@@ -782,7 +780,7 @@ int CViewRightBL::CreateTreeResources()
 		m_vecResId.emplace_back(ilvlRoot, -1, -1);
 		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
 		long ilvl2 = 0;
-		auto& refResLvL2 = iterRoot.stResLvL2;
+		auto& refResLvL2 = iterRoot.stResLvL2; //Resource level 2.
 
 		for (auto& iterLvL2 : refResLvL2.vecResLvL2)
 		{

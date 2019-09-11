@@ -37,9 +37,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe;
-	SIZE m_sizeTextToDraw { };
 	CFont m_fontSummary;
-	std::wstring m_wstrAppVersion { };
+	std::wstring m_wstrPepperVersion { };
 	std::wstring m_wstrFileName { };
 	std::wstring m_wstrFileType { };
 	std::wstring m_wstrFullPath { };

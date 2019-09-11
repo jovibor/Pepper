@@ -1157,33 +1157,33 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	auto& refDebug = pDebug->at(dwEntry);
 	WCHAR warr[9] { };
 
-	if (refDebug.stDebugHdrInfo.dwArr[0] == 0x53445352) //"RSDS"
+	if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x53445352) //"RSDS"
 	{
 		m_wstrEditBRB = L"Signature: RSDS\r\n";
 		m_wstrEditBRB += L"GUID: ";
 		LPWSTR lpwstr;
-		GUID guid = *((GUID*)& refDebug.stDebugHdrInfo.dwArr[1]);
+		GUID guid = *((GUID*)& refDebug.stDebugHdrInfo.dwHdr[1]);
 		StringFromIID(guid, &lpwstr);
 		m_wstrEditBRB += lpwstr;
 		m_wstrEditBRB += L"\r\n";
 		m_wstrEditBRB += L"Counter/Age: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwArr[5], warr);
+		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[5], warr);
 		m_wstrEditBRB += warr;
 		m_wstrEditBRB += L"\r\n";
 	}
-	else if (refDebug.stDebugHdrInfo.dwArr[0] == 0x3031424E) //"NB10"
+	else if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x3031424E) //"NB10"
 	{
 		m_wstrEditBRB = L"Signature: NB10\r\n";
 		m_wstrEditBRB += L"Offset: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwArr[1], warr);
+		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[1], warr);
 		m_wstrEditBRB += warr;
 		m_wstrEditBRB += L"\r\n";
 		m_wstrEditBRB += L"Time/Signature: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwArr[2], warr);
+		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[2], warr);
 		m_wstrEditBRB += warr;
 		m_wstrEditBRB += L"\r\n";
 		m_wstrEditBRB += L"Counter/Age: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwArr[3], warr);
+		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[3], warr);
 		m_wstrEditBRB += warr;
 		m_wstrEditBRB += L"\r\n";
 	}

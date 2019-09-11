@@ -17,10 +17,9 @@
 #define IDS_EDIT_MENU                   306
 #define IDI_TREE_MAIN_HEADER_ICON       314
 #define IDI_TREE_MAIN_DIR_ICON          315
-#define IDC_STATIC_VERSION              1004
-#define IDC_PEPPER_LINK                 1006
-#define IDC_LIBPE_LINK                  1007
-#define IDC_HEXCTRL_LINK                1008
+#define IDC_LINK_PEPPER                 1006
+#define IDC_LINK_LIBPE                  1007
+#define IDC_LINK_HEXCTRL                1008
 #define ID_1_11                         32787
 #define ID_1_12                         32788
 #define ID_1_13                         32789
@@ -37,7 +36,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        318
 #define _APS_NEXT_COMMAND_VALUE         32796
-#define _APS_NEXT_CONTROL_VALUE         1009
+#define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif
