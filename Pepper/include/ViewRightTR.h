@@ -24,11 +24,14 @@ protected:
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	void OnDocEditMode();
+	void CreateHexResources(PIMAGE_RESOURCE_DATA_ENTRY);
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
+	CFileLoader* m_pFileLoader { };
 	HWND m_hwndActive { };
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs { };

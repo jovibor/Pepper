@@ -12,8 +12,27 @@
 
 IMPLEMENT_DYNCREATE(CPepperDoc, CDocument)
 
-BEGIN_MESSAGE_MAP(CPepperDoc, CDocument)
-END_MESSAGE_MAP()
+void CPepperDoc::SetEditMode(bool fEditMode)
+{
+	if (!m_stFileLoader.IsWritable())
+	{
+		MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"File cannot be opened for writing.\r\n"
+			"Most likely it's already opened by another process.", L"Error open for writing", MB_ICONERROR);
+		return;
+	}
+
+	if (!IsEditMode())
+	{
+		if (IDYES != MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"Warning!\r\nYou are about to enter the Edit Mode. "
+			"In this mode all changes you make will be immediately reflected to the file.\r\n"
+			"Are you sure you want it?", L"Edit mode", MB_ICONINFORMATION | MB_YESNO))
+		{
+			return;
+		}
+	}
+	m_fEditMode = fEditMode;
+	UpdateAllViews(nullptr, MAKELPARAM(ID_DOC_EDITMODE, fEditMode));
+}
 
 BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
@@ -37,7 +56,7 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		return FALSE;
 	}
 
-	m_stFileLoader.LoadFile(lpszPathName);
+	m_stFileLoader.LoadFile(lpszPathName, this);
 	UpdateAllViews(nullptr);
 
 	return TRUE;
@@ -45,6 +64,7 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 void CPepperDoc::OnCloseDocument()
 {
+	m_stFileLoader.Flush();
 	m_stFileLoader.UnloadFile();
 
 	CDocument::OnCloseDocument();

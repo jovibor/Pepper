@@ -107,7 +107,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 {
 	//Check m_pChildFrame to prevent some UB.
 	//OnUpdate can be invoked before OnInitialUpdate, weird MFC.
-	if (!m_pChildFrame || LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
+	if (!m_pChildFrame || LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR || LOWORD(lHint) == ID_DOC_EDITMODE)
 		return;
 
 	if (m_pwndActive)
@@ -229,35 +229,38 @@ void CViewRightTL::OnDraw(CDC * pDC)
 {
 	//Printing app name/version info and
 	//currently oppened file's type and name.
-	if (m_fFileSummaryShow)
-	{
-		CMemDC memDC(*pDC, this);
-		CDC& rDC = memDC.GetDC();
+	if (!m_fFileSummaryShow)
+		return;
 
-		CRect rc;
-		rDC.GetClipBox(rc);
-		rDC.FillSolidRect(rc, RGB(255, 255, 255));
-		rDC.SelectObject(m_fontSummary);
-		SIZE sizeTextToDraw;
-		if (m_wstrPepperVersion.size() > m_wstrFullPath.size())
-			GetTextExtentPoint32W(rDC.m_hDC, m_wstrPepperVersion.data(), (int)m_wstrPepperVersion.size(), &sizeTextToDraw);
-		else
-			GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), (int)m_wstrFullPath.size(), &sizeTextToDraw);
-		int iRectLeft = 20;
-		int iRectTop = 20;
-		rc.SetRect(iRectLeft, iRectTop, iRectLeft + sizeTextToDraw.cx + 40, sizeTextToDraw.cy * 6);
-		rDC.Rectangle(&rc);
+	CMemDC memDC(*pDC, this);
+	CDC& rDC = memDC.GetDC();
 
-		rDC.SetTextColor(RGB(200, 50, 30));
+	CRect rc;
+	rDC.GetClipBox(rc);
+	rDC.FillSolidRect(rc, RGB(255, 255, 255));
+	rDC.SelectObject(m_fontSummary);
+	SIZE sizeTextToDraw;
+	if (m_wstrPepperVersion.size() > m_wstrFullPath.size())
 		GetTextExtentPoint32W(rDC.m_hDC, m_wstrPepperVersion.data(), (int)m_wstrPepperVersion.size(), &sizeTextToDraw);
-		ExtTextOutW(rDC.m_hDC, (rc.Width() - sizeTextToDraw.cx) / 2 + rc.left, 10, 0, nullptr,
-			m_wstrPepperVersion.data(), (int)m_wstrPepperVersion.size(), nullptr);
+	else
+		GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), (int)m_wstrFullPath.size(), &sizeTextToDraw);
+	int iRectLeft = 20;
+	int iRectTop = 20;
+	rc.SetRect(iRectLeft, iRectTop, iRectLeft + sizeTextToDraw.cx + 40, sizeTextToDraw.cy * 6);
+	rDC.Rectangle(&rc);
 
-		rDC.SetTextColor(RGB(0, 0, 255));
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + sizeTextToDraw.cy, 0, nullptr, m_wstrFileType.data(), (int)m_wstrFileType.size(), nullptr);
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + 2 * sizeTextToDraw.cy, 0, nullptr, m_wstrFileName.data(), (int)m_wstrFileName.size(), nullptr);
-		ExtTextOutW(rDC.m_hDC, 35, rc.top + 3 * sizeTextToDraw.cy, 0, nullptr, m_wstrFullPath.data(), (int)m_wstrFullPath.size(), nullptr);
-	}
+	rDC.SetTextColor(RGB(200, 50, 30));
+	GetTextExtentPoint32W(rDC.m_hDC, m_wstrPepperVersion.data(), (int)m_wstrPepperVersion.size(), &sizeTextToDraw);
+	ExtTextOutW(rDC.m_hDC, (rc.Width() - sizeTextToDraw.cx) / 2 + rc.left, 10, 0, nullptr,
+		m_wstrPepperVersion.data(), (int)m_wstrPepperVersion.size(), nullptr);
+
+	rDC.SetTextColor(RGB(0, 0, 255));
+	ExtTextOutW(rDC.m_hDC, iRectLeft + 15, rc.top + sizeTextToDraw.cy, 0, nullptr,
+		m_wstrFileName.data(), (int)m_wstrFileName.size(), nullptr);
+	ExtTextOutW(rDC.m_hDC, iRectLeft + 15, rc.top + 2 * sizeTextToDraw.cy, 0, nullptr,
+		m_wstrFileType.data(), (int)m_wstrFileType.size(), nullptr);
+	ExtTextOutW(rDC.m_hDC, iRectLeft + 15, rc.top + 3 * sizeTextToDraw.cy, 0, nullptr,
+		m_wstrFullPath.data(), (int)m_wstrFullPath.size(), nullptr);
 }
 
 BOOL CViewRightTL::OnEraseBkgnd(CDC* /*pDC*/)
@@ -711,12 +714,12 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 
 						if (!lvl3vec.empty())
 						{
-							auto& data = lvl3vec.at(idlvl3).vecResRawDataLvL3;
+							const auto data = &lvl3vec.at(idlvl3).stResDataEntryLvL3;
 
-							if (!data.empty())
+							if (data)
 								//Send data vector pointer to CViewRightTR
 								//to display raw data.
-								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), (CObject*)& data);
+								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), (CObject*)data);
 						}
 					}
 				}

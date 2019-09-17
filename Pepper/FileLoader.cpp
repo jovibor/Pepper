@@ -13,26 +13,41 @@
 #include "FileLoader.h"
 #include "constants.h"
 #include <algorithm>
+#include "PepperDoc.h"
 
-HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
+HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 {
-	if (IsCreated())
+	if (IsLoaded() || !pDoc)
 		return E_ABORT;
 
-	m_hFile = CreateFileW(lpszFileName, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	bool fWritable { false }; //ReadOnly flag.
+	m_hFile = CreateFileW(lpszFileName, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ,
+		nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (m_hFile == INVALID_HANDLE_VALUE)
-		return E_FILE_CREATEFILE_FAILED;
+	{
+		m_hFile = CreateFileW(lpszFileName, GENERIC_READ, FILE_SHARE_READ,
+			nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (m_hFile == INVALID_HANDLE_VALUE)
+		{
+			MessageBoxW(L"CreateFileW call in FileLoader::LoadFile failed.", L"Error", MB_ICONERROR);
+			return E_FILE_CREATEFILE_FAILED;
+		}
+	}
+	else
+		fWritable = true;
 
 	::GetFileSizeEx(m_hFile, &m_stFileSize);
 
-	m_hMapObject = CreateFileMappingW(m_hFile, nullptr, PAGE_READONLY, 0, 0, nullptr);
-	if (!m_hMapObject) {
+	m_hMapObject = CreateFileMappingW(m_hFile, nullptr, fWritable ? PAGE_READWRITE : PAGE_READONLY, 0, 0, nullptr);
+	if (!m_hMapObject)
+	{
 		CloseHandle(m_hFile);
+		MessageBoxW(L"CreateFileMappingW call in FileLoader::LoadFile failed.", L"Error", MB_ICONERROR);
 		return E_FILE_CREATEFILEMAPPING_FAILED;
 	}
-	m_fCreated = true;
+	m_fLoaded = true;
 
-	m_lpBase = MapViewOfFile(m_hMapObject, FILE_MAP_READ, 0, 0, 0);
+	m_lpBase = MapViewOfFile(m_hMapObject, fWritable ? FILE_MAP_WRITE : FILE_MAP_READ, 0, 0, 0);
 	if (m_lpBase)
 		m_fMapViewOfFileWhole = true;
 	else { //Not enough memory? File is too big?
@@ -43,11 +58,15 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName)
 	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr))
 		return E_ABORT;
 
+	m_fWritable = fWritable;
+	m_pMainDoc = pDoc;
+
 	m_hcs.enMode = EHexCreateMode::CREATE_FLOAT;
 	m_hcs.hwndParent = m_hWnd;
 	m_hcs.dwExStyle = WS_EX_APPWINDOW; //To force to the taskbar.
 
 	m_hds.hwndMsg = m_hWnd;
+	m_hds.fMutable = m_pMainDoc->IsEditMode();
 
 	return S_OK;
 }
@@ -70,6 +89,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 		pData = nullptr;
 	}
 
+	m_hds.fMutable = m_pMainDoc->IsEditMode();
 	m_hds.pData = pData;
 	m_hds.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
 	m_hds.enMode = enMode;
@@ -110,7 +130,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 
 HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrlPtr pHexCtrl)
 {
-	if (!IsCreated())
+	if (!IsLoaded())
 		return E_ABORT;
 
 	if (!pHexCtrl) {
@@ -141,6 +161,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		iter->fShowPiece = true;
 	}
 
+	m_hds.fMutable = m_pMainDoc->IsEditMode();
 	m_hds.pData = pData;
 	m_hds.ullDataSize = ullSize;
 	m_hds.enMode = enMode;
@@ -201,9 +222,20 @@ HRESULT CFileLoader::UnmapFileOffset(QUERYDATA& rData)
 	return S_OK;
 }
 
+bool CFileLoader::Flush()
+{
+	if (!IsLoaded())
+		return false;
+
+	if (IsModified())
+		FlushViewOfFile(m_lpBase, 0);
+
+	return false;
+}
+
 HRESULT CFileLoader::UnloadFile()
 {
-	if (!m_fCreated)
+	if (!m_fLoaded)
 		return E_ABORT;
 
 	for (auto& i : m_vecQuery)
@@ -219,20 +251,15 @@ HRESULT CFileLoader::UnloadFile()
 	m_lpBase = nullptr;
 	m_hMapObject = nullptr;
 	m_hFile = nullptr;
-	m_fCreated = false;
+	m_fLoaded = false;
 	m_fMapViewOfFileWhole = false;
 
 	return S_OK;
 }
 
-bool CFileLoader::IsCreated()
-{
-	return m_fCreated;
-}
-
 bool CFileLoader::IsLoaded()
 {
-	return m_fMapViewOfFileWhole;
+	return m_fLoaded;
 }
 
 BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
@@ -256,6 +283,9 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case HEXCTRL_MSG_GETDATA:
 		m_byte = GetByte(pHexNtfy->hdr.hwndFrom, pHexNtfy->ullIndex);
 		pHexNtfy->pData = &m_byte;
+		break;
+	case HEXCTRL_MSG_MODIFYDATA:
+		m_fModified = true;
 		break;
 	}
 

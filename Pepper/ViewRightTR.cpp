@@ -30,6 +30,7 @@ void CViewRightTR::OnInitialUpdate()
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
 	m_pLibpe = m_pMainDoc->m_pLibpe;
+	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	//Hex control for Resources raw.
 	m_hcs.hwndParent = m_hWnd;
@@ -40,13 +41,8 @@ void CViewRightTR::OnInitialUpdate()
 
 void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 {
-	if (!m_pChildFrame)
+	if (!m_pChildFrame || LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
 		return;
-	if (LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
-		return;
-
-	if (m_hwndActive)
-		::ShowWindow(m_hwndActive, SW_HIDE);
 
 	CRect rcParent, rcClient;
 	GetParent()->GetWindowRect(&rcParent);
@@ -55,6 +51,8 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	switch (LOWORD(lHint))
 	{
 	case IDC_TREE_RESOURCE:
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_stHexEdit->ClearData();
 		m_hwndActive = m_stHexEdit->GetWindowHandle();
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
@@ -62,19 +60,17 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
 	case IDC_HEX_RIGHT_TR:
-	{
-		const auto& hexData = (std::vector<std::byte>*)pHint;
-		HEXDATASTRUCT hds;
-		hds.pData = (PBYTE)hexData->data();
-		hds.ullDataSize = hexData->size();
-		m_stHexEdit->SetData(hds);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		CreateHexResources((PIMAGE_RESOURCE_DATA_ENTRY)pHint);
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
-		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
-	}
+	case ID_DOC_EDITMODE:
+		OnDocEditMode();
+		break;
 	default:
+		if (m_hwndActive)
+			::ShowWindow(m_hwndActive, SW_HIDE);
+
 		m_pChildFrame->m_stSplitterRightTop.HideCol(1);
 	}
 
@@ -91,4 +87,27 @@ void CViewRightTR::OnSize(UINT nType, int cx, int cy)
 
 	if (m_hwndActive)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+}
+
+void CViewRightTR::OnDocEditMode()
+{
+	m_stHexEdit->SetEditMode(m_pMainDoc->IsEditMode());
+}
+
+void CViewRightTR::CreateHexResources(PIMAGE_RESOURCE_DATA_ENTRY pRes)
+{
+	CRect rcParent, rcClient;
+	GetParent()->GetWindowRect(&rcParent);
+	GetClientRect(&rcClient);
+
+	if (m_hwndActive)
+		::ShowWindow(m_hwndActive, SW_HIDE);
+
+	DWORD dwOffset { };
+	m_pLibpe->GetOffsetFromRVA(pRes->OffsetToData, dwOffset);
+	//	const auto& hexData = (std::vector<std::byte>*)pHint;
+
+	m_pFileLoader->ShowFilePiece(dwOffset, pRes->Size, m_stHexEdit);
+	m_hwndActive = m_stHexEdit->GetWindowHandle();
+	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }

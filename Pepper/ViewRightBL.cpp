@@ -134,6 +134,9 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	case IDC_LIST_DEBUG_ENTRY:
 		CreateHexDebugEntry(HIWORD(lHint));
 		break;
+	case ID_DOC_EDITMODE:
+		OnDocEditMode();
+		break;
 	default:
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
@@ -841,4 +844,9 @@ int CViewRightBL::CreateHexTLS()
 	m_pFileLoader->ShowFilePiece(dwOffset, dwSize, m_stHexEdit);
 
 	return 0;
+}
+
+void CViewRightBL::OnDocEditMode()
+{
+	m_stHexEdit->SetEditMode(m_pMainDoc->IsEditMode());
 }

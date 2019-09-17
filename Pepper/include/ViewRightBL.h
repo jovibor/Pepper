@@ -47,6 +47,7 @@ protected:
 	int CreateHexSecurityEntry(unsigned nSertId);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	void OnDocEditMode();
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe;

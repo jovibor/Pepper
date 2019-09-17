@@ -90,8 +90,10 @@ IDR_MAINFRAME_256       BITMAP                  "Toolbar256.bmp"
 
 IDR_MAINFRAME_256 TOOLBAR 16, 17
 BEGIN
-    BUTTON      ID_FILE_OPEN
     BUTTON      ID_APP_ABOUT
+    BUTTON      ID_FILE_OPEN
+    SEPARATOR
+    BUTTON      ID_APP_EDITMODE
 END
 
 
@@ -140,11 +142,11 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "About Pepper..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,11,14,21,20
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,14,20,20
     DEFPUSHBUTTON   "OK",IDOK,169,69,50,14,WS_GROUP
-    CONTROL         "<<Pepper>>",IDC_LINK_PEPPER,"MfcLink",WS_TABSTOP,36,27,154,11
-    CONTROL         "<<libpe>>",IDC_LINK_LIBPE,"MfcLink",WS_TABSTOP,36,38,151,11
-    CONTROL         "<<HexCtrl>>",IDC_LINK_HEXCTRL,"MfcLink",WS_TABSTOP,36,49,153,11
+    CONTROL         "<<Pepper>>",IDC_LINK_PEPPER,"MfcLink",WS_TABSTOP,36,26,173,11
+    CONTROL         "<<libpe>>",IDC_LINK_LIBPE,"MfcLink",WS_TABSTOP,36,37,175,11
+    CONTROL         "<<HexCtrl>>",IDC_LINK_HEXCTRL,"MfcLink",WS_TABSTOP,36,48,175,11
     LTEXT           "Pepper is a free software available under the MIT license.",IDC_STATIC,36,15,187,12
 END
 
@@ -347,6 +349,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_EDIT_MENU           "Edit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_APP_EDITMODE         "Toggle Edit Mode\nEdit Mode"
 END
 
 #endif    // English (United States) resources

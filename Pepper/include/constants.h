@@ -436,6 +436,8 @@ constexpr auto IDC_HEX_RIGHT_TR = 0x0201;
 constexpr auto IDC_SHOW_FILE_SUMMARY = 0x0300;
 constexpr auto IDC_SHOW_RESOURCE_RBR = 0x0301;
 
+constexpr auto ID_DOC_EDITMODE = 0x0401;
+
 constexpr auto IDM_LIST_GOTODESCOFFSET = 0x8001;
 constexpr auto IDM_LIST_GOTODATAOFFSET = 0x8002;
 /********************************************************

@@ -27,4 +27,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CWnd* pwndMBtnCurDown { };
+public:
+	afx_msg void OnAppEditmode();
+	afx_msg void OnUpdateAppEditmode(CCmdUI *pCmdUI);
 };

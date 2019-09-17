@@ -73,7 +73,7 @@ void CViewRightBR::OnInitialUpdate()
 void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 {
 	//If it's UpdateAllViews call for top right Hex (IDC_HEX_RIGHT_TR), (from top left Resource Tree) we do nothing.
-	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR)
+	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR || LOWORD(lHint) == ID_DOC_EDITMODE)
 		return;
 
 	//If any but Resources Update we destroy m_wndDlgSample, if it's currently created.

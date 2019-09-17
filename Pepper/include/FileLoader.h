@@ -18,6 +18,7 @@
 
 using namespace HEXCTRL;
 
+class CPepperDoc;
 class CFileLoader : public CWnd
 {
 public:
@@ -25,16 +26,17 @@ public:
 	~CFileLoader() {};
 
 	//First function to call.
-	HRESULT LoadFile(LPCWSTR lpszFileName);
-
+	HRESULT LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc);
+	bool IsWritable() { return m_fWritable; }
 	//Shows arbitrary offset in already loaded file (LoadFile)
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
 	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrlPtr pHexCtrl = nullptr);
-
 	//Shows only a piece of the whole loaded file.
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
 	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrlPtr pHexCtrl = nullptr);
-
+	//Has file been modified in memory or not.
+	bool IsModified() { return m_fModified; }
+	bool Flush(); //Writes memory mapped file on disk.
 	//Unloads loaded file and all pieces, if present.
 	HRESULT UnloadFile();
 private:
@@ -44,7 +46,7 @@ private:
 	* So we can map different parts, of the big file,							*
 	* for different windows (CHexCtrl instances) simultaneously.				*
 	****************************************************************************/
-	struct QUERYDATA 
+	struct QUERYDATA
 	{
 		HWND		hWnd { };                    //IHexCtrl HWND which is querying the file's data.
 		ULONGLONG	ullStartOffsetMapped { };    //File is mapped starting from this raw offset.
@@ -54,31 +56,30 @@ private:
 		LPVOID		lpData { };                  //File's Mapped data.
 		bool		fShowPiece { false };        //Whether used in ShowOffset (false) or in ShowFilePiece (true).
 	};
+	bool m_fLoaded { false };
+	CPepperDoc* m_pMainDoc { };
 	IHexCtrlPtr m_stHex { CreateHexCtrl() };
-	HEXCREATESTRUCT m_hcs { };
-	HEXDATASTRUCT m_hds { };
-	//Size of the loaded PE file.
-	LARGE_INTEGER m_stFileSize { };
+	HEXCREATESTRUCT m_hcs;
+	HEXDATASTRUCT m_hds;
+	LARGE_INTEGER m_stFileSize { };	 //Size of the loaded PE file.
 	HANDLE m_hFile { };
-	//Returned by CreateFileMappingW.
-	HANDLE m_hMapObject { };
+	HANDLE m_hMapObject { };	     //Returned by CreateFileMappingW.
 	//Pointer to file mapping beginning,
 	//no matter if mapped completely or section by section.
 	LPVOID m_lpBase { };
-	//Is file loaded (mapped) completely, or section by section?
-	bool m_fMapViewOfFileWhole { };
+	bool m_fMapViewOfFileWhole { };	//Is file loaded (mapped) completely, or section by section?
 	//System information getting from GetSystemInfo().
 	//Needed for dwAllocationGranularity.
 	SYSTEM_INFO m_stSysInfo { };
-	bool m_fCreated { false };
 	std::vector<QUERYDATA> m_vecQuery;
-	const int IDC_HEX_CTRL = 0xFF; //Id of inner CHexCtrl.
-	BYTE m_byte { };
+	const int IDC_HEX_CTRL = 0xFF; //Id of inner IHexCtrl.
+	BYTE m_byte { }; //For HEXCTRL_MSG_GETDATA.
+	bool m_fModified { false };
+	bool m_fWritable { false };
 private:
 	unsigned char GetByte(HWND hWnd, ULONGLONG ullOffset); //For Virtual HexCtrl retrives next byte on demand.
 	HRESULT MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD dwSize = 0); //Main routine for mapping big file's parts.
 	HRESULT UnmapFileOffset(QUERYDATA& rData);
-	bool IsCreated();
 	bool IsLoaded();
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };

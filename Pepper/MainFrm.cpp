@@ -9,15 +9,18 @@
 #include "stdafx.h"
 #include "MainFrm.h"
 #include "res/resource.h"
+#include "PepperDoc.h"
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWndEx)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_WM_CREATE()
-	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
 	ON_WM_DROPFILES()
 	ON_WM_GETMINMAXINFO()
+	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
+	ON_COMMAND(ID_APP_EDITMODE, &CMainFrame::OnAppEditmode)
+	ON_UPDATE_COMMAND_UI(ID_APP_EDITMODE, &CMainFrame::OnUpdateAppEditmode)
 END_MESSAGE_MAP()
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -40,9 +43,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
 	m_wndToolBar.LoadToolBar(IDR_MAINFRAME_256);
 
-	CString strToolBarName;
-	strToolBarName.LoadString(IDS_TOOLBAR_STANDARD);
-	m_wndToolBar.SetWindowText(strToolBarName);
+	//CString strToolBarName;
+	//strToolBarName.LoadStringW(IDS_TOOLBAR_STANDARD);
+	//m_wndToolBar.SetWindowTextW(strToolBarName);
 
 	//	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
@@ -56,7 +59,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
-{	
+{
 	if (!CMDIFrameWndEx::PreCreateWindow(cs))
 		return FALSE;
 
@@ -170,4 +173,39 @@ void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 	lpMMI->ptMinTrackSize.y = 200;
 
 	CMDIFrameWndEx::OnGetMinMaxInfo(lpMMI);
+}
+
+void CMainFrame::OnAppEditmode()
+{
+	CFrameWnd* pFrame = GetActiveFrame();
+	if (pFrame)
+	{
+		CPepperDoc* pDoc = (CPepperDoc*)pFrame->GetActiveDocument();
+		if (pDoc)
+		{
+			if (pDoc->IsEditMode())
+				pDoc->SetEditMode(false);
+			else
+				pDoc->SetEditMode(true);
+		}
+	}
+}
+
+void CMainFrame::OnUpdateAppEditmode(CCmdUI *pCmdUI)
+{
+	CFrameWnd* pFrame = GetActiveFrame();
+	if (!pFrame)
+	{
+		pCmdUI->Enable(0);
+		return;
+	}
+
+	CPepperDoc* pDoc = (CPepperDoc*)pFrame->GetActiveDocument();
+	if (pDoc)
+	{
+		if (pDoc->IsEditMode())
+			m_wndToolBar.SetButtonStyle(m_wndToolBar.CommandToIndex(ID_APP_EDITMODE), TBBS_PRESSED);
+	}
+	else
+		pCmdUI->Enable(0);
 }
