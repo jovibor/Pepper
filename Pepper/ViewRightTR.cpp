@@ -91,7 +91,8 @@ void CViewRightTR::OnSize(UINT nType, int cx, int cy)
 
 void CViewRightTR::OnDocEditMode()
 {
-	m_stHexEdit->SetEditMode(m_pMainDoc->IsEditMode());
+	if (m_stHexEdit->IsDataSet())
+		m_stHexEdit->SetEditMode(m_pMainDoc->IsEditMode());
 }
 
 void CViewRightTR::CreateHexResources(PIMAGE_RESOURCE_DATA_ENTRY pRes)

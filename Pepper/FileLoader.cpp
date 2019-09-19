@@ -138,6 +138,14 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		pHexCtrl = m_stHex;
 	}
 
+	if (ullOffset >= (ULONGLONG)m_stFileSize.QuadPart) //Overflow check.
+	{
+		pHexCtrl->ClearData();
+		return E_ABORT;
+	}
+	if (ullOffset + ullSize > (ULONGLONG)m_stFileSize.QuadPart) //Overflow check.
+		ullSize = (ULONGLONG)m_stFileSize.QuadPart - ullOffset;
+
 	EHexDataMode enMode;
 	PBYTE pData;
 	if (m_fMapViewOfFileWhole) {

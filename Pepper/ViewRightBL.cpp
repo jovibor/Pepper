@@ -848,5 +848,6 @@ int CViewRightBL::CreateHexTLS()
 
 void CViewRightBL::OnDocEditMode()
 {
-	m_stHexEdit->SetEditMode(m_pMainDoc->IsEditMode());
+	if (m_stHexEdit->IsDataSet())
+		m_stHexEdit->SetEditMode(m_pMainDoc->IsEditMode());
 }
