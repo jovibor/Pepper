@@ -755,7 +755,7 @@ int CViewRightTL::CreateListDOSHeader()
 
 	for (unsigned i = 0; i < g_mapDOSHeader.size(); i++)
 	{
-		WCHAR wstr[9];
+		WCHAR wstr[18];
 		auto& ref = g_mapDOSHeader.at(i);
 		DWORD dwOffset = ref.dwOffset;
 		DWORD dwSize = ref.dwSize;
@@ -768,7 +768,7 @@ int CViewRightTL::CreateListDOSHeader()
 		swprintf_s(wstr, 9, L"%08lX", dwOffset);
 		m_listDOSHeader->InsertItem(i, wstr);
 		m_listDOSHeader->SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 9, L"%lu", dwSize);
+		swprintf_s(wstr, 17, L"%lu", dwSize);
 		m_listDOSHeader->SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 		m_listDOSHeader->SetItemText(i, 3, wstr);
@@ -975,7 +975,7 @@ int CViewRightTL::CreateListFileHeader()
 		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset);
 		m_listFileHeader->InsertItem(i, wstr);
 		m_listFileHeader->SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 9, L"%lu", dwSize);
+		swprintf_s(wstr, 17, L"%lu", dwSize);
 		m_listFileHeader->SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 		m_listFileHeader->SetItemText(i, 3, wstr);
@@ -1084,7 +1084,7 @@ int CViewRightTL::CreateListOptHeader()
 			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + dwOffset);
 			m_listOptHeader->InsertItem(i, wstr);
 			m_listOptHeader->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%lu", dwSize);
+			swprintf_s(wstr, 17, L"%lu", dwSize);
 			m_listOptHeader->SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : L"%08X"), dwValue);
 			m_listOptHeader->SetItemText(i, 3, wstr);
@@ -1127,7 +1127,7 @@ int CViewRightTL::CreateListOptHeader()
 			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + dwOffset);
 			m_listOptHeader->InsertItem(i, wstr);
 			m_listOptHeader->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%lu", dwSize);
+			swprintf_s(wstr, 17, L"%lu", dwSize);
 			m_listOptHeader->SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX")), ullValue);
 			m_listOptHeader->SetItemText(i, 3, wstr);
@@ -1308,7 +1308,7 @@ int CViewRightTL::CreateListExport()
 		swprintf_s(wstr, 9, L"%08lX", pExport->dwOffsetExportDesc + dwOffset);
 		m_listExportDir->InsertItem(i, wstr);
 		m_listExportDir->SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 9, L"%lu", dwSize);
+		swprintf_s(wstr, 17, L"%lu", dwSize);
 		m_listExportDir->SetItemText(i, 2, wstr);
 		if (i == 4) //Name
 			swprintf_s(wstr, MAX_PATH, L"%08lX (%S)", dwValue, pExport->strModuleName.data());
@@ -1615,9 +1615,9 @@ int CViewRightTL::CreateListDebug()
 			_wctime64_s(wstr, MAX_PATH, &time);
 			m_listDebugDir->SetCellTooltip(listindex, 2, wstr, L"Time / Date:");
 		}
-		swprintf_s(wstr, 5, L"%04u", pDebug->MajorVersion);
+		swprintf_s(wstr, 5, L"%04X", pDebug->MajorVersion);
 		m_listDebugDir->SetItemText(listindex, 3, wstr);
-		swprintf_s(wstr, 5, L"%04u", pDebug->MinorVersion);
+		swprintf_s(wstr, 5, L"%04X", pDebug->MinorVersion);
 		m_listDebugDir->SetItemText(listindex, 4, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDebug->Type);
 		m_listDebugDir->SetItemText(listindex, 5, wstr);
@@ -1692,7 +1692,7 @@ int CViewRightTL::CreateListTLS()
 			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir->InsertItem(i, wstr);
 			m_listTLSDir->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%lu", dwSize);
+			swprintf_s(wstr, 17, L"%lu", dwSize);
 			m_listTLSDir->SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, L"%08lX", dwValue);
 			m_listTLSDir->SetItemText(i, 3, wstr);
@@ -1717,7 +1717,7 @@ int CViewRightTL::CreateListTLS()
 			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir->InsertItem(i, wstr);
 			m_listTLSDir->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%lu", dwSize);
+			swprintf_s(wstr, 17, L"%lu", dwSize);
 			m_listTLSDir->SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 4 ? L"%08X" : L"%016llX", ullValue);
 			m_listTLSDir->SetItemText(i, 3, wstr);
@@ -1796,7 +1796,7 @@ int CViewRightTL::CreateListLCD()
 			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
 			m_listLCD->InsertItem(i, wstr);
 			m_listLCD->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%lu", dwSize);
+			swprintf_s(wstr, 17, L"%lu", dwSize);
 			m_listLCD->SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 			m_listLCD->SetItemText(i, 3, wstr);
@@ -1836,7 +1836,7 @@ int CViewRightTL::CreateListLCD()
 			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
 			m_listLCD->InsertItem(i, wstr);
 			m_listLCD->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 9, L"%lu", dwSize);
+			swprintf_s(wstr, 17, L"%lu", dwSize);
 			m_listLCD->SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX"), ullValue);
 			m_listLCD->SetItemText(i, 3, wstr);
@@ -1885,7 +1885,7 @@ int CViewRightTL::CreateListBoundImport()
 		}
 		swprintf_s(wstr, 5, L"%04X", pBoundImpDir->OffsetModuleName);
 		m_listBoundImportDir->SetItemText(listindex, 3, wstr);
-		swprintf_s(wstr, 5, L"%04u", pBoundImpDir->NumberOfModuleForwarderRefs);
+		swprintf_s(wstr, 5, L"%04X", pBoundImpDir->NumberOfModuleForwarderRefs);
 		m_listBoundImportDir->SetItemText(listindex, 4, wstr);
 
 		listindex++;
@@ -1985,7 +1985,7 @@ int CViewRightTL::CreateListCOM()
 	const IMAGE_COR20_HEADER * pCom = &pCOMDesc->stCorHdr;
 	for (unsigned i = 0; i < g_mapComDir.size(); i++)
 	{
-		WCHAR wstr[9];
+		WCHAR wstr[18];
 		std::wstring wstrToolTip;
 		auto& ref = g_mapComDir.at(i);
 		DWORD dwOffset = ref.dwOffset;
@@ -2004,7 +2004,7 @@ int CViewRightTL::CreateListCOM()
 		swprintf_s(wstr, 9, L"%08lX", pCOMDesc->dwOffsetComDesc + dwOffset);
 		m_listCOMDir->InsertItem(i, wstr);
 		m_listCOMDir->SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 9, L"%lu", dwSize);
+		swprintf_s(wstr, 17, L"%lu", dwSize);
 		m_listCOMDir->SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 		m_listCOMDir->SetItemText(i, 3, wstr);

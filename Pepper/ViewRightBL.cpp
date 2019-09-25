@@ -440,7 +440,7 @@ int CViewRightBL::CreateListExportFuncs()
 
 		swprintf_s(wstr, 9, L"%08X", i.dwRVA);
 		m_listExportFuncs->SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%u", i.dwOrdinal);
+		swprintf_s(wstr, 17, L"%u", i.dwOrdinal);
 		m_listExportFuncs->SetItemText(listindex, 2, wstr);
 		swprintf_s(wstr, MAX_PATH, L"%S", i.strFuncName.data());
 		m_listExportFuncs->SetItemText(listindex, 3, wstr);
