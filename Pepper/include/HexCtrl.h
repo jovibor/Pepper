@@ -153,7 +153,7 @@ namespace HEXCTRL
 		ULONGLONG ullSize { };  //Size of the bytes to get/send.
 		PBYTE     pData { };    //Pointer to a data to get/send.
 	};
-	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT *;
+	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT*;
 
 	/********************************************************************************************
 	* IHexCtrl - pure abstract base class.                                                      *
@@ -218,22 +218,22 @@ namespace HEXCTRL
 #define	HEXCTRLAPI
 #endif
 
-	extern "C" HEXCTRLAPI IHexCtrl* __cdecl CreateRawHexCtrl();
+	extern "C" HEXCTRLAPI IHexCtrl * __cdecl CreateRawHexCtrl();
 	using IHexCtrlUnPtr = std::unique_ptr<IHexCtrl, void(*)(IHexCtrl*)>;
 	using IHexCtrlShPtr = std::shared_ptr<IHexCtrl>;
 
 	inline IHexCtrlUnPtr CreateHexCtrl()
 	{
-		return IHexCtrlUnPtr(CreateRawHexCtrl(), [](IHexCtrl * p) { p->Destroy(); });
+		return IHexCtrlUnPtr(CreateRawHexCtrl(), [](IHexCtrl* p) { p->Destroy(); });
 	};
 
 	//using IHexCtrlPtr = IHexCtrlUnPtr;
 	using IHexCtrlPtr = IHexCtrlShPtr;
 
 	/********************************************
-	* HEXCTRL_INFO: service info structure.     *
+	* HEXCTRLINFO: service info structure.     *
 	********************************************/
-	struct HEXCTRL_INFO
+	struct HEXCTRLINFO
 	{
 		const wchar_t* pwszVersion { };        //WCHAR version string.
 		union {
@@ -246,13 +246,12 @@ namespace HEXCTRL
 			}stVersion;
 		};
 	};
-	using PCHEXCTRL_INFO = const HEXCTRL_INFO*;
 
 	/*********************************************
 	* Service info export/import function.       *
 	* Returns pointer to PCHEXCTRL_INFO struct.  *
 	*********************************************/
-	extern "C" HEXCTRLAPI PCHEXCTRL_INFO __cdecl HexCtrlInfo();
+	extern "C" HEXCTRLAPI HEXCTRLINFO * __cdecl GetHexCtrlInfo();
 
 	/********************************************************************************************
 	* WM_NOTIFY message codes (NMHDR.code values).                                              *

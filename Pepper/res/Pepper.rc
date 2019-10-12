@@ -1,5 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
+#pragma code_page(65001)
+
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -19,7 +21,6 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(1252)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -137,17 +138,17 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 231, 92
+IDD_ABOUTBOX DIALOGEX 0, 0, 231, 96
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About Pepper..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,11,14,20,20
-    DEFPUSHBUTTON   "OK",IDOK,169,69,50,14,WS_GROUP
-    CONTROL         "<<Pepper>>",IDC_LINK_PEPPER,"MfcLink",WS_TABSTOP,36,26,173,11
-    CONTROL         "<<libpe>>",IDC_LINK_LIBPE,"MfcLink",WS_TABSTOP,36,37,175,11
-    CONTROL         "<<HexCtrl>>",IDC_LINK_HEXCTRL,"MfcLink",WS_TABSTOP,36,48,175,11
-    LTEXT           "Pepper is a free software available under the MIT license.",IDC_STATIC,36,15,187,12
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,14,21,20
+    DEFPUSHBUTTON   "OK",IDOK,169,72,50,14,WS_GROUP
+    CONTROL         "<<Pepper>>",IDC_LINK_PEPPER,"MfcLink",WS_TABSTOP,36,33,173,11
+    CONTROL         "<<libpe>>",IDC_LINK_LIBPE,"MfcLink",WS_TABSTOP,36,44,175,11
+    CONTROL         "<<HexCtrl>>",IDC_LINK_HEXCTRL,"MfcLink",WS_TABSTOP,36,55,175,11
+    LTEXT           "Pepper is a free PE/PE+ binaries viewer software available under the terms of the MIT license.",IDC_STATIC,36,15,187,18
 END
 
 
@@ -162,7 +163,7 @@ BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
         RIGHTMARGIN, 225
-        BOTTOMMARGIN, 89
+        BOTTOMMARGIN, 93
     END
 END
 #endif    // APSTUDIO_INVOKED

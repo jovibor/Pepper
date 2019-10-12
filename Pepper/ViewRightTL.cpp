@@ -714,12 +714,9 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 
 						if (!lvl3vec.empty())
 						{
-							const auto data = &lvl3vec.at(idlvl3).stResDataEntryLvL3;
-
-							if (data)
-								//Send data vector pointer to CViewRightTR
-								//to display raw data.
-								m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), (CObject*)data);
+							auto data = &lvl3vec.at(idlvl3).stResDataEntryLvL3;
+							//Send data pointer to CViewRightTR to display raw data.
+							m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), (CObject*)data);
 						}
 					}
 				}
@@ -945,7 +942,7 @@ int CViewRightTL::CreateListFileHeader()
 		auto& ref = g_mapFileHeader.at(i);
 		DWORD dwOffset = ref.dwOffset;
 		DWORD dwSize = ref.dwSize;
-		DWORD dwValue = *((PDWORD)((DWORD_PTR)& pNTHdr->varHdr.stNTHdr32.FileHeader + dwOffset)) &
+		DWORD dwValue = *((PDWORD)((DWORD_PTR)&pNTHdr->varHdr.stNTHdr32.FileHeader + dwOffset)) &
 			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 		if (i == 0) { //Machine
@@ -1164,9 +1161,10 @@ int CViewRightTL::CreateListDataDirectories()
 	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
 		dwDataDirsOffset = offsetof(IMAGE_NT_HEADERS64, OptionalHeader.DataDirectory);
 
-	for (unsigned i = 0; i < pvecDataDirs->size(); i++)
+	for (auto i = 0; i < pvecDataDirs->size(); i++)
 	{
-		const IMAGE_DATA_DIRECTORY* pDataDirs = &(*pvecDataDirs)[i].stDataDir;
+		auto ref = pvecDataDirs->at((size_t)i);
+		auto pDataDirs = &ref.stDataDir;
 
 		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + dwDataDirsOffset + sizeof(IMAGE_DATA_DIRECTORY) * i);
 		m_listDataDirs->InsertItem(i, wstr);
@@ -1175,9 +1173,9 @@ int CViewRightTL::CreateListDataDirectories()
 		m_listDataDirs->SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDataDirs->Size);
 		m_listDataDirs->SetItemText(i, 3, wstr);
-		if (!pvecDataDirs->at(i).strSecResidesIn.empty())
+		if (!ref.strSecResidesIn.empty())
 		{
-			swprintf_s(wstr, 9, L"%.8S", (*pvecDataDirs)[i].strSecResidesIn.data());
+			swprintf_s(wstr, 9, L"%.8S", ref.strSecResidesIn.data());
 			m_listDataDirs->SetItemText(i, 4, wstr);
 		}
 		if (i == IMAGE_DIRECTORY_ENTRY_SECURITY && pDataDirs->VirtualAddress)

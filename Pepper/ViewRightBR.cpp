@@ -272,7 +272,7 @@ void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
 	HWND hwndResDlg = CreateDialogIndirectParamW(nullptr,
 		(LPCDLGTEMPLATEW)pResHelper->pData->data(), m_hWnd, nullptr, 0);
 
-	if (!hwndResDlg && GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
+	if (!hwndResDlg)
 	{
 		//Trying to set dialog's Items count to 0, to avoid failing on CreateWindowEx 
 		//within CreateDialogIndirectParamW, for Dialog items (controls) with CustomClassName.
@@ -526,7 +526,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		}
 		else //Menu wstring.
 		{
-			pwstrMenuRes = (WCHAR*)& pDataHdr;
+			pwstrMenuRes = (WCHAR*)&pDataHdr;
 			if (StringCbLengthW(pwstrMenuRes, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthMenuRes) != S_OK)
 				return ResLoadError();
 			pDataHdr += lengthMenuRes + sizeof(WCHAR); //Plus null terminating.
@@ -810,10 +810,10 @@ void CViewRightBR::CreateStrings(const RESHELPER * pResHelper)
 	std::wstring wstrTmp;
 	for (int i = 0; i < 16; i++)
 	{
-		m_wstrEditBRB += wstrTmp.assign(pwszResString + 1, (UINT)* pwszResString);
+		m_wstrEditBRB += wstrTmp.assign(pwszResString + 1, (UINT)*pwszResString);
 		if (i != 15)
 			m_wstrEditBRB += L"\r\n";
-		pwszResString += 1 + (UINT)* pwszResString;
+		pwszResString += 1 + (UINT)*pwszResString;
 	}
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
@@ -941,7 +941,7 @@ void CViewRightBR::CreateVersion(const RESHELPER * pResHelper)
 	UINT dwBytesOut;
 
 	//Read the list of languages and code pages.
-	VerQueryValueW(pResHelper->pData->data(), L"\\VarFileInfo\\Translation", (LPVOID*)& pLangAndCP, &dwBytesOut);
+	VerQueryValueW(pResHelper->pData->data(), L"\\VarFileInfo\\Translation", (LPVOID*)&pLangAndCP, &dwBytesOut);
 
 	WCHAR wstrSubBlock[50];
 	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
@@ -957,7 +957,7 @@ void CViewRightBR::CreateVersion(const RESHELPER * pResHelper)
 			m_wstrEditBRB += L" - ";
 
 			WCHAR* pszBufferOut;
-			if (VerQueryValueW(pResHelper->pData->data(), wstrSubBlock, (LPVOID*)& pszBufferOut, &dwBytesOut))
+			if (VerQueryValueW(pResHelper->pData->data(), wstrSubBlock, (LPVOID*)&pszBufferOut, &dwBytesOut))
 				if (dwBytesOut)
 					m_wstrEditBRB += pszBufferOut;
 			m_wstrEditBRB += L"\r\n";
@@ -1162,7 +1162,7 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 		m_wstrEditBRB = L"Signature: RSDS\r\n";
 		m_wstrEditBRB += L"GUID: ";
 		LPWSTR lpwstr;
-		GUID guid = *((GUID*)& refDebug.stDebugHdrInfo.dwHdr[1]);
+		GUID guid = *((GUID*)&refDebug.stDebugHdrInfo.dwHdr[1]);
 		StringFromIID(guid, &lpwstr);
 		m_wstrEditBRB += lpwstr;
 		m_wstrEditBRB += L"\r\n";
