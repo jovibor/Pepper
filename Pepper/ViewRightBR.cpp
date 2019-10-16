@@ -267,7 +267,7 @@ void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
 	};
 #pragma pack(pop)
 
-	ParceDlgTemplate((PBYTE)pResHelper->pData->data(), pResHelper->pData->size());
+	ParceDlgTemplate((PBYTE)pResHelper->pData->data(), pResHelper->pData->size(), m_wstrEditBRB);
 
 	HWND hwndResDlg = CreateDialogIndirectParamW(nullptr,
 		(LPCDLGTEMPLATEW)pResHelper->pData->data(), m_hWnd, nullptr, 0);
@@ -370,8 +370,9 @@ void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
 		return ResLoadError();
 }
 
-void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
+void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstring& wstrData)
 {
+//If data is from PE resources, then it is packed.
 #pragma pack(push, 4)
 	struct DLGTEMPLATEEX //Helper struct. Not completed.
 	{
@@ -484,7 +485,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		cx = ((DLGTEMPLATEEX*)pDataHdr)->cx;
 		cy = ((DLGTEMPLATEEX*)pDataHdr)->cy;
 
-		m_wstrEditBRB = L"DIALOGEX ";
+		wstrData = L"DIALOGEX ";
 
 		//Menu.
 		if (((DLGTEMPLATEEX*)pDataHdr)->menu == 0) //No menu.
@@ -514,7 +515,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		cy = ((DLGTEMPLATE*)pDataHdr)->cy;
 		pDataHdr += sizeof(DLGTEMPLATE);
 
-		m_wstrEditBRB = L"DIALOG ";
+		wstrData = L"DIALOG ";
 
 		//Menu.
 		if (*(PWORD)pDataHdr == 0) //No menu.
@@ -535,7 +536,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 
 	WCHAR wpsz[128];
 	swprintf_s(wpsz, L"%i, %i, %i, %i\r\n", x, y, cx, cy);
-	m_wstrEditBRB += wpsz;
+	wstrData += wpsz;
 
 	//Dialog styles stringanize.
 	std::wstring wstrStyles;
@@ -548,7 +549,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 				wstrStyles += i.second;
 	}
 
-	m_wstrEditBRB += L"DIALOG STYLES: " + wstrStyles + L"\r\n";
+	wstrData += L"DIALOG STYLES: " + wstrStyles + L"\r\n";
 	if (dwExStyles) //ExStyle sringanize.
 	{
 		wstrStyles.clear();
@@ -560,7 +561,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 				else
 					wstrStyles += i.second;
 		}
-		m_wstrEditBRB += L"DIALOG EXTENDED STYLES: " + wstrStyles + L"\r\n";
+		wstrData += L"DIALOG EXTENDED STYLES: " + wstrStyles + L"\r\n";
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -573,9 +574,9 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		WORD wClassOrdinal = *(PWORD)(pDataHdr + sizeof(WORD));
 		pDataHdr += sizeof(WORD) * 2; //Class name WORD plus Ordinal WORD.
 
-		m_wstrEditBRB += L"DIALOG CLASS ORDINAL: ";
+		wstrData += L"DIALOG CLASS ORDINAL: ";
 		swprintf_s(wpsz, L"0x%X\r\n", wClassOrdinal);
-		m_wstrEditBRB += wpsz;
+		wstrData += wpsz;
 	}
 	else //Class name is WString.
 	{
@@ -587,9 +588,9 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 			return ResLoadError();
 		pDataHdr += lengthClassName + sizeof(WCHAR); //Plus null terminating.
 
-		m_wstrEditBRB += L"DIALOG CLASS NAME: \"";
-		m_wstrEditBRB += pwstrClassName;
-		m_wstrEditBRB += L"\"\r\n";
+		wstrData += L"DIALOG CLASS NAME: \"";
+		wstrData += pwstrClassName;
+		wstrData += L"\"\r\n";
 	}
 
 	//Title (Caption)
@@ -601,26 +602,26 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		return ResLoadError();
 	pDataHdr += lengthTitle + sizeof(WCHAR); //Plus null terminating.
 
-	m_wstrEditBRB += L"DIALOG CAPTION: \"";
-	m_wstrEditBRB += pwstrTitle;
-	m_wstrEditBRB += L"\"\r\n";
+	wstrData += L"DIALOG CAPTION: \"";
+	wstrData += pwstrTitle;
+	wstrData += L"\"\r\n";
 
 	//Menu.
 	if (pwstrMenuRes && lengthMenuRes)
 	{
-		m_wstrEditBRB += L"DIALOG MENU RESOURCE NAME: \"";
-		m_wstrEditBRB += pwstrMenuRes;
-		m_wstrEditBRB += L"\"\r\n";
+		wstrData += L"DIALOG MENU RESOURCE NAME: \"";
+		wstrData += pwstrMenuRes;
+		wstrData += L"\"\r\n";
 	}
 	else if (wMenuResOrdinal)
 	{
-		m_wstrEditBRB += L"DIALOG MENU RESOURCE ORDINAL: ";
+		wstrData += L"DIALOG MENU RESOURCE ORDINAL: ";
 		swprintf_s(wpsz, L"0x%X\r\n", wMenuResOrdinal);
-		m_wstrEditBRB += wpsz;
+		wstrData += wpsz;
 	}
 
 	//Font related stuff has little differences between templates.
-	m_wstrEditBRB += L"DIALOG FONT: ";
+	wstrData += L"DIALOG FONT: ";
 	WORD wFontPointSize { };
 	if (fDlgEx && ((dwStyles & DS_SETFONT) || (dwStyles & DS_SHELLFONT))) //DLGTEMPLATEEX
 	{
@@ -645,13 +646,13 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 			return ResLoadError();
 		pDataHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
 
-		m_wstrEditBRB += L"NAME: \"";
-		m_wstrEditBRB += pwstrTypeFace;
-		m_wstrEditBRB += L"\"";
+		wstrData += L"NAME: \"";
+		wstrData += pwstrTypeFace;
+		wstrData += L"\"";
 		//These Font params are only in DLGTEMPLATEEX.
 		swprintf_s(wpsz, L", SIZE: %hu, WEIGHT: %hu, IS ITALIC: %hhu, CHARSET: %hhu", wFontPointSize, wFontWeight, bItalic, bCharset);
-		m_wstrEditBRB += wpsz;
-		m_wstrEditBRB += L"\r\n";
+		wstrData += wpsz;
+		wstrData += L"\r\n";
 	}
 	else if (!fDlgEx && (dwStyles & DS_SETFONT)) //DLGTEMPLATE
 	{
@@ -667,17 +668,17 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 			return ResLoadError();
 		pDataHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
 
-		m_wstrEditBRB += L"NAME \"";
-		m_wstrEditBRB += pwstrTypeFace;
-		m_wstrEditBRB += L"\"";
+		wstrData += L"NAME \"";
+		wstrData += pwstrTypeFace;
+		wstrData += L"\"";
 		swprintf_s(wpsz, L", SIZE: %hu", wFontPointSize); //Only SIZE in DLGTEMPLATE.
-		m_wstrEditBRB += wpsz;
-		m_wstrEditBRB += L"\r\n";
+		wstrData += wpsz;
+		wstrData += L"\r\n";
 	}
 
-	m_wstrEditBRB += L"DIALOG ITEMS: ";
+	wstrData += L"DIALOG ITEMS: ";
 	swprintf_s(wpsz, L"%i\r\n", wDlgItems);
-	m_wstrEditBRB += wpsz;
+	wstrData += wpsz;
 	//DLGTEMPLATE(EX) end. ///////////////////////////////////////////
 
 	//////////////////////////////////////////////////////////////////
@@ -685,7 +686,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 	//////////////////////////////////////////////////////////////////
 	PBYTE pDataItems = pDataHdr; //Just to differentiate.
 
-	m_wstrEditBRB += L"{\r\n"; //Open bracer for stringanize.
+	wstrData += L"{\r\n"; //Open bracer for stringanize.
 	for (WORD items = 0; items < wDlgItems; items++)
 	{
 		pDataItems += (sizeof(DWORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 3)) & 3; //DWORD Aligning.
@@ -799,9 +800,9 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize)
 		}
 
 		wstrItem += wpszItemStyles;
-		m_wstrEditBRB += wstrItem + L"\r\n";
+		wstrData += wstrItem + L"\r\n";
 	}
-	m_wstrEditBRB += L"}";
+	wstrData += L"}";
 }
 
 void CViewRightBR::CreateStrings(const RESHELPER * pResHelper)

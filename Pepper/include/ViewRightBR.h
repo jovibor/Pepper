@@ -41,7 +41,7 @@ protected:
 	void CreateIconCursor(const RESHELPER* pResHelper);
 	void CreateBitmap(const RESHELPER* pResHelper);
 	void CreateDlg(const RESHELPER* pResHelper);
-	void ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize);
+	void ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstring& wstrData);
 	void CreateStrings(const RESHELPER* pResHelper);
 	void CreateGroupIconCursor(const RESHELPER* pResHelper);
 	void CreateVersion(const RESHELPER* pResHelper);
