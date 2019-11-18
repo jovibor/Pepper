@@ -1370,7 +1370,7 @@ int CViewRightTL::CreateTreeResources()
 
 	WCHAR wstr[MAX_PATH];
 	HTREEITEM htreeRoot { }, htreeLvL2 { };
-	long ilvlRoot = 0, ilvl2 = 0, ilvl3 = 0;
+	long ilvlRoot = 0, ilvl2, ilvl3;
 
 	//Main loop to extract Resources.
 	for (auto& iterRoot : pResRoot->vecResRoot)

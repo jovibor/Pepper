@@ -298,81 +298,79 @@ void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
 		*pWordDlgItems = wOld;
 	}
 
-	if (hwndResDlg)
-	{
-		CRect rcDlg;
-		::GetWindowRect(hwndResDlg, &rcDlg);
-		int iPosX = 0, iPosY = 0;
-		UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
-		if (!m_wndDlgSample.m_hWnd)
-		{
-			if (!m_wndDlgSample.CreateEx(m_dwExStyles, AfxRegisterWndClass(0),
-				L"Sample Dialog...", m_dwStyles, 0, 0, 0, 0, m_hWnd, 0))
-			{
-				MessageBoxW(L"Sample Dialog window Create failed.", L"Error");
-				return;
-			}
-			iPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - rcDlg.Width() / 2;
-			iPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - rcDlg.Height() / 2;
-			uFlags &= ~SWP_NOMOVE;
-		}
-
-		HDC hDC = ::GetDC(m_wndDlgSample.m_hWnd);
-		HDC hDCMemory = CreateCompatibleDC(hDC);
-		HBITMAP hBitmap = CreateCompatibleBitmap(hDC, rcDlg.Width(), rcDlg.Height());
-		::SelectObject(hDCMemory, hBitmap);
-
-		//To avoid window pop-up removing Windows animation temporarily, then restore back.
-		ANIMATIONINFO aninfo;
-		aninfo.cbSize = sizeof(ANIMATIONINFO);
-		SystemParametersInfoW(SPI_GETANIMATION, aninfo.cbSize, &aninfo, 0);
-		int iMinAnimate = aninfo.iMinAnimate;
-		if (iMinAnimate) {
-			aninfo.iMinAnimate = 0;
-			SystemParametersInfoW(SPI_SETANIMATION, aninfo.cbSize, &aninfo, SPIF_SENDCHANGE);
-		}
-		LONG_PTR lLong = GetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE);
-		SetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE, lLong | WS_EX_LAYERED);
-		::SetLayeredWindowAttributes(hwndResDlg, 0, 1, LWA_ALPHA);
-
-		::ShowWindow(hwndResDlg, SW_SHOWNOACTIVATE);
-		::PrintWindow(hwndResDlg, hDCMemory, 0);
-		::DestroyWindow(hwndResDlg);
-
-		if (iMinAnimate) {
-			aninfo.iMinAnimate = iMinAnimate;
-			SystemParametersInfoW(SPI_SETANIMATION, aninfo.cbSize, &aninfo, SPIF_SENDCHANGE);
-		}
-
-		DeleteDC(hDCMemory);
-		::ReleaseDC(m_wndDlgSample.m_hWnd, hDC);
-
-		CBitmap bmp;
-		if (!bmp.Attach(hBitmap))
-			return ResLoadError();
-		m_stImgRes.Create(rcDlg.Width(), rcDlg.Height(), ILC_COLORDDB, 0, 1);
-		if (m_stImgRes.Add(&bmp, nullptr) == -1)
-			return ResLoadError();
-		bmp.DeleteObject();
-
-		AdjustWindowRectEx(rcDlg, m_dwStyles, 0, m_dwExStyles); //Get window size with desirable client rect.
-		m_wndDlgSample.SetWindowPos(this, iPosX, iPosY, rcDlg.Width(), rcDlg.Height(), uFlags);
-		m_wndDlgSample.RedrawWindow(); //Draw dialog bitmap.
-
-		m_EditBRB.SetWindowTextW(m_wstrEditBRB.data()); //Set Dialog resources info to Editbox.
-		CRect rcClient;
-		GetClientRect(&rcClient);
-		m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-		m_hwndActive = m_EditBRB.m_hWnd;
-	}
-	else
+	if (!hwndResDlg)
 		return ResLoadError();
+
+	CRect rcDlg;
+	::GetWindowRect(hwndResDlg, &rcDlg);
+	int iPosX = 0, iPosY = 0;
+	UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
+	if (!m_wndDlgSample.m_hWnd)
+	{
+		if (!m_wndDlgSample.CreateEx(m_dwExStyles, AfxRegisterWndClass(0),
+			L"Sample Dialog...", m_dwStyles, 0, 0, 0, 0, m_hWnd, 0))
+		{
+			MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
+			return;
+		}
+		iPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - rcDlg.Width() / 2;
+		iPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - rcDlg.Height() / 2;
+		uFlags &= ~SWP_NOMOVE;
+	}
+
+	HDC hDC = ::GetDC(m_wndDlgSample.m_hWnd);
+	HDC hDCMemory = CreateCompatibleDC(hDC);
+	HBITMAP hBitmap = CreateCompatibleBitmap(hDC, rcDlg.Width(), rcDlg.Height());
+	::SelectObject(hDCMemory, hBitmap);
+
+	//To avoid window pop-up removing Windows animation temporarily, then restore back.
+	ANIMATIONINFO aninfo;
+	aninfo.cbSize = sizeof(ANIMATIONINFO);
+	SystemParametersInfoW(SPI_GETANIMATION, aninfo.cbSize, &aninfo, 0);
+	int iMinAnimate = aninfo.iMinAnimate;
+	if (iMinAnimate) {
+		aninfo.iMinAnimate = 0;
+		SystemParametersInfoW(SPI_SETANIMATION, aninfo.cbSize, &aninfo, SPIF_SENDCHANGE);
+	}
+	LONG_PTR lLong = GetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE);
+	SetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE, lLong | WS_EX_LAYERED);
+	::SetLayeredWindowAttributes(hwndResDlg, 0, 1, LWA_ALPHA);
+
+	::ShowWindow(hwndResDlg, SW_SHOWNOACTIVATE);
+	::PrintWindow(hwndResDlg, hDCMemory, 0);
+	::DestroyWindow(hwndResDlg);
+
+	if (iMinAnimate) {
+		aninfo.iMinAnimate = iMinAnimate;
+		SystemParametersInfoW(SPI_SETANIMATION, aninfo.cbSize, &aninfo, SPIF_SENDCHANGE);
+	}
+
+	DeleteDC(hDCMemory);
+	::ReleaseDC(m_wndDlgSample.m_hWnd, hDC);
+
+	CBitmap bmp;
+	if (!bmp.Attach(hBitmap))
+		return ResLoadError();
+	m_stImgRes.Create(rcDlg.Width(), rcDlg.Height(), ILC_COLORDDB, 0, 1);
+	if (m_stImgRes.Add(&bmp, nullptr) == -1)
+		return ResLoadError();
+	bmp.DeleteObject();
+
+	AdjustWindowRectEx(rcDlg, m_dwStyles, FALSE, m_dwExStyles); //Get window size with desirable client rect.
+	m_wndDlgSample.SetWindowPos(this, iPosX, iPosY, rcDlg.Width(), rcDlg.Height(), uFlags);
+	m_wndDlgSample.RedrawWindow(); //Draw dialog bitmap.
+
+	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data()); //Set Dialog resources info to Editbox.
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
 void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstring& wstrData)
 {
-//If data is from PE resources, then it is packed.
+	//If data is from PE resources, then it is packed.
 #pragma pack(push, 4)
 	struct DLGTEMPLATEEX //Helper struct. Not completed.
 	{
@@ -947,7 +945,7 @@ void CViewRightBR::CreateVersion(const RESHELPER * pResHelper)
 	WCHAR wstrSubBlock[50];
 	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
 	//Read the file description for each language and code page.
-	for (unsigned iterCodePage = 0; iterCodePage < dwLangCount; iterCodePage++)
+	for (size_t iterCodePage = 0; iterCodePage < dwLangCount; iterCodePage++)
 	{
 		for (unsigned i = 0; i < mapVerInfoStrings.size(); i++) //sizeof pstrVerInfoStrings [];
 		{

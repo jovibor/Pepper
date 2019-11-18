@@ -61,7 +61,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	m_fWritable = fWritable;
 	m_pMainDoc = pDoc;
 
-	m_hcs.enMode = EHexCreateMode::CREATE_FLOAT;
+	m_hcs.enCreateMode = EHexCreateMode::CREATE_POPUP;
 	m_hcs.hwndParent = m_hWnd;
 	m_hcs.dwExStyle = WS_EX_APPWINDOW; //To force to the taskbar.
 
@@ -92,7 +92,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
 	m_hds.pData = pData;
 	m_hds.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
-	m_hds.enMode = enMode;
+	m_hds.enDataMode = enMode;
 	m_hds.ullSelectionStart = ullOffset;
 	m_hds.ullSelectionSize = ullSelectionSize;
 
@@ -172,7 +172,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
 	m_hds.pData = pData;
 	m_hds.ullDataSize = ullSize;
-	m_hds.enMode = enMode;
+	m_hds.enDataMode = enMode;
 	m_hds.ullSelectionSize = 0;
 	pHexCtrl->SetData(m_hds);
 

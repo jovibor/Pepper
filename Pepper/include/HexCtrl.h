@@ -7,8 +7,9 @@
 * For more information visit the project's official repository.                         *
 ****************************************************************************************/
 #pragma once
-#include <Windows.h> //Standard Windows header.
 #include <memory>    //std::shared/unique_ptr and related.
+#include <vector>
+#include <Windows.h> //Standard Windows header.
 
 /**********************************************************************
 * If HexCtrl is to be used as a .dll, then include this header,       *
@@ -35,7 +36,7 @@ namespace HEXCTRL
 
 	/********************************************************************************************
 	* EHexOperMode - Enum of the data operation mode, used in HEXMODIFYSTRUCT,                  *
-	* when HEXMODIFYSTRUCT::enMode is MODIFY_OPERATION.                                         *
+	* when HEXMODIFYSTRUCT::enModifyMode is MODIFY_OPERATION.                                         *
 	********************************************************************************************/
 	enum class EHexOperMode : WORD
 	{
@@ -44,16 +45,24 @@ namespace HEXCTRL
 	};
 
 	/********************************************************************************************
+	* HEXSPANSTRUCT - Data offset and size, used in some data/size related routines             *
+	********************************************************************************************/
+	struct HEXSPANSTRUCT
+	{
+		ULONGLONG ullOffset { };
+		ULONGLONG ullSize { };
+	};
+
+	/********************************************************************************************
 	* HEXMODIFYSTRUCT - used to represent data modification parameters.                         *
 	********************************************************************************************/
 	struct HEXMODIFYSTRUCT
 	{
-		EHexModifyMode enMode { EHexModifyMode::MODIFY_DEFAULT }; //Modify mode.
-		EHexOperMode   enOperMode { };  //Operation mode enum. Used only if enMode==MODIFY_OPERATION.
-		const BYTE*    pData { };       //Pointer to a data to be set.
-		ULONGLONG      ullIndex { };    //Index of the starting byte to modify.
-		ULONGLONG      ullSize { };     //Size to be modified.
-		ULONGLONG      ullDataSize { }; //Size of the data pData is pointing to.
+		EHexModifyMode enModifyMode { EHexModifyMode::MODIFY_DEFAULT }; //Modify mode.
+		EHexOperMode   enOperMode { };          //Operation mode enum. Used only if enModifyMode == MODIFY_OPERATION.
+		const BYTE*    pData { };               //Pointer to a data to be set.
+		ULONGLONG      ullDataSize { };         //Size of the data pData is pointing to.
+		std::vector<HEXSPANSTRUCT> vecSpan { }; //Vector of data offsets and sizes.
 	};
 
 	/********************************************************************************************
@@ -98,7 +107,15 @@ namespace HEXCTRL
 	********************************************************************************************/
 	enum class EHexCreateMode : DWORD
 	{
-		CREATE_CHILD, CREATE_FLOAT, CREATE_CUSTOMCTRL
+		CREATE_CHILD, CREATE_POPUP, CREATE_CUSTOMCTRL
+	};
+
+	/***************************************************************************************
+	* EHexShowMode - current data mode representation.                                        *
+	***************************************************************************************/
+	enum class EHexShowMode : DWORD
+	{
+		ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8
 	};
 
 	/********************************************************************************************
@@ -106,14 +123,16 @@ namespace HEXCTRL
 	********************************************************************************************/
 	struct HEXCREATESTRUCT
 	{
-		EHexCreateMode  enMode { EHexCreateMode::CREATE_CHILD }; //Creation mode of the HexCtrl window.
-		HEXCOLORSTRUCT  stColor { };    //All the control's colors.
-		HWND            hwndParent { }; //Parent window pointer.
-		const LOGFONTW* pLogFont { };   //Font to be used, nullptr for default. This font has to be monospaced.
-		RECT            rect { };       //Initial rect. If null, the window is screen centered.
-		UINT            uID { };        //Control ID.
-		DWORD           dwStyle { };    //Window styles, 0 for default.
-		DWORD           dwExStyle { };  //Extended window styles, 0 for default.
+		EHexCreateMode  enCreateMode { EHexCreateMode::CREATE_CHILD }; //Creation mode of the HexCtrl window.
+		EHexShowMode    enShowMode { EHexShowMode::ASBYTE };           //Data representation mode.
+		HEXCOLORSTRUCT  stColor { };          //All the control's colors.
+		HWND            hwndParent { };       //Parent window pointer.
+		const LOGFONTW* pLogFont { };         //Font to be used, nullptr for default. This font has to be monospaced.
+		RECT            rect { };             //Initial rect. If null, the window is screen centered.
+		UINT            uID { };              //Control ID.
+		DWORD           dwStyle { };          //Window styles, 0 for default.
+		DWORD           dwExStyle { };        //Extended window styles, 0 for default.
+		double          dbWheelRatio { 1.0 }; //Ratio for how much to scroll with mouse-wheel.
 	};
 
 	/********************************************************************************************
@@ -132,7 +151,7 @@ namespace HEXCTRL
 	********************************************************************************************/
 	struct HEXDATASTRUCT
 	{
-		EHexDataMode enMode { EHexDataMode::DATA_MEMORY };  //Working data mode.
+		EHexDataMode enDataMode { EHexDataMode::DATA_MEMORY }; //Working data mode.
 		ULONGLONG    ullDataSize { };                       //Size of the data to display, in bytes.
 		ULONGLONG    ullSelectionStart { };                 //Select this initial position. Works only if ullSelectionSize > 0.
 		ULONGLONG    ullSelectionSize { };                  //How many bytes to set as selected.
@@ -162,25 +181,30 @@ namespace HEXCTRL
 	{
 	public:
 		virtual ~IHexCtrl() = default;
+		virtual void ClearData() = 0;                          //Clears all data from HexCtrl's view (not touching data itself).
 		virtual bool Create(const HEXCREATESTRUCT& hcs) = 0;   //Main initialization method.
 		virtual bool CreateDialogCtrl(UINT uCtrlID, HWND hwndDlg) = 0; //Сreates custom dialog control.
-		virtual void SetData(const HEXDATASTRUCT& hds) = 0;    //Main method for setting data to display (and edit).	
-		virtual void ClearData() = 0;                          //Clears all data from HexCtrl's view (not touching data itself).
-		virtual void SetEditMode(bool fEnable) = 0;            //Enable or disable edit mode.
-		virtual void SetFont(const LOGFONTW* pLogFontNew) = 0; //Sets the control's new font. This font has to be monospaced.
-		virtual void SetFontSize(UINT uiSize) = 0;             //Sets the control's font size.
-		virtual void SetColor(const HEXCOLORSTRUCT& clr) = 0;  //Sets all the control's colors.
-		virtual void SetCapacity(DWORD dwCapacity) = 0;        //Sets the control's current capacity.
+		virtual void Destroy() = 0;                            //Deleter.
+		virtual DWORD GetCapacity()const = 0;                  //Current capacity.
+		virtual auto GetColor()const->HEXCOLORSTRUCT = 0;      //Current colors.
+		virtual long GetFontSize()const = 0;                   //Current font size.
+		virtual HMENU GetMenuHandle()const = 0;                //Context menu handle.
+		virtual auto GetSelection()const->std::vector<HEXSPANSTRUCT> & = 0; //Gets current selection.
+		virtual auto GetShowMode()const->EHexShowMode = 0;     //Retrieves current show mode.
+		virtual HWND GetWindowHandle()const = 0;               //Retrieves control's window handle.
 		virtual void GoToOffset(ULONGLONG ullOffset, bool fSelect = false, ULONGLONG ullSize = 1) = 0; //Scrolls to given offset.
-		virtual void SetSelection(ULONGLONG ullOffset, ULONGLONG ullSize) = 0; //Sets current selection.
 		virtual bool IsCreated()const = 0;                     //Shows whether control is created or not.
 		virtual bool IsDataSet()const = 0;                     //Shows whether a data was set to the control or not.
 		virtual bool IsMutable()const = 0;                     //Is edit mode enabled or not.
-		virtual long GetFontSize()const = 0;                   //Current font size.
-		virtual void GetSelection(ULONGLONG& ullOffset, ULONGLONG& ullSize)const = 0; //Gets current selection.
-		virtual HWND GetWindowHandle()const = 0;               //Retrieves control's window handle.
-		virtual HMENU GetMenuHandle()const = 0;                //Context menu handle.
-		virtual void Destroy() = 0;                            //Deleter.
+		virtual void SetCapacity(DWORD dwCapacity) = 0;        //Sets the control's current capacity.
+		virtual void SetColor(const HEXCOLORSTRUCT& clr) = 0;  //Sets all the control's colors.
+		virtual void SetData(const HEXDATASTRUCT& hds) = 0;    //Main method for setting data to display (and edit).	
+		virtual void SetFont(const LOGFONTW* pLogFontNew) = 0; //Sets the control's new font. This font has to be monospaced.
+		virtual void SetFontSize(UINT uiSize) = 0;             //Sets the control's font size.
+		virtual void SetMutable(bool fEnable) = 0;             //Enable or disable mutable/edit mode.
+		virtual void SetSelection(ULONGLONG ullOffset, ULONGLONG ullSize) = 0; //Sets current selection.
+		virtual void SetShowMode(EHexShowMode enMode) = 0;     //Sets current data show mode.
+		virtual void SetWheelRatio(double dbRatio) = 0;        //Sets the ratio for how much to scroll with mouse-wheel.
 	};
 
 	/********************************************************************************************
@@ -231,7 +255,7 @@ namespace HEXCTRL
 	using IHexCtrlPtr = IHexCtrlShPtr;
 
 	/********************************************
-	* HEXCTRLINFO: service info structure.     *
+	* HEXCTRLINFO: service info structure.      *
 	********************************************/
 	struct HEXCTRLINFO
 	{

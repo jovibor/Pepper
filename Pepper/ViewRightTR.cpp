@@ -92,7 +92,7 @@ void CViewRightTR::OnSize(UINT nType, int cx, int cy)
 void CViewRightTR::OnDocEditMode()
 {
 	if (m_stHexEdit->IsDataSet())
-		m_stHexEdit->SetEditMode(m_pMainDoc->IsEditMode());
+		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
 }
 
 void CViewRightTR::CreateHexResources(PIMAGE_RESOURCE_DATA_ENTRY pRes)
@@ -106,7 +106,6 @@ void CViewRightTR::CreateHexResources(PIMAGE_RESOURCE_DATA_ENTRY pRes)
 
 	DWORD dwOffset { };
 	m_pLibpe->GetOffsetFromRVA(pRes->OffsetToData, dwOffset);
-	//	const auto& hexData = (std::vector<std::byte>*)pHint;
 
 	m_pFileLoader->ShowFilePiece(dwOffset, pRes->Size, m_stHexEdit);
 	m_hwndActive = m_stHexEdit->GetWindowHandle();

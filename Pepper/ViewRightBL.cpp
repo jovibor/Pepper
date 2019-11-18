@@ -216,7 +216,7 @@ int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	auto & ref = g_mapDOSHeader.at(dwEntry);
+	const auto& ref = g_mapDOSHeader.at(dwEntry);
 	m_pFileLoader->ShowOffset(ref.dwOffset, ref.dwSize, m_stHexEdit);
 
 	return 0;
@@ -352,6 +352,7 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 	return 0;
 }
 
+
 int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 {
 	PCLIBPE_SECHEADERS_VEC pSecHeaders;
@@ -368,7 +369,7 @@ int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
-	auto & rImageSecHeader = pSecHeaders->at(dwEntry).stSecHdr;
+	const auto& rImageSecHeader = pSecHeaders->at(dwEntry).stSecHdr;
 	m_pFileLoader->ShowFilePiece(rImageSecHeader.PointerToRawData, rImageSecHeader.SizeOfRawData, m_stHexEdit);
 
 	return 0;
@@ -728,7 +729,7 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	if (m_pLibpe->GetDebug(pDebug) != S_OK)
 		return -1;
 
-	auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
+	const auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
 	m_pFileLoader->ShowFilePiece(rDebugDir.PointerToRawData, rDebugDir.SizeOfData, m_stHexEdit);
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
@@ -826,7 +827,7 @@ int CViewRightBL::CreateHexTLS()
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	DWORD dwOffset, dwSize;
+	DWORD dwOffsetStart, dwOffsetEnd, dwSize { 0 };
 	ULONGLONG ullStartAdr { }, ullEndAdr { };
 	if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32))
 	{
@@ -838,10 +839,13 @@ int CViewRightBL::CreateHexTLS()
 		ullStartAdr = pTLS->varTLS.stTLSDir64.StartAddressOfRawData;
 		ullEndAdr = pTLS->varTLS.stTLSDir64.EndAddressOfRawData;
 	}
-	m_pLibpe->GetOffsetFromVA(ullStartAdr, dwOffset);
-	m_pLibpe->GetOffsetFromVA(ullEndAdr, dwSize);
-	dwSize -= dwOffset;
-	m_pFileLoader->ShowFilePiece(dwOffset, dwSize, m_stHexEdit);
+	m_pLibpe->GetOffsetFromVA(ullStartAdr, dwOffsetStart);
+	m_pLibpe->GetOffsetFromVA(ullEndAdr, dwOffsetEnd);
+
+	if (dwOffsetEnd > dwOffsetStart)
+		dwSize = dwOffsetEnd - dwOffsetStart;
+
+	m_pFileLoader->ShowFilePiece(dwOffsetStart, dwSize, m_stHexEdit);
 
 	return 0;
 }
@@ -849,5 +853,5 @@ int CViewRightBL::CreateHexTLS()
 void CViewRightBL::OnDocEditMode()
 {
 	if (m_stHexEdit->IsDataSet())
-		m_stHexEdit->SetEditMode(m_pMainDoc->IsEditMode());
+		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
 }
