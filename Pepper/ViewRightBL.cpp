@@ -46,10 +46,13 @@ void CViewRightBL::OnInitialUpdate()
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHeaderText = RGB(255, 255, 255);
-	m_stlcs.stColor.clrHeaderBk = RGB(0, 132, 132);
-	m_stlcs.dwHeaderHeight = 35;
+	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
+	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
+	m_stlcs.stColor.clrHdrHglInactive = RGB(0, 112, 112);
+	m_stlcs.stColor.clrHdrHglActive = RGB(0, 92, 92);
+	m_stlcs.dwHdrHeight = 35;
 	m_stlcs.pwndParent = this;
+	m_stlcs.fSortable = true;
 
 	m_lf.lfHeight = 16;
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
@@ -57,7 +60,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_hdrlf.lfHeight = 17;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
-	m_stlcs.pHeaderLogFont = &m_hdrlf;
+	m_stlcs.pHdrLogFont = &m_hdrlf;
 
 	CreateListExportFuncs();
 	CreateTreeResources();
@@ -166,7 +169,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 
 	if (pTree->hdr.idFrom == IDC_TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
 	{
-		PCLIBPE_RESOURCE_ROOT pstResRoot;
+		PLIBPE_RESOURCE_ROOT pstResRoot;
 		if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 			return -1;
 
@@ -224,7 +227,7 @@ int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 {
-	PCLIBPE_RICHHEADER_VEC pRichHeader;
+	PLIBPE_RICHHEADER_VEC pRichHeader;
 	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK)
 		return -1;
 
@@ -245,7 +248,7 @@ int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexNtHeaderEntry()
 {
-	PCLIBPE_NTHEADER pNTHdr;
+	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -265,7 +268,7 @@ int CViewRightBL::CreateHexNtHeaderEntry()
 
 int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 {
-	PCLIBPE_NTHEADER pNTHdr;
+	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -286,10 +289,10 @@ int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 {
-	PCLIBPE_OPTHEADER_VAR pOptHdr;
+	PLIBPE_OPTHEADER_VAR pOptHdr;
 	if (m_pLibpe->GetOptionalHeader(pOptHdr) != S_OK)
 		return -1;
-	PCLIBPE_NTHEADER pNTHdr;
+	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -322,10 +325,10 @@ int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 {
-	PCLIBPE_OPTHEADER_VAR pOptHdr;
+	PLIBPE_OPTHEADER_VAR pOptHdr;
 	if (m_pLibpe->GetOptionalHeader(pOptHdr) != S_OK)
 		return -1;
-	PCLIBPE_NTHEADER pNTHdr;
+	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -355,7 +358,7 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 {
-	PCLIBPE_SECHEADERS_VEC pSecHeaders;
+	PLIBPE_SECHEADERS_VEC pSecHeaders;
 	if (m_pLibpe->GetSectionsHeaders(pSecHeaders) != S_OK)
 		return -1;
 
@@ -377,7 +380,7 @@ int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 {
-	PCLIBPE_LOADCONFIG pLCD;
+	PLIBPE_LOADCONFIG pLCD;
 	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK)
 		return -1;
 
@@ -423,7 +426,7 @@ int CViewRightBL::CreateListExportFuncs()
 		m_listExportFuncs->InsertColumn(3, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
 		m_listExportFuncs->InsertColumn(4, L"Forwarder Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 400);
 	}
-	PCLIBPE_EXPORT pExport;
+	PLIBPE_EXPORT pExport;
 	if (m_pLibpe->GetExport(pExport) != S_OK)
 		return -1;
 
@@ -472,7 +475,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 	else
 		m_listImportEntry->DeleteAllItems();
 
-	PCLIBPE_IMPORT_VEC m_pImport;
+	PLIBPE_IMPORT_VEC m_pImport;
 	if (m_pLibpe->GetImport(m_pImport) != S_OK || dwEntry > m_pImport->size())
 		return -1;
 
@@ -542,7 +545,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 {
-	PCLIBPE_SECURITY_VEC pSec;
+	PLIBPE_SECURITY_VEC pSec;
 	if (m_pLibpe->GetSecurity(pSec) != S_OK || nSertId > pSec->size())
 		return -1;
 
@@ -583,7 +586,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 	else
 		m_listDelayImportEntry->DeleteAllItems();
 
-	PCLIBPE_DELAYIMPORT_VEC pDelayImport;
+	PLIBPE_DELAYIMPORT_VEC pDelayImport;
 	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK || dwEntry > pDelayImport->size())
 		return -1;
 
@@ -674,7 +677,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	else
 		m_listRelocsEntry->DeleteAllItems();
 
-	PCLIBPE_RELOCATION_VEC pReloc;
+	PLIBPE_RELOCATION_VEC pReloc;
 	if (m_pLibpe->GetRelocations(pReloc) != S_OK || pReloc->empty() || pReloc->size() < dwEntry)
 		return -1;
 
@@ -725,7 +728,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 {
-	PCLIBPE_DEBUG_VEC pDebug;
+	PLIBPE_DEBUG_VEC pDebug;
 	if (m_pLibpe->GetDebug(pDebug) != S_OK)
 		return -1;
 
@@ -747,7 +750,7 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 
 int CViewRightBL::CreateTreeResources()
 {
-	PCLIBPE_RESOURCE_ROOT pstResRoot;
+	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 		return -1;
 
@@ -814,7 +817,7 @@ int CViewRightBL::CreateTreeResources()
 
 int CViewRightBL::CreateHexTLS()
 {
-	PCLIBPE_TLS pTLS;
+	PLIBPE_TLS pTLS;
 	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
 

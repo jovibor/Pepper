@@ -8,6 +8,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "ViewRightTL.h"
+#include <algorithm>
 
 IMPLEMENT_DYNCREATE(CViewRightTL, CView)
 
@@ -65,10 +66,13 @@ void CViewRightTL::OnInitialUpdate()
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHeaderText = RGB(255, 255, 255);
-	m_stlcs.stColor.clrHeaderBk = RGB(0, 132, 132);
+	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
+	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
+	m_stlcs.stColor.clrHdrHglInactive = RGB(0, 112, 112);
+	m_stlcs.stColor.clrHdrHglActive = RGB(0, 92, 92);
 	m_stlcs.pwndParent = this;
-	m_stlcs.dwHeaderHeight = 39;
+	m_stlcs.dwHdrHeight = 39;
+	m_stlcs.fSortable = true;
 
 	m_lf.lfHeight = 16;
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
@@ -76,7 +80,7 @@ void CViewRightTL::OnInitialUpdate()
 	m_hdrlf.lfHeight = 17;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
-	m_stlcs.pHeaderLogFont = &m_hdrlf;
+	m_stlcs.pHdrLogFont = &m_hdrlf;
 
 	m_menuList.CreatePopupMenu();
 	m_menuList.AppendMenuW(MF_STRING, IDM_LIST_GOTODESCOFFSET, L"Go to descriptor offset");
@@ -420,13 +424,76 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult
 	*pResult = 0;
 }
 
+void CViewRightTL::SortImportData()
+{
+	std::sort(m_pImport->begin(), m_pImport->end(), [&](const LIBPE_IMPORT_MODULE& ref1, const LIBPE_IMPORT_MODULE& ref2)
+	{
+		std::wstring wstr1, wstr2;
+		wstr1.resize(32);
+		wstr2.resize(32);
+
+		int iCompare { };
+		switch (m_listImport->GetSortColumn())
+		{
+		case 0:
+			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.dwOffsetImpDesc));
+			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.dwOffsetImpDesc));
+			iCompare = wstr1.compare(wstr2);
+			break;
+		case 1:
+			iCompare = ref1.strModuleName.compare(ref2.strModuleName);
+			break;
+		case 2:
+			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.OriginalFirstThunk));
+			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.OriginalFirstThunk));
+			iCompare = wstr1.compare(wstr2);
+			break;
+		case 3:
+			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.TimeDateStamp));
+			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.TimeDateStamp));
+			iCompare = wstr1.compare(wstr2);
+			break;
+		case 4:
+			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.ForwarderChain));
+			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.ForwarderChain));
+			iCompare = wstr1.compare(wstr2);
+			break;
+		case 5:
+			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.Name));
+			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.Name));
+			iCompare = wstr1.compare(wstr2);
+			break;
+		case 6:
+			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.FirstThunk));
+			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.FirstThunk));
+			iCompare = wstr1.compare(wstr2);
+			break;
+		}
+
+		bool result { false };
+		if (m_listImport->GetSortAscending())
+		{
+			if (iCompare < 0)
+				result = true;
+		}
+		else
+		{
+			if (iCompare > 0)
+				result = true;
+		}
+
+		return result;
+
+	});
+
+	m_listImport->RedrawWindow();
+}
+
 BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 {
 	CView::OnNotify(wParam, lParam, pResult);
 
 	const LPNMITEMACTIVATE pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
-	if (pNMI->iItem == -1)
-		return TRUE;
 
 	bool fx32 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32);
 	bool fx64 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64);
@@ -464,7 +531,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case IDC_LIST_EXPORT:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
-			PCLIBPE_EXPORT pExport;
+			PLIBPE_EXPORT pExport;
 			if (m_pLibpe->GetExport(pExport) != S_OK)
 				return -1;
 
@@ -506,6 +573,8 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case IDC_LIST_IMPORT:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_ENTRY, pNMI->iItem));
+		else if (pNMI->hdr.code == LVN_COLUMNCLICK)
+			SortImportData();
 		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
 			switch (pNMI->lParam)
@@ -561,7 +630,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case IDC_LIST_TLS:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
-			PCLIBPE_TLS pTLSDir;
+			PLIBPE_TLS pTLSDir;
 			if (m_pLibpe->GetTLS(pTLSDir) != S_OK)
 				return -1;
 
@@ -576,7 +645,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 				break;
 			case IDM_LIST_GOTODATAOFFSET:
 			{
-				PCLIBPE_OPTHEADER_VAR pOpt;
+				PLIBPE_OPTHEADER_VAR pOpt;
 				if (m_pLibpe->GetOptionalHeader(pOpt) != S_OK)
 					return -1;
 				dwSize = 1;
@@ -631,7 +700,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case IDC_LIST_BOUNDIMPORT:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
-			PCLIBPE_BOUNDIMPORT_VEC pBoundImp;
+			PLIBPE_BOUNDIMPORT_VEC pBoundImp;
 			if (m_pLibpe->GetBoundImport(pBoundImp) != S_OK)
 				return -1;
 
@@ -660,7 +729,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	case IDC_LIST_COMDESCRIPTOR:
 		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
 		{
-			PCLIBPE_COMDESCRIPTOR pCOMDesc;
+			PLIBPE_COMDESCRIPTOR pCOMDesc;
 			if (m_pLibpe->GetCOMDescriptor(pCOMDesc) != S_OK)
 				return -1;
 
@@ -695,7 +764,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 		const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
 		if (pTree->hdr.code == TVN_SELCHANGED && pTree->itemNew.hItem != m_hTreeResDir)
 		{
-			PCLIBPE_RESOURCE_ROOT pResRoot;
+			PLIBPE_RESOURCE_ROOT pResRoot;
 			if (m_pLibpe->GetResources(pResRoot) != S_OK)
 				return -1;
 
@@ -734,7 +803,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 
 int CViewRightTL::CreateListDOSHeader()
 {
-	PCLIBPE_DOSHEADER pDosHeader;
+	PLIBPE_DOSHEADER pDosHeader;
 	if (m_pLibpe->GetMSDOSHeader(pDosHeader) != S_OK)
 		return -1;
 
@@ -776,7 +845,7 @@ int CViewRightTL::CreateListDOSHeader()
 
 int CViewRightTL::CreateListRichHeader()
 {
-	PCLIBPE_RICHHEADER_VEC pRichHeader;
+	PLIBPE_RICHHEADER_VEC pRichHeader;
 	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK)
 		return -1;
 
@@ -814,7 +883,7 @@ int CViewRightTL::CreateListRichHeader()
 
 int CViewRightTL::CreateListNTHeader()
 {
-	PCLIBPE_NTHEADER pNTHdr;
+	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -866,11 +935,11 @@ int CViewRightTL::CreateListNTHeader()
 
 int CViewRightTL::CreateListFileHeader()
 {
-	PCLIBPE_FILEHEADER pFileHeader;
+	PLIBPE_FILEHEADER pFileHeader;
 	if (m_pLibpe->GetFileHeader(pFileHeader) != S_OK)
 		return -1;
 
-	PCLIBPE_NTHEADER pNTHdr;
+	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -983,10 +1052,10 @@ int CViewRightTL::CreateListFileHeader()
 
 int CViewRightTL::CreateListOptHeader()
 {
-	PCLIBPE_OPTHEADER_VAR pOptHdr;
+	PLIBPE_OPTHEADER_VAR pOptHdr;
 	if (m_pLibpe->GetOptionalHeader(pOptHdr) != S_OK)
 		return -1;
-	PCLIBPE_NTHEADER pNTHdr;
+	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -1136,10 +1205,10 @@ int CViewRightTL::CreateListOptHeader()
 
 int CViewRightTL::CreateListDataDirectories()
 {
-	PCLIBPE_DATADIRS_VEC pvecDataDirs;
+	PLIBPE_DATADIRS_VEC pvecDataDirs;
 	if (m_pLibpe->GetDataDirectories(pvecDataDirs) != S_OK)
 		return -1;
-	PCLIBPE_NTHEADER pNTHdr;
+	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
@@ -1274,7 +1343,7 @@ int CViewRightTL::CreateListSecHeaders()
 
 int CViewRightTL::CreateListExport()
 {
-	PCLIBPE_EXPORT pExport;
+	PLIBPE_EXPORT pExport;
 	if (m_pLibpe->GetExport(pExport) != S_OK)
 		return -1;
 
@@ -1358,7 +1427,7 @@ int CViewRightTL::CreateListImport()
 
 int CViewRightTL::CreateTreeResources()
 {
-	PCLIBPE_RESOURCE_ROOT pResRoot;
+	PLIBPE_RESOURCE_ROOT pResRoot;
 	if (m_pLibpe->GetResources(pResRoot) != S_OK)
 		return -1;
 
@@ -1480,7 +1549,7 @@ int CViewRightTL::CreateListExceptions()
 
 int CViewRightTL::CreateListSecurity()
 {
-	PCLIBPE_SECURITY_VEC pSecurityDir;
+	PLIBPE_SECURITY_VEC pSecurityDir;
 	if (m_pLibpe->GetSecurity(pSecurityDir) != S_OK)
 		return -1;
 
@@ -1556,7 +1625,7 @@ int CViewRightTL::CreateListRelocations()
 
 int CViewRightTL::CreateListDebug()
 {
-	PCLIBPE_DEBUG_VEC pDebugDir;
+	PLIBPE_DEBUG_VEC pDebugDir;
 	if (m_pLibpe->GetDebug(pDebugDir) != S_OK)
 		return -1;
 
@@ -1637,7 +1706,7 @@ int CViewRightTL::CreateListDebug()
 
 int CViewRightTL::CreateListTLS()
 {
-	PCLIBPE_TLS pTLSDir;
+	PLIBPE_TLS pTLSDir;
 	if (m_pLibpe->GetTLS(pTLSDir) != S_OK)
 		return -1;
 
@@ -1727,7 +1796,7 @@ int CViewRightTL::CreateListTLS()
 
 int CViewRightTL::CreateListLCD()
 {
-	PCLIBPE_LOADCONFIG pLCD;
+	PLIBPE_LOADCONFIG pLCD;
 	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK)
 		return -1;
 
@@ -1846,7 +1915,7 @@ int CViewRightTL::CreateListLCD()
 
 int CViewRightTL::CreateListBoundImport()
 {
-	PCLIBPE_BOUNDIMPORT_VEC pBoundImp;
+	PLIBPE_BOUNDIMPORT_VEC pBoundImp;
 	if (m_pLibpe->GetBoundImport(pBoundImp) != S_OK)
 		return -1;
 
@@ -1894,7 +1963,7 @@ int CViewRightTL::CreateListBoundImport()
 
 int CViewRightTL::CreateListDelayImport()
 {
-	PCLIBPE_DELAYIMPORT_VEC pDelayImp;
+	PLIBPE_DELAYIMPORT_VEC pDelayImp;
 	if (m_pLibpe->GetDelayImport(pDelayImp) != S_OK)
 		return -1;
 
@@ -1955,7 +2024,7 @@ int CViewRightTL::CreateListDelayImport()
 
 int CViewRightTL::CreateListCOM()
 {
-	PCLIBPE_COMDESCRIPTOR pCOMDesc;
+	PLIBPE_COMDESCRIPTOR pCOMDesc;
 	if (m_pLibpe->GetCOMDescriptor(pCOMDesc) != S_OK)
 		return -1;
 

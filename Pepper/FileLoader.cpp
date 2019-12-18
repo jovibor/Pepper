@@ -93,8 +93,8 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 	m_hds.pData = pData;
 	m_hds.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
 	m_hds.enDataMode = enMode;
-	m_hds.ullSelectionStart = ullOffset;
-	m_hds.ullSelectionSize = ullSelectionSize;
+	m_hds.stSelSpan.ullOffset = ullOffset;
+	m_hds.stSelSpan.ullSize = ullSelectionSize;
 
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
 		[pHexCtrl](const QUERYDATA & r) {return r.hWnd == pHexCtrl->GetWindowHandle(); });
@@ -173,7 +173,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	m_hds.pData = pData;
 	m_hds.ullDataSize = ullSize;
 	m_hds.enDataMode = enMode;
-	m_hds.ullSelectionSize = 0;
+	m_hds.stSelSpan.ullSize = 0;
 	pHexCtrl->SetData(m_hds);
 
 	return S_OK;
@@ -289,10 +289,10 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	}
 	break;
 	case HEXCTRL_MSG_GETDATA:
-		m_byte = GetByte(pHexNtfy->hdr.hwndFrom, pHexNtfy->ullIndex);
+		m_byte = GetByte(pHexNtfy->hdr.hwndFrom, pHexNtfy->stSpan.ullOffset);
 		pHexNtfy->pData = &m_byte;
 		break;
-	case HEXCTRL_MSG_MODIFYDATA:
+	case HEXCTRL_MSG_DATACHANGE:
 		m_fModified = true;
 		break;
 	}

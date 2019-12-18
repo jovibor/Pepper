@@ -55,9 +55,9 @@ void CViewRightBR::OnInitialUpdate()
 	m_stlcs.pwndParent = this;
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHeaderText = RGB(255, 255, 255);
-	m_stlcs.stColor.clrHeaderBk = RGB(0, 132, 132);
-	m_stlcs.dwHeaderHeight = 35;
+	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
+	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
+	m_stlcs.dwHdrHeight = 35;
 
 	m_lf.lfHeight = 16;
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
@@ -65,7 +65,7 @@ void CViewRightBR::OnInitialUpdate()
 	m_hdrlf.lfHeight = 17;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
-	m_stlcs.pHeaderLogFont = &m_hdrlf;
+	m_stlcs.pHdrLogFont = &m_hdrlf;
 
 	CreateListTLSCallbacks();
 }
@@ -824,7 +824,7 @@ void CViewRightBR::CreateStrings(const RESHELPER * pResHelper)
 
 void CViewRightBR::CreateGroupIconCursor(const RESHELPER * pResHelper)
 {
-	PCLIBPE_RESOURCE_ROOT pstResRoot;
+	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 		return;
 
@@ -985,7 +985,7 @@ void CViewRightBR::CreateManifest(const RESHELPER * pResHelper)
 
 void CViewRightBR::CreateToolbar(const RESHELPER * pResHelper)
 {
-	PCLIBPE_RESOURCE_ROOT pstResRoot;
+	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 		return;
 
@@ -1113,7 +1113,7 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 
 int CViewRightBR::CreateListTLSCallbacks()
 {
-	PCLIBPE_TLS pTLS;
+	PLIBPE_TLS pTLS;
 	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
 
@@ -1144,7 +1144,7 @@ void CViewRightBR::ResLoadError()
 
 void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 {
-	PCLIBPE_DEBUG_VEC pDebug;
+	PLIBPE_DEBUG_VEC pDebug;
 	if (m_pLibpe->GetDebug(pDebug) != S_OK)
 		return;
 

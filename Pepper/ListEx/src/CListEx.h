@@ -1,50 +1,64 @@
-/********************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/					*
-* Github repository URL: https://github.com/jovibor/ListEx						*
-* This software is available under the "MIT License".							*
-* This is an extended and featured version of CMFCListCtrl class.				*
-* CListEx - list control class with the ability to set tooltips on arbitrary	*
-* cells, and also with a lots of other stuff to customize your control in many	*
-* different aspects. For more info see official documentation on github.		*
-********************************************************************************/
+/****************************************************************************************
+* Copyright © 2018-2020 Jovibor https://github.com/jovibor/                             *
+* This is very extended and featured version of CMFCListCtrl class.                     *
+* Official git repository: https://github.com/jovibor/ListEx/                           *
+* This class is available under the "MIT License".                                      *
+* For more information visit the project's official repository.                         *
+****************************************************************************************/
 #pragma once
 #include "../ListEx.h"
 #include "CListExHdr.h"
 #include <unordered_map>
 
 namespace LISTEX {
+
+	struct CELLCOLOR
+	{
+		COLORREF clrBk;
+		COLORREF clrText;
+	};
+
 	/********************************************
-	* CListEx class definition.					*
+	* CListEx class declaration.                *
 	********************************************/
 	class CListEx : public IListEx
 	{
 	public:
 		DECLARE_DYNAMIC(CListEx)
-		CListEx() {}
-		virtual ~CListEx() {}
+		CListEx() = default;
+		~CListEx() = default;
 		bool Create(const LISTEXCREATESTRUCT& lcs)override;
 		void CreateDialogCtrl(UINT uCtrlID, CWnd* pwndDlg)override;
-		bool IsCreated()override;
+		static int CALLBACK DefCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+		BOOL DeleteAllItems()override;
+		BOOL DeleteItem(int iItem)override;
+		void Destroy()override;
+		ULONGLONG GetCellData(int iItem, int iSubItem)override;
+		UINT GetFontSize()override;
+		int GetSortColumn()const override;
+		bool GetSortAscending()const override;
+		bool IsCreated()const override;
+		UINT MapIndexToID(UINT nItem);
+		void SetCellColor(int iItem, int iSubItem, COLORREF clrBk, COLORREF clrText)override;
+		void SetCellData(int iItem, int iSubItem, ULONGLONG ullData)override;
+		void SetCellMenu(int iItem, int iSubItem, CMenu* pMenu)override;
+		void SetCellTooltip(int iItem, int iSubItem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption = nullptr)override;
 		void SetColor(const LISTEXCOLORSTRUCT& lcs)override;
 		void SetFont(const LOGFONTW* pLogFontNew)override;
 		void SetFontSize(UINT uiSize)override;
-		UINT GetFontSize()override;
-		void SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption = nullptr)override;
-		void SetCellMenu(int iItem, int iSubitem, CMenu* pMenu)override;
-		void SetListMenu(CMenu* pMenu)override;
-		void SetCellData(int iItem, int iSubitem, DWORD_PTR dwData)override;
-		DWORD_PTR GetCellData(int iItem, int iSubitem)override;
 		void SetHeaderHeight(DWORD dwHeight)override;
-		void SetHeaderFont(const LOGFONT* pLogFontNew)override;
+		void SetHeaderFont(const LOGFONTW* pLogFontNew)override;
 		void SetHeaderColumnColor(DWORD nColumn, COLORREF clr)override;
-		void Destroy()override;
+		void SetListMenu(CMenu* pMenu)override;
+		void SetSortable(bool fSortable, PFNLVCOMPARE pfnCompare)override;
 		DECLARE_MESSAGE_MAP()
 	protected:
-		CListExHdr& GetHeaderCtrl() override { return m_stListHeader; }
-		void InitHeader() override;
-		bool HasTooltip(int iItem, int iSubitem, std::wstring** ppwstrText = nullptr, std::wstring** ppwstrCaption = nullptr);
-		bool HasMenu(int iItem, int iSubitem, CMenu** ppMenu = nullptr);
-		void DrawItem(LPDRAWITEMSTRUCT) override;
+		CListExHdr& GetHeaderCtrl() { return m_stListHeader; }
+		void InitHeader();
+		bool HasCellColor(int iItem, int iSubItem, COLORREF& clrBk, COLORREF& clrText);
+		bool HasTooltip(int iItem, int iSubItem, std::wstring** ppwstrText = nullptr, std::wstring** ppwstrCaption = nullptr);
+		bool HasMenu(int iItem, int iSubItem, CMenu** ppMenu = nullptr);
+		void DrawItem(LPDRAWITEMSTRUCT);
 		afx_msg void OnPaint();
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 		afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
@@ -63,24 +77,31 @@ namespace LISTEX {
 		afx_msg void OnHdnBegintrack(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnHdnTrack(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnDestroy();
+		afx_msg void OnLvnColumnclick(NMHDR *pNMHDR, LRESULT *pResult);
 	private:
-		bool m_fCreated { false };
 		CListExHdr m_stListHeader;
 		LISTEXCOLORSTRUCT m_stColor { };
 		CFont m_fontList;
 		CPen m_penGrid;
 		HWND m_hwndTt { };
 		TOOLINFO m_stToolInfo { };
-		bool m_fTtShown { false };
 		LVHITTESTINFO m_stCurrCell { };
 		DWORD m_dwGridWidth { 1 };		//Grid width.
 		CMenu* m_pListMenu { };			//List global menu, if set.
 		std::unordered_map<int, std::unordered_map<int,
 			std::tuple<std::wstring/*tip text*/, std::wstring/*caption text*/>>> m_umapCellTt { }; //Cell's tooltips.
-		std::unordered_map<int, std::unordered_map<int, CMenu*>> m_umapCellMenu { };			//Cell's menus.
-		std::unordered_map<int, std::unordered_map<int, DWORD_PTR>> m_umapCellData { };			//Cell's custom data.
+		std::unordered_map<int, std::unordered_map<int, CMenu*>> m_umapCellMenu { };			   //Cell's menus.
+		std::unordered_map<int, std::unordered_map<int, ULONGLONG>> m_umapCellData { };            //Cell's custom data.
+		std::unordered_map<int, std::unordered_map<int, CELLCOLOR>> m_umapCellColor { };           //Cell's colors.
 		NMITEMACTIVATE m_stNMII { };
 		const ULONG_PTR ID_TIMER_TOOLTIP { 0x01 };
+		int m_iSortColumn { };
+		PFNLVCOMPARE m_pfnCompare { nullptr };
+		bool m_fCreated { false };  //Is created.
+		bool m_fSortable { false }; //Is list sortable.
+		bool m_fSortAscending { };  //Sorting type (ascending, descending).
+		bool m_fVirtual { false };  //Whether list is virtual (LVS_OWNERDATA) or not.
+		bool m_fTtShown { false };  //Is tool-tip shown atm.
 	};
 
 	/*******************Setting a manifest for ComCtl32.dll version 6.***********************/

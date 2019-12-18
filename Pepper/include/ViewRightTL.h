@@ -34,6 +34,7 @@ protected:
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListRelocsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListExceptionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
+	void SortImportData();
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe;
@@ -73,10 +74,10 @@ private:
 	bool m_fFileSummaryShow { true };
 	ULONG m_dwPeStart { };
 	DWORD m_dwFileInfo { };
-	PCLIBPE_SECHEADERS_VEC m_pSecHeaders { };
-	PCLIBPE_IMPORT_VEC m_pImport { };
-	PCLIBPE_EXCEPTION_VEC m_pExceptionDir { };
-	PCLIBPE_RELOCATION_VEC m_pRelocTable { };
+	PLIBPE_SECHEADERS_VEC m_pSecHeaders { };
+	PLIBPE_IMPORT_VEC m_pImport { };
+	PLIBPE_EXCEPTION_VEC m_pExceptionDir { };
+	PLIBPE_RELOCATION_VEC m_pRelocTable { };
 	CWnd* m_pwndActive { };
 	LOGFONTW m_lf { }, m_hdrlf { };
 	CMenu m_menuList;

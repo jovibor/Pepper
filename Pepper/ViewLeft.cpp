@@ -89,7 +89,7 @@ void CViewLeft::OnInitialUpdate()
 		m_stTreeMain.SetItemData(hTreeSecHeaders, IDC_LIST_SECHEADERS);
 	}
 
-	PCLIBPE_DATADIRS_VEC vecDataDirs;
+	PLIBPE_DATADIRS_VEC vecDataDirs;
 	if (m_pLibpe->GetDataDirectories(vecDataDirs) == S_OK)
 	{
 		if (hTreeOptHeader)

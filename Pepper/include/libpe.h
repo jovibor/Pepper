@@ -22,7 +22,7 @@ static_assert(__cpp17_conformant, "C++17 conformant compiler is required (MSVS 1
 
 namespace libpe {
 	//Standard DOS header struct.
-	using PCLIBPE_DOSHEADER = const IMAGE_DOS_HEADER*;
+	using PLIBPE_DOSHEADER = IMAGE_DOS_HEADER*;
 
 	//Rich.
 	struct LIBPE_RICH {
@@ -32,7 +32,7 @@ namespace libpe {
 		DWORD dwCount;      //Amount of occurrences.
 	};
 	using LIBPE_RICHHEADER_VEC = std::vector<LIBPE_RICH>;
-	using PCLIBPE_RICHHEADER_VEC = const LIBPE_RICHHEADER_VEC*;
+	using PLIBPE_RICHHEADER_VEC = LIBPE_RICHHEADER_VEC*;
 
 	//NT header.
 	struct LIBPE_NTHEADER {
@@ -42,17 +42,17 @@ namespace libpe {
 			IMAGE_NT_HEADERS64 stNTHdr64; //x64 Header.
 		}varHdr;
 	};
-	using PCLIBPE_NTHEADER = const LIBPE_NTHEADER*;
+	using PLIBPE_NTHEADER = LIBPE_NTHEADER*;
 
 	//File header.
-	using PCLIBPE_FILEHEADER = const IMAGE_FILE_HEADER*;
+	using PLIBPE_FILEHEADER = IMAGE_FILE_HEADER*;
 
 	//Optional header.
 	union LIBPE_OPTHEADER_VAR {
 		IMAGE_OPTIONAL_HEADER32 stOptHdr32; //x86 header.
 		IMAGE_OPTIONAL_HEADER64 stOptHdr64; //x64 header.
 	};
-	using PCLIBPE_OPTHEADER_VAR = const LIBPE_OPTHEADER_VAR*;
+	using PLIBPE_OPTHEADER_VAR = LIBPE_OPTHEADER_VAR*;
 
 	//Data directories.
 	struct LIBPE_DATADIR {
@@ -60,7 +60,7 @@ namespace libpe {
 		std::string          strSecResidesIn; //Name of the section this directory resides in (points to).
 	};
 	using LIBPE_DATADIRS_VEC = std::vector<LIBPE_DATADIR>;
-	using PCLIBPE_DATADIRS_VEC = const LIBPE_DATADIRS_VEC*;
+	using PLIBPE_DATADIRS_VEC = LIBPE_DATADIRS_VEC*;
 
 	//Sections headers.
 	//For more info check:
@@ -73,7 +73,7 @@ namespace libpe {
 		std::string           strSecName;         //Section full name.
 	};
 	using LIBPE_SECHEADERS_VEC = std::vector<LIBPE_SECHEADERS>;
-	using PCLIBPE_SECHEADERS_VEC = const LIBPE_SECHEADERS_VEC*;
+	using PLIBPE_SECHEADERS_VEC = LIBPE_SECHEADERS_VEC*;
 
 	//Export table.
 	struct LIBPE_EXPORT_FUNC {
@@ -88,7 +88,7 @@ namespace libpe {
 		std::string                     strModuleName;      //Actual module name.
 		std::vector<LIBPE_EXPORT_FUNC>  vecFuncs;           //Array of the exported functions struct.	
 	};
-	using PCLIBPE_EXPORT = const LIBPE_EXPORT*;
+	using PLIBPE_EXPORT = LIBPE_EXPORT*;
 
 	//Import table:
 	struct LIBPE_IMPORT_FUNC {
@@ -106,7 +106,7 @@ namespace libpe {
 		std::vector<LIBPE_IMPORT_FUNC> vecImportFunc;   //Array of imported functions.
 	};
 	using LIBPE_IMPORT_VEC = std::vector<LIBPE_IMPORT_MODULE>;
-	using PCLIBPE_IMPORT_VEC = const LIBPE_IMPORT_VEC*;
+	using PLIBPE_IMPORT_VEC = LIBPE_IMPORT_VEC*;
 
 	/**************************************Resources by Levels*******************************************
 	* There are 3 levels of resources: 1. Type 2. Name 3. Language.										*
@@ -147,7 +147,7 @@ namespace libpe {
 		IMAGE_RESOURCE_DIRECTORY              stResDirLvL3;    //Level 3 standard IMAGE_RESOURCE_DIRECTORY header.
 		std::vector<LIBPE_RESOURCE_LVL3_DATA> vecResLvL3;      //Array of level 3 resource entries.
 	};
-	using PCLIBPE_RESOURCE_LVL3 = const LIBPE_RESOURCE_LVL3*;
+	using PLIBPE_RESOURCE_LVL3 = LIBPE_RESOURCE_LVL3*;
 
 	//Level 2 Resources — Includes LVL3 Resourses.
 	struct LIBPE_RESOURCE_LVL2_DATA {
@@ -162,7 +162,7 @@ namespace libpe {
 		IMAGE_RESOURCE_DIRECTORY              stResDirLvL2;    //Level 2 standard IMAGE_RESOURCE_DIRECTORY header.
 		std::vector<LIBPE_RESOURCE_LVL2_DATA> vecResLvL2;      //Array of level 2 resource entries.
 	};
-	using PCLIBPE_RESOURCE_LVL2 = const LIBPE_RESOURCE_LVL2*;
+	using PLIBPE_RESOURCE_LVL2 = LIBPE_RESOURCE_LVL2*;
 
 	//Level 1 (Root) Resources — Includes LVL2 Resources.
 	struct LIBPE_RESOURCE_ROOT_DATA {
@@ -177,7 +177,7 @@ namespace libpe {
 		IMAGE_RESOURCE_DIRECTORY              stResDirRoot;    //Level 1 standard IMAGE_RESOURCE_DIRECTORY header.
 		std::vector<LIBPE_RESOURCE_ROOT_DATA> vecResRoot;      //Array of level 1 resource entries.
 	};
-	using PCLIBPE_RESOURCE_ROOT = const LIBPE_RESOURCE_ROOT*;
+	using PLIBPE_RESOURCE_ROOT = LIBPE_RESOURCE_ROOT*;
 	/*********************************Resources End*****************************************/
 
 	//Exception table.
@@ -186,7 +186,7 @@ namespace libpe {
 		_IMAGE_RUNTIME_FUNCTION_ENTRY stRuntimeFuncEntry;      //Standard _IMAGE_RUNTIME_FUNCTION_ENTRY header.
 	};
 	using LIBPE_EXCEPTION_VEC = std::vector<LIBPE_EXCEPTION>;
-	using PCLIBPE_EXCEPTION_VEC = const LIBPE_EXCEPTION_VEC*;
+	using PLIBPE_EXCEPTION_VEC = LIBPE_EXCEPTION_VEC*;
 
 	//Security table.
 	struct LIBPE_SECURITY {
@@ -194,7 +194,7 @@ namespace libpe {
 		WIN_CERTIFICATE stWinSert;           //Standard WIN_CERTIFICATE header.
 	};
 	using LIBPE_SECURITY_VEC = std::vector<LIBPE_SECURITY>;
-	using PCLIBPE_SECURITY_VEC = const LIBPE_SECURITY_VEC*;
+	using PLIBPE_SECURITY_VEC = const LIBPE_SECURITY_VEC*;
 
 	//Relocation table.
 	struct LIBPE_RELOC_DATA {
@@ -208,7 +208,7 @@ namespace libpe {
 		std::vector<LIBPE_RELOC_DATA> vecRelocData;  //Array of the Relocation data struct.
 	};
 	using LIBPE_RELOCATION_VEC = std::vector<LIBPE_RELOCATION>;
-	using PCLIBPE_RELOCATION_VEC = const LIBPE_RELOCATION_VEC*;
+	using PLIBPE_RELOCATION_VEC = LIBPE_RELOCATION_VEC*;
 
 	//Debug table.
 	struct LIBPE_DEBUG_DBGHDR
@@ -228,7 +228,7 @@ namespace libpe {
 		LIBPE_DEBUG_DBGHDR    stDebugHdrInfo; //Debug info header.
 	};
 	using LIBPE_DEBUG_VEC = std::vector<LIBPE_DEBUG>;
-	using PCLIBPE_DEBUG_VEC = const LIBPE_DEBUG_VEC*;
+	using PLIBPE_DEBUG_VEC = LIBPE_DEBUG_VEC*;
 
 	//TLS table.
 	struct LIBPE_TLS {
@@ -239,7 +239,7 @@ namespace libpe {
 		}varTLS;
 		std::vector<DWORD> vecTLSCallbacks;   //Array of the TLS callbacks.
 	};
-	using PCLIBPE_TLS = const LIBPE_TLS*;
+	using PLIBPE_TLS = LIBPE_TLS*;
 
 	//LoadConfigDirectory.
 	struct LIBPE_LOADCONFIG {
@@ -249,7 +249,7 @@ namespace libpe {
 			IMAGE_LOAD_CONFIG_DIRECTORY64 stLCD64; //x64 LCD descriptor.
 		}varLCD;
 	};
-	using PCLIBPE_LOADCONFIG = const LIBPE_LOADCONFIG*;
+	using PLIBPE_LOADCONFIG = const LIBPE_LOADCONFIG*;
 
 	//Bound import table.
 	struct LIBPE_BOUNDFORWARDER {
@@ -264,7 +264,7 @@ namespace libpe {
 		std::vector<LIBPE_BOUNDFORWARDER> vecBoundForwarder;    //Array of the Bound Forwarder structs.
 	};
 	using LIBPE_BOUNDIMPORT_VEC = std::vector<LIBPE_BOUNDIMPORT>;
-	using PCLIBPE_BOUNDIMPORT_VEC = const LIBPE_BOUNDIMPORT_VEC*;
+	using PLIBPE_BOUNDIMPORT_VEC = LIBPE_BOUNDIMPORT_VEC*;
 
 	//Delay import table.
 	struct LIBPE_DELAYIMPORT_FUNC {
@@ -293,14 +293,14 @@ namespace libpe {
 		std::vector<LIBPE_DELAYIMPORT_FUNC> vecDelayImpFunc;      //Array of the Delay Import module functions.
 	};
 	using LIBPE_DELAYIMPORT_VEC = std::vector<LIBPE_DELAYIMPORT>;
-	using PCLIBPE_DELAYIMPORT_VEC = const LIBPE_DELAYIMPORT_VEC*;
+	using PLIBPE_DELAYIMPORT_VEC = LIBPE_DELAYIMPORT_VEC*;
 
 	//COM descriptor table.
 	struct LIBPE_COMDESCRIPTOR {
 		DWORD              dwOffsetComDesc; //File's raw offset of the IMAGE_COR20_HEADER descriptor.
 		IMAGE_COR20_HEADER stCorHdr;        //Standard IMAGE_COR20_HEADER struct.
 	};
-	using PCLIBPE_COMDESCRIPTOR = const LIBPE_COMDESCRIPTOR*;
+	using PLIBPE_COMDESCRIPTOR = LIBPE_COMDESCRIPTOR*;
 
 	//Pure abstract base class Ilibpe.
 	class Ilibpe
@@ -308,29 +308,29 @@ namespace libpe {
 	public:
 		virtual ~Ilibpe() = default;
 		virtual HRESULT LoadPe(LPCWSTR) = 0;
-		virtual HRESULT GetImageInfo(DWORD&)const noexcept = 0;
-		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f)const noexcept = 0;
-		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset)const noexcept = 0;
-		virtual HRESULT GetOffsetFromVA(ULONGLONG ullVA, DWORD& dwOffset)const noexcept = 0;
-		virtual HRESULT GetMSDOSHeader(PCLIBPE_DOSHEADER&)const noexcept = 0;
-		virtual HRESULT GetRichHeader(PCLIBPE_RICHHEADER_VEC&)const noexcept = 0;
-		virtual HRESULT GetNTHeader(PCLIBPE_NTHEADER&)const noexcept = 0;
-		virtual HRESULT GetFileHeader(PCLIBPE_FILEHEADER&)const noexcept = 0;
-		virtual HRESULT GetOptionalHeader(PCLIBPE_OPTHEADER_VAR&)const noexcept = 0;
-		virtual HRESULT GetDataDirectories(PCLIBPE_DATADIRS_VEC&)const noexcept = 0;
-		virtual HRESULT GetSectionsHeaders(PCLIBPE_SECHEADERS_VEC&)const noexcept = 0;
-		virtual HRESULT GetExport(PCLIBPE_EXPORT&)const noexcept = 0;
-		virtual HRESULT GetImport(PCLIBPE_IMPORT_VEC&)const noexcept = 0;
-		virtual HRESULT GetResources(PCLIBPE_RESOURCE_ROOT&)const noexcept = 0;
-		virtual HRESULT GetExceptions(PCLIBPE_EXCEPTION_VEC&)const noexcept = 0;
-		virtual HRESULT GetSecurity(PCLIBPE_SECURITY_VEC&)const noexcept = 0;
-		virtual HRESULT GetRelocations(PCLIBPE_RELOCATION_VEC&)const noexcept = 0;
-		virtual HRESULT GetDebug(PCLIBPE_DEBUG_VEC&)const noexcept = 0;
-		virtual HRESULT GetTLS(PCLIBPE_TLS&)const noexcept = 0;
-		virtual HRESULT GetLoadConfig(PCLIBPE_LOADCONFIG&)const noexcept = 0;
-		virtual HRESULT GetBoundImport(PCLIBPE_BOUNDIMPORT_VEC&)const noexcept = 0;
-		virtual HRESULT GetDelayImport(PCLIBPE_DELAYIMPORT_VEC&)const noexcept = 0;
-		virtual HRESULT GetCOMDescriptor(PCLIBPE_COMDESCRIPTOR&)const noexcept = 0;
+		virtual HRESULT GetImageInfo(DWORD&)noexcept = 0;
+		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f)noexcept = 0;
+		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset)noexcept = 0;
+		virtual HRESULT GetOffsetFromVA(ULONGLONG ullVA, DWORD& dwOffset)noexcept = 0;
+		virtual HRESULT GetMSDOSHeader(PLIBPE_DOSHEADER&)noexcept = 0;
+		virtual HRESULT GetRichHeader(PLIBPE_RICHHEADER_VEC&)noexcept = 0;
+		virtual HRESULT GetNTHeader(PLIBPE_NTHEADER&)noexcept = 0;
+		virtual HRESULT GetFileHeader(PLIBPE_FILEHEADER&)noexcept = 0;
+		virtual HRESULT GetOptionalHeader(PLIBPE_OPTHEADER_VAR&)noexcept = 0;
+		virtual HRESULT GetDataDirectories(PLIBPE_DATADIRS_VEC&)noexcept = 0;
+		virtual HRESULT GetSectionsHeaders(PLIBPE_SECHEADERS_VEC&)noexcept = 0;
+		virtual HRESULT GetExport(PLIBPE_EXPORT&)noexcept = 0;
+		virtual HRESULT GetImport(PLIBPE_IMPORT_VEC&)noexcept = 0;
+		virtual HRESULT GetResources(PLIBPE_RESOURCE_ROOT&)noexcept = 0;
+		virtual HRESULT GetExceptions(PLIBPE_EXCEPTION_VEC&)noexcept = 0;
+		virtual HRESULT GetSecurity(PLIBPE_SECURITY_VEC&)noexcept = 0;
+		virtual HRESULT GetRelocations(PLIBPE_RELOCATION_VEC&)noexcept = 0;
+		virtual HRESULT GetDebug(PLIBPE_DEBUG_VEC&)noexcept = 0;
+		virtual HRESULT GetTLS(PLIBPE_TLS&)noexcept = 0;
+		virtual HRESULT GetLoadConfig(PLIBPE_LOADCONFIG&)noexcept = 0;
+		virtual HRESULT GetBoundImport(PLIBPE_BOUNDIMPORT_VEC&)noexcept = 0;
+		virtual HRESULT GetDelayImport(PLIBPE_DELAYIMPORT_VEC&)noexcept = 0;
+		virtual HRESULT GetCOMDescriptor(PLIBPE_COMDESCRIPTOR&)noexcept = 0;
 		virtual HRESULT Destroy() = 0;
 	};
 
@@ -466,11 +466,11 @@ namespace libpe {
 			}stVersion;
 		};
 	};
-	using PCLIBPE_INFO = const LIBPE_INFO*;
+	using PLIBPE_INFO = const LIBPE_INFO*;
 
 	/*********************************************
 	* Service info export/import function.       *
 	* Returns pointer to LIBPE_INFO struct.      *
 	*********************************************/
-	extern "C" ILIBPEAPI PCLIBPE_INFO __cdecl libpeInfo();
+	extern "C" ILIBPEAPI PLIBPE_INFO __cdecl libpeInfo();
 }
