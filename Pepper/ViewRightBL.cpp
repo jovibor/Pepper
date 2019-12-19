@@ -210,12 +210,16 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 
 int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 {
+	if (dwEntry >= g_mapDOSHeader.size())
+		return -1;
+
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle();
 	}
+
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -228,7 +232,7 @@ int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 {
 	PLIBPE_RICHHEADER_VEC pRichHeader;
-	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK)
+	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK || dwEntry >= pRichHeader->size())
 		return -1;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
@@ -269,7 +273,7 @@ int CViewRightBL::CreateHexNtHeaderEntry()
 int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 {
 	PLIBPE_NTHEADER pNTHdr;
-	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
+	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK || dwEntry >= g_mapFileHeader.size())
 		return -1;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
@@ -355,11 +359,10 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 	return 0;
 }
 
-
 int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 {
 	PLIBPE_SECHEADERS_VEC pSecHeaders;
-	if (m_pLibpe->GetSectionsHeaders(pSecHeaders) != S_OK)
+	if (m_pLibpe->GetSectionsHeaders(pSecHeaders) != S_OK || dwEntry >= pSecHeaders->size())
 		return -1;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
@@ -381,7 +384,7 @@ int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 {
 	PLIBPE_LOADCONFIG pLCD;
-	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK)
+	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK || dwEntry >= g_mapLCD32.size())
 		return -1;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
@@ -476,7 +479,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 		m_listImportEntry->DeleteAllItems();
 
 	PLIBPE_IMPORT_VEC m_pImport;
-	if (m_pLibpe->GetImport(m_pImport) != S_OK || dwEntry > m_pImport->size())
+	if (m_pLibpe->GetImport(m_pImport) != S_OK || dwEntry >= m_pImport->size())
 		return -1;
 
 	if (m_hwndActive)
@@ -546,7 +549,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 {
 	PLIBPE_SECURITY_VEC pSec;
-	if (m_pLibpe->GetSecurity(pSec) != S_OK || nSertId > pSec->size())
+	if (m_pLibpe->GetSecurity(pSec) != S_OK || nSertId >= pSec->size())
 		return -1;
 
 	const auto& secEntry = pSec->at(nSertId).stWinSert;
@@ -587,7 +590,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 		m_listDelayImportEntry->DeleteAllItems();
 
 	PLIBPE_DELAYIMPORT_VEC pDelayImport;
-	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK || dwEntry > pDelayImport->size())
+	if (m_pLibpe->GetDelayImport(pDelayImport) != S_OK || dwEntry >= pDelayImport->size())
 		return -1;
 
 	int listindex = 0;
@@ -678,7 +681,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 		m_listRelocsEntry->DeleteAllItems();
 
 	PLIBPE_RELOCATION_VEC pReloc;
-	if (m_pLibpe->GetRelocations(pReloc) != S_OK || pReloc->empty() || pReloc->size() < dwEntry)
+	if (m_pLibpe->GetRelocations(pReloc) != S_OK || dwEntry >= pReloc->size())
 		return -1;
 
 	const std::map<WORD, std::wstring> mapRelocTypes {
@@ -729,7 +732,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 {
 	PLIBPE_DEBUG_VEC pDebug;
-	if (m_pLibpe->GetDebug(pDebug) != S_OK)
+	if (m_pLibpe->GetDebug(pDebug) != S_OK || dwEntry >= pDebug->size())
 		return -1;
 
 	const auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
