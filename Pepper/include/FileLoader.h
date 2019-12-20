@@ -30,10 +30,10 @@ public:
 	bool IsWritable() { return m_fWritable; }
 	//Shows arbitrary offset in already loaded file (LoadFile)
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
-	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrlPtr pHexCtrl = nullptr);
+	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrl* pHexCtrl = nullptr);
 	//Shows only a piece of the whole loaded file.
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
-	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrlPtr pHexCtrl = nullptr);
+	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrl* pHexCtrl = nullptr);
 	//Has file been modified in memory or not.
 	bool IsModified() { return m_fModified; }
 	bool Flush(); //Writes memory mapped file on disk.

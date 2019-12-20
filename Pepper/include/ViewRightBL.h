@@ -66,5 +66,5 @@ private:
 	DWORD m_dwFileInfo { };
 	CImageList m_imglTreeRes;
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
-	LOGFONT m_lf { }, m_hdrlf { };
+	LOGFONTW m_lf { }, m_hdrlf { };
 };

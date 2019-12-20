@@ -62,7 +62,7 @@ private:
 	CWndDlgSample m_wndDlgSample;
 	LISTEXCREATESTRUCT m_stlcs;
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
-	LOGFONT m_lf { }, m_hdrlf { };
+	LOGFONTW m_lf { }, m_hdrlf { };
 	bool m_fDrawRes { false };
 	COLORREF m_clrBkIcons { RGB(230, 230, 230) };
 	COLORREF m_clrBkImgList { RGB(250, 250, 250) };

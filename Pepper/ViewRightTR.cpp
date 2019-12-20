@@ -107,7 +107,7 @@ void CViewRightTR::CreateHexResources(PIMAGE_RESOURCE_DATA_ENTRY pRes)
 	DWORD dwOffset { };
 	m_pLibpe->GetOffsetFromRVA(pRes->OffsetToData, dwOffset);
 
-	m_pFileLoader->ShowFilePiece(dwOffset, pRes->Size, m_stHexEdit);
+	m_pFileLoader->ShowFilePiece(dwOffset, pRes->Size, m_stHexEdit.get());
 	m_hwndActive = m_stHexEdit->GetWindowHandle();
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }

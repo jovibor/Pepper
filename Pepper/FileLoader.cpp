@@ -71,11 +71,13 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrlPtr pHexCtrl)
+HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrl* pHexCtrl)
 {
-	if (!pHexCtrl) {
-		m_stHex->Create(m_hcs);
-		pHexCtrl = m_stHex;
+	if (!pHexCtrl)
+	{
+		if (!m_stHex->IsCreated())
+			m_stHex->Create(m_hcs);
+		pHexCtrl = m_stHex.get();
 	}
 
 	EHexDataMode enMode;
@@ -122,20 +124,22 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 		pHexCtrl->SetData(m_hds);
 
 	//If floating HexCtrl in use - bring it to front.
-	if (pHexCtrl == m_stHex)
+	if (pHexCtrl == m_stHex.get())
 		::SetForegroundWindow(pHexCtrl->GetWindowHandle());
 
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrlPtr pHexCtrl)
+HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrl* pHexCtrl)
 {
 	if (!IsLoaded())
 		return E_ABORT;
 
-	if (!pHexCtrl) {
-		m_stHex->Create(m_hcs);
-		pHexCtrl = m_stHex;
+	if (!pHexCtrl)
+	{
+		if (!m_stHex->IsCreated())
+			m_stHex->Create(m_hcs);
+		pHexCtrl = m_stHex.get();
 	}
 
 	if (ullOffset >= (ULONGLONG)m_stFileSize.QuadPart) //Overflow check.

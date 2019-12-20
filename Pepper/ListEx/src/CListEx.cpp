@@ -392,7 +392,7 @@ void CListEx::SetFontSize(UINT uiSize)
 	if (uiSize < 9 || uiSize > 75)
 		return;
 
-	LOGFONT lf;
+	LOGFONTW lf;
 	m_fontList.GetLogFont(&lf);
 	lf.lfHeight = uiSize;
 	m_fontList.DeleteObject();

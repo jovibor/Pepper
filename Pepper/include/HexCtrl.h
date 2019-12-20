@@ -1,5 +1,5 @@
 /****************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/                         *
+* Copyright © 2018-2020 Jovibor https://github.com/jovibor/                             *
 * This is a Hex Control for MFC/Win32 applications.                                     *
 * Official git repository: https://github.com/jovibor/HexCtrl/                          *
 * This software is available under the "MIT License modified with The Commons Clause".  *
@@ -11,6 +11,12 @@
 #include <vector>
 #include <string>
 #include <Windows.h> //Standard Windows header.
+
+/**********************************************************************
+* If HEXCTRL_IHEXCTRLPTR_UNIQUEPTR defined then IHexCtrlPtr is        * 
+* resolved to std::unique_ptr. Otherwise it's std::shared_ptr.        *
+**********************************************************************/
+#define HEXCTRL_IHEXCTRLPTR_UNIQUEPTR
 
 /**********************************************************************
 * If HexCtrl is to be used as a .dll, then include this header,       *
@@ -285,8 +291,11 @@ namespace HEXCTRL
 		return IHexCtrlUnPtr(CreateRawHexCtrl(), [](IHexCtrl* p) { p->Destroy(); });
 	};
 
-	//using IHexCtrlPtr = IHexCtrlUnPtr;
+#ifdef HEXCTRL_IHEXCTRLPTR_UNIQUEPTR
+	using IHexCtrlPtr = IHexCtrlUnPtr;
+#else
 	using IHexCtrlPtr = IHexCtrlShPtr;
+#endif
 
 	/********************************************
 	* HEXCTRLINFO: service info structure.      *

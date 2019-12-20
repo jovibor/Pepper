@@ -31,7 +31,7 @@ void CViewRightTL::OnInitialUpdate()
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
-	LOGFONT lf { };
+	LOGFONTW lf { };
 	StringCchCopyW(lf.lfFaceName, 18, L"Consolas");
 	lf.lfHeight = 22;
 	if (!m_fontSummary.CreateFontIndirectW(&lf))
