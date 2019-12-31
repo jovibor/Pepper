@@ -8,11 +8,19 @@
 #pragma once
 #include <afxcontrolbars.h>
 #include <memory>
-#include <any>
 
-namespace LISTEX {
+namespace LISTEX
+{
 	/********************************************************************************************
-	* LISTEXCOLORSTRUCT - All ListEx colors.													*
+	* EnListExSortMode - Sorting mode.                                                          *
+	********************************************************************************************/
+	enum class EnListExSortMode : short
+	{
+		SORT_LEX, SORT_NUMERIC
+	};
+
+	/********************************************************************************************
+	* LISTEXCOLORSTRUCT - All ListEx colors.                                                    *
 	********************************************************************************************/
 	struct LISTEXCOLORSTRUCT
 	{
@@ -61,10 +69,12 @@ namespace LISTEX {
 		virtual bool Create(const LISTEXCREATESTRUCT& lcs) = 0;
 		virtual void CreateDialogCtrl(UINT uCtrlID, CWnd* pwndDlg) = 0;
 		virtual BOOL DeleteAllItems() = 0;
+		virtual BOOL DeleteColumn(int nCol) = 0;
 		virtual BOOL DeleteItem(int nItem) = 0;
 		virtual void Destroy() = 0;
-		virtual ULONGLONG GetCellData(int iItem, int iSubitem) = 0;
-		virtual UINT GetFontSize() = 0;
+		virtual ULONGLONG GetCellData(int iItem, int iSubitem)const = 0;
+		virtual EnListExSortMode GetColumnSortMode(int iColumn)const = 0;
+		virtual UINT GetFontSize()const = 0;
 		virtual int GetSortColumn()const = 0;
 		virtual bool GetSortAscending()const = 0;
 		virtual bool IsCreated()const = 0;
@@ -73,13 +83,16 @@ namespace LISTEX {
 		virtual void SetCellMenu(int iItem, int iSubitem, CMenu* pMenu) = 0;
 		virtual void SetCellTooltip(int iItem, int iSubitem, const wchar_t* pwszTooltip, const wchar_t* pwszCaption = nullptr) = 0;
 		virtual void SetColor(const LISTEXCOLORSTRUCT& lcs) = 0;
+		virtual void SetColumnColor(int iColumn, COLORREF clrBk, COLORREF clrText = -1) = 0;
+		virtual void SetColumnSortMode(int iColumn, EnListExSortMode enSortMode) = 0;
 		virtual void SetFont(const LOGFONTW* pLogFontNew) = 0;
 		virtual void SetFontSize(UINT uiSize) = 0;
-		virtual void SetHeaderHeight(DWORD dwHeight) = 0;
-		virtual void SetHeaderFont(const LOGFONT* pLogFontNew) = 0;
-		virtual void SetHeaderColumnColor(DWORD nColumn, COLORREF clr) = 0;
+		virtual void SetHdrHeight(DWORD dwHeight) = 0;
+		virtual void SetHdrFont(const LOGFONTW* pLogFontNew) = 0;
+		virtual void SetHdrColumnColor(int iColumn, COLORREF clrBk, COLORREF clrText = -1) = 0;
 		virtual void SetListMenu(CMenu* pMenu) = 0;
-		virtual void SetSortable(bool fSortable, PFNLVCOMPARE pfnCompare = nullptr) = 0;
+		virtual void SetRowColor(DWORD dwRow, COLORREF clrBk, COLORREF clrText = -1) = 0;
+		virtual void SetSortable(bool fSortable, PFNLVCOMPARE pfnCompare = nullptr, EnListExSortMode enSortMode = EnListExSortMode::SORT_LEX) = 0;
 	};
 
 	/********************************************************************************************

@@ -768,7 +768,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 			if (m_pLibpe->GetResources(pResRoot) != S_OK)
 				return -1;
 
-			const auto [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResTop.GetItemData(pTree->itemNew.hItem));
+			const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResTop.GetItemData(pTree->itemNew.hItem));
 			if (idlvl2 >= 0)
 			{
 				auto& lvl2st = pResRoot->vecResRoot.at(idlvlRoot).stResLvL2;
@@ -812,7 +812,7 @@ int CViewRightTL::CreateListDOSHeader()
 	m_listDOSHeader->Create(m_stlcs);
 	m_listDOSHeader->ShowWindow(SW_HIDE);
 	m_listDOSHeader->InsertColumn(0, L"Offset", LVCFMT_LEFT, 90);
-	m_listDOSHeader->SetHeaderColumnColor(0, g_clrOffset);
+	m_listDOSHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listDOSHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
 	m_listDOSHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listDOSHeader->InsertColumn(3, L"Value", LVCFMT_LEFT, 100);
@@ -854,11 +854,13 @@ int CViewRightTL::CreateListRichHeader()
 	m_listRichHdr->Create(m_stlcs);
 	m_listRichHdr->ShowWindow(SW_HIDE);
 	m_listRichHdr->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listRichHdr->SetHeaderColumnColor(0, g_clrOffset);
+	m_listRichHdr->SetHdrColumnColor(0, g_clrOffset);
 	m_listRichHdr->InsertColumn(1, L"\u2116", LVCFMT_CENTER, 35);
 	m_listRichHdr->InsertColumn(2, L"ID [Hex]", LVCFMT_LEFT, 100);
 	m_listRichHdr->InsertColumn(3, L"Version", LVCFMT_LEFT, 100);
 	m_listRichHdr->InsertColumn(4, L"Occurrences", LVCFMT_LEFT, 100);
+	m_listRichHdr->SetColumnSortMode(1, EnListExSortMode::SORT_NUMERIC);
+	m_listRichHdr->SetColumnSortMode(4, EnListExSortMode::SORT_NUMERIC);
 
 	WCHAR wstr[18];
 	int listindex = 0;
@@ -892,7 +894,7 @@ int CViewRightTL::CreateListNTHeader()
 	m_listNTHeader->Create(m_stlcs);
 	m_listNTHeader->ShowWindow(SW_HIDE);
 	m_listNTHeader->InsertColumn(0, L"Offset", LVCFMT_LEFT, 90);
-	m_listNTHeader->SetHeaderColumnColor(0, g_clrOffset);
+	m_listNTHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listNTHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 100);
 	m_listNTHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listNTHeader->InsertColumn(3, L"Value", LVCFMT_LEFT, 100);
@@ -948,7 +950,7 @@ int CViewRightTL::CreateListFileHeader()
 	m_listFileHeader->Create(m_stlcs);
 	m_listFileHeader->ShowWindow(SW_HIDE);
 	m_listFileHeader->InsertColumn(0, L"Offset", LVCFMT_LEFT, 90);
-	m_listFileHeader->SetHeaderColumnColor(0, g_clrOffset);
+	m_listFileHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listFileHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
 	m_listFileHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listFileHeader->InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
@@ -1014,6 +1016,14 @@ int CViewRightTL::CreateListFileHeader()
 		DWORD dwValue = *((PDWORD)((DWORD_PTR)&pNTHdr->varHdr.stNTHdr32.FileHeader + dwOffset)) &
 			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
+		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset);
+		m_listFileHeader->InsertItem(i, wstr);
+		m_listFileHeader->SetItemText(i, 1, ref.wstrName.data());
+		swprintf_s(wstr, 17, L"%lu", dwSize);
+		m_listFileHeader->SetItemText(i, 2, wstr);
+		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
+		m_listFileHeader->SetItemText(i, 3, wstr);
+
 		if (i == 0) { //Machine
 			auto iterMachine = mapMachineType.find(pFileHeader->Machine);
 			if (iterMachine != mapMachineType.end())
@@ -1037,14 +1047,6 @@ int CViewRightTL::CreateListFileHeader()
 				m_listFileHeader->SetCellTooltip(i, 3, wstrCharact.data(), L"Characteristics:");
 			}
 		}
-
-		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset);
-		m_listFileHeader->InsertItem(i, wstr);
-		m_listFileHeader->SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 17, L"%lu", dwSize);
-		m_listFileHeader->SetItemText(i, 2, wstr);
-		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
-		m_listFileHeader->SetItemText(i, 3, wstr);
 	}
 
 	return 0;
@@ -1055,6 +1057,7 @@ int CViewRightTL::CreateListOptHeader()
 	PLIBPE_OPTHEADER_VAR pOptHdr;
 	if (m_pLibpe->GetOptionalHeader(pOptHdr) != S_OK)
 		return -1;
+
 	PLIBPE_NTHEADER pNTHdr;
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
@@ -1064,7 +1067,7 @@ int CViewRightTL::CreateListOptHeader()
 	m_listOptHeader->Create(m_stlcs);
 	m_listOptHeader->ShowWindow(SW_HIDE);
 	m_listOptHeader->InsertColumn(0, L"Offset", LVCFMT_LEFT, 90);
-	m_listOptHeader->SetHeaderColumnColor(0, g_clrOffset);
+	m_listOptHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listOptHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 215);
 	m_listOptHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listOptHeader->InsertColumn(3, L"Value", LVCFMT_LEFT, 140);
@@ -1123,6 +1126,14 @@ int CViewRightTL::CreateListOptHeader()
 			DWORD dwSize = ref.dwSize;
 			DWORD dwValue = *((PDWORD)((DWORD_PTR)pOptHdr32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
+			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + dwOffset);
+			m_listOptHeader->InsertItem(i, wstr);
+			m_listOptHeader->SetItemText(i, 1, ref.wstrName.data());
+			swprintf_s(wstr, 17, L"%lu", dwSize);
+			m_listOptHeader->SetItemText(i, 2, wstr);
+			swprintf_s(wstr, 9, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : L"%08X"), dwValue);
+			m_listOptHeader->SetItemText(i, 3, wstr);
+
 			if (i == 0) //TimeDateStamp
 			{
 				auto it = mapMagic.find(pOptHdr32->Magic);
@@ -1146,14 +1157,6 @@ int CViewRightTL::CreateListOptHeader()
 					m_listOptHeader->SetCellTooltip(i, 3, wstrTooltip.data(), L"DllCharacteristics:");
 				}
 			}
-
-			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + dwOffset);
-			m_listOptHeader->InsertItem(i, wstr);
-			m_listOptHeader->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 17, L"%lu", dwSize);
-			m_listOptHeader->SetItemText(i, 2, wstr);
-			swprintf_s(wstr, 9, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : L"%08X"), dwValue);
-			m_listOptHeader->SetItemText(i, 3, wstr);
 		}
 	}
 	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
@@ -1165,6 +1168,14 @@ int CViewRightTL::CreateListOptHeader()
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
 			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pOptHdr64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+
+			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + dwOffset);
+			m_listOptHeader->InsertItem(i, wstr);
+			m_listOptHeader->SetItemText(i, 1, ref.wstrName.data());
+			swprintf_s(wstr, 17, L"%lu", dwSize);
+			m_listOptHeader->SetItemText(i, 2, wstr);
+			swprintf_s(wstr, 17, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX")), ullValue);
+			m_listOptHeader->SetItemText(i, 3, wstr);
 
 			if (i == 0) //TimeDateStamp
 			{
@@ -1189,14 +1200,6 @@ int CViewRightTL::CreateListOptHeader()
 					m_listOptHeader->SetCellTooltip(i, 3, wstrTooltip.data(), L"DllCharacteristics:");
 				}
 			}
-
-			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + dwOffset);
-			m_listOptHeader->InsertItem(i, wstr);
-			m_listOptHeader->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 17, L"%lu", dwSize);
-			m_listOptHeader->SetItemText(i, 2, wstr);
-			swprintf_s(wstr, 17, dwSize == 1 ? L"%02X" : (dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX")), ullValue);
-			m_listOptHeader->SetItemText(i, 3, wstr);
 		}
 	}
 
@@ -1217,7 +1220,7 @@ int CViewRightTL::CreateListDataDirectories()
 	m_listDataDirs->Create(m_stlcs);
 	m_listDataDirs->ShowWindow(SW_HIDE);
 	m_listDataDirs->InsertColumn(0, L"Offset", LVCFMT_LEFT, 90);
-	m_listDataDirs->SetHeaderColumnColor(0, g_clrOffset);
+	m_listDataDirs->SetHdrColumnColor(0, g_clrOffset);
 	m_listDataDirs->InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
 	m_listDataDirs->InsertColumn(2, L"Directory RVA", LVCFMT_LEFT, 100);
 	m_listDataDirs->InsertColumn(3, L"Directory Size", LVCFMT_LEFT, 100);
@@ -1242,6 +1245,7 @@ int CViewRightTL::CreateListDataDirectories()
 		m_listDataDirs->SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDataDirs->Size);
 		m_listDataDirs->SetItemText(i, 3, wstr);
+		
 		if (!ref.strSecResidesIn.empty())
 		{
 			swprintf_s(wstr, 9, L"%.8S", ref.strSecResidesIn.data());
@@ -1264,7 +1268,7 @@ int CViewRightTL::CreateListSecHeaders()
 	m_listSecHeaders->Create(m_stlcs);
 	m_listSecHeaders->ShowWindow(SW_HIDE);
 	m_listSecHeaders->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listSecHeaders->SetHeaderColumnColor(0, g_clrOffset);
+	m_listSecHeaders->SetHdrColumnColor(0, g_clrOffset);
 	m_listSecHeaders->InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
 	m_listSecHeaders->InsertColumn(2, L"Virtual Size", LVCFMT_LEFT, 100);
 	m_listSecHeaders->InsertColumn(3, L"Virtual Address", LVCFMT_LEFT, 125);
@@ -1352,7 +1356,7 @@ int CViewRightTL::CreateListExport()
 	m_listExportDir->Create(m_stlcs);
 	m_listExportDir->ShowWindow(SW_HIDE);
 	m_listExportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listExportDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listExportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listExportDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listExportDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 100);
 	m_listExportDir->InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
@@ -1366,22 +1370,24 @@ int CViewRightTL::CreateListExport()
 		DWORD dwOffset = ref.dwOffset;
 		DWORD dwSize = ref.dwSize;
 		DWORD dwValue = *((PDWORD)((DWORD_PTR)pExportDesc + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
-		if (i == 1 && pExportDesc->TimeDateStamp) {
-			__time64_t time = pExportDesc->TimeDateStamp;
-			_wctime64_s(wstr, MAX_PATH, &time);
-			m_listExportDir->SetCellTooltip(i, 3, wstr, L"Time / Date:");
-		}
 
 		swprintf_s(wstr, 9, L"%08lX", pExport->dwOffsetExportDesc + dwOffset);
 		m_listExportDir->InsertItem(i, wstr);
 		m_listExportDir->SetItemText(i, 1, ref.wstrName.data());
 		swprintf_s(wstr, 17, L"%lu", dwSize);
 		m_listExportDir->SetItemText(i, 2, wstr);
+		
 		if (i == 4) //Name
 			swprintf_s(wstr, MAX_PATH, L"%08lX (%S)", dwValue, pExport->strModuleName.data());
 		else
 			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
 
+		if (i == 1 && pExportDesc->TimeDateStamp)
+		{
+			__time64_t time = pExportDesc->TimeDateStamp;
+			_wctime64_s(wstr, MAX_PATH, &time);
+			m_listExportDir->SetCellTooltip(i, 3, wstr, L"Time / Date:");
+		}
 		m_listExportDir->SetItemText(i, 3, wstr);
 	}
 
@@ -1398,7 +1404,7 @@ int CViewRightTL::CreateListImport()
 	m_listImport->Create(m_stlcs);
 	m_listImport->ShowWindow(SW_HIDE);
 	m_listImport->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listImport->SetHeaderColumnColor(0, g_clrOffset);
+	m_listImport->SetHdrColumnColor(0, g_clrOffset);
 	m_listImport->InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 300);
 	m_listImport->InsertColumn(2, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_LEFT, 170);
 	m_listImport->InsertColumn(3, L"TimeDateStamp", LVCFMT_LEFT, 115);
@@ -1538,7 +1544,7 @@ int CViewRightTL::CreateListExceptions()
 	m_listExceptionDir->Create(m_stlcs);
 	m_listExceptionDir->ShowWindow(SW_HIDE);
 	m_listExceptionDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listExceptionDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listExceptionDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listExceptionDir->InsertColumn(1, L"BeginAddress", LVCFMT_CENTER, 100);
 	m_listExceptionDir->InsertColumn(2, L"EndAddress", LVCFMT_LEFT, 100);
 	m_listExceptionDir->InsertColumn(3, L"UnwindData/InfoAddress", LVCFMT_LEFT, 180);
@@ -1558,7 +1564,7 @@ int CViewRightTL::CreateListSecurity()
 	m_listSecurityDir->Create(m_stlcs);
 	m_listSecurityDir->ShowWindow(SW_HIDE);
 	m_listSecurityDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listSecurityDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listSecurityDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listSecurityDir->InsertColumn(1, L"dwLength", LVCFMT_CENTER, 100);
 	m_listSecurityDir->InsertColumn(2, L"wRevision", LVCFMT_LEFT, 100);
 	m_listSecurityDir->InsertColumn(3, L"wCertificateType", LVCFMT_LEFT, 180);
@@ -1588,12 +1594,14 @@ int CViewRightTL::CreateListSecurity()
 
 		swprintf_s(wstr, 5, L"%04X", pSert->wRevision);
 		m_listSecurityDir->SetItemText(listindex, 2, wstr);
+		
 		auto iterRevision = mapSertRevision.find(pSert->wRevision);
 		if (iterRevision != mapSertRevision.end())
 			m_listSecurityDir->SetCellTooltip(listindex, 2, iterRevision->second.data(), L"Certificate revision:");
 
 		swprintf_s(wstr, 5, L"%04X", pSert->wCertificateType);
 		m_listSecurityDir->SetItemText(listindex, 3, wstr);
+		
 		auto iterType = mapSertType.find(pSert->wCertificateType);
 		if (iterType != mapSertType.end())
 			m_listSecurityDir->SetCellTooltip(listindex, 3, iterType->second.data(), L"Certificate type:");
@@ -1614,7 +1622,7 @@ int CViewRightTL::CreateListRelocations()
 	m_listRelocDir->Create(m_stlcs);
 	m_listRelocDir->ShowWindow(SW_HIDE);
 	m_listRelocDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listRelocDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listRelocDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listRelocDir->InsertColumn(1, L"Virtual Address", LVCFMT_CENTER, 115);
 	m_listRelocDir->InsertColumn(2, L"Block Size", LVCFMT_LEFT, 100);
 	m_listRelocDir->InsertColumn(3, L"Entries", LVCFMT_LEFT, 100);
@@ -1634,7 +1642,7 @@ int CViewRightTL::CreateListDebug()
 	m_listDebugDir->Create(m_stlcs);
 	m_listDebugDir->ShowWindow(SW_HIDE);
 	m_listDebugDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDebugDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listDebugDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listDebugDir->InsertColumn(1, L"Characteristics", LVCFMT_CENTER, 115);
 	m_listDebugDir->InsertColumn(2, L"TimeDateStamp", LVCFMT_LEFT, 150);
 	m_listDebugDir->InsertColumn(3, L"MajorVersion", LVCFMT_LEFT, 100);
@@ -1715,7 +1723,7 @@ int CViewRightTL::CreateListTLS()
 	m_listTLSDir->Create(m_stlcs);
 	m_listTLSDir->ShowWindow(SW_HIDE);
 	m_listTLSDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listTLSDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listTLSDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listTLSDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listTLSDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 110);
 	m_listTLSDir->InsertColumn(3, L"Value", LVCFMT_LEFT, 150);
@@ -1749,13 +1757,7 @@ int CViewRightTL::CreateListTLS()
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
 			DWORD dwValue = *((PDWORD)((DWORD_PTR)pTLSDir32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
-
-			if (i == 5) { //Characteristics
-				auto iterCharact = mapCharact.find(pTLSDir32->Characteristics);
-				if (iterCharact != mapCharact.end())
-					m_listTLSDir->SetCellTooltip(i, 3, iterCharact->second.data(), L"Characteristics:");
-			}
-
+		
 			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir->InsertItem(i, wstr);
 			m_listTLSDir->SetItemText(i, 1, ref.wstrName.data());
@@ -1763,6 +1765,12 @@ int CViewRightTL::CreateListTLS()
 			m_listTLSDir->SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 9, L"%08lX", dwValue);
 			m_listTLSDir->SetItemText(i, 3, wstr);
+
+			if (i == 5) { //Characteristics
+				auto iterCharact = mapCharact.find(pTLSDir32->Characteristics);
+				if (iterCharact != mapCharact.end())
+					m_listTLSDir->SetCellTooltip(i, 3, iterCharact->second.data(), L"Characteristics:");
+			}
 		}
 	}
 	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
@@ -1774,13 +1782,7 @@ int CViewRightTL::CreateListTLS()
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
 			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pTLSDir64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
-
-			if (i == 5) { //Characteristics
-				auto iterCharact = mapCharact.find(pTLSDir64->Characteristics);
-				if (iterCharact != mapCharact.end())
-					m_listTLSDir->SetCellTooltip(i, 3, iterCharact->second.data(), L"Characteristics:");
-			}
-
+	
 			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir->InsertItem(i, wstr);
 			m_listTLSDir->SetItemText(i, 1, ref.wstrName.data());
@@ -1788,6 +1790,12 @@ int CViewRightTL::CreateListTLS()
 			m_listTLSDir->SetItemText(i, 2, wstr);
 			swprintf_s(wstr, 17, dwSize == 4 ? L"%08X" : L"%016llX", ullValue);
 			m_listTLSDir->SetItemText(i, 3, wstr);
+
+			if (i == 5) { //Characteristics
+				auto iterCharact = mapCharact.find(pTLSDir64->Characteristics);
+				if (iterCharact != mapCharact.end())
+					m_listTLSDir->SetCellTooltip(i, 3, iterCharact->second.data(), L"Characteristics:");
+			}
 		}
 	}
 
@@ -1805,7 +1813,7 @@ int CViewRightTL::CreateListLCD()
 	m_listLCD->Create(m_stlcs);
 	m_listLCD->ShowWindow(SW_HIDE);
 	m_listLCD->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listLCD->SetHeaderColumnColor(0, g_clrOffset);
+	m_listLCD->SetHdrColumnColor(0, g_clrOffset);
 	m_listLCD->InsertColumn(1, L"Name", LVCFMT_CENTER, 330);
 	m_listLCD->InsertColumn(2, L"Size [BYTES]", LVCFMT_LEFT, 110);
 	m_listLCD->InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
@@ -1842,6 +1850,14 @@ int CViewRightTL::CreateListLCD()
 			DWORD dwSize = ref.dwSize;
 			DWORD dwValue = *((PDWORD)((DWORD_PTR)pLCD32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
+			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
+			m_listLCD->InsertItem(i, wstr);
+			m_listLCD->SetItemText(i, 1, ref.wstrName.data());
+			swprintf_s(wstr, 17, L"%lu", dwSize);
+			m_listLCD->SetItemText(i, 2, wstr);
+			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
+			m_listLCD->SetItemText(i, 3, wstr);
+
 			if (i == 1) //TimeDateStamp
 			{
 				if (pLCD32->TimeDateStamp) {
@@ -1859,14 +1875,6 @@ int CViewRightTL::CreateListLCD()
 				if (!wstrTooltip.empty())
 					m_listLCD->SetCellTooltip(i, 3, wstrTooltip.data(), L"GuardFlags:");
 			}
-
-			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
-			m_listLCD->InsertItem(i, wstr);
-			m_listLCD->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 17, L"%lu", dwSize);
-			m_listLCD->SetItemText(i, 2, wstr);
-			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
-			m_listLCD->SetItemText(i, 3, wstr);
 		}
 	}
 	else if (ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64))
@@ -1881,6 +1889,14 @@ int CViewRightTL::CreateListLCD()
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
 			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pLCD64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+
+			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
+			m_listLCD->InsertItem(i, wstr);
+			m_listLCD->SetItemText(i, 1, ref.wstrName.data());
+			swprintf_s(wstr, 17, L"%lu", dwSize);
+			m_listLCD->SetItemText(i, 2, wstr);
+			swprintf_s(wstr, 17, dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX"), ullValue);
+			m_listLCD->SetItemText(i, 3, wstr);
 
 			if (i == 1) //TimeDateStamp
 			{
@@ -1899,14 +1915,6 @@ int CViewRightTL::CreateListLCD()
 				if (!wstrTooltip.empty())
 					m_listLCD->SetCellTooltip(i, 3, wstrTooltip.data(), L"GuardFlags:");
 			}
-
-			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
-			m_listLCD->InsertItem(i, wstr);
-			m_listLCD->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 17, L"%lu", dwSize);
-			m_listLCD->SetItemText(i, 2, wstr);
-			swprintf_s(wstr, 17, dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX"), ullValue);
-			m_listLCD->SetItemText(i, 3, wstr);
 		}
 	}
 
@@ -1924,7 +1932,7 @@ int CViewRightTL::CreateListBoundImport()
 	m_listBoundImportDir->Create(m_stlcs);
 	m_listBoundImportDir->ShowWindow(SW_HIDE);
 	m_listBoundImportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listBoundImportDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listBoundImportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listBoundImportDir->InsertColumn(1, L"Module Name", LVCFMT_CENTER, 290);
 	m_listBoundImportDir->InsertColumn(2, L"TimeDateStamp", LVCFMT_LEFT, 130);
 	m_listBoundImportDir->InsertColumn(3, L"OffsetModuleName", LVCFMT_LEFT, 140);
@@ -1972,7 +1980,7 @@ int CViewRightTL::CreateListDelayImport()
 	m_listDelayImportDir->Create(m_stlcs);
 	m_listDelayImportDir->ShowWindow(SW_HIDE);
 	m_listDelayImportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDelayImportDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listDelayImportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listDelayImportDir->InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
 	m_listDelayImportDir->InsertColumn(2, L"Attributes", LVCFMT_LEFT, 100);
 	m_listDelayImportDir->InsertColumn(3, L"DllNameRVA", LVCFMT_LEFT, 105);
@@ -2033,7 +2041,7 @@ int CViewRightTL::CreateListCOM()
 	m_listCOMDir->Create(m_stlcs);
 	m_listCOMDir->ShowWindow(SW_HIDE);
 	m_listCOMDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listCOMDir->SetHeaderColumnColor(0, g_clrOffset);
+	m_listCOMDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listCOMDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 300);
 	m_listCOMDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listCOMDir->InsertColumn(3, L"Value", LVCFMT_LEFT, 300);
@@ -2059,6 +2067,14 @@ int CViewRightTL::CreateListCOM()
 		DWORD dwSize = ref.dwSize;
 		DWORD dwValue = *((PDWORD)((DWORD_PTR)pCom + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
+		swprintf_s(wstr, 9, L"%08lX", pCOMDesc->dwOffsetComDesc + dwOffset);
+		m_listCOMDir->InsertItem(i, wstr);
+		m_listCOMDir->SetItemText(i, 1, ref.wstrName.data());
+		swprintf_s(wstr, 17, L"%lu", dwSize);
+		m_listCOMDir->SetItemText(i, 2, wstr);
+		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
+		m_listCOMDir->SetItemText(i, 3, wstr);
+
 		if (i == 5)
 		{
 			for (auto& iter : mapFlags)
@@ -2067,14 +2083,6 @@ int CViewRightTL::CreateListCOM()
 			if (!wstrToolTip.empty())
 				m_listCOMDir->SetCellTooltip(i, 3, wstrToolTip.data(), L"Flags:");
 		}
-
-		swprintf_s(wstr, 9, L"%08lX", pCOMDesc->dwOffsetComDesc + dwOffset);
-		m_listCOMDir->InsertItem(i, wstr);
-		m_listCOMDir->SetItemText(i, 1, ref.wstrName.data());
-		swprintf_s(wstr, 17, L"%lu", dwSize);
-		m_listCOMDir->SetItemText(i, 2, wstr);
-		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
-		m_listCOMDir->SetItemText(i, 3, wstr);
 	}
 
 	return 0;

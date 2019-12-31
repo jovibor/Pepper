@@ -173,7 +173,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 		if (m_pLibpe->GetResources(pstResRoot) != S_OK)
 			return -1;
 
-		const auto [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
+		const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
 		if (idlvl2 >= 0)
 		{
 			auto& rootvec = pstResRoot->vecResRoot;
@@ -423,7 +423,7 @@ int CViewRightBL::CreateListExportFuncs()
 		m_listExportFuncs->Create(m_stlcs);
 		m_listExportFuncs->ShowWindow(SW_HIDE);
 		m_listExportFuncs->InsertColumn(0, L"Offset", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 90);
-		m_listExportFuncs->SetHeaderColumnColor(0, g_clrOffset);
+		m_listExportFuncs->SetHdrColumnColor(0, g_clrOffset);
 		m_listExportFuncs->InsertColumn(1, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
 		m_listExportFuncs->InsertColumn(2, L"Ordinal", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
 		m_listExportFuncs->InsertColumn(3, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
@@ -469,7 +469,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 		m_stlcs.uID = IDC_LIST_IMPORT_ENTRY;
 		m_listImportEntry->Create(m_stlcs);
 		m_listImportEntry->InsertColumn(0, L"Offset", 0, 90);
-		m_listImportEntry->SetHeaderColumnColor(0, g_clrOffset);
+		m_listImportEntry->SetHdrColumnColor(0, g_clrOffset);
 		m_listImportEntry->InsertColumn(1, L"Function Name", 0, 175);
 		m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", 0, 100);
 		m_listImportEntry->InsertColumn(3, L"AddressOfData", 0, 150);
@@ -578,7 +578,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 		m_stlcs.uID = IDC_LIST_DELAYIMPORT_ENTRY;
 		m_listDelayImportEntry->Create(m_stlcs);
 		m_listDelayImportEntry->InsertColumn(0, L"Offset", 0, 90);
-		m_listDelayImportEntry->SetHeaderColumnColor(0, g_clrOffset);
+		m_listDelayImportEntry->SetHdrColumnColor(0, g_clrOffset);
 		m_listDelayImportEntry->InsertColumn(1, L"Function Name", 0, 300);
 		m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", 0, 100);
 		m_listDelayImportEntry->InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
@@ -673,7 +673,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 		m_listRelocsEntry->Create(m_stlcs);
 		m_listRelocsEntry->ShowWindow(SW_HIDE);
 		m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-		m_listRelocsEntry->SetHeaderColumnColor(0, g_clrOffset);
+		m_listRelocsEntry->SetHdrColumnColor(0, g_clrOffset);
 		m_listRelocsEntry->InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
 		m_listRelocsEntry->InsertColumn(2, L"Offset to apply", LVCFMT_LEFT, 120);
 	}
