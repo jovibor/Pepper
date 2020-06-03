@@ -25,7 +25,7 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void OnDocEditMode();
-	void CreateHexResources(PIMAGE_RESOURCE_DATA_ENTRY);
+	void CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes);
 	DECLARE_MESSAGE_MAP()
 private:
 	libpe_ptr m_pLibpe;

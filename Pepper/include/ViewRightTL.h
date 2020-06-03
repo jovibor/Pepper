@@ -34,6 +34,12 @@ protected:
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListRelocsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListExceptionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListExportMenuSelect(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListImportNotify(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListTLSMenuSelect(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListBoundImpMenuSelect(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListCOMDescMenuSelect(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnTreeResTopSelChange(NMHDR *pNMHDR, LRESULT *pResult);
 	void SortImportData();
 	DECLARE_MESSAGE_MAP()
 private:

@@ -81,13 +81,13 @@ inline const std::map<WORD, std::wstring> g_mapResType {
 
 //Helper struct for PE structs' fields offsets and sizes.
 //Reflection kind of.
-struct PESTRUCTREFLECTION
+struct SPEREFLECTION
 {
 	DWORD dwSize;			//Struct's field size.
 	DWORD dwOffset;			//Field offset.
 	std::wstring wstrName;	//Field name.
 };
-using map_hdr = std::map<DWORD, PESTRUCTREFLECTION>;
+using map_hdr = std::map<DWORD, SPEREFLECTION>;
 
 //Standard headers' maps.
 inline const map_hdr g_mapDOSHeader {
@@ -368,15 +368,20 @@ inline const map_hdr g_mapComDir {
 };
 ////////////////////////////////////////////////////////////
 
-//Helper struct for resources interchange
-//between views.
-struct RESHELPER
+//Helper struct for resources interchange between views.
+struct SRESHELPER
 {
-	RESHELPER() {}
-	RESHELPER(WORD type, WORD name, std::vector<std::byte>* data) : IdResType(type), IdResName(name), pData(data) {}
+	SRESHELPER() {}
+	SRESHELPER(WORD type, WORD name, std::vector<std::byte>* data) : IdResType(type), IdResName(name), pData(data) {}
 	WORD IdResType { };
 	WORD IdResName { };
 	std::vector<std::byte>* pData { };
+};
+
+struct SWINDOWSTATUS
+{
+	CWnd* pWnd { };
+	bool fVisible { };
 };
 
 /*****************************************************************

@@ -19,6 +19,19 @@ BEGIN_MESSAGE_MAP(CViewRightTL, CView)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_IMPORT, &CViewRightTL::OnListImportGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_RELOCATIONS, &CViewRightTL::OnListRelocsGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_EXCEPTIONS, &CViewRightTL::OnListExceptionsGetDispInfo)
+	ON_NOTIFY(LISTEX_MSG_MENUSELECTED, IDC_LIST_EXPORT, &CViewRightTL::OnListExportMenuSelect)
+	ON_NOTIFY(LISTEX_MSG_MENUSELECTED, IDC_LIST_IMPORT, &CViewRightTL::OnListImportNotify)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_IMPORT, &CViewRightTL::OnListImportNotify)
+	ON_NOTIFY(NM_CLICK, IDC_LIST_IMPORT, &CViewRightTL::OnListImportNotify)
+	ON_NOTIFY(LVN_COLUMNCLICK, IDC_LIST_IMPORT, &CViewRightTL::OnListImportNotify)
+	ON_NOTIFY(LISTEX_MSG_MENUSELECTED, IDC_LIST_IAT, &CViewRightTL::OnListImportNotify)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_IAT, &CViewRightTL::OnListImportNotify)
+	ON_NOTIFY(NM_CLICK, IDC_LIST_IAT, &CViewRightTL::OnListImportNotify)
+	ON_NOTIFY(LVN_COLUMNCLICK, IDC_LIST_IAT, &CViewRightTL::OnListImportNotify)
+	ON_NOTIFY(LISTEX_MSG_MENUSELECTED, IDC_LIST_TLS, &CViewRightTL::OnListTLSMenuSelect)
+	ON_NOTIFY(LISTEX_MSG_MENUSELECTED, IDC_LIST_BOUNDIMPORT, &CViewRightTL::OnListBoundImpMenuSelect)
+	ON_NOTIFY(LISTEX_MSG_MENUSELECTED, IDC_LIST_COMDESCRIPTOR, &CViewRightTL::OnListCOMDescMenuSelect)
+	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_RESOURCE_TOP, &CViewRightTL::OnTreeResTopSelChange)
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
@@ -68,9 +81,9 @@ void CViewRightTL::OnInitialUpdate()
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
 	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHdrHglInactive = RGB(0, 112, 112);
-	m_stlcs.stColor.clrHdrHglActive = RGB(0, 92, 92);
-	m_stlcs.pwndParent = this;
+	m_stlcs.stColor.clrHdrHglInact = RGB(0, 112, 112);
+	m_stlcs.stColor.clrHdrHglAct = RGB(0, 92, 92);
+	m_stlcs.pParent = this;
 	m_stlcs.dwHdrHeight = 39;
 	m_stlcs.fSortable = true;
 
@@ -229,7 +242,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	m_pChildFrame->m_stSplitterRight.RecalcLayout();
 }
 
-void CViewRightTL::OnDraw(CDC * pDC)
+void CViewRightTL::OnDraw(CDC* pDC)
 {
 	//Printing app name/version info and
 	//currently oppened file's type and name.
@@ -267,6 +280,73 @@ void CViewRightTL::OnDraw(CDC * pDC)
 		m_wstrFullPath.data(), (int)m_wstrFullPath.size(), nullptr);
 }
 
+BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+{
+	CView::OnNotify(wParam, lParam, pResult);
+
+	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+	switch (pNMI->hdr.idFrom)
+	{
+	case IDC_LIST_DOSHEADER:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DOSHEADER_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_RICHHEADER:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_RICHHEADER_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_NTHEADER:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_NTHEADER_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_FILEHEADER:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_FILEHEADER_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_OPTIONALHEADER:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_OPTIONALHEADER_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_DATADIRECTORIES:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DATADIRECTORIES_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_SECHEADERS:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECHEADERS_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_EXCEPTIONS:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_EXCEPTION_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_DEBUG:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DEBUG_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_ARCHITECTURE:
+	case IDC_LIST_GLOBALPTR:
+		break;
+	case IDC_LIST_LOADCONFIG:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_LOADCONFIG_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_SECURITY:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECURITY_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_RELOCATIONS:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_RELOCATIONS_ENTRY, pNMI->iItem));
+		break;
+	case IDC_LIST_DELAYIMPORT:
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DELAYIMPORT_ENTRY, pNMI->iItem));
+		break;
+	}
+
+	return TRUE;
+}
+
 BOOL CViewRightTL::OnEraseBkgnd(CDC* /*pDC*/)
 {
 	return FALSE;
@@ -280,10 +360,10 @@ void CViewRightTL::OnSize(UINT nType, int cx, int cy)
 		m_pwndActive->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightTL::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListSectionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	NMLVDISPINFOW *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
-	LVITEMW* pItem = &pDispInfo->item;
+	auto *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	auto* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -331,13 +411,12 @@ void CViewRightTL::OnListSectionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 			break;
 		}
 	}
-	*pResult = 0;
 }
 
-void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListImportGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	NMLVDISPINFOW *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
-	LVITEMW* pItem = &pDispInfo->item;
+	auto *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	auto* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -368,13 +447,12 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 			break;
 		}
 	}
-	*pResult = 0;
 }
 
-void CViewRightTL::OnListRelocsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	NMLVDISPINFOW *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
-	LVITEMW* pItem = &pDispInfo->item;
+	auto *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	auto* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -395,13 +473,12 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
 			break;
 		}
 	}
-	*pResult = 0;
 }
 
-void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult)
+void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	NMLVDISPINFOW *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
-	LVITEMW* pItem = &pDispInfo->item;
+	auto *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	auto* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -421,374 +498,177 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR * pNMHDR, LRESULT * pResult
 			break;
 		}
 	}
-	*pResult = 0;
 }
 
-void CViewRightTL::SortImportData()
+void CViewRightTL::OnListExportMenuSelect(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	std::sort(m_pImport->begin(), m_pImport->end(), [&](const LIBPE_IMPORT_MODULE& ref1, const LIBPE_IMPORT_MODULE& ref2)
-	{
-		std::wstring wstr1, wstr2;
-		wstr1.resize(32);
-		wstr2.resize(32);
-
-		int iCompare { };
-		switch (m_listImport->GetSortColumn())
-		{
-		case 0:
-			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.dwOffsetImpDesc));
-			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.dwOffsetImpDesc));
-			iCompare = wstr1.compare(wstr2);
-			break;
-		case 1:
-			iCompare = ref1.strModuleName.compare(ref2.strModuleName);
-			break;
-		case 2:
-			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.OriginalFirstThunk));
-			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.OriginalFirstThunk));
-			iCompare = wstr1.compare(wstr2);
-			break;
-		case 3:
-			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.TimeDateStamp));
-			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.TimeDateStamp));
-			iCompare = wstr1.compare(wstr2);
-			break;
-		case 4:
-			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.ForwarderChain));
-			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.ForwarderChain));
-			iCompare = wstr1.compare(wstr2);
-			break;
-		case 5:
-			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.Name));
-			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.Name));
-			iCompare = wstr1.compare(wstr2);
-			break;
-		case 6:
-			wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.FirstThunk));
-			wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.FirstThunk));
-			iCompare = wstr1.compare(wstr2);
-			break;
-		}
-
-		bool result { false };
-		if (m_listImport->GetSortAscending())
-		{
-			if (iCompare < 0)
-				result = true;
-		}
-		else
-		{
-			if (iCompare > 0)
-				result = true;
-		}
-
-		return result;
-
-	});
-
-	m_listImport->RedrawWindow();
-}
-
-BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
-{
-	CView::OnNotify(wParam, lParam, pResult);
-
-	const LPNMITEMACTIVATE pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
 
 	bool fx32 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32);
 	bool fx64 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64);
 	DWORD dwOffset { }, dwSize = 0;
-	switch (pNMI->hdr.idFrom)
+
+	PLIBPE_EXPORT pExport;
+	if (m_pLibpe->GetExport(pExport) != S_OK)
+		return;
+
+	switch (pNMI->lParam)
 	{
-	case IDC_LIST_DOSHEADER:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DOSHEADER_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_RICHHEADER:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_RICHHEADER_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_NTHEADER:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_NTHEADER_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_FILEHEADER:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_FILEHEADER_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_OPTIONALHEADER:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_OPTIONALHEADER_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_DATADIRECTORIES:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DATADIRECTORIES_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_SECHEADERS:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECHEADERS_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_EXPORT:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-			PLIBPE_EXPORT pExport;
-			if (m_pLibpe->GetExport(pExport) != S_OK)
-				return -1;
-
-			switch (pNMI->lParam)
-			{
-			case IDM_LIST_GOTODESCOFFSET:
-			{
-				dwOffset = pExport->dwOffsetExportDesc;
-				dwSize = sizeof(IMAGE_EXPORT_DIRECTORY);
-			}
-			break;
-			case IDM_LIST_GOTODATAOFFSET:
-			{
-				switch (pNMI->iItem)
-				{
-				case 4: //Name
-					m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.Name, dwOffset);
-					dwSize = (DWORD)pExport->strModuleName.size();
-					break;
-				case 8: //AddressOfFunctions
-					m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions, dwOffset);
-					dwSize = 1;
-					break;
-				case 9: //AddressOfNames
-					m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfNames, dwOffset);
-					dwSize = 1;
-					break;
-				case 10: //AddressOfOrdinals
-					m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfNameOrdinals, dwOffset);
-					dwSize = 1;
-					break;
-				}
-			}
-			break;
-			}
-		}
-		break;
-	case IDC_LIST_IAT:
-	case IDC_LIST_IMPORT:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_ENTRY, pNMI->iItem));
-		else if (pNMI->hdr.code == LVN_COLUMNCLICK)
-			SortImportData();
-		else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-			switch (pNMI->lParam)
-			{
-			case IDM_LIST_GOTODESCOFFSET:
-				dwOffset = m_pImport->at(pNMI->iItem).dwOffsetImpDesc;
-				dwSize = sizeof(IMAGE_IMPORT_DESCRIPTOR);
-				break;
-			case IDM_LIST_GOTODATAOFFSET:
-				switch (pNMI->iSubItem)
-				{
-				case 1: //Str dll name
-				case 5: //Name
-					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.Name, dwOffset);
-					dwSize = (DWORD)m_pImport->at(pNMI->iItem).strModuleName.size();
-					break; ;
-				case 2: //OriginalFirstThunk 
-					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.OriginalFirstThunk, dwOffset);
-					if (fx32)
-						dwSize = sizeof(IMAGE_THUNK_DATA32);
-					else if (fx64)
-						dwSize = sizeof(IMAGE_THUNK_DATA64);
-					break;
-				case 3: //TimeDateStamp
-					break;
-				case 4: //ForwarderChain
-					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.ForwarderChain, dwOffset);
-					break;
-				case 6: //FirstThunk
-					m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.FirstThunk, dwOffset);
-					if (fx32)
-						dwSize = sizeof(IMAGE_THUNK_DATA32);
-					else if (fx64)
-						dwSize = sizeof(IMAGE_THUNK_DATA64);
-					break;
-				}
-				break;
-			}
-		}
-		break;
-	case IDC_LIST_EXCEPTIONS:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_EXCEPTION_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_DEBUG:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DEBUG_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_ARCHITECTURE:
-		break;
-	case IDC_LIST_GLOBALPTR:
-		break;
-	case IDC_LIST_TLS:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-			PLIBPE_TLS pTLSDir;
-			if (m_pLibpe->GetTLS(pTLSDir) != S_OK)
-				return -1;
-
-			switch (pNMI->lParam)
-			{
-			case IDM_LIST_GOTODESCOFFSET:
-				dwOffset = pTLSDir->dwOffsetTLS;
-				if (fx32)
-					dwSize = sizeof(IMAGE_TLS_DIRECTORY32);
-				else if (fx64)
-					dwSize = sizeof(IMAGE_TLS_DIRECTORY64);
-				break;
-			case IDM_LIST_GOTODATAOFFSET:
-			{
-				PLIBPE_OPTHEADER_VAR pOpt;
-				if (m_pLibpe->GetOptionalHeader(pOpt) != S_OK)
-					return -1;
-				dwSize = 1;
-
-				if (fx32)
-				{
-					const IMAGE_TLS_DIRECTORY32* pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
-
-					switch (pNMI->iItem)
-					{
-					case 0: //StartAddressOfRawData
-						m_pLibpe->GetOffsetFromVA(pTLSDir32->StartAddressOfRawData, dwOffset);
-						break;
-					case 2: //AddressOfIndex
-						m_pLibpe->GetOffsetFromVA(pTLSDir32->AddressOfIndex, dwOffset);
-						break;
-					case 3: //AddressOfCallBacks
-						m_pLibpe->GetOffsetFromVA(pTLSDir32->AddressOfCallBacks, dwOffset);
-						break;
-					default:
-						dwSize = 0; //To not process other fields.
-					}
-				}
-				else if (fx64)
-				{
-					const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
-
-					switch (pNMI->iItem)
-					{
-					case 0: //StartAddressOfRawData
-						m_pLibpe->GetOffsetFromRVA(pTLSDir64->StartAddressOfRawData, dwOffset);
-						break;
-					case 2: //AddressOfIndex
-						m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfIndex, dwOffset);
-						break;
-					case 3: //AddressOfCallBacks
-						m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfCallBacks, dwOffset);
-						break;
-					default:
-						dwSize = 0; //To not process other fields.
-					}
-				}
-			}
-			break;
-			}
-		}
-		break;
-	case IDC_LIST_LOADCONFIG:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_LOADCONFIG_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_BOUNDIMPORT:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-			PLIBPE_BOUNDIMPORT_VEC pBoundImp;
-			if (m_pLibpe->GetBoundImport(pBoundImp) != S_OK)
-				return -1;
-
-			switch (pNMI->lParam)
-			{
-			case IDM_LIST_GOTODESCOFFSET:
-			{
-				dwOffset = pBoundImp->at(pNMI->iItem).dwOffsetBoundImpDesc;
-				dwSize = sizeof(IMAGE_BOUND_IMPORT_DESCRIPTOR);
-			}
-			break;
-			case IDM_LIST_GOTODATAOFFSET:
-			{
-				switch (pNMI->iSubItem)
-				{
-				case 3: //OffsetModuleName
-					dwOffset = m_pLibpe->GetOffsetFromRVA(pBoundImp->at(pNMI->iItem).stBoundImpDesc.OffsetModuleName, dwOffset);
-					dwSize = (DWORD)pBoundImp->at(pNMI->iItem).strBoundName.size();
-					break;
-				}
-			}
-			break;
-			}
-		}
-		break;
-	case IDC_LIST_COMDESCRIPTOR:
-		if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
-		{
-			PLIBPE_COMDESCRIPTOR pCOMDesc;
-			if (m_pLibpe->GetCOMDescriptor(pCOMDesc) != S_OK)
-				return -1;
-
-			switch (pNMI->lParam)
-			{
-			case IDM_LIST_GOTODESCOFFSET:
-			{
-				dwOffset = pCOMDesc->dwOffsetComDesc;
-				dwSize = sizeof(IMAGE_COR20_HEADER);
-			}
-			break;
-			case IDM_LIST_GOTODATAOFFSET:
-				//TODO: IDC_LIST_COMDESCRIPTOR->IDM_LIST_GOTODATAOFFSET.
-				break;
-			}
-		}
-		break;
-	case IDC_LIST_SECURITY:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_SECURITY_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_RELOCATIONS:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_RELOCATIONS_ENTRY, pNMI->iItem));
-		break;
-	case IDC_LIST_DELAYIMPORT:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DELAYIMPORT_ENTRY, pNMI->iItem));
-		break;
-	case IDC_TREE_RESOURCE_TOP:
+	case IDM_LIST_GOTODESCOFFSET:
 	{
-		const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
-		if (pTree->hdr.code == TVN_SELCHANGED && pTree->itemNew.hItem != m_hTreeResDir)
+		dwOffset = pExport->dwOffsetExportDesc;
+		dwSize = sizeof(IMAGE_EXPORT_DIRECTORY);
+	}
+	break;
+	case IDM_LIST_GOTODATAOFFSET:
+	{
+		switch (pNMI->iItem)
 		{
-			PLIBPE_RESOURCE_ROOT pResRoot;
-			if (m_pLibpe->GetResources(pResRoot) != S_OK)
-				return -1;
+		case 4: //Name
+			m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.Name, dwOffset);
+			dwSize = (DWORD)pExport->strModuleName.size();
+			break;
+		case 8: //AddressOfFunctions
+			m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions, dwOffset);
+			dwSize = 1;
+			break;
+		case 9: //AddressOfNames
+			m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfNames, dwOffset);
+			dwSize = 1;
+			break;
+		case 10: //AddressOfOrdinals
+			m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfNameOrdinals, dwOffset);
+			dwSize = 1;
+			break;
+		}
+	}
+	break;
+	}
 
-			const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResTop.GetItemData(pTree->itemNew.hItem));
-			if (idlvl2 >= 0)
+	if (dwSize)
+		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+}
+
+void CViewRightTL::OnListImportNotify(NMHDR* pNMHDR, LRESULT* /*pResult*/)
+{
+	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+
+	bool fx32 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32);
+	bool fx64 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64);
+	DWORD dwOffset { }, dwSize = 0;
+
+	if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+		m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_IMPORT_ENTRY, pNMI->iItem));
+	else if (pNMI->hdr.code == LVN_COLUMNCLICK)
+		SortImportData();
+	else if (pNMI->hdr.code == LISTEX_MSG_MENUSELECTED)
+	{
+		switch (pNMI->lParam)
+		{
+		case IDM_LIST_GOTODESCOFFSET:
+			dwOffset = m_pImport->at(pNMI->iItem).dwOffsetImpDesc;
+			dwSize = sizeof(IMAGE_IMPORT_DESCRIPTOR);
+			break;
+		case IDM_LIST_GOTODATAOFFSET:
+			switch (pNMI->iSubItem)
 			{
-				auto& lvl2st = pResRoot->vecResRoot.at(idlvlRoot).stResLvL2;
-				auto& lvl2vec = lvl2st.vecResLvL2;
+			case 1: //Str dll name
+			case 5: //Name
+				m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.Name, dwOffset);
+				dwSize = (DWORD)m_pImport->at(pNMI->iItem).strModuleName.size();
+				break; ;
+			case 2: //OriginalFirstThunk 
+				m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.OriginalFirstThunk, dwOffset);
+				if (fx32)
+					dwSize = sizeof(IMAGE_THUNK_DATA32);
+				else if (fx64)
+					dwSize = sizeof(IMAGE_THUNK_DATA64);
+				break;
+			case 3: //TimeDateStamp
+				break;
+			case 4: //ForwarderChain
+				m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.ForwarderChain, dwOffset);
+				break;
+			case 6: //FirstThunk
+				m_pLibpe->GetOffsetFromRVA(m_pImport->at(pNMI->iItem).stImportDesc.FirstThunk, dwOffset);
+				if (fx32)
+					dwSize = sizeof(IMAGE_THUNK_DATA32);
+				else if (fx64)
+					dwSize = sizeof(IMAGE_THUNK_DATA64);
+				break;
+			}
+			break;
+		}
+	}
 
-				if (!lvl2vec.empty())
-				{
-					if (idlvl3 >= 0)
-					{
-						auto& lvl3st = lvl2vec.at(idlvl2).stResLvL3;
-						auto& lvl3vec = lvl3st.vecResLvL3;
+	if (dwSize)
+		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+}
 
-						if (!lvl3vec.empty())
-						{
-							auto data = &lvl3vec.at(idlvl3).stResDataEntryLvL3;
-							//Send data pointer to CViewRightTR to display raw data.
-							m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), (CObject*)data);
-						}
-					}
-				}
+void CViewRightTL::OnListTLSMenuSelect(NMHDR* pNMHDR, LRESULT* /*pResult*/)
+{
+	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+
+	bool fx32 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE32);
+	bool fx64 = ImageHasFlag(m_dwFileInfo, IMAGE_FLAG_PE64);
+	DWORD dwOffset { }, dwSize = 0;
+
+	PLIBPE_TLS pTLSDir;
+	if (m_pLibpe->GetTLS(pTLSDir) != S_OK)
+		return;
+
+	switch (pNMI->lParam)
+	{
+	case IDM_LIST_GOTODESCOFFSET:
+		dwOffset = pTLSDir->dwOffsetTLS;
+		if (fx32)
+			dwSize = sizeof(IMAGE_TLS_DIRECTORY32);
+		else if (fx64)
+			dwSize = sizeof(IMAGE_TLS_DIRECTORY64);
+		break;
+	case IDM_LIST_GOTODATAOFFSET:
+	{
+		PLIBPE_OPTHEADER_VAR pOpt;
+		if (m_pLibpe->GetOptionalHeader(pOpt) != S_OK)
+			return;
+		dwSize = 1;
+
+		if (fx32)
+		{
+			const IMAGE_TLS_DIRECTORY32* pTLSDir32 = &pTLSDir->varTLS.stTLSDir32;
+
+			switch (pNMI->iItem)
+			{
+			case 0: //StartAddressOfRawData
+				m_pLibpe->GetOffsetFromVA(pTLSDir32->StartAddressOfRawData, dwOffset);
+				break;
+			case 2: //AddressOfIndex
+				m_pLibpe->GetOffsetFromVA(pTLSDir32->AddressOfIndex, dwOffset);
+				break;
+			case 3: //AddressOfCallBacks
+				m_pLibpe->GetOffsetFromVA(pTLSDir32->AddressOfCallBacks, dwOffset);
+				break;
+			default:
+				dwSize = 0; //To not process other fields.
+			}
+		}
+		else if (fx64)
+		{
+			const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &pTLSDir->varTLS.stTLSDir64;
+
+			switch (pNMI->iItem)
+			{
+			case 0: //StartAddressOfRawData
+				m_pLibpe->GetOffsetFromRVA(pTLSDir64->StartAddressOfRawData, dwOffset);
+				break;
+			case 2: //AddressOfIndex
+				m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfIndex, dwOffset);
+				break;
+			case 3: //AddressOfCallBacks
+				m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfCallBacks, dwOffset);
+				break;
+			default:
+				dwSize = 0; //To not process other fields.
 			}
 		}
 	}
@@ -797,8 +677,100 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 
 	if (dwSize)
 		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+}
 
-	return TRUE;
+void CViewRightTL::OnListBoundImpMenuSelect(NMHDR* pNMHDR, LRESULT* /*pResult*/)
+{
+	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	DWORD dwOffset { }, dwSize = 0;
+
+	PLIBPE_BOUNDIMPORT_VEC pBoundImp;
+	if (m_pLibpe->GetBoundImport(pBoundImp) != S_OK)
+		return;
+
+	switch (pNMI->lParam)
+	{
+	case IDM_LIST_GOTODESCOFFSET:
+	{
+		dwOffset = pBoundImp->at(pNMI->iItem).dwOffsetBoundImpDesc;
+		dwSize = sizeof(IMAGE_BOUND_IMPORT_DESCRIPTOR);
+	}
+	break;
+	case IDM_LIST_GOTODATAOFFSET:
+	{
+		switch (pNMI->iSubItem)
+		{
+		case 3: //OffsetModuleName
+			dwOffset = m_pLibpe->GetOffsetFromRVA(pBoundImp->at(pNMI->iItem).stBoundImpDesc.OffsetModuleName, dwOffset);
+			dwSize = (DWORD)pBoundImp->at(pNMI->iItem).strBoundName.size();
+			break;
+		}
+	}
+	break;
+	}
+
+	if (dwSize)
+		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+}
+
+void CViewRightTL::OnListCOMDescMenuSelect(NMHDR* pNMHDR, LRESULT* /*pResult*/)
+{
+	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	DWORD dwOffset { }, dwSize = 0;
+
+	PLIBPE_COMDESCRIPTOR pCOMDesc;
+	if (m_pLibpe->GetCOMDescriptor(pCOMDesc) != S_OK)
+		return;
+
+	switch (pNMI->lParam)
+	{
+	case IDM_LIST_GOTODESCOFFSET:
+	{
+		dwOffset = pCOMDesc->dwOffsetComDesc;
+		dwSize = sizeof(IMAGE_COR20_HEADER);
+	}
+	break;
+	case IDM_LIST_GOTODATAOFFSET:
+		//TODO: IDC_LIST_COMDESCRIPTOR->IDM_LIST_GOTODATAOFFSET.
+		break;
+	}
+
+	if (dwSize)
+		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+}
+
+void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
+{
+	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
+	if (pTree->itemNew.hItem == m_hTreeResDir)
+		return;
+
+	PLIBPE_RESOURCE_ROOT pResRoot;
+	if (m_pLibpe->GetResources(pResRoot) != S_OK)
+		return;
+
+	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResTop.GetItemData(pTree->itemNew.hItem));
+	if (idlvl2 >= 0)
+	{
+		auto& lvl2st = pResRoot->vecResRoot.at(idlvlRoot).stResLvL2;
+		auto& lvl2vec = lvl2st.vecResLvL2;
+
+		if (!lvl2vec.empty())
+		{
+			if (idlvl3 >= 0)
+			{
+				auto& lvl3st = lvl2vec.at(idlvl2).stResLvL3;
+				auto& lvl3vec = lvl3st.vecResLvL3;
+
+				if (!lvl3vec.empty())
+				{
+					auto data = &lvl3vec.at(idlvl3).stResDataEntryLvL3;
+					//Send data pointer to CViewRightTR to display raw data.
+					m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), reinterpret_cast<CObject*>(data));
+				}
+			}
+		}
+	}
 }
 
 int CViewRightTL::CreateListDOSHeader()
@@ -859,8 +831,8 @@ int CViewRightTL::CreateListRichHeader()
 	m_listRichHdr->InsertColumn(2, L"ID [Hex]", LVCFMT_LEFT, 100);
 	m_listRichHdr->InsertColumn(3, L"Version", LVCFMT_LEFT, 100);
 	m_listRichHdr->InsertColumn(4, L"Occurrences", LVCFMT_LEFT, 100);
-	m_listRichHdr->SetColumnSortMode(1, EnListExSortMode::SORT_NUMERIC);
-	m_listRichHdr->SetColumnSortMode(4, EnListExSortMode::SORT_NUMERIC);
+	m_listRichHdr->SetColumnSortMode(1, EListExSortMode::SORT_NUMERIC);
+	m_listRichHdr->SetColumnSortMode(4, EListExSortMode::SORT_NUMERIC);
 
 	WCHAR wstr[18];
 	int listindex = 0;
@@ -1098,20 +1070,20 @@ int CViewRightTL::CreateListOptHeader()
 
 	const std::map<WORD, std::wstring> mapDllCharacteristics {
 		{ 0x0001, L"IMAGE_LIBRARY_PROCESS_INIT" },
-	{ 0x0002, L"IMAGE_LIBRARY_PROCESS_TERM" },
-	{ 0x0004, L"IMAGE_LIBRARY_THREAD_INIT" },
-	{ 0x0008, L"IMAGE_LIBRARY_THREAD_TERM" },
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NX_COMPAT),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_ISOLATION),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_SEH),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_BIND),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_APPCONTAINER),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_GUARD_CF),
-	TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE)
+		{ 0x0002, L"IMAGE_LIBRARY_PROCESS_TERM" },
+		{ 0x0004, L"IMAGE_LIBRARY_THREAD_INIT" },
+		{ 0x0008, L"IMAGE_LIBRARY_THREAD_TERM" },
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NX_COMPAT),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_ISOLATION),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_SEH),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_BIND),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_APPCONTAINER),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_GUARD_CF),
+		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE)
 	};
 
 	WCHAR wstr[18];
@@ -1245,7 +1217,7 @@ int CViewRightTL::CreateListDataDirectories()
 		m_listDataDirs->SetItemText(i, 2, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDataDirs->Size);
 		m_listDataDirs->SetItemText(i, 3, wstr);
-		
+
 		if (!ref.strSecResidesIn.empty())
 		{
 			swprintf_s(wstr, 9, L"%.8S", ref.strSecResidesIn.data());
@@ -1283,48 +1255,48 @@ int CViewRightTL::CreateListSecHeaders()
 
 	const std::map<DWORD, std::wstring> mapSecFlags {
 		{ 0x00000000, L"IMAGE_SCN_TYPE_REG\n Reserved." },
-	{ 0x00000001, L"IMAGE_SCN_TYPE_DSECT\n Reserved." },
-	{ 0x00000002, L"IMAGE_SCN_TYPE_NOLOAD\n Reserved." },
-	{ 0x00000004, L"IMAGE_SCN_TYPE_GROUP\n Reserved." },
-	{ IMAGE_SCN_TYPE_NO_PAD, L"IMAGE_SCN_TYPE_NO_PAD\n Reserved." },
-	{ 0x00000010, L"IMAGE_SCN_TYPE_COPY\n Reserved." },
-	{ IMAGE_SCN_CNT_CODE, L"IMAGE_SCN_CNT_CODE\n Section contains code." },
-	{ IMAGE_SCN_CNT_INITIALIZED_DATA, L"IMAGE_SCN_CNT_INITIALIZED_DATA\n Section contains initialized data." },
-	{ IMAGE_SCN_CNT_UNINITIALIZED_DATA, L"IMAGE_SCN_CNT_UNINITIALIZED_DATA\n Section contains uninitialized data." },
-	{ IMAGE_SCN_LNK_OTHER, L"IMAGE_SCN_LNK_OTHER\n Reserved." },
-	{ IMAGE_SCN_LNK_INFO, L"IMAGE_SCN_LNK_INFO\n Section contains comments or some other type of information." },
-	{ 0x00000400, L"IMAGE_SCN_TYPE_OVER\n Reserved." },
-	{ IMAGE_SCN_LNK_REMOVE, L"IMAGE_SCN_LNK_REMOVE\n Section contents will not become part of image." },
-	{ IMAGE_SCN_LNK_COMDAT, L"IMAGE_SCN_LNK_COMDAT\n Section contents comdat." },
-	{ IMAGE_SCN_NO_DEFER_SPEC_EXC, L"IMAGE_SCN_NO_DEFER_SPEC_EXC\n Reset speculative exceptions handling bits in the TLB entries for this section." },
-	{ IMAGE_SCN_GPREL, L"IMAGE_SCN_GPREL\n Section content can be accessed relative to GP" },
-	{ 0x00010000, L"IMAGE_SCN_MEM_SYSHEAP\n Obsolete" },
-	{ IMAGE_SCN_MEM_PURGEABLE, L"IMAGE_SCN_MEM_PURGEABLE" },
-	{ IMAGE_SCN_MEM_LOCKED, L"IMAGE_SCN_MEM_LOCKED" },
-	{ IMAGE_SCN_MEM_PRELOAD, L"IMAGE_SCN_MEM_PRELOAD" },
-	{ IMAGE_SCN_ALIGN_1BYTES, L"IMAGE_SCN_ALIGN_1BYTES" },
-	{ IMAGE_SCN_ALIGN_2BYTES, L"IMAGE_SCN_ALIGN_2BYTES" },
-	{ IMAGE_SCN_ALIGN_4BYTES, L"IMAGE_SCN_ALIGN_4BYTES" },
-	{ IMAGE_SCN_ALIGN_8BYTES, L"IMAGE_SCN_ALIGN_8BYTES" },
-	{ IMAGE_SCN_ALIGN_16BYTES, L"IMAGE_SCN_ALIGN_16BYTES\n Default alignment if no others are specified." },
-	{ IMAGE_SCN_ALIGN_32BYTES, L"IMAGE_SCN_ALIGN_32BYTES" },
-	{ IMAGE_SCN_ALIGN_64BYTES, L"IMAGE_SCN_ALIGN_64BYTES" },
-	{ IMAGE_SCN_ALIGN_128BYTES, L"IMAGE_SCN_ALIGN_128BYTES" },
-	{ IMAGE_SCN_ALIGN_256BYTES, L"IMAGE_SCN_ALIGN_256BYTES" },
-	{ IMAGE_SCN_ALIGN_512BYTES, L"IMAGE_SCN_ALIGN_512BYTES" },
-	{ IMAGE_SCN_ALIGN_1024BYTES, L"IMAGE_SCN_ALIGN_1024BYTES" },
-	{ IMAGE_SCN_ALIGN_2048BYTES, L"IMAGE_SCN_ALIGN_2048BYTES" },
-	{ IMAGE_SCN_ALIGN_4096BYTES, L"IMAGE_SCN_ALIGN_4096BYTES" },
-	{ IMAGE_SCN_ALIGN_8192BYTES, L"IMAGE_SCN_ALIGN_8192BYTES" },
-	{ IMAGE_SCN_ALIGN_MASK, L"IMAGE_SCN_ALIGN_MASK" },
-	{ IMAGE_SCN_LNK_NRELOC_OVFL, L"IMAGE_SCN_LNK_NRELOC_OVFL\n Section contains extended relocations." },
-	{ IMAGE_SCN_MEM_DISCARDABLE, L"IMAGE_SCN_MEM_DISCARDABLE\n Section can be discarded." },
-	{ IMAGE_SCN_MEM_NOT_CACHED, L"IMAGE_SCN_MEM_NOT_CACHED\n Section is not cachable." },
-	{ IMAGE_SCN_MEM_NOT_PAGED, L"IMAGE_SCN_MEM_NOT_PAGED\n Section is not pageable." },
-	{ IMAGE_SCN_MEM_SHARED, L"IMAGE_SCN_MEM_SHARED\n Section is shareable." },
-	{ IMAGE_SCN_MEM_EXECUTE, L"IMAGE_SCN_MEM_EXECUTE\n Section is executable." },
-	{ IMAGE_SCN_MEM_READ, L"IMAGE_SCN_MEM_READ\n Section is readable." },
-	{ IMAGE_SCN_MEM_WRITE, L"IMAGE_SCN_MEM_WRITE\n Section is writeable." }
+		{ 0x00000001, L"IMAGE_SCN_TYPE_DSECT\n Reserved." },
+		{ 0x00000002, L"IMAGE_SCN_TYPE_NOLOAD\n Reserved." },
+		{ 0x00000004, L"IMAGE_SCN_TYPE_GROUP\n Reserved." },
+		{ IMAGE_SCN_TYPE_NO_PAD, L"IMAGE_SCN_TYPE_NO_PAD\n Reserved." },
+		{ 0x00000010, L"IMAGE_SCN_TYPE_COPY\n Reserved." },
+		{ IMAGE_SCN_CNT_CODE, L"IMAGE_SCN_CNT_CODE\n Section contains code." },
+		{ IMAGE_SCN_CNT_INITIALIZED_DATA, L"IMAGE_SCN_CNT_INITIALIZED_DATA\n Section contains initialized data." },
+		{ IMAGE_SCN_CNT_UNINITIALIZED_DATA, L"IMAGE_SCN_CNT_UNINITIALIZED_DATA\n Section contains uninitialized data." },
+		{ IMAGE_SCN_LNK_OTHER, L"IMAGE_SCN_LNK_OTHER\n Reserved." },
+		{ IMAGE_SCN_LNK_INFO, L"IMAGE_SCN_LNK_INFO\n Section contains comments or some other type of information." },
+		{ 0x00000400, L"IMAGE_SCN_TYPE_OVER\n Reserved." },
+		{ IMAGE_SCN_LNK_REMOVE, L"IMAGE_SCN_LNK_REMOVE\n Section contents will not become part of image." },
+		{ IMAGE_SCN_LNK_COMDAT, L"IMAGE_SCN_LNK_COMDAT\n Section contents comdat." },
+		{ IMAGE_SCN_NO_DEFER_SPEC_EXC, L"IMAGE_SCN_NO_DEFER_SPEC_EXC\n Reset speculative exceptions handling bits in the TLB entries for this section." },
+		{ IMAGE_SCN_GPREL, L"IMAGE_SCN_GPREL\n Section content can be accessed relative to GP" },
+		{ 0x00010000, L"IMAGE_SCN_MEM_SYSHEAP\n Obsolete" },
+		{ IMAGE_SCN_MEM_PURGEABLE, L"IMAGE_SCN_MEM_PURGEABLE" },
+		{ IMAGE_SCN_MEM_LOCKED, L"IMAGE_SCN_MEM_LOCKED" },
+		{ IMAGE_SCN_MEM_PRELOAD, L"IMAGE_SCN_MEM_PRELOAD" },
+		{ IMAGE_SCN_ALIGN_1BYTES, L"IMAGE_SCN_ALIGN_1BYTES" },
+		{ IMAGE_SCN_ALIGN_2BYTES, L"IMAGE_SCN_ALIGN_2BYTES" },
+		{ IMAGE_SCN_ALIGN_4BYTES, L"IMAGE_SCN_ALIGN_4BYTES" },
+		{ IMAGE_SCN_ALIGN_8BYTES, L"IMAGE_SCN_ALIGN_8BYTES" },
+		{ IMAGE_SCN_ALIGN_16BYTES, L"IMAGE_SCN_ALIGN_16BYTES\n Default alignment if no others are specified." },
+		{ IMAGE_SCN_ALIGN_32BYTES, L"IMAGE_SCN_ALIGN_32BYTES" },
+		{ IMAGE_SCN_ALIGN_64BYTES, L"IMAGE_SCN_ALIGN_64BYTES" },
+		{ IMAGE_SCN_ALIGN_128BYTES, L"IMAGE_SCN_ALIGN_128BYTES" },
+		{ IMAGE_SCN_ALIGN_256BYTES, L"IMAGE_SCN_ALIGN_256BYTES" },
+		{ IMAGE_SCN_ALIGN_512BYTES, L"IMAGE_SCN_ALIGN_512BYTES" },
+		{ IMAGE_SCN_ALIGN_1024BYTES, L"IMAGE_SCN_ALIGN_1024BYTES" },
+		{ IMAGE_SCN_ALIGN_2048BYTES, L"IMAGE_SCN_ALIGN_2048BYTES" },
+		{ IMAGE_SCN_ALIGN_4096BYTES, L"IMAGE_SCN_ALIGN_4096BYTES" },
+		{ IMAGE_SCN_ALIGN_8192BYTES, L"IMAGE_SCN_ALIGN_8192BYTES" },
+		{ IMAGE_SCN_ALIGN_MASK, L"IMAGE_SCN_ALIGN_MASK" },
+		{ IMAGE_SCN_LNK_NRELOC_OVFL, L"IMAGE_SCN_LNK_NRELOC_OVFL\n Section contains extended relocations." },
+		{ IMAGE_SCN_MEM_DISCARDABLE, L"IMAGE_SCN_MEM_DISCARDABLE\n Section can be discarded." },
+		{ IMAGE_SCN_MEM_NOT_CACHED, L"IMAGE_SCN_MEM_NOT_CACHED\n Section is not cachable." },
+		{ IMAGE_SCN_MEM_NOT_PAGED, L"IMAGE_SCN_MEM_NOT_PAGED\n Section is not pageable." },
+		{ IMAGE_SCN_MEM_SHARED, L"IMAGE_SCN_MEM_SHARED\n Section is shareable." },
+		{ IMAGE_SCN_MEM_EXECUTE, L"IMAGE_SCN_MEM_EXECUTE\n Section is executable." },
+		{ IMAGE_SCN_MEM_READ, L"IMAGE_SCN_MEM_READ\n Section is readable." },
+		{ IMAGE_SCN_MEM_WRITE, L"IMAGE_SCN_MEM_WRITE\n Section is writeable." }
 	};
 
 	UINT listindex = 0;
@@ -1376,7 +1348,7 @@ int CViewRightTL::CreateListExport()
 		m_listExportDir->SetItemText(i, 1, ref.wstrName.data());
 		swprintf_s(wstr, 17, L"%lu", dwSize);
 		m_listExportDir->SetItemText(i, 2, wstr);
-		
+
 		if (i == 4) //Name
 			swprintf_s(wstr, MAX_PATH, L"%08lX (%S)", dwValue, pExport->strModuleName.data());
 		else
@@ -1594,14 +1566,14 @@ int CViewRightTL::CreateListSecurity()
 
 		swprintf_s(wstr, 5, L"%04X", pSert->wRevision);
 		m_listSecurityDir->SetItemText(listindex, 2, wstr);
-		
+
 		auto iterRevision = mapSertRevision.find(pSert->wRevision);
 		if (iterRevision != mapSertRevision.end())
 			m_listSecurityDir->SetCellTooltip(listindex, 2, iterRevision->second.data(), L"Certificate revision:");
 
 		swprintf_s(wstr, 5, L"%04X", pSert->wCertificateType);
 		m_listSecurityDir->SetItemText(listindex, 3, wstr);
-		
+
 		auto iterType = mapSertType.find(pSert->wCertificateType);
 		if (iterType != mapSertType.end())
 			m_listSecurityDir->SetCellTooltip(listindex, 3, iterType->second.data(), L"Certificate type:");
@@ -1757,7 +1729,7 @@ int CViewRightTL::CreateListTLS()
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
 			DWORD dwValue = *((PDWORD)((DWORD_PTR)pTLSDir32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
-		
+
 			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir->InsertItem(i, wstr);
 			m_listTLSDir->SetItemText(i, 1, ref.wstrName.data());
@@ -1782,7 +1754,7 @@ int CViewRightTL::CreateListTLS()
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
 			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pTLSDir64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
-	
+
 			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir->InsertItem(i, wstr);
 			m_listTLSDir->SetItemText(i, 1, ref.wstrName.data());
@@ -1820,19 +1792,19 @@ int CViewRightTL::CreateListLCD()
 
 	const std::map<WORD, std::wstring> mapGuardFlags {
 		{ IMAGE_GUARD_CF_INSTRUMENTED, L"IMAGE_GUARD_CF_INSTRUMENTED\n Module performs control flow integrity checks using system-supplied support" },
-	{ IMAGE_GUARD_CFW_INSTRUMENTED, L"IMAGE_GUARD_CFW_INSTRUMENTED\n Module performs control flow and write integrity checks" },
-	{ IMAGE_GUARD_CF_FUNCTION_TABLE_PRESENT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_PRESENT\n Module contains valid control flow target metadata" },
-	{ IMAGE_GUARD_SECURITY_COOKIE_UNUSED, L"IMAGE_GUARD_SECURITY_COOKIE_UNUSED\n Module does not make use of the /GS security cookie" },
-	{ IMAGE_GUARD_PROTECT_DELAYLOAD_IAT, L"IMAGE_GUARD_PROTECT_DELAYLOAD_IAT\n Module supports read only delay load IAT" },
-	{ IMAGE_GUARD_DELAYLOAD_IAT_IN_ITS_OWN_SECTION, L"IMAGE_GUARD_DELAYLOAD_IAT_IN_ITS_OWN_SECTION\n Delayload import table in its own .didat section (with nothing else in it) that can be freely reprotected" },
-	{ IMAGE_GUARD_CF_EXPORT_SUPPRESSION_INFO_PRESENT, L"IMAGE_GUARD_CF_EXPORT_SUPPRESSION_INFO_PRESENT\n Module contains suppressed export information. This also infers that the address taken IAT table is also present in the load config." },
-	{ IMAGE_GUARD_CF_ENABLE_EXPORT_SUPPRESSION, L"IMAGE_GUARD_CF_ENABLE_EXPORT_SUPPRESSION\n Module enables suppression of exports" },
-	{ IMAGE_GUARD_CF_LONGJUMP_TABLE_PRESENT, L"IMAGE_GUARD_CF_LONGJUMP_TABLE_PRESENT\n Module contains longjmp target information" },
-	{ IMAGE_GUARD_RF_INSTRUMENTED, L"IMAGE_GUARD_RF_INSTRUMENTED\n Module contains return flow instrumentation and metadata" },
-	{ IMAGE_GUARD_RF_ENABLE, L"IMAGE_GUARD_RF_ENABLE\n Module requests that the OS enable return flow protection" },
-	{ IMAGE_GUARD_RF_STRICT, L"IMAGE_GUARD_RF_STRICT\n Module requests that the OS enable return flow protection in strict mode" },
-	{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK\n Stride of Guard CF function table encoded in these bits (additional count of bytes per element)" },
-	{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT\n Shift to right-justify Guard CF function table stride" }
+		{ IMAGE_GUARD_CFW_INSTRUMENTED, L"IMAGE_GUARD_CFW_INSTRUMENTED\n Module performs control flow and write integrity checks" },
+		{ IMAGE_GUARD_CF_FUNCTION_TABLE_PRESENT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_PRESENT\n Module contains valid control flow target metadata" },
+		{ IMAGE_GUARD_SECURITY_COOKIE_UNUSED, L"IMAGE_GUARD_SECURITY_COOKIE_UNUSED\n Module does not make use of the /GS security cookie" },
+		{ IMAGE_GUARD_PROTECT_DELAYLOAD_IAT, L"IMAGE_GUARD_PROTECT_DELAYLOAD_IAT\n Module supports read only delay load IAT" },
+		{ IMAGE_GUARD_DELAYLOAD_IAT_IN_ITS_OWN_SECTION, L"IMAGE_GUARD_DELAYLOAD_IAT_IN_ITS_OWN_SECTION\n Delayload import table in its own .didat section (with nothing else in it) that can be freely reprotected" },
+		{ IMAGE_GUARD_CF_EXPORT_SUPPRESSION_INFO_PRESENT, L"IMAGE_GUARD_CF_EXPORT_SUPPRESSION_INFO_PRESENT\n Module contains suppressed export information. This also infers that the address taken IAT table is also present in the load config." },
+		{ IMAGE_GUARD_CF_ENABLE_EXPORT_SUPPRESSION, L"IMAGE_GUARD_CF_ENABLE_EXPORT_SUPPRESSION\n Module enables suppression of exports" },
+		{ IMAGE_GUARD_CF_LONGJUMP_TABLE_PRESENT, L"IMAGE_GUARD_CF_LONGJUMP_TABLE_PRESENT\n Module contains longjmp target information" },
+		{ IMAGE_GUARD_RF_INSTRUMENTED, L"IMAGE_GUARD_RF_INSTRUMENTED\n Module contains return flow instrumentation and metadata" },
+		{ IMAGE_GUARD_RF_ENABLE, L"IMAGE_GUARD_RF_ENABLE\n Module requests that the OS enable return flow protection" },
+		{ IMAGE_GUARD_RF_STRICT, L"IMAGE_GUARD_RF_STRICT\n Module requests that the OS enable return flow protection in strict mode" },
+		{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK\n Stride of Guard CF function table encoded in these bits (additional count of bytes per element)" },
+		{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT\n Shift to right-justify Guard CF function table stride" }
 	};
 
 	WCHAR wstr[MAX_PATH];
@@ -2049,12 +2021,12 @@ int CViewRightTL::CreateListCOM()
 
 	const std::map<DWORD, std::wstring> mapFlags {
 		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_ILONLY, L"COMIMAGE_FLAGS_ILONLY" },
-	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITREQUIRED, L"COMIMAGE_FLAGS_32BITREQUIRED" },
-	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_IL_LIBRARY, L"COMIMAGE_FLAGS_IL_LIBRARY" },
-	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_STRONGNAMESIGNED, L"COMIMAGE_FLAGS_STRONGNAMESIGNED" },
-	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_NATIVE_ENTRYPOINT, L"COMIMAGE_FLAGS_NATIVE_ENTRYPOINT" },
-	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_TRACKDEBUGDATA, L"COMIMAGE_FLAGS_TRACKDEBUGDATA" },
-	{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITPREFERRED, L"COMIMAGE_FLAGS_32BITPREFERRED" }
+		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITREQUIRED, L"COMIMAGE_FLAGS_32BITREQUIRED" },
+		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_IL_LIBRARY, L"COMIMAGE_FLAGS_IL_LIBRARY" },
+		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_STRONGNAMESIGNED, L"COMIMAGE_FLAGS_STRONGNAMESIGNED" },
+		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_NATIVE_ENTRYPOINT, L"COMIMAGE_FLAGS_NATIVE_ENTRYPOINT" },
+		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_TRACKDEBUGDATA, L"COMIMAGE_FLAGS_TRACKDEBUGDATA" },
+		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITPREFERRED, L"COMIMAGE_FLAGS_32BITPREFERRED" }
 	};
 
 	const IMAGE_COR20_HEADER * pCom = &pCOMDesc->stCorHdr;
@@ -2086,4 +2058,70 @@ int CViewRightTL::CreateListCOM()
 	}
 
 	return 0;
+}
+
+void CViewRightTL::SortImportData()
+{
+	std::sort(m_pImport->begin(), m_pImport->end(),
+		[&](const LIBPE_IMPORT_MODULE& ref1, const LIBPE_IMPORT_MODULE& ref2)
+		{
+			std::wstring wstr1, wstr2;
+			wstr1.resize(32);
+			wstr2.resize(32);
+
+			int iCompare { };
+			switch (m_listImport->GetSortColumn())
+			{
+			case 0:
+				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.dwOffsetImpDesc));
+				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.dwOffsetImpDesc));
+				iCompare = wstr1.compare(wstr2);
+				break;
+			case 1:
+				iCompare = ref1.strModuleName.compare(ref2.strModuleName);
+				break;
+			case 2:
+				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.OriginalFirstThunk));
+				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.OriginalFirstThunk));
+				iCompare = wstr1.compare(wstr2);
+				break;
+			case 3:
+				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.TimeDateStamp));
+				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.TimeDateStamp));
+				iCompare = wstr1.compare(wstr2);
+				break;
+			case 4:
+				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.ForwarderChain));
+				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.ForwarderChain));
+				iCompare = wstr1.compare(wstr2);
+				break;
+			case 5:
+				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.Name));
+				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.Name));
+				iCompare = wstr1.compare(wstr2);
+				break;
+			case 6:
+				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.FirstThunk));
+				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.FirstThunk));
+				iCompare = wstr1.compare(wstr2);
+				break;
+			}
+
+			bool result { false };
+			if (m_listImport->GetSortAscending())
+			{
+				if (iCompare < 0)
+					result = true;
+			}
+			else
+			{
+				if (iCompare > 0)
+					result = true;
+			}
+
+			return result;
+
+		});
+
+	m_listImport->RedrawWindow();
 }

@@ -7,19 +7,43 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
+#include "MainFrm.h"
 #include "ViewRightBR.h"
 #include "constants.h"
 
-BEGIN_MESSAGE_MAP(CWndDlgSample, CWnd)
+BEGIN_MESSAGE_MAP(CDlgSampleWnd, CWnd)
 	ON_WM_PAINT()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
-void CWndDlgSample::OnPaint()
+void CDlgSampleWnd::Attach(CImageList* pImgList, CChildFrame* pChildFrame)
+{
+	m_pImgRes = pImgList;
+	m_pChildFrame = pChildFrame;
+}
+
+void CDlgSampleWnd::SetDlgVisible(bool fVisible)
+{
+	if (m_pChildFrame == nullptr)
+		return;
+
+	ShowWindow(fVisible ? SW_SHOW : SW_HIDE);
+	m_pChildFrame->SetWindowStatus(this, fVisible);
+}
+
+void CDlgSampleWnd::OnPaint()
 {
 	CPaintDC dc(this);
 	if (m_pImgRes)
 		m_pImgRes->Draw(&dc, 0, POINT { 0, 0 }, ILD_NORMAL);
 }
+
+void CDlgSampleWnd::OnClose()
+{
+	SetDlgVisible(false);
+	CWnd::OnClose();
+}
+
 
 IMPLEMENT_DYNCREATE(CViewRightBR, CScrollView)
 
@@ -40,6 +64,9 @@ void CViewRightBR::OnInitialUpdate()
 	m_EditBRB.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);
 
+	m_DlgSampleWnd.Attach(&m_stImgRes, m_pChildFrame);
+	m_pChildFrame->GetWndStatData().emplace_back(SWINDOWSTATUS { &m_DlgSampleWnd });
+
 	LOGFONTW lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
 	lf.lfHeight = 18;
@@ -52,7 +79,7 @@ void CViewRightBR::OnInitialUpdate()
 	}
 	m_EditBRB.SetFont(&m_fontEditRes);
 
-	m_stlcs.pwndParent = this;
+	m_stlcs.pParent = this;
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
 	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
@@ -76,11 +103,11 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR || LOWORD(lHint) == ID_DOC_EDITMODE)
 		return;
 
-	//If any but Resources Update we destroy m_wndDlgSample, if it's currently created.
+	//If any but Resources Update we destroy m_DlgSampleWnd, if it's currently created.
 	if (LOWORD(lHint) != IDC_SHOW_RESOURCE_RBR)
 	{
-		if (m_wndDlgSample.m_hWnd)
-			m_wndDlgSample.DestroyWindow();
+		if (m_DlgSampleWnd.m_hWnd)
+			m_DlgSampleWnd.DestroyWindow();
 	}
 
 	if (m_hwndActive)
@@ -104,7 +131,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case IDC_SHOW_RESOURCE_RBR:
-		ShowResource(reinterpret_cast<RESHELPER*>(pHint));
+		ShowResource(reinterpret_cast<SRESHELPER*>(pHint));
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
@@ -120,7 +147,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
 }
 
-void CViewRightBR::ShowResource(const RESHELPER* pResHelper)
+void CViewRightBR::ShowResource(const SRESHELPER* pResHelper)
 {
 	m_stImgRes.DeleteImageList();
 	m_iResTypeToDraw = -1;
@@ -132,9 +159,11 @@ void CViewRightBR::ShowResource(const RESHELPER* pResHelper)
 	if (pResHelper)
 	{
 		//Destroy Dialog Sample window if it's any other resource type now.
-		if (pResHelper->IdResType != 5 && m_wndDlgSample.m_hWnd)
-			m_wndDlgSample.DestroyWindow();
-
+		if (pResHelper->IdResType != 5 && m_DlgSampleWnd.m_hWnd)
+		{
+			m_DlgSampleWnd.SetDlgVisible(false);
+			m_DlgSampleWnd.DestroyWindow();
+		}
 		if (pResHelper->pData->empty())
 			return ResLoadError();
 
@@ -176,14 +205,17 @@ void CViewRightBR::ShowResource(const RESHELPER* pResHelper)
 	else
 	{
 		//Destroy Dialog Sample window if it's just Resource window Update.
-		if (m_wndDlgSample.m_hWnd)
-			m_wndDlgSample.DestroyWindow();
+		if (m_DlgSampleWnd.m_hWnd)
+		{
+			m_DlgSampleWnd.SetDlgVisible(false);
+			m_DlgSampleWnd.DestroyWindow();
+		}
 	}
 
 	RedrawWindow();
 }
 
-void CViewRightBR::CreateIconCursor(const RESHELPER* pResHelper)
+void CViewRightBR::CreateIconCursor(const SRESHELPER* pResHelper)
 {
 	HICON hIcon;
 	ICONINFO iconInfo;
@@ -213,15 +245,15 @@ void CViewRightBR::CreateIconCursor(const RESHELPER* pResHelper)
 	m_fDrawRes = true;
 }
 
-void CViewRightBR::CreateBitmap(const RESHELPER * pResHelper)
+void CViewRightBR::CreateBitmap(const SRESHELPER* pResHelper)
 {
-	BITMAPINFO* pDIBInfo = (BITMAPINFO*)pResHelper->pData->data();
+	auto* pDIBInfo = (BITMAPINFO*)pResHelper->pData->data();
 	int iColors = pDIBInfo->bmiHeader.biClrUsed ? pDIBInfo->bmiHeader.biClrUsed : 1 << pDIBInfo->bmiHeader.biBitCount;
 	LPVOID pDIBBits;
 
 	if (pDIBInfo->bmiHeader.biBitCount > 8)
 		pDIBBits = (LPVOID)((PDWORD)(pDIBInfo->bmiColors + pDIBInfo->bmiHeader.biClrUsed) +
-		((pDIBInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
+			((pDIBInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
 	else
 		pDIBBits = (LPVOID)(pDIBInfo->bmiColors + iColors);
 
@@ -248,7 +280,7 @@ void CViewRightBR::CreateBitmap(const RESHELPER * pResHelper)
 	bmp.DeleteObject();
 }
 
-void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
+void CViewRightBR::CreateDlg(const SRESHELPER * pResHelper)
 {
 #pragma pack(push, 4)
 	struct DLGTEMPLATEEX //Helper struct. Not completed.
@@ -305,10 +337,10 @@ void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
 	::GetWindowRect(hwndResDlg, &rcDlg);
 	int iPosX = 0, iPosY = 0;
 	UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
-	if (!m_wndDlgSample.m_hWnd)
+	if (!m_DlgSampleWnd.m_hWnd)
 	{
-		if (!m_wndDlgSample.CreateEx(m_dwExStyles, AfxRegisterWndClass(0),
-			L"Sample Dialog...", m_dwStyles, 0, 0, 0, 0, m_hWnd, 0))
+		if (!m_DlgSampleWnd.CreateEx(m_dwExStyles, AfxRegisterWndClass(0),
+			L"Sample Dialog...", m_dwStyles, 0, 0, 0, 0, m_hWnd, nullptr))
 		{
 			MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
 			return;
@@ -318,7 +350,7 @@ void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
 		uFlags &= ~SWP_NOMOVE;
 	}
 
-	HDC hDC = ::GetDC(m_wndDlgSample.m_hWnd);
+	HDC hDC = ::GetDC(m_DlgSampleWnd.m_hWnd);
 	HDC hDCMemory = CreateCompatibleDC(hDC);
 	HBITMAP hBitmap = CreateCompatibleBitmap(hDC, rcDlg.Width(), rcDlg.Height());
 	::SelectObject(hDCMemory, hBitmap);
@@ -346,7 +378,7 @@ void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
 	}
 
 	DeleteDC(hDCMemory);
-	::ReleaseDC(m_wndDlgSample.m_hWnd, hDC);
+	::ReleaseDC(m_DlgSampleWnd.m_hWnd, hDC);
 
 	CBitmap bmp;
 	if (!bmp.Attach(hBitmap))
@@ -357,8 +389,9 @@ void CViewRightBR::CreateDlg(const RESHELPER * pResHelper)
 	bmp.DeleteObject();
 
 	AdjustWindowRectEx(rcDlg, m_dwStyles, FALSE, m_dwExStyles); //Get window size with desirable client rect.
-	m_wndDlgSample.SetWindowPos(this, iPosX, iPosY, rcDlg.Width(), rcDlg.Height(), uFlags);
-	m_wndDlgSample.RedrawWindow(); //Draw dialog bitmap.
+	m_DlgSampleWnd.SetWindowPos(this, iPosX, iPosY, rcDlg.Width(), rcDlg.Height(), uFlags);
+	m_DlgSampleWnd.SetDlgVisible(true);
+	m_DlgSampleWnd.RedrawWindow(); //Draw dialog bitmap.
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data()); //Set Dialog resources info to Editbox.
 	CRect rcClient;
@@ -541,10 +574,12 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	for (auto& i : mapDlgStyles)
 	{
 		if (i.first & dwStyles)
+		{
 			if (!wstrStyles.empty())
 				wstrStyles += L" | " + i.second;
 			else
 				wstrStyles += i.second;
+		}
 	}
 
 	wstrData += L"DIALOG STYLES: " + wstrStyles + L"\r\n";
@@ -554,10 +589,12 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		for (auto& i : mapDlgExStyles)
 		{
 			if (i.first & dwExStyles)
+			{
 				if (!wstrStyles.empty())
 					wstrStyles += L" | " + i.second;
 				else
 					wstrStyles += i.second;
+			}
 		}
 		wstrData += L"DIALOG EXTENDED STYLES: " + wstrStyles + L"\r\n";
 	}
@@ -581,7 +618,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		if (*(PWORD)pDataHdr != 0x0000) //If not NULL then there is a need to align.
 			pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 		size_t lengthClassName;
-		WCHAR* pwstrClassName = (WCHAR*)pDataHdr;
+		auto* pwstrClassName = (WCHAR*)pDataHdr;
 		if (StringCbLengthW(pwstrClassName, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthClassName) != S_OK)
 			return ResLoadError();
 		pDataHdr += lengthClassName + sizeof(WCHAR); //Plus null terminating.
@@ -595,7 +632,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	if (*(PWORD)pDataHdr != 0x0000) //If not NULL then there is a need to align.
 		pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 	size_t lengthTitle;
-	WCHAR* pwstrTitle = (WCHAR*)pDataHdr;
+	auto* pwstrTitle = (WCHAR*)pDataHdr;
 	if (StringCbLengthW(pwstrTitle, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTitle) != S_OK)
 		return ResLoadError();
 	pDataHdr += lengthTitle + sizeof(WCHAR); //Plus null terminating.
@@ -730,11 +767,11 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 
 		static const std::map<WORD, std::wstring> mapItemClassOrd {
 			{ 0x0080, L"Button" },
-		{ 0x0081, L"Edit" },
-		{ 0x0082, L"Static" },
-		{ 0x0083, L"List box" },
-		{ 0x0084, L"Scroll bar" },
-		{ 0x0085, L"Combo box" },
+			{ 0x0081, L"Edit" },
+			{ 0x0082, L"Static" },
+			{ 0x0083, L"List box" },
+			{ 0x0084, L"Scroll bar" },
+			{ 0x0085, L"Combo box" },
 		};
 		std::wstring wstrItem = L"    ";
 
@@ -755,7 +792,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		{
 			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 			size_t lengthClassNameItem;
-			WCHAR* pwstrClassNameItem = (WCHAR*)pDataItems;
+			auto* pwstrClassNameItem = (WCHAR*)pDataItems;
 			if (StringCbLengthW(pwstrClassNameItem, nSize - ((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes), &lengthClassNameItem) != S_OK)
 				return ResLoadError();
 			pDataItems += lengthClassNameItem + sizeof(WCHAR); //Plus null terminating.
@@ -778,7 +815,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		{
 			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 			size_t lengthTitleItem;
-			WCHAR* pwstrTitleItem = (WCHAR*)pDataItems;
+			auto* pwstrTitleItem = (WCHAR*)pDataItems;
 			if (StringCbLengthW(pwstrTitleItem, nSize - ((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes), &lengthTitleItem) != S_OK)
 				return ResLoadError();
 			pDataItems += lengthTitleItem + sizeof(WCHAR); //Plus null terminating.
@@ -803,9 +840,9 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	wstrData += L"}";
 }
 
-void CViewRightBR::CreateStrings(const RESHELPER * pResHelper)
+void CViewRightBR::CreateStrings(const SRESHELPER * pResHelper)
 {
-	LPCWSTR pwszResString = reinterpret_cast<LPCWSTR>(pResHelper->pData->data());
+	auto pwszResString = reinterpret_cast<LPCWSTR>(pResHelper->pData->data());
 	std::wstring wstrTmp;
 	for (int i = 0; i < 16; i++)
 	{
@@ -822,7 +859,7 @@ void CViewRightBR::CreateStrings(const RESHELPER * pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateGroupIconCursor(const RESHELPER * pResHelper)
+void CViewRightBR::CreateGroupIconCursor(const SRESHELPER * pResHelper)
 {
 	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
@@ -850,7 +887,7 @@ void CViewRightBR::CreateGroupIconCursor(const RESHELPER * pResHelper)
 	using LPGRPICONDIR = const GRPICONDIR*;
 #pragma pack(pop)
 
-	LPGRPICONDIR pGRPIDir = (LPGRPICONDIR)pResHelper->pData->data();
+	auto pGRPIDir = (LPGRPICONDIR)pResHelper->pData->data();
 	HICON hIcon;
 	ICONINFO iconInfo;
 
@@ -915,7 +952,7 @@ void CViewRightBR::CreateGroupIconCursor(const RESHELPER * pResHelper)
 	m_fDrawRes = true;
 }
 
-void CViewRightBR::CreateVersion(const RESHELPER * pResHelper)
+void CViewRightBR::CreateVersion(const SRESHELPER * pResHelper)
 {
 #pragma pack(push, 4)
 	struct LANGANDCODEPAGE
@@ -927,13 +964,13 @@ void CViewRightBR::CreateVersion(const RESHELPER * pResHelper)
 
 	static const std::map<int, std::wstring> mapVerInfoStrings {
 		{ 0, L"FileDescription" },
-	{ 1, L"FileVersion" },
-	{ 2, L"InternalName" },
-	{ 3, L"CompanyName" },
-	{ 4, L"LegalCopyright" },
-	{ 5, L"OriginalFilename" },
-	{ 6, L"ProductName" },
-	{ 7, L"ProductVersion" }
+		{ 1, L"FileVersion" },
+		{ 2, L"InternalName" },
+		{ 3, L"CompanyName" },
+		{ 4, L"LegalCopyright" },
+		{ 5, L"OriginalFilename" },
+		{ 6, L"ProductName" },
+		{ 7, L"ProductVersion" }
 	};
 
 	LANGANDCODEPAGE* pLangAndCP;
@@ -952,7 +989,7 @@ void CViewRightBR::CreateVersion(const RESHELPER * pResHelper)
 			swprintf_s(wstrSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
 				pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(i).data());
 
-			m_wstrEditBRB += mapVerInfoStrings.at(i).data();
+			m_wstrEditBRB += mapVerInfoStrings.at(i);
 			m_wstrEditBRB += L" - ";
 
 			WCHAR* pszBufferOut;
@@ -970,7 +1007,7 @@ void CViewRightBR::CreateVersion(const RESHELPER * pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateManifest(const RESHELPER * pResHelper)
+void CViewRightBR::CreateManifest(const SRESHELPER * pResHelper)
 {
 	m_wstrEditBRB.resize(pResHelper->pData->size());
 	MultiByteToWideChar(CP_UTF8, 0, (LPCCH)pResHelper->pData->data(), (int)pResHelper->pData->size(), &m_wstrEditBRB[0], (int)pResHelper->pData->size());
@@ -983,7 +1020,7 @@ void CViewRightBR::CreateManifest(const RESHELPER * pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateToolbar(const RESHELPER * pResHelper)
+void CViewRightBR::CreateToolbar(const SRESHELPER * pResHelper)
 {
 	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
@@ -1009,7 +1046,7 @@ void CViewRightBR::CreateToolbar(const RESHELPER * pResHelper)
 						auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 						if (!data.empty())
 						{
-							RESHELPER rh(2, pResHelper->IdResName, (std::vector<std::byte>*) & data);
+							SRESHELPER rh(2, pResHelper->IdResName, (std::vector<std::byte>*) & data);
 							ShowResource(&rh);
 						}
 					}
@@ -1077,10 +1114,10 @@ void CViewRightBR::OnDraw(CDC* pDC)
 		else
 			x = rcClient.Width() / 2 - (m_iImgResWidth / 2);
 
-		for (int i = 0; i < (int)m_vecImgRes.size(); i++)
+		for (const auto& iter : m_vecImgRes)
 		{
 			IMAGEINFO imginfo;
-			m_vecImgRes.at(i)->GetImageInfo(0, &imginfo);
+			iter->GetImageInfo(0, &imginfo);
 			int iImgHeight = imginfo.rcImage.bottom - imginfo.rcImage.top;
 			if (sizeScroll.cy > rcClient.Height())
 				y = sizeScroll.cy / 2 - (iImgHeight / 2);
@@ -1088,7 +1125,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 				y = rcClient.Height() / 2 - (iImgHeight / 2);
 
 			ptDrawAt.SetPoint(x, y);
-			m_vecImgRes.at(i)->Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
+			iter->Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
 			x += imginfo.rcImage.right - imginfo.rcImage.left;
 		}
 		break;

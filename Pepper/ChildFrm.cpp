@@ -8,11 +8,12 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "ChildFrm.h"
+#include "MainFrm.h"
 #include "ViewLeft.h"
-#include "ViewRightTL.h"
 #include "ViewRightBL.h"
-#include "ViewRightTR.h"
 #include "ViewRightBR.h"
+#include "ViewRightTL.h"
+#include "ViewRightTR.h"
 #include <cmath>
 
 IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWndEx)
@@ -20,6 +21,7 @@ IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWndEx)
 BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWndEx)
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
@@ -54,12 +56,39 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pConte
 
 	m_fSplitterCreated = true;
 
+	auto pMainFrm = (CMainFrame*)AfxGetMainWnd();
+	pMainFrm->GetChildFramesCount()++;
+
 	return TRUE;
+}
+
+void CChildFrame::OnClose()
+{
+	auto pMainFrm = (CMainFrame*)AfxGetMainWnd();
+	--pMainFrm->GetChildFramesCount();
+	pMainFrm->SetCurrFramePtrNull();
+	m_vecWndStatus.clear();
+
+	CMDIChildWndEx::OnClose();
 }
 
 BOOL CChildFrame::OnEraseBkgnd(CDC* pDC)
 {
 	return CMDIChildWndEx::OnEraseBkgnd(pDC);
+}
+
+auto CChildFrame::GetWndStatData() -> std::vector<SWINDOWSTATUS>&
+{
+	return m_vecWndStatus;
+}
+
+void CChildFrame::SetWindowStatus(CWnd* pWnd, bool fVisible)
+{
+	if (auto iter = std::find_if(m_vecWndStatus.begin(), m_vecWndStatus.end(),
+		[pWnd](const SWINDOWSTATUS& ref) {return ref.pWnd == pWnd; }); iter != m_vecWndStatus.end())
+	{
+		iter->fVisible = fVisible;
+	}
 }
 
 void CChildFrame::OnSize(UINT nType, int cx, int cy)

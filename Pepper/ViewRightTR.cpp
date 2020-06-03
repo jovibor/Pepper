@@ -60,7 +60,7 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
 	case IDC_HEX_RIGHT_TR:
-		CreateHexResources((PIMAGE_RESOURCE_DATA_ENTRY)pHint);
+		CreateHexResources(reinterpret_cast<PIMAGE_RESOURCE_DATA_ENTRY>(pHint));
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
@@ -95,7 +95,7 @@ void CViewRightTR::OnDocEditMode()
 		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
 }
 
-void CViewRightTR::CreateHexResources(PIMAGE_RESOURCE_DATA_ENTRY pRes)
+void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes)
 {
 	CRect rcParent, rcClient;
 	GetParent()->GetWindowRect(&rcParent);

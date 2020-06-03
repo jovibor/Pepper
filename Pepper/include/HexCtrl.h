@@ -7,13 +7,19 @@
 * For more information visit the project's official repository.                         *
 ****************************************************************************************/
 #pragma once
-#include <memory>    //std::shared/unique_ptr and related.
-#include <vector>
-#include <string>
 #include <Windows.h> //Standard Windows header.
+#include <deque>
+#include <memory>    //std::shared/unique_ptr and related.
+#include <optional>
+#include <string>
+#include <vector>
+
+#ifndef __cpp_lib_byte
+static_assert(false, "std::byte compliant compiler required.");
+#endif
 
 /**********************************************************************
-* If HEXCTRL_IHEXCTRLPTR_UNIQUEPTR defined then IHexCtrlPtr is        * 
+* If HEXCTRL_IHEXCTRLPTR_UNIQUEPTR defined then IHexCtrlPtr is        *
 * resolved to std::unique_ptr. Otherwise it's std::shared_ptr.        *
 **********************************************************************/
 #define HEXCTRL_IHEXCTRLPTR_UNIQUEPTR
@@ -26,29 +32,64 @@
 
 /**********************************************************************
 * For manually initialize MFC.                                        *
-* This macro is used only for Win32 non MFC projects, built with      *
-* Use MFC in a Shared DLL option.                                     *
+* This macro is used only for Win32 non MFC projects, with HexCtrl    *
+* built from sources, with "Use MFC in a Shared DLL" setting.         *
 **********************************************************************/
 //#define HEXCTRL_MANUAL_MFC_INIT
 
 namespace HEXCTRL
 {
 	/********************************************************************************************
-	* EHexModifyMode - Enum of the data modification mode, used in HEXMODIFYSTRUCT.             *
+	* EHexCmd - Enum of the commands that can be executed within HexCtrl, used in ExecuteCmd.   *
 	********************************************************************************************/
-	enum class EHexModifyMode : WORD
+	enum class EHexCmd : WORD
 	{
-		MODIFY_DEFAULT, MODIFY_REPEAT, MODIFY_OPERATION
+		CMD_SEARCH = 0x01, CMD_SEARCH_NEXT, CMD_SEARCH_PREV,
+		CMD_SHOWDATA_BYTE, CMD_SHOWDATA_WORD, CMD_SHOWDATA_DWORD, CMD_SHOWDATA_QWORD,
+		CMD_BKM_ADD, CMD_BKM_REMOVE, CMD_BKM_NEXT, CMD_BKM_PREV, CMD_BKM_CLEARALL, CMD_BKM_MANAGER,
+		CMD_CLIPBOARD_COPY_HEX, CMD_CLIPBOARD_COPY_HEXLE, CMD_CLIPBOARD_COPY_HEXFMT, CMD_CLIPBOARD_COPY_TEXT,
+		CMD_CLIPBOARD_COPY_BASE64, CMD_CLIPBOARD_COPY_CARR, CMD_CLIPBOARD_COPY_GREPHEX, CMD_CLIPBOARD_COPY_PRNTSCRN,
+		CMD_CLIPBOARD_PASTE_HEX, CMD_CLIPBOARD_PASTE_TEXT,
+		CMD_MODIFY_OPERS, CMD_MODIFY_FILLZEROS, CMD_MODIFY_FILLDATA, CMD_MODIFY_UNDO, CMD_MODIFY_REDO,
+		CMD_SEL_MARKSTART, CMD_SEL_MARKEND, CMD_SEL_SELECTALL,
+		CMD_DATAINTERPRET, CMD_ENCODING,
+		CMD_APPEARANCE_FONTINC, CMD_APPEARANCE_FONTDEC, CMD_APPEARANCE_CAPACITYINC, CMD_APPEARANCE_CAPACITYDEC,
+		CMD_PRINT, CMD_ABOUT
 	};
 
 	/********************************************************************************************
-	* EHexOperMode - Enum of the data operation mode, used in HEXMODIFYSTRUCT,                  *
-	* when HEXMODIFYSTRUCT::enModifyMode is MODIFY_OPERATION.                                   *
+	* EHexCreateMode - Enum of HexCtrl creation mode.                                           *
 	********************************************************************************************/
-	enum class EHexOperMode : WORD
+	enum class EHexCreateMode : WORD
 	{
-		OPER_OR = 0x01, OPER_XOR, OPER_AND, OPER_NOT, OPER_SHL, OPER_SHR,
-		OPER_ADD, OPER_SUBTRACT, OPER_MULTIPLY, OPER_DIVIDE
+		CREATE_CHILD, CREATE_POPUP, CREATE_CUSTOMCTRL
+	};
+
+	/********************************************************************************************
+	* EHexShowMode - current data mode representation.                                          *
+	********************************************************************************************/
+	enum class EHexShowMode : WORD
+	{
+		ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8
+	};
+
+	/********************************************************************************************
+	* EHexDataMode - Enum of the working data mode, used in HEXDATASTRUCT in SetData.           *
+	* DATA_MEMORY: Default standard data mode.                                                  *
+	* DATA_MSG: Data is handled through WM_NOTIFY messages in handler window.				    *
+	* DATA_VIRTUAL: Data is handled through IHexVirtData interface by derived class.            *
+	********************************************************************************************/
+	enum class EHexDataMode : WORD
+	{
+		DATA_MEMORY, DATA_MSG, DATA_VIRTUAL
+	};
+
+	/********************************************************************************************
+	* EHexDlg - control's modeless dialogs.                                                     *
+	********************************************************************************************/
+	enum class EHexDlg : WORD
+	{
+		DLG_BKMMANAGER, DLG_DATAINTERPRET, DLG_FILLDATA, DLG_OPERS, DLG_SEARCH, DLG_ENCODING
 	};
 
 	/********************************************************************************************
@@ -61,31 +102,21 @@ namespace HEXCTRL
 	};
 
 	/********************************************************************************************
-	* HEXBOOKMARKSTRUCT - Bookmarks.                                                            *
+	* HEXBKMSTRUCT - Bookmarks.                                                                 *
 	********************************************************************************************/
-	struct HEXBOOKMARKSTRUCT
+	struct HEXBKMSTRUCT
 	{
 		std::vector<HEXSPANSTRUCT> vecSpan { };                //Vector of offsets and sizes.
-		std::wstring               wstrDesc { };               //Description.
+		std::wstring               wstrDesc { };               //Bookmark description.
+		ULONGLONG                  ullID { };                  //Bookmark ID, assigned internally by framework.
+		ULONGLONG                  ullData { };                //User defined custom data.
 		COLORREF                   clrBk { RGB(240, 240, 0) }; //Bk color.
 		COLORREF                   clrText { RGB(0, 0, 0) };   //Text color.
-		DWORD                      dwID { };                   //Bookmark id. Must be 0. Assigned internally by framework.
 	};
+	using PHEXBKMSTRUCT = HEXBKMSTRUCT*;
 
 	/********************************************************************************************
-	* HEXMODIFYSTRUCT - used to represent data modification parameters.                         *
-	********************************************************************************************/
-	struct HEXMODIFYSTRUCT
-	{
-		EHexModifyMode enModifyMode { EHexModifyMode::MODIFY_DEFAULT }; //Modify mode.
-		EHexOperMode   enOperMode { };          //Operation mode enum. Used only if enModifyMode == MODIFY_OPERATION.
-		const BYTE*    pData { };               //Pointer to a data to be set.
-		ULONGLONG      ullDataSize { };         //Size of the data pData is pointing to.
-		std::vector<HEXSPANSTRUCT> vecSpan { }; //Vector of data offsets and sizes.
-	};
-
-	/********************************************************************************************
-	* IHexVirtual - Pure abstract data handler class, that can be implemented by client,        *
+	* IHexVirtData - Pure abstract data handler class, that can be implemented by client,       *
 	* to set its own data handler routines.	Works in EHexDataMode::DATA_VIRTUAL mode.           *
 	* Pointer to this class can be set in IHexCtrl::SetData method.                             *
 	* Its usage is very similar to DATA_MSG logic, where control sends WM_NOTIFY messages       *
@@ -93,35 +124,51 @@ namespace HEXCTRL
 	* routine's implementation.                                                                 *
 	* All virtual functions must be defined in client's derived class.                          *
 	********************************************************************************************/
-	class IHexVirtual
+	class IHexVirtData
 	{
 	public:
-		virtual ~IHexVirtual() = default;
-		virtual BYTE GetByte(ULONGLONG ullIndex) = 0;            //Gets the byte data by index.
-		virtual	void ModifyData(const HEXMODIFYSTRUCT& hms) = 0; //Routine to modify data, if HEXDATASTRUCT::fMutable == true.
+		[[nodiscard]] virtual std::byte* GetData(const HEXSPANSTRUCT&) = 0; //Data index and size to get.
+		virtual	void SetData(std::byte*, const HEXSPANSTRUCT&) = 0; //Routine to modify data, if HEXDATASTRUCT::fMutable == true.
 	};
 
 	/********************************************************************************************
-	* IHexBkmVirtual - Pure abstract class for virtual bookmarks.                               *
+	* IHexVirtBkm - Pure abstract class for virtual bookmarks.                                  *
 	********************************************************************************************/
-	class IHexBkmVirtual
+	class IHexVirtBkm
 	{
 	public:
-		virtual ~IHexBkmVirtual() = default;
-		virtual DWORD Add(const HEXBOOKMARKSTRUCT& stBookmark) = 0; //Add new bookmark, return new bookmark's ID.
-		virtual void ClearAll() = 0;                    //Clear all bookmarks.
-		virtual auto GetNext()->HEXBOOKMARKSTRUCT* = 0; //Get next bookmark.
-		virtual auto GetPrev()->HEXBOOKMARKSTRUCT* = 0; //Get previous bookmark.
-		virtual bool HasBookmarks() = 0;                //Returns true is there is at least one bookmark atm.
-		virtual auto HitTest(ULONGLONG ullOffset)->HEXBOOKMARKSTRUCT* = 0; //Has given offset the bookmark?
-		virtual void Remove(ULONGLONG ullOffset) = 0;   //Remove bookmark by the given offset.
-		virtual void RemoveId(DWORD dwId) = 0;          //Remove bookmark by given ID (returned by Add()).
+		virtual ULONGLONG Add(const HEXBKMSTRUCT& stBookmark) = 0; //Add new bookmark, return new bookmark's ID.
+		virtual void ClearAll() = 0; //Clear all bookmarks.
+		[[nodiscard]] virtual ULONGLONG GetCount() = 0; //Get total bookmarks count.
+		[[nodiscard]] virtual auto GetByID(ULONGLONG ullID)->HEXBKMSTRUCT* = 0; //Bookmark by ID.
+		[[nodiscard]] virtual auto GetByIndex(ULONGLONG ullIndex)->HEXBKMSTRUCT* = 0; //Bookmark by index (in inner list).
+		[[nodiscard]] virtual auto HitTest(ULONGLONG ullOffset)->HEXBKMSTRUCT* = 0;   //Does given offset have a bookmark?
+		virtual void RemoveByID(ULONGLONG ullID) = 0;   //Remove bookmark by given ID (returned by Add()).
 	};
 
 	/********************************************************************************************
-	* HEXCOLORSTRUCT - All HexCtrl colors.                                                      *
+	* HEXCOLOR - used with the IHexVirtColors interface.                                        *
 	********************************************************************************************/
-	struct HEXCOLORSTRUCT
+	struct HEXCOLOR
+	{
+		COLORREF clrBk { };   //Bk color.
+		COLORREF clrText { }; //Text color.
+	};
+	using PHEXCOLOR = HEXCOLOR*;
+
+	/********************************************************************************************
+	* IHexVirtColors - Pure abstract class for chunk colors.                                    *
+	********************************************************************************************/
+	class IHexVirtColors
+	{
+	public:
+		[[nodiscard]] virtual PHEXCOLOR GetColor(ULONGLONG ullOffset) = 0;
+	};
+
+	/********************************************************************************************
+	* HEXCOLORSSTRUCT - All HexCtrl colors.                                                     *
+	********************************************************************************************/
+	struct HEXCOLORSSTRUCT
 	{
 		COLORREF clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };         //Hex chunks text color.
 		COLORREF clrTextAscii { GetSysColor(COLOR_WINDOWTEXT) };       //Ascii text color.
@@ -137,23 +184,7 @@ namespace HEXCTRL
 		COLORREF clrBkInfoRect { GetSysColor(COLOR_BTNFACE) };         //Background color of the bottom "Info" rect.
 		COLORREF clrBkCursor { RGB(0, 0, 255) };                       //Cursor background color.
 		COLORREF clrBkCursorSelected { RGB(0, 0, 200) };               //Cursor background color in selection.
-		COLORREF clrBkTooltip { GetSysColor(COLOR_INFOBK) };           //Tooltip text color.
-	};
-
-	/********************************************************************************************
-	* EHexCreateMode - Enum of HexCtrl creation mode.                                           *
-	********************************************************************************************/
-	enum class EHexCreateMode : DWORD
-	{
-		CREATE_CHILD, CREATE_POPUP, CREATE_CUSTOMCTRL
-	};
-
-	/********************************************************************************************
-	* EHexShowMode - current data mode representation.                                          *
-	********************************************************************************************/
-	enum class EHexShowMode : DWORD
-	{
-		ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8
+		COLORREF clrBkTooltip { GetSysColor(COLOR_INFOBK) };           //Tooltip background color.
 	};
 
 	/********************************************************************************************
@@ -163,7 +194,7 @@ namespace HEXCTRL
 	{
 		EHexCreateMode  enCreateMode { EHexCreateMode::CREATE_CHILD }; //Creation mode of the HexCtrl window.
 		EHexShowMode    enShowMode { EHexShowMode::ASBYTE };           //Data representation mode.
-		HEXCOLORSTRUCT  stColor { };          //All the control's colors.
+		HEXCOLORSSTRUCT stColor { };          //All the control's colors.
 		HWND            hwndParent { };       //Parent window handle.
 		const LOGFONTW* pLogFont { };         //Font to be used, nullptr for default. This font has to be monospaced.
 		RECT            rect { };             //Initial rect. If null, the window is screen centered.
@@ -174,29 +205,20 @@ namespace HEXCTRL
 	};
 
 	/********************************************************************************************
-	* EHexDataMode - Enum of the working data mode, used in HEXDATASTRUCT in SetData.           *
-	* DATA_MEMORY: Default standard data mode.                                                  *
-	* DATA_MSG: Data is handled through WM_NOTIFY messages in handler window.				    *
-	* DATA_VIRTUAL: Data is handled through IHexVirtual interface by derived class.             *
-	********************************************************************************************/
-	enum class EHexDataMode : DWORD
-	{
-		DATA_MEMORY, DATA_MSG, DATA_VIRTUAL
-	};
-
-	/********************************************************************************************
 	* HEXDATASTRUCT - for IHexCtrl::SetData method.                                             *
 	********************************************************************************************/
 	struct HEXDATASTRUCT
 	{
 		EHexDataMode    enDataMode { EHexDataMode::DATA_MEMORY }; //Working data mode.
-		ULONGLONG       ullDataSize { };                       //Size of the data to display, in bytes.
-		HEXSPANSTRUCT   stSelSpan { };                         //Select .ullOffset initial position. Works only if .ullSize > 0.
-		HWND            hwndMsg { };                           //Window for DATA_MSG mode. Parent is used by default.
-		IHexVirtual*    pHexVirtual { };                       //Pointer for DATA_VIRTUAL mode.
-		IHexBkmVirtual* pHexBkmVirtual { };                    //Pointer for Virtual Bookmarks.
-		PBYTE           pData { };                             //Data pointer for DATA_MEMORY mode. Not used in other modes.
-		bool            fMutable { false };                    //Is data mutable (editable) or read-only.
+		ULONGLONG       ullDataSize { };          //Size of the data to display, in bytes.
+		HEXSPANSTRUCT   stSelSpan { };            //Select .ullOffset initial position. Works only if .ullSize > 0.
+		HWND            hwndMsg { };              //Window for DATA_MSG mode. Parent is used by default.
+		IHexVirtData*   pHexVirtData { };         //Pointer for DATA_VIRTUAL mode.
+		IHexVirtColors* pHexVirtColors { };       //Pointer for Custom Colors class.
+		std::byte*      pData { };                //Data pointer for DATA_MEMORY mode. Not used in other modes.
+		DWORD           dwCacheSize { 0x800000 }; //In DATA_MSG and DATA_VIRTUAL max cached size of data to fetch.
+		bool            fMutable { false };       //Is data mutable (editable) or read-only.
+		bool            fHighLatency { false };   //Do not redraw window until scrolling completes.
 	};
 
 	/********************************************************************************************
@@ -205,11 +227,22 @@ namespace HEXCTRL
 	struct HEXNOTIFYSTRUCT
 	{
 		NMHDR         hdr { };     //Standard Windows header. For hdr.code values see HEXCTRL_MSG_* messages.
-		HEXSPANSTRUCT stSpan { };  //Offset and size of the bytes. 
-		ULONGLONG     ullData { }; //Data depending on message (e.g. user defined custom menu id/cursor pos).
-		const BYTE*   pData { };   //Pointer to a data to get/send.
+		HEXSPANSTRUCT stSpan { };  //Offset and size of the bytes.
+		ULONGLONG     ullData { }; //Data depending on message (e.g. user defined custom menu ID/caret pos).
+		std::byte*    pData { };   //Pointer to a data to get/send.
+		POINT         point { };   //Mouse position for menu notifications.
 	};
 	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT*;
+
+	/********************************************************************************************
+	* HEXHITTESTSTRUCT - used in HitTest method.                                                *
+	********************************************************************************************/
+	struct HEXHITTESTSTRUCT
+	{
+		ULONGLONG ullOffset { };      //Offset.
+		bool      fIsAscii { false }; //Is cursor at ASCII part or at Hex.
+	};
+
 
 	/********************************************************************************************
 	* IHexCtrl - pure abstract base class.                                                      *
@@ -217,34 +250,51 @@ namespace HEXCTRL
 	class IHexCtrl
 	{
 	public:
-		virtual ~IHexCtrl() = default;
-		virtual DWORD AddBookmark(const HEXBOOKMARKSTRUCT& hbs) = 0; //Adds new bookmark.
-		virtual void ClearData() = 0;                          //Clears all data from HexCtrl's view (not touching data itself).
-		virtual bool Create(const HEXCREATESTRUCT& hcs) = 0;   //Main initialization method.
+		virtual ULONGLONG BkmAdd(const HEXBKMSTRUCT& hbs, bool fRedraw = false) = 0;     //Adds new bookmark.
+		virtual void BkmClearAll() = 0;                                                  //Clear all bookmarks.
+		[[nodiscard]] virtual auto BkmGetByID(ULONGLONG ullID)->HEXBKMSTRUCT* = 0;       //Get bookmark by ID.
+		[[nodiscard]] virtual auto BkmGetByIndex(ULONGLONG ullIndex)->HEXBKMSTRUCT* = 0; //Get bookmark by Index.
+		[[nodiscard]] virtual ULONGLONG BkmGetCount()const = 0;                          //Get bookmarks count.
+		[[nodiscard]] virtual auto BkmHitTest(ULONGLONG ullOffset)->HEXBKMSTRUCT* = 0;   //HitTest for given offset.
+		virtual void BkmRemoveByID(ULONGLONG ullID) = 0;                                 //Remove bookmark by the given ID.
+		virtual void BkmSetVirtual(bool fEnable, IHexVirtBkm* pVirtual = nullptr) = 0;   //Enable/disable bookmarks virtual mode.
+		virtual void ClearData() = 0;                           //Clears all data from HexCtrl's view (not touching data itself).
+		virtual bool Create(const HEXCREATESTRUCT& hcs) = 0;    //Main initialization method.
 		virtual bool CreateDialogCtrl(UINT uCtrlID, HWND hwndDlg) = 0; //Сreates custom dialog control.
-		virtual void Destroy() = 0;                            //Deleter.
-		virtual DWORD GetCapacity()const = 0;                  //Current capacity.
-		virtual auto GetColor()const->HEXCOLORSTRUCT = 0;      //Current colors.
-		virtual long GetFontSize()const = 0;                   //Current font size.
-		virtual HMENU GetMenuHandle()const = 0;                //Context menu handle.
-		virtual auto GetSelection()const->std::vector<HEXSPANSTRUCT> = 0; //Gets current selection.
-		virtual auto GetShowMode()const->EHexShowMode = 0;     //Retrieves current show mode.
-		virtual HWND GetWindowHandle()const = 0;               //Retrieves control's window handle.
+		virtual void Destroy() = 0;                             //Deleter.
+		virtual void ExecuteCmd(EHexCmd enCmd)const = 0;        //Execute a command within the control.
+		[[nodiscard]] virtual DWORD GetCapacity()const = 0;                  //Current capacity.
+		[[nodiscard]] virtual ULONGLONG GetCaretPos()const = 0;              //Cursor position.
+		[[nodiscard]] virtual auto GetColors()const->HEXCOLORSSTRUCT = 0;    //Current colors.
+		[[nodiscard]] virtual int GetEncoding()const = 0;                    //Get current code page ID.
+		[[nodiscard]] virtual long GetFontSize()const = 0;                   //Current font size.
+		[[nodiscard]] virtual HMENU GetMenuHandle()const = 0;                //Context menu handle.
+		[[nodiscard]] virtual DWORD GetSectorSize()const = 0;                //Current sector size.
+		[[nodiscard]] virtual auto GetSelection()const->std::vector<HEXSPANSTRUCT> = 0; //Gets current selection.
+		[[nodiscard]] virtual auto GetShowMode()const->EHexShowMode = 0;     //Retrieves current show mode.
+		[[nodiscard]] virtual HWND GetWindowHandle()const = 0;               //Retrieves control's window handle.
 		virtual void GoToOffset(ULONGLONG ullOffset, bool fSelect = false, ULONGLONG ullSize = 1) = 0; //Scrolls to given offset.
-		virtual bool IsCreated()const = 0;                     //Shows whether control is created or not.
-		virtual bool IsDataSet()const = 0;                     //Shows whether a data was set to the control or not.
-		virtual bool IsMutable()const = 0;                     //Is edit mode enabled or not.
-		virtual void RemoveBookmark(DWORD dwId) = 0;           //Removes bookmark by the given Id.
+		[[nodiscard]] virtual auto HitTest(POINT pt, bool fScreen = true)const->std::optional<HEXHITTESTSTRUCT> = 0; //HitTest given point.
+		[[nodiscard]] virtual bool IsCmdAvail(EHexCmd enCmd)const = 0; //Is given Cmd currently available (can be executed)?
+		[[nodiscard]] virtual bool IsCreated()const = 0;       //Shows whether control is created or not.
+		[[nodiscard]] virtual bool IsDataSet()const = 0;       //Shows whether a data was set to the control or not.
+		[[nodiscard]] virtual bool IsDlgVisible(EHexDlg enDlg)const = 0; //Is specific dialog is currently visible.
+		[[nodiscard]] virtual bool IsMutable()const = 0;       //Is edit mode enabled or not.
+		[[nodiscard]] virtual bool IsOffsetAsHex()const = 0;   //Is "Offset" currently represented (shown) as Hex or as Decimal.
+		[[nodiscard]] virtual bool IsOffsetVisible(ULONGLONG ullOffset)const = 0; //Ensures that given offset is visible.
+		virtual void Redraw() = 0;                             //Redraw the control's window.
 		virtual void SetCapacity(DWORD dwCapacity) = 0;        //Sets the control's current capacity.
-		virtual void SetColor(const HEXCOLORSTRUCT& clr) = 0;  //Sets all the control's colors.
+		virtual void SetColors(const HEXCOLORSSTRUCT& clr) = 0;//Sets all the control's colors.
 		virtual void SetData(const HEXDATASTRUCT& hds) = 0;    //Main method for setting data to display (and edit).	
-		virtual void SetFont(const LOGFONTW* pLogFontNew) = 0; //Sets the control's new font. This font has to be monospaced.
+		virtual void SetEncoding(int iCodePage) = 0;           //Code page for text area.
+		virtual void SetFont(const LOGFONTW* pLogFont) = 0;    //Sets the control's new font. This font has to be monospaced.
 		virtual void SetFontSize(UINT uiSize) = 0;             //Sets the control's font size.
 		virtual void SetMutable(bool fEnable) = 0;             //Enable or disable mutable/edit mode.
-		virtual void SetSectorSize(DWORD dwSize, const wchar_t* wstrName = L"Sector") = 0; //Sets sector/page size and name to draw the line between.
-		virtual void SetSelection(ULONGLONG ullOffset, ULONGLONG ullSize) = 0; //Sets current selection.
+		virtual void SetSectorSize(DWORD dwSize, std::wstring_view wstrName = L"Sector") = 0; //Sets sector/page size and name to draw the lines in-between.
+		virtual void SetSelection(const std::vector<HEXSPANSTRUCT>& vecSel) = 0; //Sets current selection.
 		virtual void SetShowMode(EHexShowMode enMode) = 0;     //Sets current data show mode.
 		virtual void SetWheelRatio(double dbRatio) = 0;        //Sets the ratio for how much to scroll with mouse-wheel.
+		virtual void ShowDlg(EHexDlg enDlg, bool fShow = true)const = 0; //Show/hide specific dialog.
 	};
 
 	/********************************************************************************************
@@ -325,14 +375,15 @@ namespace HEXCTRL
 	* These codes are used to notify m_hwndMsg window about control's states.                   *
 	********************************************************************************************/
 
-	constexpr auto HEXCTRL_MSG_CARETCHANGE { 0x0100u };  //Caret position changed.
-	constexpr auto HEXCTRL_MSG_CONTEXTMENU { 0x0101u };  //OnContextMenu triggered.
-	constexpr auto HEXCTRL_MSG_DATACHANGE { 0x0102u };   //Indicates that the data has changed, used with the HEXMODIFYSTRUCT*.
-	constexpr auto HEXCTRL_MSG_DESTROY { 0x0103u };      //Indicates that HexCtrl is being destroyed.
-	constexpr auto HEXCTRL_MSG_GETDATA { 0x0104u };      //Used in DATA_MSG mode to acquire the next byte to display.
-	constexpr auto HEXCTRL_MSG_MENUCLICK { 0x0105u };    //User defined custom menu clicked.
-	constexpr auto HEXCTRL_MSG_SELECTION { 0x0106u };    //Selection has been made.
-	constexpr auto HEXCTRL_MSG_VIEWCHANGE { 0x0107u };   //View of the control has changed.
+	constexpr auto HEXCTRL_MSG_BKMCLICK { 0x0100U };     //Bookmark clicked.
+	constexpr auto HEXCTRL_MSG_CARETCHANGE { 0x0101U };  //Caret position changed.
+	constexpr auto HEXCTRL_MSG_CONTEXTMENU { 0x0102U };  //OnContextMenu triggered.
+	constexpr auto HEXCTRL_MSG_DESTROY { 0x0103U };      //Indicates that HexCtrl is being destroyed.
+	constexpr auto HEXCTRL_MSG_GETDATA { 0x0104U };      //Used in DATA_MSG mode to request the data to display.
+	constexpr auto HEXCTRL_MSG_MENUCLICK { 0x0105U };    //User defined custom menu clicked.
+	constexpr auto HEXCTRL_MSG_SELECTION { 0x0106U };    //Selection has been made.
+	constexpr auto HEXCTRL_MSG_SETDATA { 0x0107U };      //Indicates that the data has changed.
+	constexpr auto HEXCTRL_MSG_VIEWCHANGE { 0x0108U };   //View of the control has changed.
 
 	/*******************Setting a manifest for ComCtl32.dll version 6.***********************/
 #ifdef _UNICODE

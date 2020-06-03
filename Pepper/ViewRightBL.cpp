@@ -8,8 +8,8 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "ViewRightBL.h"
-#include "res/resource.h"
 #include "constants.h"
+#include "res/resource.h"
 
 IMPLEMENT_DYNCREATE(CViewRightBL, CView)
 
@@ -48,10 +48,10 @@ void CViewRightBL::OnInitialUpdate()
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
 	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHdrHglInactive = RGB(0, 112, 112);
-	m_stlcs.stColor.clrHdrHglActive = RGB(0, 92, 92);
+	m_stlcs.stColor.clrHdrHglInact= RGB(0, 112, 112);
+	m_stlcs.stColor.clrHdrHglAct = RGB(0, 92, 92);
 	m_stlcs.dwHdrHeight = 35;
-	m_stlcs.pwndParent = this;
+	m_stlcs.pParent = this;
 	m_stlcs.fSortable = true;
 
 	m_lf.lfHeight = 16;
@@ -165,7 +165,7 @@ BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 
 BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 {
-	const LPNMTREEVIEW pTree = reinterpret_cast<LPNMTREEVIEW>(lParam);
+	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(lParam);
 
 	if (pTree->hdr.idFrom == IDC_TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
 	{
@@ -191,7 +191,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 					{
 						auto data = &lvl3vec[idlvl3].vecResRawDataLvL3;
 						//Resource data and resource type to show in CViewRightBR.
-						RESHELPER stResHelper { };
+						SRESHELPER stResHelper { };
 						stResHelper.IdResType = rootvec[idlvlRoot].stResDirEntryRoot.Id;
 						stResHelper.IdResName = lvl2vec[idlvl2].stResDirEntryLvL2.Id;
 						stResHelper.pData = (std::vector<std::byte>*)data;
@@ -786,7 +786,7 @@ int CViewRightBL::CreateTreeResources()
 				swprintf_s(wstr, MAX_PATH, L"%u", pResDirEntry->Id);
 		}
 
-		const HTREEITEM treeRoot = m_treeResBottom.InsertItem(wstr, iconDirs, iconDirs);
+		const auto treeRoot = m_treeResBottom.InsertItem(wstr, iconDirs, iconDirs);
 		m_vecResId.emplace_back(ilvlRoot, -1, -1);
 		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
 		long ilvl2 = 0;

@@ -7,27 +7,32 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #pragma once
+#include "constants.h"
 
 class CMainFrame : public CMDIFrameWndEx
-{	
+{
 	DECLARE_DYNAMIC(CMainFrame)
-	CMainFrame() {}
-	virtual ~CMainFrame() {}
-	BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, 
-		CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr) override;
+	BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE,
+		CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr)override;
+	int& GetChildFramesCount();
+	void SetCurrFramePtrNull();
 protected:
-	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
-	BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)override;
+	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnWindowManager();
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
-	CMFCToolBar m_wndToolBar;
-	DECLARE_MESSAGE_MAP()
-private:
-	CWnd* pwndMBtnCurDown { };
-public:
 	afx_msg void OnAppEditmode();
 	afx_msg void OnUpdateAppEditmode(CCmdUI *pCmdUI);
+	LRESULT OnTabActivate(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnClose();
+	DECLARE_MESSAGE_MAP()
+private:
+	CMFCToolBar m_wndToolBar;
+	CWnd* pWndMBtnCurDown { };
+	std::vector<SWINDOWSTATUS>* m_pCurrFrameData { };
+	int m_iChildFrames { };    //Amount of active child frames.
+	bool m_fClosing { false }; //Indicates that thr app is closing now, to avoid dialogs' flickering on exit.
 };

@@ -15,38 +15,39 @@
 
 using namespace LISTEX;
 
-class CWndDlgSample : public CWnd
+class CDlgSampleWnd : public CWnd
 {
 public:
-	explicit CWndDlgSample(CImageList* pImgList) { m_pImgRes = pImgList; }
-	virtual	~CWndDlgSample() {}
+	void Attach(CImageList* pImgList, CChildFrame* pChildFrame);
+	void SetDlgVisible(bool fVisible);
 	DECLARE_MESSAGE_MAP()
 private:
 	afx_msg void OnPaint();
 private:
 	CImageList* m_pImgRes { };
+	CChildFrame* m_pChildFrame { };
+public:
+	afx_msg void OnClose();
 };
 
 class CViewRightBR : public CScrollView
 {
 	DECLARE_DYNCREATE(CViewRightBR)
 protected:
-	CViewRightBR() :m_wndDlgSample(&m_stImgRes) {} //Initializing Dialog Sample Window's image list.
-	virtual ~CViewRightBR() {}
 	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
 	virtual void OnInitialUpdate();     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
-	void ShowResource(const RESHELPER*);
-	void CreateIconCursor(const RESHELPER* pResHelper);
-	void CreateBitmap(const RESHELPER* pResHelper);
-	void CreateDlg(const RESHELPER* pResHelper);
+	void ShowResource(const SRESHELPER*);
+	void CreateIconCursor(const SRESHELPER* pResHelper);
+	void CreateBitmap(const SRESHELPER* pResHelper);
+	void CreateDlg(const SRESHELPER* pResHelper);
 	void ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstring& wstrData);
-	void CreateStrings(const RESHELPER* pResHelper);
-	void CreateGroupIconCursor(const RESHELPER* pResHelper);
-	void CreateVersion(const RESHELPER* pResHelper);
-	void CreateManifest(const RESHELPER* pResHelper);
-	void CreateToolbar(const RESHELPER* pResHelper);
+	void CreateStrings(const SRESHELPER* pResHelper);
+	void CreateGroupIconCursor(const SRESHELPER* pResHelper);
+	void CreateVersion(const SRESHELPER* pResHelper);
+	void CreateManifest(const SRESHELPER* pResHelper);
+	void CreateToolbar(const SRESHELPER* pResHelper);
 	int CreateListTLSCallbacks();
 	void ResLoadError();
 	void CreateDebugEntry(DWORD dwEntry);
@@ -59,7 +60,7 @@ private:
 	DWORD m_dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
 	DWORD m_dwExStyles { WS_EX_APPWINDOW };
 	CImageList m_stImgRes;
-	CWndDlgSample m_wndDlgSample;
+	CDlgSampleWnd m_DlgSampleWnd;
 	LISTEXCREATESTRUCT m_stlcs;
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
 	LOGFONTW m_lf { }, m_hdrlf { };

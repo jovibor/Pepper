@@ -7,21 +7,62 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
+#include "ChildFrm.h"
 #include "MainFrm.h"
-#include "res/resource.h"
 #include "PepperDoc.h"
+#include "res/resource.h"
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWndEx)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_WM_CREATE()
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
+	ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, &CMainFrame::OnTabActivate)
 	ON_WM_DROPFILES()
 	ON_WM_GETMINMAXINFO()
 	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
 	ON_COMMAND(ID_APP_EDITMODE, &CMainFrame::OnAppEditmode)
 	ON_UPDATE_COMMAND_UI(ID_APP_EDITMODE, &CMainFrame::OnUpdateAppEditmode)
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
+
+int& CMainFrame::GetChildFramesCount()
+{
+	return m_iChildFrames;
+}
+
+void CMainFrame::SetCurrFramePtrNull()
+{
+	m_pCurrFrameData = nullptr;
+}
+
+LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
+{
+	if (m_fClosing || GetChildFramesCount() == 0)
+		return S_OK;
+
+	if (m_pCurrFrameData != nullptr)
+	{
+		for (const auto& iter : *m_pCurrFrameData)
+		{
+			if (iter.pWnd != nullptr && ::IsWindow(iter.pWnd->m_hWnd) && iter.pWnd->IsWindowVisible())
+				iter.pWnd->ShowWindow(SW_HIDE);
+		}
+	}
+
+	if (auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive());	pFrame != nullptr)
+	{
+		auto& refVec = pFrame->GetWndStatData();
+		for (const auto& iter : refVec)
+		{
+			if (iter.pWnd != nullptr && ::IsWindow(iter.pWnd->m_hWnd) && iter.fVisible)
+				iter.pWnd->ShowWindow(SW_SHOW);
+		}
+		m_pCurrFrameData = &refVec;
+	}
+
+	return S_OK;
+}
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
@@ -82,9 +123,9 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		if (tabGroups.GetCount() > 0)
 		{
 			POSITION pos = tabGroups.GetHeadPosition();
-			while (pos != NULL)
+			while (pos != nullptr)
 			{
-				CMFCTabCtrl* pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos));
+				auto* pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos));
 				if (pTabCtrl == pWnd) //Click on TabCtrl.
 				{
 					pTabCtrl->ScreenToClient(&pt);
@@ -93,15 +134,15 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 					{
 						CWnd* pTab = pTabCtrl->GetTabWnd(iTab);
 						if (pTab)
-							pwndMBtnCurDown = pTab;
+							pWndMBtnCurDown = pTab;
 						else
-							pwndMBtnCurDown = nullptr;
+							pWndMBtnCurDown = nullptr;
 					}
 					else
-						pwndMBtnCurDown = nullptr;
+						pWndMBtnCurDown = nullptr;
 				}
 				else
-					pwndMBtnCurDown = nullptr;
+					pWndMBtnCurDown = nullptr;
 			}
 		}
 	}
@@ -117,9 +158,9 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		if (tabGroups.GetCount() > 0)
 		{
 			POSITION pos = tabGroups.GetHeadPosition();
-			while (pos != NULL)
+			while (pos != nullptr)
 			{
-				CMFCTabCtrl* pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos));
+				auto* pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos));
 				if (pTabCtrl == pWnd) //Click on TabCtrl.
 				{
 					pTabCtrl->ScreenToClient(&pt);
@@ -127,7 +168,7 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 					if (iTab != -1)
 					{
 						CWnd* pTab = pTabCtrl->GetTabWnd(iTab);
-						if (pTab && pTab == pwndMBtnCurDown)
+						if (pTab && pTab == pWndMBtnCurDown)
 							pTab->SendMessage(WM_CLOSE, 0, 0);
 					}
 				}
@@ -177,35 +218,33 @@ void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 
 void CMainFrame::OnAppEditmode()
 {
-	CFrameWnd* pFrame = GetActiveFrame();
-	if (pFrame)
-	{
-		CPepperDoc* pDoc = (CPepperDoc*)pFrame->GetActiveDocument();
-		if (pDoc)
-		{
-			if (pDoc->IsEditMode())
-				pDoc->SetEditMode(false);
-			else
-				pDoc->SetEditMode(true);
-		}
-	}
+	if (auto pFrame = GetActiveFrame(); pFrame != nullptr)
+		if (auto* pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
+			pDoc->SetEditMode(!pDoc->IsEditMode());
 }
 
 void CMainFrame::OnUpdateAppEditmode(CCmdUI *pCmdUI)
 {
-	CFrameWnd* pFrame = GetActiveFrame();
-	if (!pFrame)
+	auto pFrame = GetActiveFrame();
+	
+	if (pFrame == nullptr)
 	{
 		pCmdUI->Enable(0);
 		return;
 	}
 
-	CPepperDoc* pDoc = (CPepperDoc*)pFrame->GetActiveDocument();
-	if (pDoc)
+	if (auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
 	{
 		if (pDoc->IsEditMode())
 			m_wndToolBar.SetButtonStyle(m_wndToolBar.CommandToIndex(ID_APP_EDITMODE), TBBS_PRESSED);
 	}
 	else
 		pCmdUI->Enable(0);
+}
+
+void CMainFrame::OnClose()
+{
+	m_fClosing = true;
+
+	CMDIFrameWndEx::OnClose();
 }

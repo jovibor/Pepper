@@ -162,7 +162,6 @@ void CSplitterEx::RecalcPanes()
 
 void CSplitterEx::OnInvertTracker(const CRect& /*rect*/)
 {
-	return;
 }
 
 void CSplitterEx::OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect)

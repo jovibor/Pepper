@@ -7,21 +7,26 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #pragma once
+#include "constants.h"
 #include "SplitterEx.h"
 
 class CChildFrame : public CMDIChildWndEx
 {
 public:
-	CChildFrame() {};
-	CSplitterEx m_stSplitterMain, m_stSplitterRight, m_stSplitterRightTop, m_stSplitterRightBottom;
+	auto GetWndStatData()->std::vector<SWINDOWSTATUS>&;
+	void SetWindowStatus(CWnd* pWnd, bool fVisible);
 	DECLARE_DYNCREATE(CChildFrame)
+	CSplitterEx m_stSplitterMain, m_stSplitterRight, m_stSplitterRightTop, m_stSplitterRightBottom;
 protected:
 	virtual ~CChildFrame() {};
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnClose();
 	BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
+	DECLARE_MESSAGE_MAP()
+private:
 	bool m_fSplitterCreated { false };
 	UINT m_cx { }, m_cy { };
-	DECLARE_MESSAGE_MAP()
+	std::vector<SWINDOWSTATUS> m_vecWndStatus { };
 };

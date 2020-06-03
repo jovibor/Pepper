@@ -1,5 +1,5 @@
 /****************************************************************************************
-* Copyright © 2018-2020 Jovibor https://github.com/jovibor/                             *
+* Copyright Â© 2018-2020 Jovibor https://github.com/jovibor/                             *
 * This is very extended and featured version of CMFCListCtrl class.                     *
 * Official git repository: https://github.com/jovibor/ListEx/                           *
 * This class is available under the "MIT License".                                      *
@@ -74,12 +74,13 @@ void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BO
 
 	rDC.SetTextColor(clrText);
 	rDC.SelectObject(m_fontHdr);
+	
 	//Set item's text buffer first char to zero,
 	//then getting item's text and Draw it.
 	m_wstrHeaderText[0] = L'\0';
 	GetItem(iItem, &m_hdItem);
 	if (StrStrW(m_wstrHeaderText, L"\n"))
-	{	//If it's multiline text, first — calculate rect for the text,
+	{	//If it's multiline text, first â€” calculate rect for the text,
 		//with DT_CALCRECT flag (not drawing anything),
 		//and then calculate rect for final vertical text alignment.
 		CRect rcText;
@@ -120,16 +121,20 @@ void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BO
 
 	//rDC.DrawEdge(&rect, EDGE_RAISED, BF_RECT); //3D look edges.
 	rDC.SelectObject(m_penGrid);
-	rDC.MoveTo(rect.left, rect.top);
+	rDC.MoveTo(rect.TopLeft());
 	rDC.LineTo(rect.left, rect.bottom);
+	if (iItem == GetItemCount() - 1) //Last item.
+	{
+		rDC.MoveTo(rect.right, rect.top);
+		rDC.LineTo(rect.BottomRight());
+	}
 }
 
 LRESULT CListExHdr::OnLayout(WPARAM /*wParam*/, LPARAM lParam)
 {
 	CMFCHeaderCtrl::DefWindowProcW(HDM_LAYOUT, 0, lParam);
 
-	LPHDLAYOUT pHDL = reinterpret_cast<LPHDLAYOUT>(lParam);
-
+	auto pHDL = reinterpret_cast<LPHDLAYOUT>(lParam);
 	pHDL->pwpos->cy = m_dwHeaderHeight;	//New header height.
 	pHDL->prc->top = m_dwHeaderHeight;  //Decreasing list's height begining by the new header's height.
 
@@ -141,13 +146,13 @@ void CListExHdr::SetHeight(DWORD dwHeight)
 	m_dwHeaderHeight = dwHeight;
 }
 
-void CListExHdr::SetColor(const LISTEXCOLORSTRUCT& lcs)
+void CListExHdr::SetColor(const LISTEXCOLORS& lcs)
 {
 	m_clrText = lcs.clrHdrText;
 	m_clrBk = lcs.clrHdrBk;
-	m_clrBkNWA = lcs.clrBkNWA;
-	m_clrHglInactive = lcs.clrHdrHglInactive;
-	m_clrHglActive = lcs.clrHdrHglActive;
+	m_clrBkNWA = lcs.clrNWABk;
+	m_clrHglInactive = lcs.clrHdrHglInact;
+	m_clrHglActive = lcs.clrHdrHglAct;
 
 	RedrawWindow();
 }
@@ -157,7 +162,7 @@ void CListExHdr::SetColumnColor(int iColumn, COLORREF clrBk, COLORREF clrText)
 	if (clrText == -1)
 		clrText = m_clrText;
 
-	m_umapClrColumn[iColumn] = HDRCOLOR { clrBk, clrText };
+	m_umapClrColumn[iColumn] = SHDRCOLOR { clrBk, clrText };
 	RedrawWindow();
 }
 
@@ -171,6 +176,7 @@ void CListExHdr::SetSortArrow(int iColumn, bool fAscending)
 {
 	m_iSortColumn = iColumn;
 	m_fSortAscending = fAscending;
+	RedrawWindow();
 }
 
 void CListExHdr::SetFont(const LOGFONTW* pLogFontNew)
@@ -197,9 +203,5 @@ void CListExHdr::OnDestroy()
 {
 	CMFCHeaderCtrl::OnDestroy();
 
-	m_fontHdr.DeleteObject();
-	m_penGrid.DeleteObject();
-	m_penLight.DeleteObject();
-	m_penShadow.DeleteObject();
 	m_umapClrColumn.clear();
 }

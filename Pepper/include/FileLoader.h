@@ -22,12 +22,9 @@ class CPepperDoc;
 class CFileLoader : public CWnd
 {
 public:
-	CFileLoader() {};
-	~CFileLoader() {};
-
 	//First function to call.
 	HRESULT LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc);
-	bool IsWritable() { return m_fWritable; }
+	[[nodiscard]] bool IsWritable()const { return m_fWritable; }
 	//Shows arbitrary offset in already loaded file (LoadFile)
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
 	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrl* pHexCtrl = nullptr);
@@ -35,7 +32,7 @@ public:
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
 	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrl* pHexCtrl = nullptr);
 	//Has file been modified in memory or not.
-	bool IsModified() { return m_fModified; }
+	[[nodiscard]] bool IsModified()const { return m_fModified; }
 	bool Flush(); //Writes memory mapped file on disk.
 	//Unloads loaded file and all pieces, if present.
 	HRESULT UnloadFile();
@@ -58,7 +55,7 @@ private:
 	};
 	bool m_fLoaded { false };
 	CPepperDoc* m_pMainDoc { };
-	IHexCtrlPtr m_stHex { CreateHexCtrl() };
+	IHexCtrlPtr m_pHex { CreateHexCtrl() };
 	HEXCREATESTRUCT m_hcs;
 	HEXDATASTRUCT m_hds;
 	LARGE_INTEGER m_stFileSize { };	 //Size of the loaded PE file.
@@ -73,13 +70,12 @@ private:
 	SYSTEM_INFO m_stSysInfo { };
 	std::vector<QUERYDATA> m_vecQuery;
 	const int IDC_HEX_CTRL = 0xFF; //Id of inner IHexCtrl.
-	BYTE m_byte { }; //For HEXCTRL_MSG_GETDATA.
 	bool m_fModified { false };
 	bool m_fWritable { false };
 private:
-	unsigned char GetByte(HWND hWnd, ULONGLONG ullOffset); //For Virtual HexCtrl retrives next byte on demand.
+	std::byte* GetData(HWND hWnd, ULONGLONG ullOffset); //For Virtual HexCtrl retrives next byte on demand.
 	HRESULT MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD dwSize = 0); //Main routine for mapping big file's parts.
 	HRESULT UnmapFileOffset(QUERYDATA& rData);
-	bool IsLoaded();
+	[[nodiscard]] bool IsLoaded()const;
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };

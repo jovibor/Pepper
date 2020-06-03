@@ -5,11 +5,11 @@
 * This software is available under the "MIT License".                                   *
 ****************************************************************************************/
 #pragma once
-#include <vector>     //std::vector and related.
+#include <WinTrust.h> //WIN_CERTIFICATE struct.
+#include <Windows.h>  //All standard Windows' typedefs.
 #include <memory>     //std::shared_ptr and related.
 #include <string>     //std::string and related.
-#include <Windows.h>  //All standard Windows' typedefs.
-#include <WinTrust.h> //WIN_CERTIFICATE struct.
+#include <vector>     //std::vector and related.
 
 #ifndef __cpp_lib_byte
 #define __cpp17_conformant 0
@@ -306,31 +306,30 @@ namespace libpe {
 	class Ilibpe
 	{
 	public:
-		virtual ~Ilibpe() = default;
-		virtual HRESULT LoadPe(LPCWSTR) = 0;
-		virtual HRESULT GetImageInfo(DWORD&)noexcept = 0;
-		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f)noexcept = 0;
+		virtual HRESULT LoadPe(LPCWSTR pwszFilePath) = 0;
+		virtual HRESULT GetImageInfo(DWORD& dwInfo)noexcept = 0;
+		virtual HRESULT GetImageFlag(DWORD dwFlag, bool& f)const noexcept = 0;
 		virtual HRESULT GetOffsetFromRVA(ULONGLONG ullRVA, DWORD& dwOffset)noexcept = 0;
 		virtual HRESULT GetOffsetFromVA(ULONGLONG ullVA, DWORD& dwOffset)noexcept = 0;
-		virtual HRESULT GetMSDOSHeader(PLIBPE_DOSHEADER&)noexcept = 0;
-		virtual HRESULT GetRichHeader(PLIBPE_RICHHEADER_VEC&)noexcept = 0;
-		virtual HRESULT GetNTHeader(PLIBPE_NTHEADER&)noexcept = 0;
-		virtual HRESULT GetFileHeader(PLIBPE_FILEHEADER&)noexcept = 0;
-		virtual HRESULT GetOptionalHeader(PLIBPE_OPTHEADER_VAR&)noexcept = 0;
-		virtual HRESULT GetDataDirectories(PLIBPE_DATADIRS_VEC&)noexcept = 0;
-		virtual HRESULT GetSectionsHeaders(PLIBPE_SECHEADERS_VEC&)noexcept = 0;
-		virtual HRESULT GetExport(PLIBPE_EXPORT&)noexcept = 0;
-		virtual HRESULT GetImport(PLIBPE_IMPORT_VEC&)noexcept = 0;
-		virtual HRESULT GetResources(PLIBPE_RESOURCE_ROOT&)noexcept = 0;
-		virtual HRESULT GetExceptions(PLIBPE_EXCEPTION_VEC&)noexcept = 0;
-		virtual HRESULT GetSecurity(PLIBPE_SECURITY_VEC&)noexcept = 0;
-		virtual HRESULT GetRelocations(PLIBPE_RELOCATION_VEC&)noexcept = 0;
-		virtual HRESULT GetDebug(PLIBPE_DEBUG_VEC&)noexcept = 0;
-		virtual HRESULT GetTLS(PLIBPE_TLS&)noexcept = 0;
-		virtual HRESULT GetLoadConfig(PLIBPE_LOADCONFIG&)noexcept = 0;
-		virtual HRESULT GetBoundImport(PLIBPE_BOUNDIMPORT_VEC&)noexcept = 0;
-		virtual HRESULT GetDelayImport(PLIBPE_DELAYIMPORT_VEC&)noexcept = 0;
-		virtual HRESULT GetCOMDescriptor(PLIBPE_COMDESCRIPTOR&)noexcept = 0;
+		virtual HRESULT GetMSDOSHeader(PLIBPE_DOSHEADER& pDosHeader)noexcept = 0;
+		virtual HRESULT GetRichHeader(PLIBPE_RICHHEADER_VEC& pVecRich)noexcept = 0;
+		virtual HRESULT GetNTHeader(PLIBPE_NTHEADER& pVarNTHdr)noexcept = 0;
+		virtual HRESULT GetFileHeader(PLIBPE_FILEHEADER& pFileHeader)noexcept = 0;
+		virtual HRESULT GetOptionalHeader(PLIBPE_OPTHEADER_VAR& pVarOptHeader)noexcept = 0;
+		virtual HRESULT GetDataDirectories(PLIBPE_DATADIRS_VEC& pVecDataDir)noexcept = 0;
+		virtual HRESULT GetSectionsHeaders(PLIBPE_SECHEADERS_VEC& pVecSections)noexcept = 0;
+		virtual HRESULT GetExport(PLIBPE_EXPORT& pExport)noexcept = 0;
+		virtual HRESULT GetImport(PLIBPE_IMPORT_VEC& pVecImport)noexcept = 0;
+		virtual HRESULT GetResources(PLIBPE_RESOURCE_ROOT& pResRoot)noexcept = 0;
+		virtual HRESULT GetExceptions(PLIBPE_EXCEPTION_VEC& pVecException)noexcept = 0;
+		virtual HRESULT GetSecurity(PLIBPE_SECURITY_VEC& pVecSecurity)noexcept = 0;
+		virtual HRESULT GetRelocations(PLIBPE_RELOCATION_VEC& pVecRelocs)noexcept = 0;
+		virtual HRESULT GetDebug(PLIBPE_DEBUG_VEC& pVecDebug)noexcept = 0;
+		virtual HRESULT GetTLS(PLIBPE_TLS& pTLS)noexcept = 0;
+		virtual HRESULT GetLoadConfig(PLIBPE_LOADCONFIG& pLCD)noexcept = 0;
+		virtual HRESULT GetBoundImport(PLIBPE_BOUNDIMPORT_VEC& pVecBoundImp)noexcept = 0;
+		virtual HRESULT GetDelayImport(PLIBPE_DELAYIMPORT_VEC& pVecDelayImp)noexcept = 0;
+		virtual HRESULT GetCOMDescriptor(PLIBPE_COMDESCRIPTOR& pCOMDesc)noexcept = 0;
 		virtual HRESULT Destroy() = 0;
 	};
 
@@ -338,66 +337,66 @@ namespace libpe {
 	* Return errors.                                 *
 	*************************************************/
 
-	constexpr auto E_CALL_LOADPE_FIRST = 0xFFFFu;
-	constexpr auto E_FILE_CREATEFILE_FAILED = 0x0010u;
-	constexpr auto E_FILE_SIZE_TOO_SMALL = 0x0011u;
-	constexpr auto E_FILE_CREATEFILEMAPPING_FAILED = 0x0012u;
+	constexpr auto E_CALL_LOADPE_FIRST = 0xFFFFU;
+	constexpr auto E_FILE_CREATEFILE_FAILED = 0x0010U;
+	constexpr auto E_FILE_SIZE_TOO_SMALL = 0x0011U;
+	constexpr auto E_FILE_CREATEFILEMAPPING_FAILED = 0x0012U;
 	constexpr auto E_FILE_MAPVIEWOFFILE_FAILED = 0x0013;
-	constexpr auto E_FILE_MAPVIEWOFFILE_SECTION_FAILED = 0x0014u;
-	constexpr auto E_FILE_SECTION_DATA_CORRUPTED = 0x0015u;
-	constexpr auto E_IMAGE_TYPE_UNSUPPORTED = 0x0016u;
-	constexpr auto E_IMAGE_HAS_NO_DOSHEADER = 0x0017u;
-	constexpr auto E_IMAGE_HAS_NO_RICHHEADER = 0x0018u;
-	constexpr auto E_IMAGE_HAS_NO_NTHEADER = 0x0019u;
-	constexpr auto E_IMAGE_HAS_NO_FILEHEADER = 0x001Au;
-	constexpr auto E_IMAGE_HAS_NO_OPTHEADER = 0x001Bu;
-	constexpr auto E_IMAGE_HAS_NO_DATADIRECTORIES = 0x001Cu;
-	constexpr auto E_IMAGE_HAS_NO_SECTIONS = 0x001Du;
-	constexpr auto E_IMAGE_HAS_NO_EXPORT = 0x001Eu;
-	constexpr auto E_IMAGE_HAS_NO_IMPORT = 0x001Fu;
-	constexpr auto E_IMAGE_HAS_NO_RESOURCE = 0x0020u;
-	constexpr auto E_IMAGE_HAS_NO_EXCEPTION = 0x0021u;
-	constexpr auto E_IMAGE_HAS_NO_SECURITY = 0x0022u;
-	constexpr auto E_IMAGE_HAS_NO_BASERELOC = 0x0023u;
-	constexpr auto E_IMAGE_HAS_NO_DEBUG = 0x0024u;
-	constexpr auto E_IMAGE_HAS_NO_ARCHITECTURE = 0x0025u;
-	constexpr auto E_IMAGE_HAS_NO_GLOBALPTR = 0x0026u;
-	constexpr auto E_IMAGE_HAS_NO_TLS = 0x0027u;
-	constexpr auto E_IMAGE_HAS_NO_LOADCONFIG = 0x0028u;
-	constexpr auto E_IMAGE_HAS_NO_BOUNDIMPORT = 0x0029u;
-	constexpr auto E_IMAGE_HAS_NO_IAT = 0x002Au;
-	constexpr auto E_IMAGE_HAS_NO_DELAYIMPORT = 0x002Bu;
-	constexpr auto E_IMAGE_HAS_NO_COMDESCRIPTOR = 0x002Cu;
+	constexpr auto E_FILE_MAPVIEWOFFILE_SECTION_FAILED = 0x0014U;
+	constexpr auto E_FILE_SECTION_DATA_CORRUPTED = 0x0015U;
+	constexpr auto E_IMAGE_TYPE_UNSUPPORTED = 0x0016U;
+	constexpr auto E_IMAGE_HAS_NO_DOSHEADER = 0x0017U;
+	constexpr auto E_IMAGE_HAS_NO_RICHHEADER = 0x0018U;
+	constexpr auto E_IMAGE_HAS_NO_NTHEADER = 0x0019U;
+	constexpr auto E_IMAGE_HAS_NO_FILEHEADER = 0x001AU;
+	constexpr auto E_IMAGE_HAS_NO_OPTHEADER = 0x001BU;
+	constexpr auto E_IMAGE_HAS_NO_DATADIRECTORIES = 0x001CU;
+	constexpr auto E_IMAGE_HAS_NO_SECTIONS = 0x001DU;
+	constexpr auto E_IMAGE_HAS_NO_EXPORT = 0x001EU;
+	constexpr auto E_IMAGE_HAS_NO_IMPORT = 0x001FU;
+	constexpr auto E_IMAGE_HAS_NO_RESOURCE = 0x0020U;
+	constexpr auto E_IMAGE_HAS_NO_EXCEPTION = 0x0021U;
+	constexpr auto E_IMAGE_HAS_NO_SECURITY = 0x0022U;
+	constexpr auto E_IMAGE_HAS_NO_BASERELOC = 0x0023U;
+	constexpr auto E_IMAGE_HAS_NO_DEBUG = 0x0024U;
+	constexpr auto E_IMAGE_HAS_NO_ARCHITECTURE = 0x0025U;
+	constexpr auto E_IMAGE_HAS_NO_GLOBALPTR = 0x0026U;
+	constexpr auto E_IMAGE_HAS_NO_TLS = 0x0027U;
+	constexpr auto E_IMAGE_HAS_NO_LOADCONFIG = 0x0028U;
+	constexpr auto E_IMAGE_HAS_NO_BOUNDIMPORT = 0x0029U;
+	constexpr auto E_IMAGE_HAS_NO_IAT = 0x002AU;
+	constexpr auto E_IMAGE_HAS_NO_DELAYIMPORT = 0x002BU;
+	constexpr auto E_IMAGE_HAS_NO_COMDESCRIPTOR = 0x002CU;
 
 	/*****************************************************
 	* Flags according to loaded PE file properties.      *
 	*****************************************************/
 	//Tiny function shows whether given DWORD has given flag.
 	constexpr bool ImageHasFlag(DWORD dwFileInfo, DWORD dwFlag) { return dwFileInfo & dwFlag; };
-	constexpr auto IMAGE_FLAG_PE32 = 0x00000001ul;
-	constexpr auto IMAGE_FLAG_PE64 = 0x00000002ul;
-	constexpr auto IMAGE_FLAG_DOSHEADER = 0x00000004ul;
-	constexpr auto IMAGE_FLAG_RICHHEADER = 0x00000008ul;
-	constexpr auto IMAGE_FLAG_NTHEADER = 0x00000010ul;
-	constexpr auto IMAGE_FLAG_FILEHEADER = 0x00000020ul;
-	constexpr auto IMAGE_FLAG_OPTHEADER = 0x00000040ul;
-	constexpr auto IMAGE_FLAG_DATADIRECTORIES = 0x00000080ul;
-	constexpr auto IMAGE_FLAG_SECTIONS = 0x00000100ul;
-	constexpr auto IMAGE_FLAG_EXPORT = 0x00000200ul;
-	constexpr auto IMAGE_FLAG_IMPORT = 0x00000400ul;
-	constexpr auto IMAGE_FLAG_RESOURCE = 0x00000800ul;
-	constexpr auto IMAGE_FLAG_EXCEPTION = 0x00001000ul;
-	constexpr auto IMAGE_FLAG_SECURITY = 0x00002000ul;
-	constexpr auto IMAGE_FLAG_BASERELOC = 0x00004000ul;
-	constexpr auto IMAGE_FLAG_DEBUG = 0x00008000ul;
-	constexpr auto IMAGE_FLAG_ARCHITECTURE = 0x00010000ul;
-	constexpr auto IMAGE_FLAG_GLOBALPTR = 0x00020000ul;
-	constexpr auto IMAGE_FLAG_TLS = 0x00040000ul;
-	constexpr auto IMAGE_FLAG_LOADCONFIG = 0x00080000ul;
-	constexpr auto IMAGE_FLAG_BOUNDIMPORT = 0x00100000ul;
-	constexpr auto IMAGE_FLAG_IAT = 0x00200000ul;
-	constexpr auto IMAGE_FLAG_DELAYIMPORT = 0x00400000ul;
-	constexpr auto IMAGE_FLAG_COMDESCRIPTOR = 0x00800000ul;
+	constexpr auto IMAGE_FLAG_PE32 = 0x00000001UL;
+	constexpr auto IMAGE_FLAG_PE64 = 0x00000002UL;
+	constexpr auto IMAGE_FLAG_DOSHEADER = 0x00000004UL;
+	constexpr auto IMAGE_FLAG_RICHHEADER = 0x00000008UL;
+	constexpr auto IMAGE_FLAG_NTHEADER = 0x00000010UL;
+	constexpr auto IMAGE_FLAG_FILEHEADER = 0x00000020UL;
+	constexpr auto IMAGE_FLAG_OPTHEADER = 0x00000040UL;
+	constexpr auto IMAGE_FLAG_DATADIRECTORIES = 0x00000080UL;
+	constexpr auto IMAGE_FLAG_SECTIONS = 0x00000100UL;
+	constexpr auto IMAGE_FLAG_EXPORT = 0x00000200UL;
+	constexpr auto IMAGE_FLAG_IMPORT = 0x00000400UL;
+	constexpr auto IMAGE_FLAG_RESOURCE = 0x00000800UL;
+	constexpr auto IMAGE_FLAG_EXCEPTION = 0x00001000UL;
+	constexpr auto IMAGE_FLAG_SECURITY = 0x00002000UL;
+	constexpr auto IMAGE_FLAG_BASERELOC = 0x00004000UL;
+	constexpr auto IMAGE_FLAG_DEBUG = 0x00008000UL;
+	constexpr auto IMAGE_FLAG_ARCHITECTURE = 0x00010000UL;
+	constexpr auto IMAGE_FLAG_GLOBALPTR = 0x00020000UL;
+	constexpr auto IMAGE_FLAG_TLS = 0x00040000UL;
+	constexpr auto IMAGE_FLAG_LOADCONFIG = 0x00080000UL;
+	constexpr auto IMAGE_FLAG_BOUNDIMPORT = 0x00100000UL;
+	constexpr auto IMAGE_FLAG_IAT = 0x00200000UL;
+	constexpr auto IMAGE_FLAG_DELAYIMPORT = 0x00400000UL;
+	constexpr auto IMAGE_FLAG_COMDESCRIPTOR = 0x00800000UL;
 
 	/********************************************************************************************
 	* Factory function Createlibpe returns IlibpeUnPtr - unique_ptr with custom deleter.        *
@@ -434,17 +433,17 @@ namespace libpe {
 #pragma comment(lib, LIBNAME_PROPER("libpe"))
 #endif
 
-	extern "C" ILIBPEAPI HRESULT __cdecl CreateRawlibpe(Ilibpe*&);
+	extern "C" ILIBPEAPI HRESULT __cdecl CreateRawlibpe(Ilibpe*& pLibpe);
 	using IlibpeUnPtr = std::unique_ptr<Ilibpe, void(*)(Ilibpe*)>;
 	using IlibpeShPtr = std::shared_ptr<Ilibpe>;
 
 	inline IlibpeUnPtr Createlibpe()
 	{
-		Ilibpe* ptr { };
-		if (CreateRawlibpe(ptr) == S_OK)
-			return IlibpeUnPtr(ptr, [](Ilibpe * p) { p->Destroy(); });
-		else
-			return IlibpeUnPtr(nullptr, nullptr);
+		Ilibpe* pLibpe { };
+		if (CreateRawlibpe(pLibpe) == S_OK)
+			return IlibpeUnPtr(pLibpe, [](Ilibpe * p) { p->Destroy(); });
+
+		return { nullptr, nullptr };
 	};
 
 	//using libpe_ptr = IlibpeUnPtr;

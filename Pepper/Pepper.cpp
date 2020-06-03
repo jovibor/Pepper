@@ -7,24 +7,20 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
-#include "Pepper.h"
-#include "MainFrm.h"
 #include "ChildFrm.h"
+#include "MainFrm.h"
+#include "Pepper.h"
 #include "PepperDoc.h"
-#include "res/resource.h"
 #include "constants.h"
+#include "res/resource.h"
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
 protected:
-	BOOL OnInitDialog() override;
-	DECLARE_MESSAGE_MAP()
+	BOOL OnInitDialog()override;
 };
-
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-END_MESSAGE_MAP()
 
 BOOL CAboutDlg::OnInitDialog()
 {
@@ -58,6 +54,7 @@ BOOL CPepperApp::InitInstance()
 
 	SetRegistryKey(L"Pepper - PE files viewer");
 
+	//Modern looking tooltips.
 	CMFCToolTipInfo ttParams;
 	ttParams.m_bVislManagerTheme = TRUE;
 	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL, RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
@@ -69,7 +66,7 @@ BOOL CPepperApp::InitInstance()
 	AddDocTemplate(pDocTemplate);
 
 	// create main MDI Frame window
-	CMainFrame* pMainFrame = new CMainFrame;
+	auto* pMainFrame = new CMainFrame;
 	if (!pMainFrame->LoadFrame(IDR_MAINFRAME))
 	{
 		delete pMainFrame;
@@ -126,7 +123,7 @@ void CPepperApp::OnAppAbout()
 
 void CPepperApp::OnFileOpen()
 {
-	CFileDialog fd(TRUE, NULL, NULL,
+	CFileDialog fd(TRUE, nullptr, nullptr,
 		OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
 		OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, L"All files (*.*)|*.*||");
 
