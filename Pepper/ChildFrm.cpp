@@ -22,6 +22,7 @@ BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWndEx)
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
 	ON_WM_CLOSE()
+	ON_WM_MDIACTIVATE()
 END_MESSAGE_MAP()
 
 BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
@@ -60,6 +61,15 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pConte
 	pMainFrm->GetChildFramesCount()++;
 
 	return TRUE;
+}
+
+void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd)
+{
+	CMDIChildWndEx::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
+
+	if (bActivate == FALSE)
+	{
+	}
 }
 
 void CChildFrame::OnClose()

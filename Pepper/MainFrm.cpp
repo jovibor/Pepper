@@ -50,7 +50,7 @@ LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 		}
 	}
 
-	if (auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive());	pFrame != nullptr)
+	if (auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive()); pFrame != nullptr)
 	{
 		auto& refVec = pFrame->GetWndStatData();
 		for (const auto& iter : refVec)
@@ -223,10 +223,10 @@ void CMainFrame::OnAppEditmode()
 			pDoc->SetEditMode(!pDoc->IsEditMode());
 }
 
-void CMainFrame::OnUpdateAppEditmode(CCmdUI *pCmdUI)
+void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
 {
 	auto pFrame = GetActiveFrame();
-	
+
 	if (pFrame == nullptr)
 	{
 		pCmdUI->Enable(0);

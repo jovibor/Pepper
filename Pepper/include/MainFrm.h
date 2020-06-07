@@ -34,5 +34,5 @@ private:
 	CWnd* pWndMBtnCurDown { };
 	std::vector<SWINDOWSTATUS>* m_pCurrFrameData { };
 	int m_iChildFrames { };    //Amount of active child frames.
-	bool m_fClosing { false }; //Indicates that thr app is closing now, to avoid dialogs' flickering on exit.
+	bool m_fClosing { false }; //Indicates that the app is closing now, to avoid dialogs' flickering on exit.
 };

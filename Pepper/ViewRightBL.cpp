@@ -42,7 +42,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_hcs.hwndParent = m_hWnd;
 	m_hcs.uID = IDC_HEX_RIGHT_BL;
 	m_stHexEdit->Create(m_hcs);
-	::ShowWindow(m_stHexEdit->GetWindowHandle(), SW_HIDE);
+	::ShowWindow(m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN), SW_HIDE);
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
@@ -213,11 +213,11 @@ int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 	if (dwEntry >= g_mapDOSHeader.size())
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 
 	CRect rc;
@@ -235,11 +235,11 @@ int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 	if (m_pLibpe->GetRichHeader(pRichHeader) != S_OK || dwEntry >= pRichHeader->size())
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 	CRect rc;
 	GetClientRect(&rc);
@@ -256,11 +256,11 @@ int CViewRightBL::CreateHexNtHeaderEntry()
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 	CRect rc;
 	GetClientRect(&rc);
@@ -276,11 +276,11 @@ int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK || dwEntry >= g_mapFileHeader.size())
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 	CRect rc;
 	GetClientRect(&rc);
@@ -300,11 +300,11 @@ int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 
 	DWORD dwOffset { }, dwSize { };
@@ -336,11 +336,11 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 	if (m_pLibpe->GetNTHeader(pNTHdr) != S_OK)
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 
 	DWORD dwOffset { }, dwSize = sizeof(IMAGE_DATA_DIRECTORY);
@@ -365,11 +365,11 @@ int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 	if (m_pLibpe->GetSectionsHeaders(pSecHeaders) != S_OK || dwEntry >= pSecHeaders->size())
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 	CRect rc;
 	GetClientRect(&rc);
@@ -387,11 +387,11 @@ int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 	if (m_pLibpe->GetLoadConfig(pLCD) != S_OK || dwEntry >= g_mapLCD32.size())
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 	CRect rc;
 	GetClientRect(&rc);
@@ -557,11 +557,11 @@ int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 	DWORD dwCertSize = (DWORD_PTR)secEntry.dwLength - offsetof(WIN_CERTIFICATE, bCertificate);
 	m_pFileLoader->ShowFilePiece(dwStart, dwCertSize, m_stHexEdit.get());
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 	CRect rc;
 	GetClientRect(&rc);
@@ -738,11 +738,11 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	const auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
 	m_pFileLoader->ShowFilePiece(rDebugDir.PointerToRawData, rDebugDir.SizeOfData, m_stHexEdit.get());
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 	CRect rc;
 	GetClientRect(&rc);
@@ -824,11 +824,11 @@ int CViewRightBL::CreateHexTLS()
 	if (m_pLibpe->GetTLS(pTLS) != S_OK)
 		return -1;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle())
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 	CRect rc;
 	GetClientRect(&rc);

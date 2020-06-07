@@ -36,7 +36,7 @@ void CViewRightTR::OnInitialUpdate()
 	m_hcs.hwndParent = m_hWnd;
 	m_hcs.uID = IDC_HEX_RIGHT_TR;
 	if (m_stHexEdit->Create(m_hcs))
-		::ShowWindow(m_stHexEdit->GetWindowHandle(), SW_HIDE);
+		::ShowWindow(m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN), SW_HIDE);
 }
 
 void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
@@ -54,7 +54,7 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_stHexEdit->ClearData();
-		m_hwndActive = m_stHexEdit->GetWindowHandle();
+		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -108,6 +108,6 @@ void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes)
 	m_pLibpe->GetOffsetFromRVA(pRes->OffsetToData, dwOffset);
 
 	m_pFileLoader->ShowFilePiece(dwOffset, pRes->Size, m_stHexEdit.get());
-	m_hwndActive = m_stHexEdit->GetWindowHandle();
+	m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }
