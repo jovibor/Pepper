@@ -380,7 +380,7 @@ struct SRESHELPER
 
 struct SWINDOWSTATUS
 {
-	CWnd* pWnd { };
+	HWND hWnd { };
 	bool fVisible { };
 };
 

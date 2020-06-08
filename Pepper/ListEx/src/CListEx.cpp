@@ -1213,7 +1213,7 @@ void CListEx::OnRButtonDown(UINT nFlags, CPoint pt)
 	CMFCListCtrl::OnRButtonDown(nFlags, pt);
 }
 
-void CListEx::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
+void CListEx::OnContextMenu(CWnd* /*hWnd*/, CPoint pt)
 {
 	CPoint ptClient = pt;
 	ScreenToClient(&ptClient);

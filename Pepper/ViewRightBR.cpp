@@ -28,7 +28,7 @@ void CDlgSampleWnd::SetDlgVisible(bool fVisible)
 		return;
 
 	ShowWindow(fVisible ? SW_SHOW : SW_HIDE);
-	m_pChildFrame->SetWindowStatus(this, fVisible);
+	m_pChildFrame->SetWindowStatus(m_hWnd, fVisible);
 }
 
 void CDlgSampleWnd::OnPaint()
@@ -65,7 +65,6 @@ void CViewRightBR::OnInitialUpdate()
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);
 
 	m_DlgSampleWnd.Attach(&m_stImgRes, m_pChildFrame);
-	m_pChildFrame->GetWndStatData().emplace_back(SWINDOWSTATUS { &m_DlgSampleWnd });
 
 	LOGFONTW lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");

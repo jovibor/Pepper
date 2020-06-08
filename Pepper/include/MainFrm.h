@@ -31,7 +31,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CMFCToolBar m_wndToolBar;
-	CWnd* pWndMBtnCurDown { };
+	CWnd* pWndMBtnCurrDown { };
 	std::vector<SWINDOWSTATUS>* m_pCurrFrameData { };
 	int m_iChildFrames { };    //Amount of active child frames.
 	bool m_fClosing { false }; //Indicates that the app is closing now, to avoid dialogs' flickering on exit.

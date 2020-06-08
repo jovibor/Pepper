@@ -44,20 +44,17 @@ LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 	if (m_pCurrFrameData != nullptr)
 	{
 		for (const auto& iter : *m_pCurrFrameData)
-		{
-			if (iter.pWnd != nullptr && ::IsWindow(iter.pWnd->m_hWnd) && iter.pWnd->IsWindowVisible())
-				iter.pWnd->ShowWindow(SW_HIDE);
-		}
+			if (::IsWindow(iter.hWnd) && ::IsWindowVisible(iter.hWnd))
+				::ShowWindow(iter.hWnd, SW_HIDE);
 	}
 
 	if (auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive()); pFrame != nullptr)
 	{
 		auto& refVec = pFrame->GetWndStatData();
 		for (const auto& iter : refVec)
-		{
-			if (iter.pWnd != nullptr && ::IsWindow(iter.pWnd->m_hWnd) && iter.fVisible)
-				iter.pWnd->ShowWindow(SW_SHOW);
-		}
+			if (::IsWindow(iter.hWnd) && iter.fVisible)
+				::ShowWindow(iter.hWnd, SW_SHOW);
+
 		m_pCurrFrameData = &refVec;
 	}
 
@@ -114,35 +111,28 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 	{
 	case WM_MBUTTONDOWN:
 	{
+		pWndMBtnCurrDown = nullptr;
 		CPoint pt = pMsg->pt;
-		CWnd* pWnd = WindowFromPoint(pt);
-		if (!pWnd)
+		auto pWnd = WindowFromPoint(pt);
+		if (pWnd == nullptr)
 			break;
 
-		const CObList& tabGroups = GetMDITabGroups();
-		if (tabGroups.GetCount() > 0)
+		const auto& tabGroups = GetMDITabGroups();
+		if (tabGroups.GetCount() <= 0)
+			break;
+
+		auto pos = tabGroups.GetHeadPosition();
+		while (pos != nullptr)
 		{
-			POSITION pos = tabGroups.GetHeadPosition();
-			while (pos != nullptr)
+			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) //Click on TabCtrl.
 			{
-				auto* pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos));
-				if (pTabCtrl == pWnd) //Click on TabCtrl.
+				pTabCtrl->ScreenToClient(&pt);
+				if (int iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1)
 				{
-					pTabCtrl->ScreenToClient(&pt);
-					int iTab = pTabCtrl->GetTabFromPoint(pt);
-					if (iTab != -1)
-					{
-						CWnd* pTab = pTabCtrl->GetTabWnd(iTab);
-						if (pTab)
-							pWndMBtnCurDown = pTab;
-						else
-							pWndMBtnCurDown = nullptr;
-					}
-					else
-						pWndMBtnCurDown = nullptr;
+					if (auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr)
+						pWndMBtnCurrDown = pTab;
+					break;
 				}
-				else
-					pWndMBtnCurDown = nullptr;
 			}
 		}
 	}
@@ -150,28 +140,23 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 	case WM_MBUTTONUP:
 	{
 		CPoint pt = pMsg->pt;
-		CWnd* pWnd = WindowFromPoint(pt);
-		if (!pWnd)
-			return TRUE;
+		auto pWnd = WindowFromPoint(pt);
+		if (pWnd == nullptr)
+			break;
 
-		const CObList& tabGroups = m_wndClientArea.GetMDITabGroups();
-		if (tabGroups.GetCount() > 0)
+		const auto& tabGroups = m_wndClientArea.GetMDITabGroups();
+		if (tabGroups.GetCount() <= 0)
+			break;
+
+		auto pos = tabGroups.GetHeadPosition();
+		while (pos != nullptr)
 		{
-			POSITION pos = tabGroups.GetHeadPosition();
-			while (pos != nullptr)
+			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) //Click on TabCtrl.
 			{
-				auto* pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos));
-				if (pTabCtrl == pWnd) //Click on TabCtrl.
-				{
-					pTabCtrl->ScreenToClient(&pt);
-					int iTab = pTabCtrl->GetTabFromPoint(pt);
-					if (iTab != -1)
-					{
-						CWnd* pTab = pTabCtrl->GetTabWnd(iTab);
-						if (pTab && pTab == pWndMBtnCurDown)
-							pTab->SendMessage(WM_CLOSE, 0, 0);
-					}
-				}
+				pTabCtrl->ScreenToClient(&pt);
+				if (int iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1)
+					if (auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr && pTab == pWndMBtnCurrDown)
+						pTab->SendMessageW(WM_CLOSE);
 			}
 		}
 	}

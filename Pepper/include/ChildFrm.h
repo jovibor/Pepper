@@ -14,7 +14,7 @@ class CChildFrame : public CMDIChildWndEx
 {
 public:
 	auto GetWndStatData()->std::vector<SWINDOWSTATUS>&;
-	void SetWindowStatus(CWnd* pWnd, bool fVisible);
+	void SetWindowStatus(HWND hWnd, bool fVisible);
 	DECLARE_DYNCREATE(CChildFrame)
 	CSplitterEx m_stSplitterMain, m_stSplitterRight, m_stSplitterRightTop, m_stSplitterRightBottom;
 protected:

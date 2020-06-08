@@ -69,6 +69,7 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 
 	if (bActivate == FALSE)
 	{
+		//Every child window that must be closed on tab change goes here.
 	}
 }
 
@@ -92,13 +93,13 @@ auto CChildFrame::GetWndStatData() -> std::vector<SWINDOWSTATUS>&
 	return m_vecWndStatus;
 }
 
-void CChildFrame::SetWindowStatus(CWnd* pWnd, bool fVisible)
+void CChildFrame::SetWindowStatus(HWND hWnd, bool fVisible)
 {
 	if (auto iter = std::find_if(m_vecWndStatus.begin(), m_vecWndStatus.end(),
-		[pWnd](const SWINDOWSTATUS& ref) {return ref.pWnd == pWnd; }); iter != m_vecWndStatus.end())
-	{
+		[hWnd](const SWINDOWSTATUS& ref) {return ref.hWnd == hWnd; }); iter != m_vecWndStatus.end())
 		iter->fVisible = fVisible;
-	}
+	else
+		m_vecWndStatus.emplace_back(SWINDOWSTATUS { hWnd, fVisible });
 }
 
 void CChildFrame::OnSize(UINT nType, int cx, int cy)
