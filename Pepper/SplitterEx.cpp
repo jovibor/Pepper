@@ -35,7 +35,7 @@ BOOL CSplitterEx::CreateStatic(CWnd * m_pParent, int nRows, int nCols, DWORD dwS
 
 BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE sizeInit, CCreateContext * pContext)
 {
-	if (row >= (int)m_vecRows.size() || col >= (int)m_vecCols.size())
+	if (row >= static_cast<int>(m_vecRows.size()) || col >= static_cast<int>(m_vecCols.size()))
 		return FALSE;
 
 	BOOL ret = CSplitterWnd::CreateView(row, col, pViewClass, sizeInit, pContext);
@@ -48,7 +48,7 @@ BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE 
 
 bool CSplitterEx::AddNested(int row, int col, CWnd* pNested)
 {
-	if (row >= (int)m_vecRows.size() || col >= (int)m_vecCols.size())
+	if (row >= static_cast<int>(m_vecRows.size()) || col >= static_cast<int>(m_vecCols.size()))
 		return false;
 
 	for (auto& i : m_vecPanes)

@@ -15,19 +15,18 @@
 
 using namespace LISTEX;
 
-class CDlgSampleWnd : public CWnd
+class CWndSampledlg : public CWnd
 {
 public:
 	void Attach(CImageList* pImgList, CChildFrame* pChildFrame);
 	void SetDlgVisible(bool fVisible);
 	DECLARE_MESSAGE_MAP()
 private:
-	afx_msg void OnPaint();
+	afx_msg void OnPaint();	
+	afx_msg void OnClose();
 private:
 	CImageList* m_pImgRes { };
 	CChildFrame* m_pChildFrame { };
-public:
-	afx_msg void OnClose();
 };
 
 class CViewRightBR : public CScrollView
@@ -57,10 +56,8 @@ private:
 	libpe_ptr m_pLibpe;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
-	DWORD m_dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
-	DWORD m_dwExStyles { WS_EX_APPWINDOW };
 	CImageList m_stImgRes;
-	CDlgSampleWnd m_DlgSampleWnd;
+	CWndSampledlg m_wndSampledlg;
 	LISTEXCREATESTRUCT m_stlcs;
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
 	LOGFONTW m_lf { }, m_hdrlf { };

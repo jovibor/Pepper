@@ -194,7 +194,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 						SRESHELPER stResHelper { };
 						stResHelper.IdResType = rootvec[idlvlRoot].stResDirEntryRoot.Id;
 						stResHelper.IdResName = lvl2vec[idlvl2].stResDirEntryLvL2.Id;
-						stResHelper.pData = (std::vector<std::byte>*)data;
+						stResHelper.pData = data;
 						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&stResHelper));
 					}
 				}
@@ -554,7 +554,7 @@ int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 
 	const auto& secEntry = pSec->at(nSertId).stWinSert;
 	DWORD dwStart = pSec->at(nSertId).dwOffsetWinCertDesc + offsetof(WIN_CERTIFICATE, bCertificate);
-	DWORD dwCertSize = (DWORD_PTR)secEntry.dwLength - offsetof(WIN_CERTIFICATE, bCertificate);
+	DWORD dwCertSize = static_cast<DWORD_PTR>(secEntry.dwLength) - offsetof(WIN_CERTIFICATE, bCertificate);
 	m_pFileLoader->ShowFilePiece(dwStart, dwCertSize, m_stHexEdit.get());
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))

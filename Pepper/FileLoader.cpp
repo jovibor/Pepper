@@ -84,7 +84,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 	std::byte* pData;
 	if (m_fMapViewOfFileWhole) {
 		enMode = EHexDataMode::DATA_MEMORY;
-		pData = (std::byte*)m_lpBase;
+		pData = static_cast<std::byte*>(m_lpBase);
 	}
 	else {
 		enMode = EHexDataMode::DATA_MSG;
@@ -93,7 +93,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize,
 
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
 	m_hds.pData = pData;
-	m_hds.ullDataSize = (ULONGLONG)m_stFileSize.QuadPart;
+	m_hds.ullDataSize = static_cast<ULONGLONG>(m_stFileSize.QuadPart);
 	m_hds.enDataMode = enMode;
 	m_hds.stSelSpan.ullOffset = ullOffset;
 	m_hds.stSelSpan.ullSize = ullSelectionSize;
@@ -142,13 +142,13 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		pHexCtrl = m_pHex.get();
 	}
 
-	if (ullOffset >= (ULONGLONG)m_stFileSize.QuadPart) //Overflow check.
+	if (ullOffset >= static_cast<ULONGLONG>(m_stFileSize.QuadPart)) //Overflow check.
 	{
 		pHexCtrl->ClearData();
 		return E_ABORT;
 	}
-	if (ullOffset + ullSize > (ULONGLONG)m_stFileSize.QuadPart) //Overflow check.
-		ullSize = (ULONGLONG)m_stFileSize.QuadPart - ullOffset;
+	if (ullOffset + ullSize > static_cast<ULONGLONG>(m_stFileSize.QuadPart)) //Overflow check.
+		ullSize = static_cast<ULONGLONG>(m_stFileSize.QuadPart) - ullOffset;
 
 	EHexDataMode enMode;
 	std::byte* pData;
@@ -189,12 +189,12 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA & rData, ULONGLONG ullOffset, DWORD
 
 	DWORD_PTR dwSizeToMap;
 	if (dwSize > 0)
-		dwSizeToMap = (DWORD_PTR)dwSize;
+		dwSizeToMap = static_cast<DWORD_PTR>(dwSize);
 	else
 		dwSizeToMap = 0x01900000; //25MB.
 
 	ULONGLONG ullStartOffsetMapped;
-	if (ullOffset > (ULONGLONG)dwSizeToMap)
+	if (ullOffset > static_cast<ULONGLONG>(dwSizeToMap))
 		ullStartOffsetMapped = ullOffset - (dwSizeToMap / 2);
 	else
 		ullStartOffsetMapped = 0;
@@ -204,8 +204,8 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA & rData, ULONGLONG ullOffset, DWORD
 		ullStartOffsetMapped = (ullStartOffsetMapped < m_stSysInfo.dwAllocationGranularity) ? 0 :
 		(ullStartOffsetMapped - dwDelta);
 
-	if ((LONGLONG)(ullStartOffsetMapped + dwSizeToMap) > m_stFileSize.QuadPart)
-		dwSizeToMap = (DWORD_PTR)(m_stFileSize.QuadPart - (LONGLONG)ullStartOffsetMapped);
+	if (static_cast<LONGLONG>(ullStartOffsetMapped + dwSizeToMap) > m_stFileSize.QuadPart)
+		dwSizeToMap = static_cast<DWORD_PTR>(m_stFileSize.QuadPart - static_cast<LONGLONG>(ullStartOffsetMapped));
 
 	DWORD dwOffsetHigh = (ullStartOffsetMapped >> 32) & 0xFFFFFFFFUL;
 	DWORD dwOffsetLow = ullStartOffsetMapped & 0xFFFFFFFFUL;
@@ -313,16 +313,16 @@ std::byte* CFileLoader::GetData(HWND hWnd, ULONGLONG ullOffset)
 	std::byte* pData { };
 	ullOffset += iter->ullOffsetDelta;
 
-	if (m_fMapViewOfFileWhole && ullOffset < (ULONGLONG)m_stFileSize.QuadPart)
-		pData = ((std::byte*)m_lpBase) + ullOffset;
+	if (m_fMapViewOfFileWhole && ullOffset < static_cast<ULONGLONG>(m_stFileSize.QuadPart))
+		pData = (static_cast<std::byte*>(m_lpBase)) + ullOffset;
 	else
 	{
 		if (ullOffset >= iter->ullStartOffsetMapped && ullOffset < iter->ullEndOffsetMapped)
-			pData = ((std::byte*)iter->lpData) + (ullOffset - iter->ullStartOffsetMapped);
+			pData = (static_cast<std::byte*>(iter->lpData)) + (ullOffset - iter->ullStartOffsetMapped);
 		else
 		{
 			if (MapFileOffset(*iter, ullOffset) == S_OK)
-				pData = ((std::byte*)iter->lpData) + (ullOffset - iter->ullStartOffsetMapped);
+				pData = (static_cast<std::byte*>(iter->lpData)) + (ullOffset - iter->ullStartOffsetMapped);
 		}
 	}
 

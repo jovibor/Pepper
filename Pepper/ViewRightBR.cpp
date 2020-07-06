@@ -11,18 +11,18 @@
 #include "ViewRightBR.h"
 #include "constants.h"
 
-BEGIN_MESSAGE_MAP(CDlgSampleWnd, CWnd)
+BEGIN_MESSAGE_MAP(CWndSampledlg, CWnd)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
-void CDlgSampleWnd::Attach(CImageList* pImgList, CChildFrame* pChildFrame)
+void CWndSampledlg::Attach(CImageList* pImgList, CChildFrame* pChildFrame)
 {
 	m_pImgRes = pImgList;
 	m_pChildFrame = pChildFrame;
 }
 
-void CDlgSampleWnd::SetDlgVisible(bool fVisible)
+void CWndSampledlg::SetDlgVisible(bool fVisible)
 {
 	if (m_pChildFrame == nullptr)
 		return;
@@ -31,14 +31,14 @@ void CDlgSampleWnd::SetDlgVisible(bool fVisible)
 	m_pChildFrame->SetWindowStatus(m_hWnd, fVisible);
 }
 
-void CDlgSampleWnd::OnPaint()
+void CWndSampledlg::OnPaint()
 {
 	CPaintDC dc(this);
 	if (m_pImgRes)
 		m_pImgRes->Draw(&dc, 0, POINT { 0, 0 }, ILD_NORMAL);
 }
 
-void CDlgSampleWnd::OnClose()
+void CWndSampledlg::OnClose()
 {
 	SetDlgVisible(false);
 	CWnd::OnClose();
@@ -64,7 +64,7 @@ void CViewRightBR::OnInitialUpdate()
 	m_EditBRB.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);
 
-	m_DlgSampleWnd.Attach(&m_stImgRes, m_pChildFrame);
+	m_wndSampledlg.Attach(&m_stImgRes, m_pChildFrame);
 
 	LOGFONTW lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
@@ -105,8 +105,8 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	//If any but Resources Update we destroy m_DlgSampleWnd, if it's currently created.
 	if (LOWORD(lHint) != IDC_SHOW_RESOURCE_RBR)
 	{
-		if (m_DlgSampleWnd.m_hWnd)
-			m_DlgSampleWnd.DestroyWindow();
+		if (m_wndSampledlg.m_hWnd)
+			m_wndSampledlg.DestroyWindow();
 	}
 
 	if (m_hwndActive)
@@ -158,10 +158,10 @@ void CViewRightBR::ShowResource(const SRESHELPER* pResHelper)
 	if (pResHelper)
 	{
 		//Destroy Dialog Sample window if it's any other resource type now.
-		if (pResHelper->IdResType != 5 && m_DlgSampleWnd.m_hWnd)
+		if (pResHelper->IdResType != 5 && m_wndSampledlg.m_hWnd)
 		{
-			m_DlgSampleWnd.SetDlgVisible(false);
-			m_DlgSampleWnd.DestroyWindow();
+			m_wndSampledlg.SetDlgVisible(false);
+			m_wndSampledlg.DestroyWindow();
 		}
 		if (pResHelper->pData->empty())
 			return ResLoadError();
@@ -204,10 +204,10 @@ void CViewRightBR::ShowResource(const SRESHELPER* pResHelper)
 	else
 	{
 		//Destroy Dialog Sample window if it's just Resource window Update.
-		if (m_DlgSampleWnd.m_hWnd)
+		if (m_wndSampledlg.m_hWnd)
 		{
-			m_DlgSampleWnd.SetDlgVisible(false);
-			m_DlgSampleWnd.DestroyWindow();
+			m_wndSampledlg.SetDlgVisible(false);
+			m_wndSampledlg.DestroyWindow();
 		}
 	}
 
@@ -219,7 +219,7 @@ void CViewRightBR::CreateIconCursor(const SRESHELPER* pResHelper)
 	HICON hIcon;
 	ICONINFO iconInfo;
 
-	hIcon = CreateIconFromResourceEx((PBYTE)pResHelper->pData->data(), (DWORD)pResHelper->pData->size(),
+	hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(pResHelper->pData->data()), static_cast<DWORD>(pResHelper->pData->size()),
 		(pResHelper->IdResType == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 	if (!hIcon)
 		return ResLoadError();
@@ -246,12 +246,12 @@ void CViewRightBR::CreateIconCursor(const SRESHELPER* pResHelper)
 
 void CViewRightBR::CreateBitmap(const SRESHELPER* pResHelper)
 {
-	auto* pDIBInfo = (BITMAPINFO*)pResHelper->pData->data();
+	auto* pDIBInfo = reinterpret_cast<BITMAPINFO*>(pResHelper->pData->data());
 	int iColors = pDIBInfo->bmiHeader.biClrUsed ? pDIBInfo->bmiHeader.biClrUsed : 1 << pDIBInfo->bmiHeader.biBitCount;
 	LPVOID pDIBBits;
 
 	if (pDIBInfo->bmiHeader.biBitCount > 8)
-		pDIBBits = (LPVOID)((PDWORD)(pDIBInfo->bmiColors + pDIBInfo->bmiHeader.biClrUsed) +
+		pDIBBits = (LPVOID)(reinterpret_cast<PDWORD>(pDIBInfo->bmiColors + pDIBInfo->bmiHeader.biClrUsed) +
 			((pDIBInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
 	else
 		pDIBBits = (LPVOID)(pDIBInfo->bmiColors + iColors);
@@ -298,10 +298,23 @@ void CViewRightBR::CreateDlg(const SRESHELPER * pResHelper)
 	};
 #pragma pack(pop)
 
-	ParceDlgTemplate((PBYTE)pResHelper->pData->data(), pResHelper->pData->size(), m_wstrEditBRB);
+	ParceDlgTemplate(reinterpret_cast<PBYTE>(pResHelper->pData->data()), pResHelper->pData->size(), m_wstrEditBRB);
 
-	HWND hwndResDlg = CreateDialogIndirectParamW(nullptr,
-		(LPCDLGTEMPLATEW)pResHelper->pData->data(), m_hWnd, nullptr, 0);
+	bool fDlgEx = *((reinterpret_cast<PWORD>(pResHelper->pData->data())) + 1) == 0xFFFF;
+
+	//Pointer to 'Style' dword.
+	PDWORD pStyle { fDlgEx ? &(reinterpret_cast<DLGTEMPLATEEX*>(pResHelper->pData->data()))->style :
+		&(reinterpret_cast<DLGTEMPLATE*>(pResHelper->pData->data()))->style };
+
+	bool fWS_VISIBLE { false };
+	if (*pStyle & WS_VISIBLE) //Remove WS_VISIBLE flag if exists, so that dialog not steal the focus on creation.
+	{
+		*pStyle &= ~WS_VISIBLE;
+		fWS_VISIBLE = true;
+	}
+
+	auto hwndResDlg = CreateDialogIndirectParamW(nullptr,
+		reinterpret_cast<LPCDLGTEMPLATEW>(pResHelper->pData->data()), m_hWnd, nullptr, 0);
 
 	if (!hwndResDlg)
 	{
@@ -313,22 +326,24 @@ void CViewRightBR::CreateDlg(const SRESHELPER * pResHelper)
 		//Instead, just showing empty dialog without controls.
 		PWORD pWordDlgItems;
 		WORD wOld;
-		if (*(((PWORD)pResHelper->pData->data()) + 1) == 0xFFFF) //DLGTEMPLATEEX
+		if (fDlgEx) //DLGTEMPLATEEX
 		{
-			pWordDlgItems = &((DLGTEMPLATEEX*)pResHelper->pData->data())->cDlgItems;
+			pWordDlgItems = &(reinterpret_cast<DLGTEMPLATEEX*>(pResHelper->pData->data()))->cDlgItems;
 			wOld = *pWordDlgItems;
 		}
 		else //DLGTEMPLATE
 		{
-			pWordDlgItems = &((DLGTEMPLATE*)pResHelper->pData->data())->cdit;
+			pWordDlgItems = &(reinterpret_cast<DLGTEMPLATE*>(pResHelper->pData->data()))->cdit;
 			wOld = *pWordDlgItems;
 		}
 		*pWordDlgItems = 0;
 		hwndResDlg = CreateDialogIndirectParamW(nullptr,
-			(LPCDLGTEMPLATEW)pResHelper->pData->data(), m_hWnd, nullptr, 0);
+			reinterpret_cast<LPCDLGTEMPLATEW>(pResHelper->pData->data()), m_hWnd, nullptr, 0);
 		*pWordDlgItems = wOld;
 	}
 
+	if (fWS_VISIBLE) //Revert style back.
+		*pStyle |= WS_VISIBLE;
 	if (!hwndResDlg)
 		return ResLoadError();
 
@@ -336,10 +351,12 @@ void CViewRightBR::CreateDlg(const SRESHELPER * pResHelper)
 	::GetWindowRect(hwndResDlg, &rcDlg);
 	int iPosX = 0, iPosY = 0;
 	UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
-	if (!m_DlgSampleWnd.m_hWnd)
+	DWORD dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
+	DWORD dwExStyles { WS_EX_APPWINDOW };
+	if (!m_wndSampledlg.m_hWnd)
 	{
-		if (!m_DlgSampleWnd.CreateEx(m_dwExStyles, AfxRegisterWndClass(0),
-			L"Sample Dialog...", m_dwStyles, 0, 0, 0, 0, m_hWnd, nullptr))
+		if (!m_wndSampledlg.CreateEx(dwExStyles, AfxRegisterWndClass(0),
+			L"Sample Dialog...", dwStyles, 0, 0, 0, 0, m_hWnd, nullptr))
 		{
 			MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
 			return;
@@ -349,7 +366,7 @@ void CViewRightBR::CreateDlg(const SRESHELPER * pResHelper)
 		uFlags &= ~SWP_NOMOVE;
 	}
 
-	HDC hDC = ::GetDC(m_DlgSampleWnd.m_hWnd);
+	HDC hDC = ::GetDC(m_wndSampledlg.m_hWnd);
 	HDC hDCMemory = CreateCompatibleDC(hDC);
 	HBITMAP hBitmap = CreateCompatibleBitmap(hDC, rcDlg.Width(), rcDlg.Height());
 	::SelectObject(hDCMemory, hBitmap);
@@ -377,7 +394,7 @@ void CViewRightBR::CreateDlg(const SRESHELPER * pResHelper)
 	}
 
 	DeleteDC(hDCMemory);
-	::ReleaseDC(m_DlgSampleWnd.m_hWnd, hDC);
+	::ReleaseDC(m_wndSampledlg.m_hWnd, hDC);
 
 	CBitmap bmp;
 	if (!bmp.Attach(hBitmap))
@@ -387,10 +404,10 @@ void CViewRightBR::CreateDlg(const SRESHELPER * pResHelper)
 		return ResLoadError();
 	bmp.DeleteObject();
 
-	AdjustWindowRectEx(rcDlg, m_dwStyles, FALSE, m_dwExStyles); //Get window size with desirable client rect.
-	m_DlgSampleWnd.SetWindowPos(this, iPosX, iPosY, rcDlg.Width(), rcDlg.Height(), uFlags);
-	m_DlgSampleWnd.SetDlgVisible(true);
-	m_DlgSampleWnd.RedrawWindow(); //Draw dialog bitmap.
+	AdjustWindowRectEx(rcDlg, dwStyles, FALSE, dwExStyles); //Get window size with desirable client rect.
+	m_wndSampledlg.SetWindowPos(this, iPosX, iPosY, rcDlg.Width(), rcDlg.Height(), uFlags);
+	m_wndSampledlg.SetDlgVisible(true);
+	m_wndSampledlg.RedrawWindow(); //Draw dialog bitmap.
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data()); //Set Dialog resources info to Editbox.
 	CRect rcClient;
@@ -496,7 +513,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 
 	PBYTE pDataHdr = pDataDlgRes;
 	bool fDlgEx { false };
-	if (*(((PWORD)pDataHdr) + 1) == 0xFFFF) //DLGTEMPLATEEX
+	if (*((reinterpret_cast<PWORD>(pDataHdr)) + 1) == 0xFFFF) //DLGTEMPLATEEX
 		fDlgEx = true;
 
 	DWORD dwStyles, dwExStyles;
@@ -507,28 +524,28 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 
 	if (fDlgEx) //DLGTEMPLATEEX
 	{
-		dwStyles = ((DLGTEMPLATEEX*)pDataHdr)->style;
-		dwExStyles = ((DLGTEMPLATEEX*)pDataHdr)->exStyle;
-		wDlgItems = ((DLGTEMPLATEEX*)pDataHdr)->cDlgItems;
-		x = ((DLGTEMPLATEEX*)pDataHdr)->x;
-		y = ((DLGTEMPLATEEX*)pDataHdr)->y;
-		cx = ((DLGTEMPLATEEX*)pDataHdr)->cx;
-		cy = ((DLGTEMPLATEEX*)pDataHdr)->cy;
+		dwStyles = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->style;
+		dwExStyles = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->exStyle;
+		wDlgItems = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->cDlgItems;
+		x = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->x;
+		y = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->y;
+		cx = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->cx;
+		cy = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->cy;
 
 		wstrData = L"DIALOGEX ";
 
 		//Menu.
-		if (((DLGTEMPLATEEX*)pDataHdr)->menu == 0) //No menu.
+		if ((reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->menu == 0) //No menu.
 			pDataHdr += sizeof(DLGTEMPLATEEX);
-		else if (((DLGTEMPLATEEX*)pDataHdr)->menu == 0xFFFF) //Menu ordinal.
+		else if ((reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->menu == 0xFFFF) //Menu ordinal.
 		{
-			wMenuResOrdinal = *(PWORD)(pDataHdr + sizeof(WORD));
+			wMenuResOrdinal = *reinterpret_cast<PWORD>(pDataHdr + sizeof(WORD));
 			pDataHdr += sizeof(WORD) * 2; //Ordinal's WORD follows ((DLGTEMPLATEEX*)pDataHdr)->menu.
 		}
 		else //Menu wstring.
 		{
 			pDataHdr += sizeof(DLGTEMPLATEEX);
-			pwstrMenuRes = (WCHAR*)pDataHdr;
+			pwstrMenuRes = reinterpret_cast<WCHAR*>(pDataHdr);
 			if (StringCbLengthW(pwstrMenuRes, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthMenuRes) != S_OK)
 				return ResLoadError();
 			pDataHdr += lengthMenuRes + sizeof(WCHAR); //Plus null terminating.
@@ -536,28 +553,28 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	}
 	else //DLGTEMPLATE
 	{
-		dwStyles = ((DLGTEMPLATE*)pDataHdr)->style;
-		dwExStyles = ((DLGTEMPLATE*)pDataHdr)->dwExtendedStyle;
-		wDlgItems = ((DLGTEMPLATE*)pDataHdr)->cdit;
-		x = ((DLGTEMPLATE*)pDataHdr)->x;
-		y = ((DLGTEMPLATE*)pDataHdr)->y;
-		cx = ((DLGTEMPLATE*)pDataHdr)->cx;
-		cy = ((DLGTEMPLATE*)pDataHdr)->cy;
+		dwStyles = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->style;
+		dwExStyles = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->dwExtendedStyle;
+		wDlgItems = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->cdit;
+		x = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->x;
+		y = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->y;
+		cx = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->cx;
+		cy = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->cy;
 		pDataHdr += sizeof(DLGTEMPLATE);
 
 		wstrData = L"DIALOG ";
 
 		//Menu.
-		if (*(PWORD)pDataHdr == 0) //No menu.
+		if (*reinterpret_cast<PWORD>(pDataHdr) == 0) //No menu.
 			pDataHdr += sizeof(WORD);
-		else if (*(PWORD)pDataHdr == 0xFFFF) //Menu ordinal.
+		else if (*reinterpret_cast<PWORD>(pDataHdr) == 0xFFFF) //Menu ordinal.
 		{
-			wMenuResOrdinal = *(PWORD)(pDataHdr + sizeof(WORD));
+			wMenuResOrdinal = *reinterpret_cast<PWORD>(pDataHdr + sizeof(WORD));
 			pDataHdr += sizeof(WORD) * 2; //Ordinal's WORD follows menu WORD.
 		}
 		else //Menu wstring.
 		{
-			pwstrMenuRes = (WCHAR*)&pDataHdr;
+			pwstrMenuRes = reinterpret_cast<WCHAR*>(&pDataHdr);
 			if (StringCbLengthW(pwstrMenuRes, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthMenuRes) != S_OK)
 				return ResLoadError();
 			pDataHdr += lengthMenuRes + sizeof(WCHAR); //Plus null terminating.
@@ -603,9 +620,9 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	//////////////////////////////////////////////////////////////////
 
 	//Class name.
-	if (*(PWORD)pDataHdr == 0xFFFF) //Class name is ordinal.
+	if (*reinterpret_cast<PWORD>(pDataHdr) == 0xFFFF) //Class name is ordinal.
 	{
-		WORD wClassOrdinal = *(PWORD)(pDataHdr + sizeof(WORD));
+		WORD wClassOrdinal = *reinterpret_cast<PWORD>(pDataHdr + sizeof(WORD));
 		pDataHdr += sizeof(WORD) * 2; //Class name WORD plus Ordinal WORD.
 
 		wstrData += L"DIALOG CLASS ORDINAL: ";
@@ -614,10 +631,10 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	}
 	else //Class name is WString.
 	{
-		if (*(PWORD)pDataHdr != 0x0000) //If not NULL then there is a need to align.
+		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL then there is a need to align.
 			pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 		size_t lengthClassName;
-		auto* pwstrClassName = (WCHAR*)pDataHdr;
+		auto* pwstrClassName = reinterpret_cast<WCHAR*>(pDataHdr);
 		if (StringCbLengthW(pwstrClassName, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthClassName) != S_OK)
 			return ResLoadError();
 		pDataHdr += lengthClassName + sizeof(WCHAR); //Plus null terminating.
@@ -628,10 +645,10 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	}
 
 	//Title (Caption)
-	if (*(PWORD)pDataHdr != 0x0000) //If not NULL then there is a need to align.
+	if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL then there is a need to align.
 		pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 	size_t lengthTitle;
-	auto* pwstrTitle = (WCHAR*)pDataHdr;
+	auto* pwstrTitle = reinterpret_cast<WCHAR*>(pDataHdr);
 	if (StringCbLengthW(pwstrTitle, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTitle) != S_OK)
 		return ResLoadError();
 	pDataHdr += lengthTitle + sizeof(WCHAR); //Plus null terminating.
@@ -661,10 +678,10 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	{
 		//Font related. Only if DS_SETFONT or DS_SHELLFONT styles present.
 
-		wFontPointSize = *(PWORD)pDataHdr;
+		wFontPointSize = *reinterpret_cast<PWORD>(pDataHdr);
 		pDataHdr += sizeof(wFontPointSize);
 
-		WORD wFontWeight = *(PWORD)pDataHdr;
+		WORD wFontWeight = *reinterpret_cast<PWORD>(pDataHdr);
 		pDataHdr += sizeof(wFontWeight);
 
 		BYTE bItalic = *pDataHdr;
@@ -673,9 +690,9 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		BYTE bCharset = *pDataHdr;
 		pDataHdr += sizeof(bCharset);
 
-		if (*(PWORD)pDataHdr != 0x0000) //If not NULL nedd to align.
+		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL nedd to align.
 			pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
-		pwstrTypeFace = (WCHAR*)pDataHdr;
+		pwstrTypeFace = reinterpret_cast<WCHAR*>(pDataHdr);
 		if (StringCbLengthW(pwstrTypeFace, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTypeFace) != S_OK)
 			return ResLoadError();
 		pDataHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
@@ -692,12 +709,12 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	{
 		//Font related. Only if DS_SETFONT style present.
 
-		wFontPointSize = *(PWORD)pDataHdr;
+		wFontPointSize = *reinterpret_cast<PWORD>(pDataHdr);
 		pDataHdr += sizeof(wFontPointSize);
 
-		if (*(PWORD)pDataHdr != 0x0000)
+		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000)
 			pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
-		pwstrTypeFace = (WCHAR*)pDataHdr;
+		pwstrTypeFace = reinterpret_cast<WCHAR*>(pDataHdr);
 		if (StringCbLengthW(pwstrTypeFace, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTypeFace) != S_OK)
 			return ResLoadError();
 		pDataHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
@@ -725,7 +742,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	{
 		pDataItems += (sizeof(DWORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 3)) & 3; //DWORD Aligning.
 		//Out of bounds checking.
-		if ((DWORD_PTR)pDataItems >= (DWORD_PTR)((PBYTE)pDataDlgRes) + nSize)
+		if ((DWORD_PTR)pDataItems >= (DWORD_PTR)(pDataDlgRes)+nSize)
 			break;
 
 		DWORD dwItemStyles, dwItemExStyles;
@@ -733,13 +750,13 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		WCHAR wpszItemStyles[128]; //Styles, ExStyles, ItemID and Coords.
 		if (fDlgEx) //DLGITEMTEMPLATEEX
 		{
-			dwItemStyles = ((DLGITEMTEMPLATEEX*)pDataItems)->style;
-			dwItemExStyles = ((DLGITEMTEMPLATEEX*)pDataItems)->exStyle;
-			xItem = ((DLGITEMTEMPLATEEX*)pDataItems)->x;
-			yItem = ((DLGITEMTEMPLATEEX*)pDataItems)->y;
-			cxItem = ((DLGITEMTEMPLATEEX*)pDataItems)->cx;
-			cyItem = ((DLGITEMTEMPLATEEX*)pDataItems)->cy;
-			DWORD dwIDItem = ((DLGITEMTEMPLATEEX*)pDataItems)->id;
+			dwItemStyles = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->style;
+			dwItemExStyles = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->exStyle;
+			xItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->x;
+			yItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->y;
+			cxItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->cx;
+			cyItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->cy;
+			DWORD dwIDItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->id;
 
 			pDataItems += sizeof(DLGITEMTEMPLATEEX);
 
@@ -749,13 +766,13 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		}
 		else //DLGITEMTEMPLATE
 		{
-			dwItemStyles = ((DLGITEMTEMPLATE*)pDataItems)->style;
-			dwItemExStyles = ((DLGITEMTEMPLATE*)pDataItems)->dwExtendedStyle;
-			xItem = ((DLGITEMTEMPLATE*)pDataItems)->x;
-			yItem = ((DLGITEMTEMPLATE*)pDataItems)->y;
-			cxItem = ((DLGITEMTEMPLATE*)pDataItems)->cx;
-			cyItem = ((DLGITEMTEMPLATE*)pDataItems)->cy;
-			WORD wIDItem = ((DLGITEMTEMPLATE*)pDataItems)->id;
+			dwItemStyles = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->style;
+			dwItemExStyles = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->dwExtendedStyle;
+			xItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->x;
+			yItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->y;
+			cxItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->cx;
+			cyItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->cy;
+			WORD wIDItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->id;
 
 			pDataItems += sizeof(DLGITEMTEMPLATE);
 
@@ -775,9 +792,9 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		std::wstring wstrItem = L"    ";
 
 		//Item Class name.
-		if (*(PWORD)pDataItems == 0xFFFF) //Class is ordinal
+		if (*reinterpret_cast<PWORD>(pDataItems) == 0xFFFF) //Class is ordinal
 		{
-			WORD wClassOrdinalItem = *(PWORD)(pDataItems + sizeof(WORD));
+			WORD wClassOrdinalItem = *reinterpret_cast<PWORD>(pDataItems + sizeof(WORD));
 			pDataItems += sizeof(WORD) * 2;
 
 			swprintf_s(wpsz, L"Class ordinal: 0x%04X", wClassOrdinalItem);
@@ -791,7 +808,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		{
 			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 			size_t lengthClassNameItem;
-			auto* pwstrClassNameItem = (WCHAR*)pDataItems;
+			auto* pwstrClassNameItem = reinterpret_cast<WCHAR*>(pDataItems);
 			if (StringCbLengthW(pwstrClassNameItem, nSize - ((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes), &lengthClassNameItem) != S_OK)
 				return ResLoadError();
 			pDataItems += lengthClassNameItem + sizeof(WCHAR); //Plus null terminating.
@@ -802,9 +819,9 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		}
 
 		//Item Title (Caption).
-		if (*(PWORD)pDataItems == 0xFFFF) //Item Title is ordinal
+		if (*reinterpret_cast<PWORD>(pDataItems) == 0xFFFF) //Item Title is ordinal
 		{
-			WORD wTitleOrdinalItem = *(PWORD)(pDataItems + sizeof(WORD));
+			WORD wTitleOrdinalItem = *reinterpret_cast<PWORD>(pDataItems + sizeof(WORD));
 			pDataItems += sizeof(WORD) * 2;
 
 			swprintf_s(wpsz, L"Caption ordinal: 0x%04X, ", wTitleOrdinalItem);
@@ -814,7 +831,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		{
 			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
 			size_t lengthTitleItem;
-			auto* pwstrTitleItem = (WCHAR*)pDataItems;
+			auto* pwstrTitleItem = reinterpret_cast<WCHAR*>(pDataItems);
 			if (StringCbLengthW(pwstrTitleItem, nSize - ((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes), &lengthTitleItem) != S_OK)
 				return ResLoadError();
 			pDataItems += lengthTitleItem + sizeof(WCHAR); //Plus null terminating.
@@ -825,7 +842,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		}
 
 		//Extra count Item.
-		WORD wExtraCountItem = *(PWORD)pDataItems;
+		WORD wExtraCountItem = *reinterpret_cast<PWORD>(pDataItems);
 		pDataItems += sizeof(WORD);
 		if (wExtraCountItem)
 		{
@@ -845,10 +862,10 @@ void CViewRightBR::CreateStrings(const SRESHELPER * pResHelper)
 	std::wstring wstrTmp;
 	for (int i = 0; i < 16; i++)
 	{
-		m_wstrEditBRB += wstrTmp.assign(pwszResString + 1, (UINT)*pwszResString);
+		m_wstrEditBRB += wstrTmp.assign(pwszResString + 1, static_cast<UINT>(*pwszResString));
 		if (i != 15)
 			m_wstrEditBRB += L"\r\n";
-		pwszResString += 1 + (UINT)*pwszResString;
+		pwszResString += 1 + static_cast<UINT>(*pwszResString);
 	}
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
@@ -886,7 +903,7 @@ void CViewRightBR::CreateGroupIconCursor(const SRESHELPER * pResHelper)
 	using LPGRPICONDIR = const GRPICONDIR*;
 #pragma pack(pop)
 
-	auto pGRPIDir = (LPGRPICONDIR)pResHelper->pData->data();
+	auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(pResHelper->pData->data());
 	HICON hIcon;
 	ICONINFO iconInfo;
 
@@ -913,7 +930,7 @@ void CViewRightBR::CreateGroupIconCursor(const SRESHELPER * pResHelper)
 							auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 							if (!data.empty())
 							{
-								hIcon = CreateIconFromResourceEx((PBYTE)data.data(), (DWORD)data.size(),
+								hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(data.data()), static_cast<DWORD>(data.size()),
 									(iterRoot.stResDirEntryRoot.Id == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 								if (!hIcon)
 									return ResLoadError();
@@ -976,7 +993,7 @@ void CViewRightBR::CreateVersion(const SRESHELPER * pResHelper)
 	UINT dwBytesOut;
 
 	//Read the list of languages and code pages.
-	VerQueryValueW(pResHelper->pData->data(), L"\\VarFileInfo\\Translation", (LPVOID*)&pLangAndCP, &dwBytesOut);
+	VerQueryValueW(pResHelper->pData->data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
 
 	WCHAR wstrSubBlock[50];
 	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
@@ -992,7 +1009,7 @@ void CViewRightBR::CreateVersion(const SRESHELPER * pResHelper)
 			m_wstrEditBRB += L" - ";
 
 			WCHAR* pszBufferOut;
-			if (VerQueryValueW(pResHelper->pData->data(), wstrSubBlock, (LPVOID*)&pszBufferOut, &dwBytesOut))
+			if (VerQueryValueW(pResHelper->pData->data(), wstrSubBlock, reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
 				if (dwBytesOut)
 					m_wstrEditBRB += pszBufferOut;
 			m_wstrEditBRB += L"\r\n";
@@ -1009,7 +1026,7 @@ void CViewRightBR::CreateVersion(const SRESHELPER * pResHelper)
 void CViewRightBR::CreateManifest(const SRESHELPER * pResHelper)
 {
 	m_wstrEditBRB.resize(pResHelper->pData->size());
-	MultiByteToWideChar(CP_UTF8, 0, (LPCCH)pResHelper->pData->data(), (int)pResHelper->pData->size(), &m_wstrEditBRB[0], (int)pResHelper->pData->size());
+	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(pResHelper->pData->data()), static_cast<int>(pResHelper->pData->size()), &m_wstrEditBRB[0], static_cast<int>(pResHelper->pData->size()));
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
 	CRect rcClient;
@@ -1045,7 +1062,7 @@ void CViewRightBR::CreateToolbar(const SRESHELPER * pResHelper)
 						auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 						if (!data.empty())
 						{
-							SRESHELPER rh(2, pResHelper->IdResName, (std::vector<std::byte>*) & data);
+							SRESHELPER rh(2, pResHelper->IdResName, static_cast<std::vector<std::byte>*>(&data));
 							ShowResource(&rh);
 						}
 					}
@@ -1197,7 +1214,7 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 		m_wstrEditBRB = L"Signature: RSDS\r\n";
 		m_wstrEditBRB += L"GUID: ";
 		LPWSTR lpwstr;
-		GUID guid = *((GUID*)&refDebug.stDebugHdrInfo.dwHdr[1]);
+		GUID guid = *(reinterpret_cast<GUID*>(&refDebug.stDebugHdrInfo.dwHdr[1]));
 		StringFromIID(guid, &lpwstr);
 		m_wstrEditBRB += lpwstr;
 		m_wstrEditBRB += L"\r\n";
@@ -1228,7 +1245,7 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 		std::wstring wstr;
 		wstr.resize(refDebug.stDebugHdrInfo.strPDBName.size());
 		MultiByteToWideChar(CP_UTF8, 0, (LPCCH)refDebug.stDebugHdrInfo.strPDBName.data(),
-			(int)refDebug.stDebugHdrInfo.strPDBName.size(), &wstr[0], (int)refDebug.stDebugHdrInfo.strPDBName.size());
+			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()), &wstr[0], static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()));
 		m_wstrEditBRB += L"PDB File: ";
 		m_wstrEditBRB += wstr;
 		m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
