@@ -27,7 +27,7 @@ public:
 	[[nodiscard]] bool IsWritable()const { return m_fWritable; }
 	//Shows arbitrary offset in already loaded file (LoadFile)
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
-	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelectionSize, IHexCtrl* pHexCtrl = nullptr);
+	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexCtrl* pHexCtrl = nullptr);
 	//Shows only a piece of the whole loaded file.
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
 	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrl* pHexCtrl = nullptr);

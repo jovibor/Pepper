@@ -44,19 +44,21 @@ namespace HEXCTRL
 	********************************************************************************************/
 	enum class EHexCmd : WORD
 	{
-		CMD_SEARCH = 0x01, CMD_SEARCH_NEXT, CMD_SEARCH_PREV,
+		CMD_DLG_SEARCH = 0x01, CMD_SEARCH_NEXT, CMD_SEARCH_PREV,
+		CMD_NAV_DLG_GOTO, CMD_NAV_REPFWD, CMD_NAV_REPBKW, CMD_NAV_DATABEG, CMD_NAV_DATAEND, 
+		CMD_NAV_PAGEBEG, CMD_NAV_PAGEEND, CMD_NAV_LINEBEG, CMD_NAV_LINEEND,
 		CMD_SHOWDATA_BYTE, CMD_SHOWDATA_WORD, CMD_SHOWDATA_DWORD, CMD_SHOWDATA_QWORD,
-		CMD_BKM_ADD, CMD_BKM_REMOVE, CMD_BKM_NEXT, CMD_BKM_PREV, CMD_BKM_CLEARALL, CMD_BKM_MANAGER,
-		CMD_CLIPBOARD_COPY_HEX, CMD_CLIPBOARD_COPY_HEXLE, CMD_CLIPBOARD_COPY_HEXFMT, CMD_CLIPBOARD_COPY_TEXT,
-		CMD_CLIPBOARD_COPY_BASE64, CMD_CLIPBOARD_COPY_CARR, CMD_CLIPBOARD_COPY_GREPHEX, CMD_CLIPBOARD_COPY_PRNTSCRN,
-		CMD_CLIPBOARD_PASTE_HEX, CMD_CLIPBOARD_PASTE_TEXT,
-		CMD_MODIFY_OPERS, CMD_MODIFY_FILLZEROS, CMD_MODIFY_FILLDATA, CMD_MODIFY_UNDO, CMD_MODIFY_REDO,
+		CMD_BKM_ADD, CMD_BKM_REMOVE, CMD_BKM_NEXT, CMD_BKM_PREV, CMD_BKM_CLEARALL, CMD_BKM_DLG_MANAGER,
+		CMD_CLPBRD_COPYHEX, CMD_CLPBRD_COPYHEXLE, CMD_CLPBRD_COPYHEXFMT, CMD_CLPBRD_COPYTEXT,
+		CMD_CLPBRD_COPYBASE64, CMD_CLPBRD_COPYCARR, CMD_CLPBRD_COPYGREPHEX, CMD_CLPBRD_COPYPRNTSCRN,
+		CMD_CLPBRD_PASTEHEX, CMD_CLPBRD_PASTETEXT,
+		CMD_MODIFY_DLG_OPERS, CMD_MODIFY_FILLZEROS, CMD_MODIFY_DLG_FILLDATA, CMD_MODIFY_UNDO, CMD_MODIFY_REDO,
 		CMD_SEL_MARKSTART, CMD_SEL_MARKEND, CMD_SEL_ALL, CMD_SEL_ADDLEFT, CMD_SEL_ADDRIGHT, CMD_SEL_ADDUP, CMD_SEL_ADDDOWN,
-		CMD_DATAINTERPRET, CMD_ENCODING,
-		CMD_APPEARANCE_FONTINC, CMD_APPEARANCE_FONTDEC, CMD_APPEARANCE_CAPACINC, CMD_APPEARANCE_CAPACDEC,
-		CMD_PRINT, CMD_ABOUT,
+		CMD_DLG_DATAINTERP, CMD_DLG_ENCODING,
+		CMD_APPEAR_FONTINC, CMD_APPEAR_FONTDEC, CMD_APPEAR_CAPACINC, CMD_APPEAR_CAPACDEC,
+		CMD_DLG_PRINT, CMD_DLG_ABOUT,
 		CMD_CARET_LEFT, CMD_CARET_RIGHT, CMD_CARET_UP, CMD_CARET_DOWN,
-		CMD_SCROLL_PAGEUP, CMD_SCROLL_PAGEDOWN, CMD_SCROLL_TOP, CMD_SCROLL_BOTTOM
+		CMD_SCROLL_PAGEUP, CMD_SCROLL_PAGEDOWN
 	};
 
 	/********************************************************************************************
@@ -91,7 +93,8 @@ namespace HEXCTRL
 	********************************************************************************************/
 	enum class EHexWnd : WORD
 	{
-		WND_MAIN, DLG_BKMMANAGER, DLG_DATAINTERPRET, DLG_FILLDATA, DLG_OPERS, DLG_SEARCH, DLG_ENCODING
+		WND_MAIN, DLG_BKMMANAGER, DLG_DATAINTERP, DLG_FILLDATA, 
+		DLG_OPERS, DLG_SEARCH, DLG_ENCODING, DLG_GOTO
 	};
 
 	/********************************************************************************************
@@ -213,7 +216,6 @@ namespace HEXCTRL
 	{
 		EHexDataMode    enDataMode { EHexDataMode::DATA_MEMORY }; //Working data mode.
 		ULONGLONG       ullDataSize { };          //Size of the data to display, in bytes.
-		HEXSPANSTRUCT   stSelSpan { };            //Select .ullOffset initial position. Works only if .ullSize > 0.
 		HWND            hwndMsg { };              //Window for DATA_MSG mode. Parent is used by default.
 		IHexVirtData*   pHexVirtData { };         //Pointer for DATA_VIRTUAL mode.
 		IHexVirtColors* pHexVirtColors { };       //Pointer for Custom Colors class.
@@ -245,6 +247,15 @@ namespace HEXCTRL
 		bool      fIsAscii { false }; //Is cursor at ASCII part or at Hex.
 	};
 
+	/********************************************************************************************
+	* HEXVISSTRUCT - Offset visibility struct, used in IsOffsetVisible method.                  *
+	********************************************************************************************/
+	struct HEXVISSTRUCT
+	{
+		std::int8_t i8Vert { }; //Vertical offset.
+		std::int8_t i8Horz { }; //Horizontal offset.
+		operator bool() { return i8Vert == 0 && i8Horz == 0; }; //For test simplicity: if(IsOffsetVisible()).
+	};
 
 	/********************************************************************************************
 	* IHexCtrl - pure abstract base class.                                                      *
@@ -264,38 +275,42 @@ namespace HEXCTRL
 		virtual bool Create(const HEXCREATESTRUCT& hcs) = 0;    //Main initialization method.
 		virtual bool CreateDialogCtrl(UINT uCtrlID, HWND hParent) = 0; //Сreates custom dialog control.
 		virtual void Destroy() = 0;                             //Deleter.
-		virtual void ExecuteCmd(EHexCmd enCmd) = 0;              //Execute a command within the control.
+		virtual void ExecuteCmd(EHexCmd enCmd) = 0;             //Execute a command within the control.
 		[[nodiscard]] virtual DWORD GetCapacity()const = 0;                  //Current capacity.
 		[[nodiscard]] virtual ULONGLONG GetCaretPos()const = 0;              //Cursor position.
 		[[nodiscard]] virtual auto GetColors()const->HEXCOLORSSTRUCT = 0;    //Current colors.
+		[[nodiscard]] virtual auto GetDataSize()const->ULONGLONG = 0;        //Get currently set data size.
 		[[nodiscard]] virtual int GetEncoding()const = 0;                    //Get current code page ID.
 		[[nodiscard]] virtual long GetFontSize()const = 0;                   //Current font size.
 		[[nodiscard]] virtual HMENU GetMenuHandle()const = 0;                //Context menu handle.
-		[[nodiscard]] virtual DWORD GetSectorSize()const = 0;                //Current sector size.
+		[[nodiscard]] virtual auto GetPagesCount()const->ULONGLONG = 0;      //Get count of pages.
+		[[nodiscard]] virtual auto GetPagePos()const->ULONGLONG = 0;         //Get current page a cursor stays at.
+		[[nodiscard]] virtual DWORD GetPageSize()const = 0;                  //Current page size.
 		[[nodiscard]] virtual auto GetSelection()const->std::vector<HEXSPANSTRUCT> = 0; //Gets current selection.
 		[[nodiscard]] virtual auto GetShowMode()const->EHexShowMode = 0;     //Retrieves current show mode.
 		[[nodiscard]] virtual HWND GetWindowHandle(EHexWnd enWnd)const = 0;  //Retrieves control's window/dialog handle.
-		virtual void GoToOffset(ULONGLONG ullOffset, bool fSelect = false, ULONGLONG ullSize = 1) = 0; //Scrolls to given offset.
+		virtual void GoToOffset(ULONGLONG ullOffset, int iRelPos = 0) = 0;   //Go (scroll) to a given offset.
 		[[nodiscard]] virtual auto HitTest(POINT pt, bool fScreen = true)const->std::optional<HEXHITTESTSTRUCT> = 0; //HitTest given point.
 		[[nodiscard]] virtual bool IsCmdAvail(EHexCmd enCmd)const = 0; //Is given Cmd currently available (can be executed)?
 		[[nodiscard]] virtual bool IsCreated()const = 0;       //Shows whether control is created or not.
 		[[nodiscard]] virtual bool IsDataSet()const = 0;       //Shows whether a data was set to the control or not.
 		[[nodiscard]] virtual bool IsMutable()const = 0;       //Is edit mode enabled or not.
 		[[nodiscard]] virtual bool IsOffsetAsHex()const = 0;   //Is "Offset" currently represented (shown) as Hex or as Decimal.
-		[[nodiscard]] virtual bool IsOffsetVisible(ULONGLONG ullOffset)const = 0; //Ensures that given offset is visible.
+		[[nodiscard]] virtual HEXVISSTRUCT IsOffsetVisible(ULONGLONG ullOffset)const = 0; //Ensures that the given offset is visible.
 		virtual void Redraw() = 0;                             //Redraw the control's window.
-		virtual void SetCapacity(DWORD dwCapacity) = 0;        //Sets the control's current capacity.
-		virtual void SetColors(const HEXCOLORSSTRUCT& clr) = 0;//Sets all the control's colors.
+		virtual void SetCapacity(DWORD dwCapacity) = 0;        //Set the control's current capacity.
+		virtual void SetCaretPos(ULONGLONG ullOffset, bool fHighLow = true, bool fRedraw = true) = 0; //Set the caret position.
+		virtual void SetColors(const HEXCOLORSSTRUCT& clr) = 0;//Set all the control's colors.
 		virtual bool SetConfig(std::wstring_view wstrPath) = 0;//Set configuration file, or "" for defaults.
 		virtual void SetData(const HEXDATASTRUCT& hds) = 0;    //Main method for setting data to display (and edit).	
-		virtual void SetEncoding(int iCodePage) = 0;           //Code page for text area.
-		virtual void SetFont(const LOGFONTW* pLogFont) = 0;    //Sets the control's new font. This font has to be monospaced.
-		virtual void SetFontSize(UINT uiSize) = 0;             //Sets the control's font size.
+		virtual void SetEncoding(int iCodePage) = 0;           //Code-page for text area.
+		virtual void SetFont(const LOGFONTW* pLogFont) = 0;    //Set the control's new font. This font has to be monospaced.
+		virtual void SetFontSize(UINT uiSize) = 0;             //Set the control's font size.
 		virtual void SetMutable(bool fEnable) = 0;             //Enable or disable mutable/edit mode.
-		virtual void SetSectorSize(DWORD dwSize, std::wstring_view wstrName = L"Sector") = 0; //Sets sector/page size and name to draw the lines in-between.
-		virtual void SetSelection(const std::vector<HEXSPANSTRUCT>& vecSel) = 0; //Sets current selection.
-		virtual void SetShowMode(EHexShowMode enMode) = 0;     //Sets current data show mode.
-		virtual void SetWheelRatio(double dbRatio) = 0;        //Sets the ratio for how much to scroll with mouse-wheel.
+		virtual void SetPageSize(DWORD dwSize, std::wstring_view wstrName = L"Page") = 0; //Set page size and name to draw the lines in-between.
+		virtual void SetSelection(const std::vector<HEXSPANSTRUCT>& vecSel, bool fRedraw = true) = 0; //Set current selection.
+		virtual void SetShowMode(EHexShowMode enMode) = 0;     //Set current data show mode.
+		virtual void SetWheelRatio(double dbRatio) = 0;        //Set the ratio for how much to scroll with mouse-wheel.
 	};
 
 	/********************************************************************************************
