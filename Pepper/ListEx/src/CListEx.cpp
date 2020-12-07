@@ -1,13 +1,13 @@
 /****************************************************************************************
-* Copyright © 2018-2020 Jovibor https://github.com/jovibor/                             *
+* Copyright © 2018-2021 Jovibor https://github.com/jovibor/                             *
 * This is very extended and featured version of CMFCListCtrl class.                     *
 * Official git repository: https://github.com/jovibor/ListEx/                           *
 * This class is available under the "MIT License".                                      *
-* For more information visit the project's official repository.                         *
 ****************************************************************************************/
 #include "stdafx.h"
 #include "CListEx.h"
 #include "strsafe.h"
+#include <algorithm>
 #include <cassert>
 
 using namespace LISTEX;
@@ -201,12 +201,12 @@ void CListEx::CreateDialogCtrl(UINT uCtrlID, CWnd* pParent)
 
 int CALLBACK CListEx::DefCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
-	auto pListCtrl = reinterpret_cast<IListEx*>(lParamSort);
-	auto iSortColumn = pListCtrl->GetSortColumn();
-	auto enSortMode = pListCtrl->GetColumnSortMode(iSortColumn);
+	const auto* const pListCtrl = reinterpret_cast<IListEx*>(lParamSort);
+	const auto iSortColumn = pListCtrl->GetSortColumn();
+	const auto enSortMode = pListCtrl->GetColumnSortMode(iSortColumn);
 
-	std::wstring_view wstrItem1 = pListCtrl->GetItemText(static_cast<int>(lParam1), iSortColumn).GetString();
-	std::wstring_view wstrItem2 = pListCtrl->GetItemText(static_cast<int>(lParam2), iSortColumn).GetString();
+	const std::wstring_view wstrItem1 = pListCtrl->GetItemText(static_cast<int>(lParam1), iSortColumn).GetString();
+	const std::wstring_view wstrItem2 = pListCtrl->GetItemText(static_cast<int>(lParam2), iSortColumn).GetString();
 
 	int iCompare { };
 	switch (enSortMode)
@@ -264,9 +264,9 @@ BOOL CListEx::DeleteColumn(int nCol)
 	if (!IsCreated())
 		return FALSE;
 
-	if (auto iter = m_umapColumnColor.find(nCol); iter != m_umapColumnColor.end())
+	if (const auto iter = m_umapColumnColor.find(nCol); iter != m_umapColumnColor.end())
 		m_umapColumnColor.erase(iter);
-	if (auto iter = m_umapColumnSortMode.find(nCol); iter != m_umapColumnSortMode.end())
+	if (const auto iter = m_umapColumnSortMode.find(nCol); iter != m_umapColumnSortMode.end())
 		m_umapColumnSortMode.erase(iter);
 
 	return CMFCListCtrl::DeleteColumn(nCol);
@@ -278,17 +278,17 @@ BOOL CListEx::DeleteItem(int iItem)
 	if (!IsCreated())
 		return FALSE;
 
-	UINT ID = MapIndexToID(iItem);
+	const auto ID = MapIndexToID(iItem);
 
-	if (auto iter = m_umapCellTt.find(ID); iter != m_umapCellTt.end())
+	if (const auto iter = m_umapCellTt.find(ID); iter != m_umapCellTt.end())
 		m_umapCellTt.erase(iter);
-	if (auto iter = m_umapCellMenu.find(ID); iter != m_umapCellMenu.end())
+	if (const auto iter = m_umapCellMenu.find(ID); iter != m_umapCellMenu.end())
 		m_umapCellMenu.erase(iter);
-	if (auto iter = m_umapCellData.find(ID); iter != m_umapCellData.end())
+	if (const auto iter = m_umapCellData.find(ID); iter != m_umapCellData.end())
 		m_umapCellData.erase(iter);
-	if (auto iter = m_umapCellColor.find(ID); iter != m_umapCellColor.end())
+	if (const auto iter = m_umapCellColor.find(ID); iter != m_umapCellColor.end())
 		m_umapCellColor.erase(iter);
-	if (auto iter = m_umapRowColor.find(ID); iter != m_umapRowColor.end())
+	if (const auto iter = m_umapRowColor.find(ID); iter != m_umapRowColor.end())
 		m_umapRowColor.erase(iter);
 
 	return CMFCListCtrl::DeleteItem(iItem);
@@ -305,12 +305,12 @@ ULONGLONG CListEx::GetCellData(int iItem, int iSubItem)const
 	if (!IsCreated())
 		return 0;
 
-	UINT ID = MapIndexToID(iItem);
-	auto it = m_umapCellData.find(ID);
+	const auto ID = MapIndexToID(iItem);
+	const auto it = m_umapCellData.find(ID);
 
 	if (it != m_umapCellData.end())
 	{
-		auto itInner = it->second.find(iSubItem);
+		const auto itInner = it->second.find(iSubItem);
 
 		//If subitem id found.
 		if (itInner != it->second.end())
@@ -330,7 +330,7 @@ EListExSortMode CListEx::GetColumnSortMode(int iColumn)const
 	assert(IsCreated());
 
 	EListExSortMode enMode;
-	auto iter = m_umapColumnSortMode.find(iColumn);
+	const auto iter = m_umapColumnSortMode.find(iColumn);
 	if (iter != m_umapColumnSortMode.end())
 		enMode = iter->second;
 	else
@@ -379,7 +379,7 @@ UINT CListEx::MapIndexToID(UINT nItem)const
 	//The unique ID is set in NMITEMACTIVATE::lParam by client.
 	if (m_fVirtual)
 	{
-		UINT uCtrlId = static_cast<UINT>(GetDlgCtrlID());
+		const auto uCtrlId = static_cast<UINT>(GetDlgCtrlID());
 		NMITEMACTIVATE nmii { { m_hWnd, uCtrlId, LVM_MAPINDEXTOID } };
 		nmii.iItem = static_cast<int>(nItem);
 		GetParent()->SendMessageW(WM_NOTIFY, static_cast<WPARAM>(uCtrlId), reinterpret_cast<LPARAM>(&nmii));
@@ -400,8 +400,8 @@ void CListEx::SetCellColor(int iItem, int iSubItem, COLORREF clrBk, COLORREF clr
 	if (clrText == -1) //-1 for default color.
 		clrText = m_stColors.clrListText;
 
-	UINT ID = MapIndexToID(static_cast<UINT>(iItem));
-	auto it = m_umapCellColor.find(ID);
+	const auto ID = MapIndexToID(static_cast<UINT>(iItem));
+	const auto it = m_umapCellColor.find(ID);
 
 	//If there is no color for such item/subitem we just set it.
 	if (it == m_umapCellColor.end())
@@ -411,7 +411,7 @@ void CListEx::SetCellColor(int iItem, int iSubItem, COLORREF clrBk, COLORREF clr
 	}
 	else
 	{
-		auto itInner = it->second.find(iSubItem);
+		const auto itInner = it->second.find(iSubItem);
 
 		if (itInner == it->second.end())
 			it->second.insert({ iSubItem, { clrBk, clrText } });
@@ -429,8 +429,8 @@ void CListEx::SetCellData(int iItem, int iSubItem, ULONGLONG ullData)
 	if (!IsCreated())
 		return;
 
-	UINT ID = MapIndexToID(iItem);
-	auto it = m_umapCellData.find(ID);
+	const auto ID = MapIndexToID(iItem);
+	const auto it = m_umapCellData.find(ID);
 
 	//If there is no data for such item/subitem we just set it.
 	if (it == m_umapCellData.end())
@@ -440,7 +440,7 @@ void CListEx::SetCellData(int iItem, int iSubItem, ULONGLONG ullData)
 	}
 	else
 	{
-		auto itInner = it->second.find(iSubItem);
+		const auto itInner = it->second.find(iSubItem);
 
 		if (itInner == it->second.end())
 			it->second.insert({ iSubItem, ullData });
@@ -455,8 +455,8 @@ void CListEx::SetCellMenu(int iItem, int iSubItem, CMenu* pMenu)
 	if (!IsCreated())
 		return;
 
-	UINT ID = MapIndexToID(iItem);
-	auto it = m_umapCellMenu.find(ID);
+	const auto ID = MapIndexToID(iItem);
+	const auto it = m_umapCellMenu.find(ID);
 
 	//If there is no menu for such item/subitem we just set it.
 	if (it == m_umapCellMenu.end())
@@ -466,7 +466,7 @@ void CListEx::SetCellMenu(int iItem, int iSubItem, CMenu* pMenu)
 	}
 	else
 	{
-		auto itInner = it->second.find(iSubItem);
+		const auto itInner = it->second.find(iSubItem);
 
 		//If there is Item's menu but no Subitem's menu
 		//inserting new Subitem into inner map.
@@ -483,8 +483,8 @@ void CListEx::SetCellTooltip(int iItem, int iSubItem, std::wstring_view wstrTool
 	if (!IsCreated())
 		return;
 
-	UINT ID = MapIndexToID(iItem);
-	auto it = m_umapCellTt.find(ID);
+	const auto ID = MapIndexToID(iItem);
+	const auto it = m_umapCellTt.find(ID);
 
 	//If there is no tooltip for such item/subitem we just set it.
 	if (it == m_umapCellTt.end())
@@ -499,7 +499,7 @@ void CListEx::SetCellTooltip(int iItem, int iSubItem, std::wstring_view wstrTool
 	}
 	else
 	{
-		auto itInner = it->second.find(iSubItem);
+		const auto itInner = it->second.find(iSubItem);
 
 		//If there is Item's tooltip but no Subitem's tooltip
 		//inserting new Subitem into inner map.
@@ -684,14 +684,14 @@ bool CListEx::HasCellColor(int iItem, int iSubItem, COLORREF& clrBk, COLORREF& c
 
 	//If parent responds for LISTEX_MSG_CELLCOLOR message, we use lParam
 	//as a pointer to LISTEXCELLCOLOR. Otherwise we doing inner lookup.
-	auto iCtrlID = GetDlgCtrlID();
+	const auto iCtrlID = GetDlgCtrlID();
 	NMITEMACTIVATE nmii { { m_hWnd, static_cast<UINT>(iCtrlID), LISTEX_MSG_CELLCOLOR } };
 	nmii.iItem = iItem;
 	nmii.iSubItem = iSubItem;
 	GetParent()->SendMessageW(WM_NOTIFY, static_cast<WPARAM>(iCtrlID), reinterpret_cast<LPARAM>(&nmii));
 	if (nmii.lParam != 0)
 	{
-		auto pClr = reinterpret_cast<PLISTEXCELLCOLOR>(nmii.lParam);
+		const auto pClr = reinterpret_cast<PLISTEXCELLCOLOR>(nmii.lParam);
 		clrBk = pClr->clrBk;
 		clrText = pClr->clrText;
 
@@ -700,12 +700,12 @@ bool CListEx::HasCellColor(int iItem, int iSubItem, COLORREF& clrBk, COLORREF& c
 
 	if (!fHasColor)
 	{
-		UINT ID = MapIndexToID(static_cast<UINT>(iItem));
-		auto it = m_umapCellColor.find(ID);
+		const auto ID = MapIndexToID(static_cast<UINT>(iItem));
+		const auto it = m_umapCellColor.find(ID);
 
 		if (it != m_umapCellColor.end())
 		{
-			auto itInner = it->second.find(iSubItem);
+			const auto itInner = it->second.find(iSubItem);
 
 			//If subitem id found.
 			if (itInner != it->second.end())
@@ -718,8 +718,8 @@ bool CListEx::HasCellColor(int iItem, int iSubItem, COLORREF& clrBk, COLORREF& c
 
 		if (!fHasColor)
 		{
-			auto itColumn = m_umapColumnColor.find(iSubItem);
-			auto itRow = m_umapRowColor.find(ID);
+			const auto itColumn = m_umapColumnColor.find(iSubItem);
+			const auto itRow = m_umapRowColor.find(ID);
 
 			if (itColumn != m_umapColumnColor.end() && itRow != m_umapRowColor.end())
 			{
@@ -752,12 +752,12 @@ bool CListEx::HasTooltip(int iItem, int iSubItem, std::wstring** ppwstrText, std
 
 	//Can return true/false indicating if subitem has tooltip,
 	//or can return pointers to tooltip text as well, if poiters are not nullptr.
-	UINT ID = MapIndexToID(iItem);
-	auto it = m_umapCellTt.find(ID);
+	const auto ID = MapIndexToID(iItem);
+	const auto it = m_umapCellTt.find(ID);
 
 	if (it != m_umapCellTt.end())
 	{
-		auto itInner = it->second.find(iSubItem);
+		const auto itInner = it->second.find(iSubItem);
 
 		//If subitem id found and its text is not empty.
 		if (itInner != it->second.end() && !itInner->second.wstrText.empty())
@@ -791,12 +791,12 @@ bool CListEx::HasMenu(int iItem, int iSubItem, CMenu** ppMenu)
 	}
 	else
 	{
-		UINT ID = MapIndexToID(iItem);
-		auto it = m_umapCellMenu.find(ID);
+		const auto ID = MapIndexToID(iItem);
+		const auto it = m_umapCellMenu.find(ID);
 
 		if (it != m_umapCellMenu.end())
 		{
-			auto itInner = it->second.find(iSubItem);
+			const auto itInner = it->second.find(iSubItem);
 
 			//If subitem id found.
 			if (itInner != it->second.end())
@@ -821,33 +821,30 @@ std::vector<CListEx::SITEMTEXT> CListEx::ParseItemText(int iItem, int iSubitem)
 {
 	std::vector<SITEMTEXT> vecData { };
 	auto CStringText = GetItemText(iItem, iSubitem);
-	std::wstring_view wstrText = CStringText.GetString();
+	const std::wstring_view wstrText = CStringText.GetString();
 	CRect rcTextOrig; //Original rect of the subitem's text.
 	GetSubItemRect(iItem, iSubitem, LVIR_LABEL, rcTextOrig);
 	if (iSubitem != 0) //Not needed for item itself (not subitem).
 		rcTextOrig.left += 4;
 
-	size_t nPosCurr { 0 };          //Current position in the parsed string.
-	size_t nPosTagLink { };         //Start position of the opening tag "<link=".
-	size_t nPosLinkOpenQuote { };   //Position of the (link="<-) open quote.
-	size_t nPosLinkCloseQuote { };  //Position of the (link=""<-) close quote.
-	size_t nPosTagTitle { };        //Position of the (title=) tag beginning.
-	size_t nPosTitleOpenQuote { };  //Position of the (title="<-) open quote.
-	size_t nPosTitleCloseQuote { }; //Position of the (title=""<-) closequote.
-	size_t nPosTagFirstClose { };   //Start position of the opening tag's closing bracket ">".
-	size_t nPosTagLast { };         //Start position of the enclosing tag "</link>".
-	CRect rcTextCurr { };           //Current rect.
-
-	constexpr std::wstring_view wstrTagLink { L"<link=" };
-	constexpr std::wstring_view wstrTagFirstClose { L">" };
-	constexpr std::wstring_view wstrTagLast { L"</link>" };
-	constexpr std::wstring_view wstrTagTitle { L"title=" };
-	constexpr std::wstring_view wstrQuote { L"\"" };
+	size_t nPosCurr { 0 }; //Current position in the parsed string.
+	CRect rcTextCurr { };  //Current rect.
 
 	while (nPosCurr != std::wstring_view::npos)
 	{
+		constexpr std::wstring_view wstrTagLink { L"<link=" };
+		constexpr std::wstring_view wstrTagFirstClose { L">" };
+		constexpr std::wstring_view wstrTagLast { L"</link>" };
+		constexpr std::wstring_view wstrTagTitle { L"title=" };
+		constexpr std::wstring_view wstrQuote { L"\"" };
+
 		//Searching the string for a <link=...></link> pattern.
-		if ((nPosTagLink = wstrText.find(wstrTagLink, nPosCurr)) != std::wstring_view::npos
+		if (size_t nPosTagLink { }, //Start position of the opening tag "<link=".
+			nPosLinkOpenQuote { },  //Position of the (link="<-) open quote.
+			nPosLinkCloseQuote { }, //Position of the (link=""<-) close quote.
+			nPosTagFirstClose { },  //Start position of the opening tag's closing bracket ">".
+			nPosTagLast { };        //Start position of the enclosing tag "</link>".
+			(nPosTagLink = wstrText.find(wstrTagLink, nPosCurr)) != std::wstring_view::npos
 			&& (nPosLinkOpenQuote = wstrText.find(wstrQuote, nPosTagLink)) != std::wstring_view::npos
 			&& (nPosLinkCloseQuote = wstrText.find(wstrQuote, nPosLinkOpenQuote + wstrQuote.size())) != std::wstring_view::npos
 			&& (nPosTagFirstClose = wstrText.find(wstrTagFirstClose, nPosLinkCloseQuote + wstrQuote.size())) != std::wstring_view::npos
@@ -894,14 +891,17 @@ std::vector<CListEx::SITEMTEXT> CListEx::ParseItemText(int iItem, int iSubitem)
 			//Searching for title "<link=...title="">" tag.
 			bool fTitle { false };
 			std::wstring_view wstrTextTitle { };
-			if ((nPosTagTitle = wstrText.find(wstrTagTitle, nPosCurr)) != std::wstring_view::npos
+
+			if (size_t nPosTagTitle { }, //Position of the (title=) tag beginning.
+				nPosTitleOpenQuote { },  //Position of the (title="<-) opening quote.
+				nPosTitleCloseQuote { }; //Position of the (title=""<-) closing equote.
+				(nPosTagTitle = wstrText.find(wstrTagTitle, nPosCurr)) != std::wstring_view::npos
 				&& (nPosTitleOpenQuote = wstrText.find(wstrQuote, nPosTagTitle)) != std::wstring_view::npos
 				&& (nPosTitleCloseQuote = wstrText.find(wstrQuote, nPosTitleOpenQuote + wstrQuote.size())) != std::wstring_view::npos)
 			{
 				//Title tag text between quotes: <...title="textFromHere">
 				wstrTextTitle = wstrText.substr(nPosTitleOpenQuote + wstrQuote.size(),
 					nPosTitleCloseQuote - nPosTitleOpenQuote - wstrQuote.size());
-
 				fTitle = true;
 			}
 
@@ -1052,6 +1052,8 @@ void CListEx::DrawItem(LPDRAWITEMSTRUCT pDIS)
 	break;
 	case ODA_FOCUS:
 		break;
+	default:
+		break;
 	}
 }
 
@@ -1074,24 +1076,21 @@ void CListEx::OnMouseMove(UINT /*nFlags*/, CPoint pt)
 	ListView_SubItemHitTest(m_hWnd, &hi);
 
 	bool fLink { false }; //Cursor at link's rect area.
-	for (const auto& iter : ParseItemText(hi.iItem, hi.iSubItem))
+	auto vecText = ParseItemText(hi.iItem, hi.iSubItem);
+	if (const auto iterFind = std::find_if(vecText.begin(), vecText.end(), [&](SITEMTEXT& iter)
+		{ return iter.fLink && iter.rect.PtInRect(pt); }); iterFind != vecText.end())
 	{
-		if (iter.fLink && iter.rect.PtInRect(pt))
+		fLink = true;
+		if (m_fLinkTooltip && !m_fLDownAtLink && m_rcLinkCurr != iterFind->rect)
 		{
-			fLink = true;
+			TtLinkHide();
+			m_rcLinkCurr = iterFind->rect;
+			m_stCurrLink.iItem = hi.iItem;
+			m_stCurrLink.iSubItem = hi.iSubItem;
+			m_wstrTtText = iterFind->fTitle ? iterFind->wstrTitle : iterFind->wstrLink;
+			m_stTInfoLink.lpszText = m_wstrTtText.data();
 
-			if (m_fLinkTooltip && !m_fLDownAtLink && m_rcLinkCurr != iter.rect)
-			{
-				TtLinkHide();
-				m_rcLinkCurr = iter.rect;
-				m_stCurrLink.iItem = hi.iItem;
-				m_stCurrLink.iSubItem = hi.iSubItem;
-				m_wstrTtText = iter.fTitle ? iter.wstrTitle : iter.wstrLink;
-				m_stTInfoLink.lpszText = m_wstrTtText.data();
-
-				SetTimer(ID_TIMER_TT_LINK_ACTIVATE, 400, nullptr); //Activate (show) tooltip after delay.
-			}
-			break;
+			SetTimer(ID_TIMER_TT_LINK_ACTIVATE, 400, nullptr); //Activate (show) tooltip after delay.
 		}
 	}
 	SetCursor(fLink ? m_cursorHand : m_cursorDefault);
@@ -1154,15 +1153,13 @@ void CListEx::OnLButtonDown(UINT nFlags, CPoint pt)
 		return;
 
 	bool fLinkDown { false };
-	for (const auto& iter : ParseItemText(hi.iItem, hi.iSubItem))
+	auto vecText = ParseItemText(hi.iItem, hi.iSubItem);
+	if (const auto iterFind = std::find_if(vecText.begin(), vecText.end(), [&](SITEMTEXT& iter)
+		{ return iter.fLink && iter.rect.PtInRect(pt); }); iterFind != vecText.end())
 	{
-		if (iter.fLink && iter.rect.PtInRect(pt))
-		{
-			m_fLDownAtLink = true;
-			m_rcLinkCurr = iter.rect;
-			fLinkDown = true;
-			break;
-		}
+		m_fLDownAtLink = true;
+		m_rcLinkCurr = iterFind->rect;
+		fLinkDown = true;
 	}
 
 	if (!fLinkDown)
@@ -1183,23 +1180,19 @@ void CListEx::OnLButtonUp(UINT nFlags, CPoint pt)
 			return;
 		}
 
-		for (const auto& iter : ParseItemText(hi.iItem, hi.iSubItem))
+		auto vecText = ParseItemText(hi.iItem, hi.iSubItem);
+		if (const auto iterFind = std::find_if(vecText.begin(), vecText.end(), [&](SITEMTEXT& iter)
+			{ return iter.fLink && iter.rect == m_rcLinkCurr; }); iterFind != vecText.end())
 		{
-			if (iter.fLink && iter.rect == m_rcLinkCurr)
-			{
-				m_rcLinkCurr.SetRectEmpty();
-				fLinkUp = true;
-
-				UINT uCtrlId = static_cast<UINT>(GetDlgCtrlID());
-				NMITEMACTIVATE nmii { { m_hWnd, uCtrlId, LISTEX_MSG_LINKCLICK } };
-				nmii.iItem = hi.iItem;
-				nmii.iSubItem = hi.iSubItem;
-				nmii.ptAction = pt;
-				nmii.lParam = reinterpret_cast<LPARAM>(iter.wstrLink.data());
-				GetParent()->SendMessageW(WM_NOTIFY, static_cast<WPARAM>(uCtrlId), reinterpret_cast<LPARAM>(&nmii));
-
-				break;
-			}
+			m_rcLinkCurr.SetRectEmpty();
+			fLinkUp = true;
+			const auto uCtrlId = static_cast<UINT>(GetDlgCtrlID());
+			NMITEMACTIVATE nmii { { m_hWnd, uCtrlId, LISTEX_MSG_LINKCLICK } };
+			nmii.iItem = hi.iItem;
+			nmii.iSubItem = hi.iSubItem;
+			nmii.ptAction = pt;
+			nmii.lParam = reinterpret_cast<LPARAM>(iterFind->wstrLink.data());
+			GetParent()->SendMessageW(WM_NOTIFY, static_cast<WPARAM>(uCtrlId), reinterpret_cast<LPARAM>(&nmii));
 		}
 	}
 
@@ -1284,6 +1277,8 @@ void CListEx::OnTimer(UINT_PTR nIDEvent)
 
 		KillTimer(ID_TIMER_TT_LINK_ACTIVATE);
 		break;
+	default:
+		break;
 	}
 }
 
@@ -1361,7 +1356,7 @@ BOOL CListEx::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	//only AFTER the parent window handles LVN_COLUMNCLICK.
 	//So briefly, ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, &CListEx::OnLvnColumnClick) fires up
 	//only AFTER LVN_COLUMNCLICK sent to the parent.
-	auto pNMLV = reinterpret_cast<LPNMHEADERW>(lParam);
+	const auto* const pNMLV = reinterpret_cast<LPNMHEADERW>(lParam);
 	if (m_fSortable && (pNMLV->hdr.code == HDN_ITEMCLICKW || pNMLV->hdr.code == HDN_ITEMCLICKA))
 	{
 		m_fSortAscending = pNMLV->iItem == m_iSortColumn ? !m_fSortAscending : true;

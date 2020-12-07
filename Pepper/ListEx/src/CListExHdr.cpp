@@ -1,9 +1,8 @@
 /****************************************************************************************
-* Copyright © 2018-2020 Jovibor https://github.com/jovibor/                             *
+* Copyright © 2018-2021 Jovibor https://github.com/jovibor/                             *
 * This is very extended and featured version of CMFCListCtrl class.                     *
 * Official git repository: https://github.com/jovibor/ListEx/                           *
 * This class is available under the "MIT License".                                      *
-* For more information visit the project's official repository.                         *
 ****************************************************************************************/
 #include "stdafx.h"
 #include "../ListEx.h"
@@ -85,6 +84,8 @@ void CListExHdr::OnDrawItem(CDC* pDC, int iItem, CRect rect, BOOL bIsPressed, BO
 		break;
 	case (HDF_STRING | HDF_RIGHT):
 		uFormat = DT_RIGHT;
+		break;
+	default:
 		break;
 	}
 
@@ -208,7 +209,7 @@ void CListExHdr::SetFont(const LOGFONTW* pLogFontNew)
 	pDC->SelectObject(m_fontHdr);
 	pDC->GetTextMetricsW(&tm);
 	ReleaseDC(pDC);
-	DWORD dwHeightFont = tm.tmHeight + tm.tmExternalLeading + 1;
+	const DWORD dwHeightFont = tm.tmHeight + tm.tmExternalLeading + 1;
 	if (dwHeightFont > m_dwHeaderHeight)
 		SetHeight(dwHeightFont);
 }

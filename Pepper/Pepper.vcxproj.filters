@@ -93,9 +93,6 @@
     <ClInclude Include="include\FileLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\libpe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ListEx\ListEx.h">
       <Filter>ListEx</Filter>
     </ClInclude>
@@ -104,9 +101,6 @@
     </ClInclude>
     <ClInclude Include="ListEx\src\CListExHdr.h">
       <Filter>ListEx\src</Filter>
-    </ClInclude>
-    <ClInclude Include="include\HexCtrl.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

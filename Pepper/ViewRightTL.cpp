@@ -39,8 +39,8 @@ void CViewRightTL::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
 
-	m_pChildFrame = (CChildFrame*)GetParentFrame();
-	m_pMainDoc = (CPepperDoc*)GetDocument();
+	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
+	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
@@ -799,7 +799,8 @@ int CViewRightTL::CreateListDOSHeader()
 		DWORD dwSize = ref.dwSize;
 
 		//Get a pointer to an offset and then take only needed amount of bytes (by &...).
-		DWORD dwValue = *((PDWORD)((DWORD_PTR)pDosHeader + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pDosHeader) + dwOffset)) &
+			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 		if (i == 0)
 			dwValue = (dwValue & 0xFF00) >> 8 | (dwValue & 0xFF) << 8;
 
@@ -960,7 +961,6 @@ int CViewRightTL::CreateListFileHeader()
 		TO_WSTR_MAP(IMAGE_FILE_MACHINE_ARM64),
 		TO_WSTR_MAP(IMAGE_FILE_MACHINE_CEE),
 	};
-
 	const std::map<WORD, std::wstring> mapCharacteristics {
 		TO_WSTR_MAP(IMAGE_FILE_RELOCS_STRIPPED),
 		TO_WSTR_MAP(IMAGE_FILE_EXECUTABLE_IMAGE),
@@ -985,7 +985,7 @@ int CViewRightTL::CreateListFileHeader()
 		auto& ref = g_mapFileHeader.at(i);
 		DWORD dwOffset = ref.dwOffset;
 		DWORD dwSize = ref.dwSize;
-		DWORD dwValue = *((PDWORD)((DWORD_PTR)&pNTHdr->varHdr.stNTHdr32.FileHeader + dwOffset)) &
+		DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(&pNTHdr->varHdr.stNTHdr32.FileHeader) + dwOffset)) &
 			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 		swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset);
@@ -1096,7 +1096,8 @@ int CViewRightTL::CreateListOptHeader()
 			auto& ref = g_mapOptHeader32.at(i);
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
-			DWORD dwValue = *((PDWORD)((DWORD_PTR)pOptHdr32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+			DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pOptHdr32) + dwOffset)) &
+				(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + dwOffset);
 			m_listOptHeader->InsertItem(i, wstr);
@@ -1139,7 +1140,8 @@ int CViewRightTL::CreateListOptHeader()
 			auto& ref = g_mapOptHeader64.at(i);
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
-			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pOptHdr64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+			ULONGLONG ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(pOptHdr64) + dwOffset)) &
+				(ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
 
 			swprintf_s(wstr, 9, L"%08zX", pNTHdr->dwOffsetNTHdrDesc + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + dwOffset);
 			m_listOptHeader->InsertItem(i, wstr);
@@ -1341,7 +1343,8 @@ int CViewRightTL::CreateListExport()
 		auto& ref = g_mapExport.at(i);
 		DWORD dwOffset = ref.dwOffset;
 		DWORD dwSize = ref.dwSize;
-		DWORD dwValue = *((PDWORD)((DWORD_PTR)pExportDesc + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pExportDesc) + dwOffset)) &
+			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 		swprintf_s(wstr, 9, L"%08lX", pExport->dwOffsetExportDesc + dwOffset);
 		m_listExportDir->InsertItem(i, wstr);
@@ -1728,7 +1731,8 @@ int CViewRightTL::CreateListTLS()
 			auto& ref = g_mapTLS32.at(i);
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
-			DWORD dwValue = *((PDWORD)((DWORD_PTR)pTLSDir32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+			DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pTLSDir32) + dwOffset)) &
+				(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir->InsertItem(i, wstr);
@@ -1753,7 +1757,8 @@ int CViewRightTL::CreateListTLS()
 			auto& ref = g_mapTLS64.at(i);
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
-			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pTLSDir64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+			ULONGLONG ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(pTLSDir64) + dwOffset)) &
+				(ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
 
 			swprintf_s(wstr, 9, L"%08lX", pTLSDir->dwOffsetTLS + dwOffset);
 			m_listTLSDir->InsertItem(i, wstr);
@@ -1820,7 +1825,8 @@ int CViewRightTL::CreateListLCD()
 
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
-			DWORD dwValue = *((PDWORD)((DWORD_PTR)pLCD32 + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+			DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pLCD32) + dwOffset)) &
+				(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
 			m_listLCD->InsertItem(i, wstr);
@@ -1860,7 +1866,8 @@ int CViewRightTL::CreateListLCD()
 
 			DWORD dwOffset = ref.dwOffset;
 			DWORD dwSize = ref.dwSize;
-			ULONGLONG ullValue = *((PULONGLONG)((DWORD_PTR)pLCD64 + dwOffset)) & (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
+			ULONGLONG ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(pLCD64) + dwOffset)) &
+				(ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
 
 			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffsetLCD + dwOffset);
 			m_listLCD->InsertItem(i, wstr);
@@ -2037,7 +2044,8 @@ int CViewRightTL::CreateListCOM()
 		auto& ref = g_mapComDir.at(i);
 		DWORD dwOffset = ref.dwOffset;
 		DWORD dwSize = ref.dwSize;
-		DWORD dwValue = *((PDWORD)((DWORD_PTR)pCom + dwOffset)) & (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pCom) + dwOffset)) &
+			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 		swprintf_s(wstr, 9, L"%08lX", pCOMDesc->dwOffsetComDesc + dwOffset);
 		m_listCOMDir->InsertItem(i, wstr);

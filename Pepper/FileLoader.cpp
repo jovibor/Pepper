@@ -11,9 +11,9 @@
 ************************************************************/
 #include "stdafx.h"
 #include "FileLoader.h"
+#include "PepperDoc.h"
 #include "constants.h"
 #include <algorithm>
-#include "PepperDoc.h"
 
 HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 {
@@ -158,7 +158,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	std::byte* pData;
 	if (m_fMapViewOfFileWhole) {
 		enMode = EHexDataMode::DATA_MEMORY;
-		pData = (std::byte*)((DWORD_PTR)m_lpBase + ullOffset);
+		pData = reinterpret_cast<std::byte*>(reinterpret_cast<DWORD_PTR>(m_lpBase) + ullOffset);
 	}
 	else {
 		enMode = EHexDataMode::DATA_MSG;
@@ -279,7 +279,7 @@ bool CFileLoader::IsLoaded()const
 
 BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	auto pHexNtfy = (PHEXNOTIFYSTRUCT)lParam;
+	auto pHexNtfy = reinterpret_cast<PHEXNOTIFYSTRUCT>(lParam);
 
 	switch (pHexNtfy->hdr.code)
 	{

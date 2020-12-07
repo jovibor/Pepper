@@ -57,7 +57,7 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pConte
 
 	m_fSplitterCreated = true;
 
-	auto pMainFrm = (CMainFrame*)AfxGetMainWnd();
+	auto pMainFrm = reinterpret_cast<CMainFrame*>(AfxGetMainWnd());
 	pMainFrm->GetChildFramesCount()++;
 
 	return TRUE;
@@ -75,7 +75,7 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 
 void CChildFrame::OnClose()
 {
-	auto pMainFrm = (CMainFrame*)AfxGetMainWnd();
+	auto pMainFrm = reinterpret_cast<CMainFrame*>(AfxGetMainWnd());
 	--pMainFrm->GetChildFramesCount();
 	pMainFrm->SetCurrFramePtrNull();
 	m_vecWndStatus.clear();

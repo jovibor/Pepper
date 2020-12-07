@@ -57,8 +57,8 @@ void CViewRightBR::OnInitialUpdate()
 	CScrollView::OnInitialUpdate();
 	SetScrollSizes(MM_TEXT, CSize(0, 0));
 
-	m_pChildFrame = (CChildFrame*)GetParentFrame();
-	m_pMainDoc = (CPepperDoc*)GetDocument();
+	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
+	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 
 	m_EditBRB.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
@@ -251,10 +251,10 @@ void CViewRightBR::CreateBitmap(const SRESHELPER* pResHelper)
 	LPVOID pDIBBits;
 
 	if (pDIBInfo->bmiHeader.biBitCount > 8)
-		pDIBBits = (LPVOID)(reinterpret_cast<PDWORD>(pDIBInfo->bmiColors + pDIBInfo->bmiHeader.biClrUsed) +
+		pDIBBits = static_cast<LPVOID>(reinterpret_cast<PDWORD>(pDIBInfo->bmiColors + pDIBInfo->bmiHeader.biClrUsed) +
 			((pDIBInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
 	else
-		pDIBBits = (LPVOID)(pDIBInfo->bmiColors + iColors);
+		pDIBBits = static_cast<LPVOID>(pDIBInfo->bmiColors + iColors);
 
 	HDC hDC = ::GetDC(m_hWnd);
 	HBITMAP hBitmap = CreateDIBitmap(hDC, &pDIBInfo->bmiHeader, CBM_INIT, pDIBBits, pDIBInfo, DIB_RGB_COLORS);
@@ -279,7 +279,7 @@ void CViewRightBR::CreateBitmap(const SRESHELPER* pResHelper)
 	bmp.DeleteObject();
 }
 
-void CViewRightBR::CreateDlg(const SRESHELPER * pResHelper)
+void CViewRightBR::CreateDlg(const SRESHELPER* pResHelper)
 {
 #pragma pack(push, 4)
 	struct DLGTEMPLATEEX //Helper struct. Not completed.
@@ -546,7 +546,8 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		{
 			pDataHdr += sizeof(DLGTEMPLATEEX);
 			pwstrMenuRes = reinterpret_cast<WCHAR*>(pDataHdr);
-			if (StringCbLengthW(pwstrMenuRes, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthMenuRes) != S_OK)
+			if (StringCbLengthW(pwstrMenuRes, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthMenuRes) != S_OK)
 				return ResLoadError();
 			pDataHdr += lengthMenuRes + sizeof(WCHAR); //Plus null terminating.
 		}
@@ -575,7 +576,8 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		else //Menu wstring.
 		{
 			pwstrMenuRes = reinterpret_cast<WCHAR*>(&pDataHdr);
-			if (StringCbLengthW(pwstrMenuRes, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthMenuRes) != S_OK)
+			if (StringCbLengthW(pwstrMenuRes, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthMenuRes) != S_OK)
 				return ResLoadError();
 			pDataHdr += lengthMenuRes + sizeof(WCHAR); //Plus null terminating.
 		}
@@ -632,10 +634,12 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	else //Class name is WString.
 	{
 		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL then there is a need to align.
-			pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
 		size_t lengthClassName;
 		auto* pwstrClassName = reinterpret_cast<WCHAR*>(pDataHdr);
-		if (StringCbLengthW(pwstrClassName, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthClassName) != S_OK)
+		if (StringCbLengthW(pwstrClassName, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
+			reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthClassName) != S_OK)
 			return ResLoadError();
 		pDataHdr += lengthClassName + sizeof(WCHAR); //Plus null terminating.
 
@@ -646,10 +650,12 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 
 	//Title (Caption)
 	if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL then there is a need to align.
-		pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+		pDataHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataHdr) -
+			reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
 	size_t lengthTitle;
 	auto* pwstrTitle = reinterpret_cast<WCHAR*>(pDataHdr);
-	if (StringCbLengthW(pwstrTitle, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTitle) != S_OK)
+	if (StringCbLengthW(pwstrTitle, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
+		reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthTitle) != S_OK)
 		return ResLoadError();
 	pDataHdr += lengthTitle + sizeof(WCHAR); //Plus null terminating.
 
@@ -691,9 +697,11 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		pDataHdr += sizeof(bCharset);
 
 		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL nedd to align.
-			pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
 		pwstrTypeFace = reinterpret_cast<WCHAR*>(pDataHdr);
-		if (StringCbLengthW(pwstrTypeFace, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTypeFace) != S_OK)
+		if (StringCbLengthW(pwstrTypeFace, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
+			reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthTypeFace) != S_OK)
 			return ResLoadError();
 		pDataHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
 
@@ -713,9 +721,11 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		pDataHdr += sizeof(wFontPointSize);
 
 		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000)
-			pDataHdr += (sizeof(WORD) - (((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
 		pwstrTypeFace = reinterpret_cast<WCHAR*>(pDataHdr);
-		if (StringCbLengthW(pwstrTypeFace, nSize - ((DWORD_PTR)pDataHdr - (DWORD_PTR)pDataDlgRes), &lengthTypeFace) != S_OK)
+		if (StringCbLengthW(pwstrTypeFace, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
+			reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthTypeFace) != S_OK)
 			return ResLoadError();
 		pDataHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
 
@@ -740,9 +750,10 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	wstrData += L"{\r\n"; //Open bracer for stringanize.
 	for (WORD items = 0; items < wDlgItems; items++)
 	{
-		pDataItems += (sizeof(DWORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 3)) & 3; //DWORD Aligning.
+		pDataItems += (sizeof(DWORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
+			reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 3)) & 3; //DWORD Aligning.
 		//Out of bounds checking.
-		if ((DWORD_PTR)pDataItems >= (DWORD_PTR)(pDataDlgRes)+nSize)
+		if (reinterpret_cast<DWORD_PTR>(pDataItems) >= reinterpret_cast<DWORD_PTR>(pDataDlgRes) + nSize)
 			break;
 
 		DWORD dwItemStyles, dwItemExStyles;
@@ -806,10 +817,12 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		}
 		else //Class name is Wstring.
 		{
-			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
 			size_t lengthClassNameItem;
 			auto* pwstrClassNameItem = reinterpret_cast<WCHAR*>(pDataItems);
-			if (StringCbLengthW(pwstrClassNameItem, nSize - ((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes), &lengthClassNameItem) != S_OK)
+			if (StringCbLengthW(pwstrClassNameItem, nSize - (reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthClassNameItem) != S_OK)
 				return ResLoadError();
 			pDataItems += lengthClassNameItem + sizeof(WCHAR); //Plus null terminating.
 
@@ -829,10 +842,12 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		}
 		else //Title is wstring.
 		{
-			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
 			size_t lengthTitleItem;
 			auto* pwstrTitleItem = reinterpret_cast<WCHAR*>(pDataItems);
-			if (StringCbLengthW(pwstrTitleItem, nSize - ((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes), &lengthTitleItem) != S_OK)
+			if (StringCbLengthW(pwstrTitleItem, nSize - (reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthTitleItem) != S_OK)
 				return ResLoadError();
 			pDataItems += lengthTitleItem + sizeof(WCHAR); //Plus null terminating.
 
@@ -846,7 +861,8 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 		pDataItems += sizeof(WORD);
 		if (wExtraCountItem)
 		{
-			pDataItems += (sizeof(WORD) - (((DWORD_PTR)pDataItems - (DWORD_PTR)pDataDlgRes) & 1)) & 1; //WORD Aligning.
+			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
 			pDataItems += wExtraCountItem;
 		}
 
@@ -1023,10 +1039,11 @@ void CViewRightBR::CreateVersion(const SRESHELPER * pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateManifest(const SRESHELPER * pResHelper)
+void CViewRightBR::CreateManifest(const SRESHELPER* pResHelper)
 {
 	m_wstrEditBRB.resize(pResHelper->pData->size());
-	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(pResHelper->pData->data()), static_cast<int>(pResHelper->pData->size()), &m_wstrEditBRB[0], static_cast<int>(pResHelper->pData->size()));
+	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(pResHelper->pData->data()), 
+		static_cast<int>(pResHelper->pData->size()), &m_wstrEditBRB[0], static_cast<int>(pResHelper->pData->size()));
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
 	CRect rcClient;
@@ -1036,7 +1053,7 @@ void CViewRightBR::CreateManifest(const SRESHELPER * pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateToolbar(const SRESHELPER * pResHelper)
+void CViewRightBR::CreateToolbar(const SRESHELPER* pResHelper)
 {
 	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
@@ -1244,8 +1261,9 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	{
 		std::wstring wstr;
 		wstr.resize(refDebug.stDebugHdrInfo.strPDBName.size());
-		MultiByteToWideChar(CP_UTF8, 0, (LPCCH)refDebug.stDebugHdrInfo.strPDBName.data(),
-			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()), &wstr[0], static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()));
+		MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(refDebug.stDebugHdrInfo.strPDBName.data()),
+			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()), &wstr[0], 
+			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()));
 		m_wstrEditBRB += L"PDB File: ";
 		m_wstrEditBRB += wstr;
 		m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());

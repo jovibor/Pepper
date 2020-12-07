@@ -7,9 +7,9 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
-#include "res/resource.h"
 #include "ViewLeft.h"
 #include "constants.h"
+#include "res/resource.h"
 
 IMPLEMENT_DYNCREATE(CViewLeft, CView)
 
@@ -22,7 +22,7 @@ void CViewLeft::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
 
-	m_pMainDoc = (CPepperDoc*)GetDocument();
+	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
 	m_pLibpe = m_pMainDoc->m_pLibpe;
 
 	DWORD dwFileInfo;

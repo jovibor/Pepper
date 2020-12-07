@@ -442,7 +442,7 @@ int CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs->SetRedraw(FALSE); //to increase the speed of List populating
 	for (auto& i : pExport->vecFuncs)
 	{
-		swprintf_s(wstr, 9, L"%08lX", DWORD(dwOffset + sizeof(DWORD) * i.dwOrdinal));
+		swprintf_s(wstr, 9, L"%08lX", static_cast<DWORD>(dwOffset + sizeof(DWORD) * i.dwOrdinal));
 		m_listExportFuncs->InsertItem(listindex, wstr);
 
 		swprintf_s(wstr, 9, L"%08X", i.dwRVA);

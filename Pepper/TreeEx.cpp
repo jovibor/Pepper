@@ -30,7 +30,7 @@ void CTreeEx::OnPaint()
 	rDC.GetClipBox(&rc);
 	rDC.FillSolidRect(rc, RGB(255,255,255));
 
-	DefWindowProcW(WM_PAINT, (WPARAM)rDC.m_hDC, static_cast<LPARAM>(0));
+	DefWindowProcW(WM_PAINT, reinterpret_cast<WPARAM>(rDC.m_hDC), static_cast<LPARAM>(0));
 }
 
 BOOL CTreeEx::OnEraseBkgnd(CDC* /*pDC*/)
