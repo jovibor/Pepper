@@ -48,7 +48,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
 	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHdrHglInact= RGB(0, 112, 112);
+	m_stlcs.stColor.clrHdrHglInact = RGB(0, 112, 112);
 	m_stlcs.stColor.clrHdrHglAct = RGB(0, 92, 92);
 	m_stlcs.dwHdrHeight = 35;
 	m_stlcs.pParent = this;
@@ -422,12 +422,14 @@ int CViewRightBL::CreateListExportFuncs()
 		m_stlcs.uID = IDC_LIST_EXPORT_FUNCS;
 		m_listExportFuncs->Create(m_stlcs);
 		m_listExportFuncs->ShowWindow(SW_HIDE);
-		m_listExportFuncs->InsertColumn(0, L"Offset", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 90);
+		m_listExportFuncs->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+		m_listExportFuncs->SetColumn(0, &stCol);
 		m_listExportFuncs->SetHdrColumnColor(0, g_clrOffset);
-		m_listExportFuncs->InsertColumn(1, L"Function RVA", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 100);
-		m_listExportFuncs->InsertColumn(2, L"Ordinal", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 100);
-		m_listExportFuncs->InsertColumn(3, L"Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 250);
-		m_listExportFuncs->InsertColumn(4, L"Forwarder Name", LVCFMT_LEFT | LVCFMT_FIXED_WIDTH, 400);
+		m_listExportFuncs->InsertColumn(1, L"Function RVA", LVCFMT_CENTER, 100);
+		m_listExportFuncs->InsertColumn(2, L"Ordinal", LVCFMT_CENTER, 100);
+		m_listExportFuncs->InsertColumn(3, L"Name", LVCFMT_CENTER, 250);
+		m_listExportFuncs->InsertColumn(4, L"Forwarder Name", LVCFMT_CENTER, 400);
 	}
 	PLIBPE_EXPORT pExport;
 	if (m_pLibpe->GetExport(pExport) != S_OK)
@@ -469,6 +471,8 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 		m_stlcs.uID = IDC_LIST_IMPORT_ENTRY;
 		m_listImportEntry->Create(m_stlcs);
 		m_listImportEntry->InsertColumn(0, L"Offset", 0, 90);
+		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+		m_listImportEntry->SetColumn(0, &stCol);
 		m_listImportEntry->SetHdrColumnColor(0, g_clrOffset);
 		m_listImportEntry->InsertColumn(1, L"Function Name", 0, 175);
 		m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", 0, 100);
@@ -578,6 +582,8 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 		m_stlcs.uID = IDC_LIST_DELAYIMPORT_ENTRY;
 		m_listDelayImportEntry->Create(m_stlcs);
 		m_listDelayImportEntry->InsertColumn(0, L"Offset", 0, 90);
+		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+		m_listDelayImportEntry->SetColumn(0, &stCol);
 		m_listDelayImportEntry->SetHdrColumnColor(0, g_clrOffset);
 		m_listDelayImportEntry->InsertColumn(1, L"Function Name", 0, 300);
 		m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", 0, 100);
@@ -673,9 +679,11 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 		m_listRelocsEntry->Create(m_stlcs);
 		m_listRelocsEntry->ShowWindow(SW_HIDE);
 		m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+		m_listRelocsEntry->SetColumn(0, &stCol);
 		m_listRelocsEntry->SetHdrColumnColor(0, g_clrOffset);
 		m_listRelocsEntry->InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
-		m_listRelocsEntry->InsertColumn(2, L"Offset to apply", LVCFMT_LEFT, 120);
+		m_listRelocsEntry->InsertColumn(2, L"Offset to apply", LVCFMT_CENTER, 120);
 	}
 	else
 		m_listRelocsEntry->DeleteAllItems();
