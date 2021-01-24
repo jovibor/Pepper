@@ -26,7 +26,8 @@ protected:
 	virtual ~CViewRightTL() {}
 	void OnInitialUpdate() override;
 	void OnUpdate(CView*, LPARAM, CObject*) override;
-	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) override;
+	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)override;
+	BOOL OnCommand(WPARAM wParam, LPARAM lParam)override;
 	void OnDraw(CDC* pDC) override; // overridden to draw this view.
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -34,11 +35,12 @@ protected:
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListRelocsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListExceptionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnListExportMenuSelect(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnListImportNotify(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnListTLSMenuSelect(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnListBoundImpMenuSelect(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnListCOMDescMenuSelect(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListSecHdrGetToolTip(NMHDR *pNMHDR, LRESULT *pResult);
+	void OnListExportMenuSelect(WORD wMenuID);
+	void OnListImportMenuSelect(WORD wMenuID);
+	void OnListTLSMenuSelect(WORD wMenuID);
+	void OnListBoundImpMenuSelect(WORD wMenuID);
+	void OnListCOMDescMenuSelect(WORD wMenuID);
 	afx_msg void OnTreeResTopSelChange(NMHDR *pNMHDR, LRESULT *pResult);
 	void SortImportData();
 	DECLARE_MESSAGE_MAP()
@@ -88,6 +90,9 @@ private:
 	LOGFONTW m_lf { }, m_hdrlf { };
 	CMenu m_menuList;
 	CFileLoader* m_pFileLoader { };
+	UINT_PTR m_iListID { };      //List ID munu clicked at.
+	int m_iListItem { };    //List item munu clicked at.
+	int m_iListSubItem { }; //List SubItem menu clicked at.
 
 	int CreateListDOSHeader();
 	int CreateListRichHeader();

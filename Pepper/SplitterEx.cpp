@@ -12,6 +12,7 @@
 ************************************************************/
 #include "stdafx.h"
 #include "SplitterEx.h"
+#include <algorithm>
 
 IMPLEMENT_DYNAMIC(CSplitterEx, CSplitterWndEx)
 
@@ -41,7 +42,7 @@ BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE 
 	BOOL ret = CSplitterWnd::CreateView(row, col, pViewClass, sizeInit, pContext);
 
 	CWnd* pPane = GetPane(row, col);
-	m_vecPanes.emplace_back(row, col, pPane);
+	m_vecPanes.emplace_back(SPANES { row, col, pPane });
 
 	return ret;
 }
@@ -51,14 +52,14 @@ bool CSplitterEx::AddNested(int row, int col, CWnd* pNested)
 	if (row >= static_cast<int>(m_vecRows.size()) || col >= static_cast<int>(m_vecCols.size()))
 		return false;
 
-	for (auto& i : m_vecPanes)
-		if (std::get<0>(i) == row && std::get<1>(i) == col)
+	for (auto& iter : m_vecPanes)
+		if (iter.iRow == row && iter.iCol == col)
 		{
-			i = { row, col, pNested };
+			iter = { row, col, pNested };
 			return true;
 		}
 
-	m_vecPanes.emplace_back(row, col, pNested);
+	m_vecPanes.emplace_back(SPANES { row, col, pNested });
 
 	return true;
 }
@@ -69,7 +70,8 @@ bool CSplitterEx::HideRow(UINT nRow)
 		return false;
 
 	m_vecRows[nRow] = false;
-	m_nRows--;
+
+	--m_nRows;
 	RecalcPanes();
 
 	return true;
@@ -93,7 +95,7 @@ bool CSplitterEx::HideCol(UINT nCol)
 		return false;
 
 	m_vecCols[nCol] = false;
-	m_nCols--;
+	--m_nCols;
 	RecalcPanes();
 
 	return true;
@@ -114,48 +116,65 @@ bool CSplitterEx::ShowCol(UINT nCol)
 void CSplitterEx::RecalcPanes()
 {
 	//Populating temp vectors with visible cols/rows first,
-	//then adding invisible cols/rows at the end.
-	std::vector<int> vecColsOrdered { }, vecRowsOrdered { };
+	//then adding invisible cols/rows to the end.
+	std::vector<int> vecColsOrdered;
+	vecColsOrdered.reserve(m_vecCols.size());
+	int iIndex { 0 };
+	for (auto i : m_vecCols)
 	{
-		int iIndex { };
-		for (auto i : m_vecCols) {
-			if (i)
-				vecColsOrdered.emplace_back(iIndex);
-			iIndex++;
-		}
-		iIndex = 0;
-		for (auto i : m_vecCols) {
-			if (!i)
-				vecColsOrdered.emplace_back(iIndex);
-			iIndex++;
-		}
-		iIndex = 0;
-		for (auto i : m_vecRows) {
-			if (i)
-				vecRowsOrdered.emplace_back(iIndex);
-			iIndex++;
-		}
-		iIndex = 0;
-		for (auto i : m_vecRows) {
-			if (!i)
-				vecRowsOrdered.emplace_back(iIndex);
-			iIndex++;
-		}
+		if (i)
+			vecColsOrdered.emplace_back(iIndex);
+		++iIndex;
 	}
+	iIndex = 0;
+	for (auto i : m_vecCols)
+	{
+		if (!i)
+			vecColsOrdered.emplace_back(iIndex);
+		++iIndex;
+	}
+
+	std::vector<int> vecRowsOrdered;
+	vecRowsOrdered.reserve(m_vecRows.size());
+	iIndex = 0;
+	for (auto i : m_vecRows)
+	{
+		if (i)
+			vecRowsOrdered.emplace_back(iIndex);
+		++iIndex;
+	}
+	iIndex = 0;
+	for (auto i : m_vecRows)
+	{
+		if (!i)
+			vecRowsOrdered.emplace_back(iIndex);
+		++iIndex;
+	}
+
 	//Recalculating DlgCtrlId based on visible/hidden status.
 	for (unsigned iterRow = 0; iterRow < m_vecRows.size(); iterRow++)
+	{
 		for (unsigned iterCol = 0; iterCol < m_vecCols.size(); iterCol++)
-			for (auto& i : m_vecPanes) //Search for exact pane.
-				if (std::get<0>(i) == vecRowsOrdered[iterRow] && std::get<1>(i) == vecColsOrdered[iterCol])
+		{
+			//Finding an exact pane.
+			const auto iterPane = std::find_if(m_vecPanes.begin(), m_vecPanes.end(),
+				[=](const SPANES& refData)
 				{
-					CWnd *pPane = std::get<2>(i);
-					pPane->SetDlgCtrlID(AFX_IDW_PANE_FIRST + iterRow * 16 + iterCol);
+					return refData.iRow == vecRowsOrdered[iterRow] && refData.iCol == vecColsOrdered[iterCol];
+				});
 
-					if (!m_vecCols[iterCol] || !m_vecRows[iterRow])
-						pPane->ShowWindow(SW_HIDE);
-					else
-						pPane->ShowWindow(SW_SHOW);
-				}
+			if (iterPane != m_vecPanes.end())
+			{
+				const auto pPane = iterPane->pPane;
+				pPane->SetDlgCtrlID(AFX_IDW_PANE_FIRST + iterRow * 16 + iterCol);
+
+				if (!m_vecRows[iterPane->iRow] || !m_vecCols[iterPane->iCol])
+					pPane->ShowWindow(SW_HIDE);
+				else
+					pPane->ShowWindow(SW_SHOW);
+			}
+		}
+	}
 
 	RecalcLayout();
 }

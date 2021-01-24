@@ -7,7 +7,7 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 /********************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/						*
+* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/					*
 * Extended CSplitterWnd class with the ability to Hide/Show individual			*
 * rows and columns.																*
 * Has five additional methods: 1.HideRow() 2. ShowRow()							*
@@ -30,8 +30,6 @@ class CSplitterEx : public CSplitterWndEx
 {
 public:
 	DECLARE_DYNAMIC(CSplitterEx)
-	CSplitterEx() {}
-	virtual ~CSplitterEx() {}
 	BOOL CreateStatic(CWnd* m_pParent, int nRows, int nCols, DWORD dwStyle = WS_CHILD | WS_VISIBLE, UINT nID = AFX_IDW_PANE_FIRST) override;
 	BOOL CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE sizeInit, CCreateContext* pContext);
 	bool AddNested(int row, int col, CWnd* pNested);
@@ -48,9 +46,16 @@ protected:
 	virtual void OnInvertTracker(const CRect& rect);
 	virtual void OnDrawSplitter(CDC* pDC, ESplitType nType, const CRect& rect);
 private:
-	//Vector of row/col is visible?
+	struct SPANES
+	{
+		int iRow { };    //Row of the pane.
+		int iCol { };    //Column of the pane.
+		CWnd* pPane { }; //Pane pointer.
+	};
+
+	//Vectors of row/col visibility flags.
 	std::vector<bool> m_vecRows { };
 	std::vector<bool> m_vecCols { };
-	//row, column ,pPane.
-	std::vector<std::tuple<int, int, CWnd*>> m_vecPanes { };
+	//row, column, pPane.
+	std::vector<SPANES> m_vecPanes { };
 };

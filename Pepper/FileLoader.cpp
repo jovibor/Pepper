@@ -82,11 +82,13 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexC
 
 	EHexDataMode enMode;
 	std::byte* pData;
-	if (m_fMapViewOfFileWhole) {
+	if (m_fMapViewOfFileWhole) 
+	{
 		enMode = EHexDataMode::DATA_MEMORY;
 		pData = static_cast<std::byte*>(m_lpBase);
 	}
-	else {
+	else 
+	{
 		enMode = EHexDataMode::DATA_MSG;
 		pData = nullptr;
 	}
@@ -95,7 +97,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexC
 	m_hds.pData = pData;
 	m_hds.ullDataSize = static_cast<ULONGLONG>(m_stFileSize.QuadPart);
 	m_hds.enDataMode = enMode;
-
+	
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
 		[pHexCtrl](const QUERYDATA & r) {return r.hWnd == pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN); });
 

@@ -1,8 +1,8 @@
 /****************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/                             *
+* Copyright Â© 2018-2021 Jovibor https://github.com/jovibor/                             *
 * This is a Hex Control for MFC/Win32 applications.                                     *
 * Official git repository: https://github.com/jovibor/HexCtrl/                          *
-* This software is available under the "MIT License modified with The Commons Clause".  *
+* This software is available under the "MIT License modified withÂ TheÂ Commons Clause".  *
 * https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
 ****************************************************************************************/
 #pragma once
@@ -25,7 +25,7 @@ namespace HEXCTRL
 		CMD_BKM_ADD, CMD_BKM_REMOVE, CMD_BKM_NEXT, CMD_BKM_PREV, CMD_BKM_CLEARALL, CMD_BKM_DLG_MANAGER,
 		CMD_CLPBRD_COPYHEX, CMD_CLPBRD_COPYHEXLE, CMD_CLPBRD_COPYHEXFMT, CMD_CLPBRD_COPYTEXT,
 		CMD_CLPBRD_COPYBASE64, CMD_CLPBRD_COPYCARR, CMD_CLPBRD_COPYGREPHEX, CMD_CLPBRD_COPYPRNTSCRN,
-		CMD_CLPBRD_PASTEHEX, CMD_CLPBRD_PASTETEXT,
+		CMD_CLPBRD_COPYOFFSET, CMD_CLPBRD_PASTEHEX, CMD_CLPBRD_PASTETEXT,
 		CMD_MODIFY_DLG_OPERS, CMD_MODIFY_FILLZEROS, CMD_MODIFY_DLG_FILLDATA, CMD_MODIFY_UNDO, CMD_MODIFY_REDO,
 		CMD_SEL_MARKSTART, CMD_SEL_MARKEND, CMD_SEL_ALL, CMD_SEL_ADDLEFT, CMD_SEL_ADDRIGHT, CMD_SEL_ADDUP, CMD_SEL_ADDDOWN,
 		CMD_DLG_DATAINTERP, CMD_DLG_ENCODING,
@@ -228,5 +228,45 @@ namespace HEXCTRL
 		std::int8_t i8Vert { }; //Vertical offset.
 		std::int8_t i8Horz { }; //Horizontal offset.
 		operator bool()const { return i8Vert == 0 && i8Horz == 0; }; //For test simplicity: if(IsOffsetVisible()).
+	};
+
+	/********************************************************************************************
+	* EHexModifyMode - Enum of the data modification mode, used in HEXMODIFY.                   *
+	********************************************************************************************/
+	enum class EHexModifyMode : WORD
+	{
+		MODIFY_DEFAULT, MODIFY_REPEAT, MODIFY_OPERATION
+	};
+
+	/********************************************************************************************
+	* EHexOperMode - Enum of the data operation mode, used in HEXMODIFY when                    *
+	* HEXMODIFY::enModifyMode is set to MODIFY_OPERATION.                                       *
+	********************************************************************************************/
+	enum class EHexOperMode : WORD
+	{
+		OPER_OR = 0x01, OPER_XOR, OPER_AND, OPER_NOT, OPER_SHL, OPER_SHR,
+		OPER_ADD, OPER_SUBTRACT, OPER_MULTIPLY, OPER_DIVIDE
+	};
+
+	/********************************************************************************************
+	* HEXMODIFY - used to represent data modification parameters.                               *
+	* When enModifyMode is set to EHexModifyMode::MODIFY_DEFAULT, bytes from pData just replace *
+	* corresponding data bytes as is. If enModifyMode is equal to EHexModifyMode::MODIFY_REPEAT *
+	* then block by block replacement takes place few times.                                    *
+	*   For example : if SUM(vecSpan.ullSize) = 9, ullDataSize = 3 and enModifyMode is set to   *
+	* EHexModifyMode::MODIFY_REPEAT, bytes in memory at vecSpan.ullOffset position are          *
+	* 123456789, and bytes pointed to by pData are 345, then, after modification, bytes at      *
+	* vecSpan.ullOffset will be 345345345. If enModifyMode is equal to                          *
+	* EHexModifyMode::MODIFY_OPERATION then enOperMode comes into play, showing what kind of    *
+	* operation must be performed on data.                                                      *
+	********************************************************************************************/
+	struct HEXMODIFY
+	{
+		EHexModifyMode enModifyMode { EHexModifyMode::MODIFY_DEFAULT }; //Modify mode.
+		EHexOperMode   enOperMode { };          //Operation mode, used only if enModifyMode == MODIFY_OPERATION.
+		std::byte*  pData { };                  //Pointer to a data to be set.
+		ULONGLONG   ullDataSize { };            //Size of the data pData is pointing to.
+		std::vector<HEXSPANSTRUCT> vecSpan { }; //Vector of data offsets and sizes.
+		bool        fRedraw { true };           //Redraw HexCtrl's window after data changes?
 	};
 };
