@@ -63,14 +63,15 @@ namespace HEXCTRL
 		[[nodiscard]] virtual auto GetDataSize()const->ULONGLONG = 0;        //Get currently set data size.
 		[[nodiscard]] virtual int GetEncoding()const = 0;                    //Get current code page ID.
 		[[nodiscard]] virtual long GetFontSize()const = 0;                   //Current font size.
-		[[nodiscard]] virtual auto GetGroupMode()const->EHexGroupMode = 0;   //Retrieves current data grouping mode.
+		[[nodiscard]] virtual auto GetGroupMode()const->EHexDataSize = 0;    //Retrieves current data grouping mode.
 		[[nodiscard]] virtual HMENU GetMenuHandle()const = 0;                //Context menu handle.
 		[[nodiscard]] virtual auto GetPagesCount()const->ULONGLONG = 0;      //Get count of pages.
 		[[nodiscard]] virtual auto GetPagePos()const->ULONGLONG = 0;         //Get current page a cursor stays at.
 		[[nodiscard]] virtual DWORD GetPageSize()const = 0;                  //Current page size.
-		[[nodiscard]] virtual auto GetSelection()const->std::vector<HEXSPANSTRUCT> = 0; //Gets current selection.
+		[[nodiscard]] virtual auto GetSelection()const->std::vector<HEXSPANSTRUCT> = 0; //Get current selection.
 		[[nodiscard]] virtual HWND GetWindowHandle(EHexWnd enWnd)const = 0;  //Retrieves control's window/dialog handle.
 		virtual void GoToOffset(ULONGLONG ullOffset, int iRelPos = 0) = 0;   //Go (scroll) to a given offset.
+		[[nodiscard]] virtual bool HasSelection()const = 0;    //Does currently have any selection or not.
 		[[nodiscard]] virtual auto HitTest(POINT pt, bool fScreen = true)const->std::optional<HEXHITTESTSTRUCT> = 0; //HitTest given point.
 		[[nodiscard]] virtual bool IsCmdAvail(EHexCmd enCmd)const = 0; //Is given Cmd currently available (can be executed)?
 		[[nodiscard]] virtual bool IsCreated()const = 0;       //Shows whether control is created or not.
@@ -88,7 +89,7 @@ namespace HEXCTRL
 		virtual void SetEncoding(int iCodePage) = 0;           //Code-page for text area.
 		virtual void SetFont(const LOGFONTW* pLogFont) = 0;    //Set the control's new font. This font has to be monospaced.
 		virtual void SetFontSize(UINT uiSize) = 0;             //Set the control's font size.
-		virtual void SetGroupMode(EHexGroupMode enMode) = 0;   //Set current "Group Data By" mode.
+		virtual void SetGroupMode(EHexDataSize enMode) = 0;    //Set current "Group Data By" mode.
 		virtual void SetMutable(bool fEnable) = 0;             //Enable or disable mutable/editable mode.
 		virtual void SetOffsetMode(bool fHex) = 0;             //Set offset being shown as Hex or as Decimal.
 		virtual void SetPageSize(DWORD dwSize, std::wstring_view wstrName = L"Page") = 0; //Set page size and name to draw the lines in-between.

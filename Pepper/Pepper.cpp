@@ -29,7 +29,7 @@ BOOL CAboutDlg::OnInitDialog()
 	std::wstring wstrlibpeVer = L"libpe - PE/PE+ binaries library v";
 	wstrlibpeVer += libpeInfo()->pwszVersion;
 	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrlibpeVer.data());
-	wstrlibpeVer = L"HexCtrl - Hex Control for MFC/Win32 v";
+	wstrlibpeVer = L"HexCtrl - ";
 	wstrlibpeVer += GetHexCtrlInfo()->pwszVersion;
 	GetDlgItem(IDC_LINK_HEXCTRL)->SetWindowTextW(wstrlibpeVer.data());
 

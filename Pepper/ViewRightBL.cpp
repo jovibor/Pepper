@@ -474,10 +474,10 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 		m_listImportEntry->SetColumn(0, &stCol);
 		m_listImportEntry->SetHdrColumnColor(0, g_clrOffset);
-		m_listImportEntry->InsertColumn(1, L"Function Name", 0, 175);
-		m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", 0, 100);
-		m_listImportEntry->InsertColumn(3, L"AddressOfData", 0, 150);
-		m_listImportEntry->InsertColumn(4, L"Thunk RVA", 0, 150);
+		m_listImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 175);
+		m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
+		m_listImportEntry->InsertColumn(3, L"AddressOfData", LVCFMT_CENTER, 150);
+		m_listImportEntry->InsertColumn(4, L"Thunk RVA", LVCFMT_CENTER, 150);
 	}
 	else
 		m_listImportEntry->DeleteAllItems();
@@ -585,12 +585,12 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 		m_listDelayImportEntry->SetColumn(0, &stCol);
 		m_listDelayImportEntry->SetHdrColumnColor(0, g_clrOffset);
-		m_listDelayImportEntry->InsertColumn(1, L"Function Name", 0, 300);
-		m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", 0, 100);
+		m_listDelayImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 300);
+		m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
 		m_listDelayImportEntry->InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
-		m_listDelayImportEntry->InsertColumn(4, L"IAT AddresOfData", 0, 200);
-		m_listDelayImportEntry->InsertColumn(5, L"BoundIAT AddresOfData", 0, 230);
-		m_listDelayImportEntry->InsertColumn(6, L"UnloadInfoTable AddresOfData", 0, 240);
+		m_listDelayImportEntry->InsertColumn(4, L"IAT AddresOfData", LVCFMT_CENTER, 200);
+		m_listDelayImportEntry->InsertColumn(5, L"BoundIAT AddresOfData", LVCFMT_CENTER, 230);
+		m_listDelayImportEntry->InsertColumn(6, L"UnloadInfoTable AddresOfData", LVCFMT_CENTER, 240);
 	}
 	else
 		m_listDelayImportEntry->DeleteAllItems();

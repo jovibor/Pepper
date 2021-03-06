@@ -16,7 +16,7 @@ namespace HEXCTRL
 	/********************************************************************************************
 	* EHexCmd - Enum of the commands that can be executed within HexCtrl, used in ExecuteCmd.   *
 	********************************************************************************************/
-	enum class EHexCmd : WORD
+	enum class EHexCmd : std::uint8_t
 	{
 		CMD_DLG_SEARCH = 0x01, CMD_SEARCH_NEXT, CMD_SEARCH_PREV,
 		CMD_NAV_DLG_GOTO, CMD_NAV_REPFWD, CMD_NAV_REPBKW, CMD_NAV_DATABEG, CMD_NAV_DATAEND,
@@ -38,17 +38,9 @@ namespace HEXCTRL
 	/********************************************************************************************
 	* EHexCreateMode - Enum of HexCtrl creation mode.                                           *
 	********************************************************************************************/
-	enum class EHexCreateMode : WORD
+	enum class EHexCreateMode : std::uint8_t
 	{
 		CREATE_CHILD, CREATE_POPUP, CREATE_CUSTOMCTRL
-	};
-
-	/********************************************************************************************
-	* EHexGroupMode - current data mode representation.                                         *
-	********************************************************************************************/
-	enum class EHexGroupMode : WORD
-	{
-		ASBYTE = 1, ASWORD = 2, ASDWORD = 4, ASQWORD = 8
 	};
 
 	/********************************************************************************************
@@ -57,7 +49,7 @@ namespace HEXCTRL
 	* DATA_MSG: Data is handled through WM_NOTIFY messages in handler window.				    *
 	* DATA_VIRTUAL: Data is handled through IHexVirtData interface by derived class.            *
 	********************************************************************************************/
-	enum class EHexDataMode : WORD
+	enum class EHexDataMode : std::uint8_t
 	{
 		DATA_MEMORY, DATA_MSG, DATA_VIRTUAL
 	};
@@ -65,7 +57,7 @@ namespace HEXCTRL
 	/********************************************************************************************
 	* EHexWnd - HexControl's windows.                                                           *
 	********************************************************************************************/
-	enum class EHexWnd : WORD
+	enum class EHexWnd : std::uint8_t
 	{
 		WND_MAIN, DLG_BKMMANAGER, DLG_DATAINTERP, DLG_FILLDATA,
 		DLG_OPERS, DLG_SEARCH, DLG_ENCODING, DLG_GOTO
@@ -156,14 +148,12 @@ namespace HEXCTRL
 		COLORREF clrTextCaption { RGB(0, 0, 180) };                  //Caption text color
 		COLORREF clrTextInfoRect { GetSysColor(COLOR_WINDOWTEXT) };  //Text color of the bottom "Info" rect.
 		COLORREF clrTextCaret { RGB(255, 255, 255) };                //Caret text color.
-		COLORREF clrTextTooltip { GetSysColor(COLOR_INFOTEXT) };     //Tooltip text color.
 		COLORREF clrBk { GetSysColor(COLOR_WINDOW) };                //Background color.
 		COLORREF clrBkSelect { GetSysColor(COLOR_HIGHLIGHT) };       //Background color of the selected Hex/ASCII.
 		COLORREF clrBkDataInterp { RGB(147, 58, 22) };               //Data Interpreter Bk color.
 		COLORREF clrBkInfoRect { GetSysColor(COLOR_BTNFACE) };       //Background color of the bottom "Info" rect.
 		COLORREF clrBkCaret { RGB(0, 0, 255) };                      //Caret background color.
 		COLORREF clrBkCaretSelect { RGB(0, 0, 200) };                //Caret background color in selection.
-		COLORREF clrBkTooltip { GetSysColor(COLOR_INFOBK) };         //Tooltip background color.
 	};
 
 	/********************************************************************************************
@@ -218,10 +208,14 @@ namespace HEXCTRL
 	{
 		ULONGLONG ullOffset { };      //Offset.
 		bool      fIsAscii { false }; //Is cursor at ASCII part or at Hex.
+		bool      fIsHigh { false };  //Is it High or Low part of the byte.
 	};
 
 	/********************************************************************************************
 	* HEXVISSTRUCT - Offset visibility struct, used in IsOffsetVisible method.                  *
+	* -1 - Offset is higher, or at the left, of the visible area.                               *
+	*  1 - lower, or at the right.                                                              *
+	*  0 - visible.                                                                             *
 	********************************************************************************************/
 	struct HEXVISSTRUCT
 	{
@@ -233,19 +227,28 @@ namespace HEXCTRL
 	/********************************************************************************************
 	* EHexModifyMode - Enum of the data modification mode, used in HEXMODIFY.                   *
 	********************************************************************************************/
-	enum class EHexModifyMode : WORD
+	enum class EHexModifyMode : std::uint8_t
 	{
-		MODIFY_DEFAULT, MODIFY_REPEAT, MODIFY_OPERATION
+		MODIFY_DEFAULT, MODIFY_REPEAT, MODIFY_OPERATION, MODIFY_RANDOM
 	};
 
 	/********************************************************************************************
-	* EHexOperMode - Enum of the data operation mode, used in HEXMODIFY when                    *
-	* HEXMODIFY::enModifyMode is set to MODIFY_OPERATION.                                       *
+	* EHexOperMode - Data Operation mode, used in EHexModifyMode::MODIFY_OPERATION mode.        *
 	********************************************************************************************/
-	enum class EHexOperMode : WORD
+	enum class EHexOperMode : std::uint8_t
 	{
-		OPER_OR = 0x01, OPER_XOR, OPER_AND, OPER_NOT, OPER_SHL, OPER_SHR,
-		OPER_ADD, OPER_SUBTRACT, OPER_MULTIPLY, OPER_DIVIDE
+		OPER_ASSIGN, OPER_OR, OPER_XOR, OPER_AND, OPER_NOT, OPER_SHL, OPER_SHR, OPER_ROTL,
+		OPER_ROTR, OPER_SWAP, OPER_ADD, OPER_SUBTRACT, OPER_MULTIPLY, OPER_DIVIDE,
+		OPER_CEILING, OPER_FLOOR
+	};
+
+	/********************************************************************************************
+	* EHexDataSize - Data size to operate on, used in EHexModifyMode::MODIFY_OPERATION mode.    *
+	* Also used to set data grouping mode, in SetGroupMode method.                              *
+	********************************************************************************************/
+	enum class EHexDataSize : std::uint8_t
+	{
+		SIZE_BYTE = 0x01, SIZE_WORD = 0x02, SIZE_DWORD = 0x04, SIZE_QWORD = 0x08
 	};
 
 	/********************************************************************************************
@@ -256,17 +259,18 @@ namespace HEXCTRL
 	*   For example : if SUM(vecSpan.ullSize) = 9, ullDataSize = 3 and enModifyMode is set to   *
 	* EHexModifyMode::MODIFY_REPEAT, bytes in memory at vecSpan.ullOffset position are          *
 	* 123456789, and bytes pointed to by pData are 345, then, after modification, bytes at      *
-	* vecSpan.ullOffset will be 345345345. If enModifyMode is equal to                          *
-	* EHexModifyMode::MODIFY_OPERATION then enOperMode comes into play, showing what kind of    *
-	* operation must be performed on data.                                                      *
+	* vecSpan.ullOffset will be 345345345.                                                      *
+	* If enModifyMode is equal to MODIFY_OPERATION then enOperMode comes into play, showing     *
+	* what kind of operation must be performed on data, with the enOperSize showing the size.   *
 	********************************************************************************************/
 	struct HEXMODIFY
 	{
 		EHexModifyMode enModifyMode { EHexModifyMode::MODIFY_DEFAULT }; //Modify mode.
 		EHexOperMode   enOperMode { };          //Operation mode, used only if enModifyMode == MODIFY_OPERATION.
-		std::byte*  pData { };                  //Pointer to a data to be set.
-		ULONGLONG   ullDataSize { };            //Size of the data pData is pointing to.
+		EHexDataSize   enOperSize { };          //Operation data size.
+		std::byte*     pData { };               //Pointer to a data to be set.
+		ULONGLONG      ullDataSize { };         //Size of the data pData is pointing to.
 		std::vector<HEXSPANSTRUCT> vecSpan { }; //Vector of data offsets and sizes.
-		bool        fRedraw { true };           //Redraw HexCtrl's window after data changes?
+		bool           fBigEndian { false };    //Treat the data being modified as a big endian, used only in MODIFY_OPERATION mode.
 	};
 };
