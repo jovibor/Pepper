@@ -78,11 +78,13 @@ void CViewRightBR::OnInitialUpdate()
 	}
 	m_EditBRB.SetFont(&m_fontEditRes);
 
-	m_stlcs.pParent = this;
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
 	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
+	m_stlcs.stColor.clrHdrHglInact = RGB(0, 112, 112);
+	m_stlcs.stColor.clrHdrHglAct = RGB(0, 92, 92);
+	m_stlcs.pParent = this;
 	m_stlcs.dwHdrHeight = 35;
 
 	m_lf.lfHeight = 16;
@@ -1042,7 +1044,7 @@ void CViewRightBR::CreateVersion(const SRESHELPER * pResHelper)
 void CViewRightBR::CreateManifest(const SRESHELPER* pResHelper)
 {
 	m_wstrEditBRB.resize(pResHelper->pData->size());
-	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(pResHelper->pData->data()), 
+	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(pResHelper->pData->data()),
 		static_cast<int>(pResHelper->pData->size()), &m_wstrEditBRB[0], static_cast<int>(pResHelper->pData->size()));
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
@@ -1191,6 +1193,8 @@ int CViewRightBR::CreateListTLSCallbacks()
 	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
 	m_stListTLSCallbacks->Create(m_stlcs);
 	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
+	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	m_stListTLSCallbacks->SetColumn(0, &stCol);
 
 	int listindex { };
 	WCHAR wstr[9];
@@ -1262,7 +1266,7 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 		std::wstring wstr;
 		wstr.resize(refDebug.stDebugHdrInfo.strPDBName.size());
 		MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(refDebug.stDebugHdrInfo.strPDBName.data()),
-			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()), &wstr[0], 
+			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()), &wstr[0],
 			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()));
 		m_wstrEditBRB += L"PDB File: ";
 		m_wstrEditBRB += wstr;
