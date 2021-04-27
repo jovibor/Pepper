@@ -14,6 +14,8 @@
 #include "ViewRightBR.h"
 #include "ViewRightTL.h"
 #include "ViewRightTR.h"
+
+#include <algorithm>
 #include <cmath>
 
 IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWndEx)
