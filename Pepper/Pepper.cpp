@@ -123,8 +123,7 @@ void CPepperApp::OnAppAbout()
 
 void CPepperApp::OnFileOpen()
 {
-	CFileDialog fd(TRUE, nullptr, nullptr,
-		OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
+	CFileDialog fd(TRUE, nullptr, nullptr, OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
 		OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, L"All files (*.*)|*.*||");
 
 	if (fd.DoModal() == IDOK)
@@ -133,17 +132,21 @@ void CPepperApp::OnFileOpen()
 		CComPtr<IShellItemArray> pResults;
 		pIFOD->GetResults(&pResults);
 
+		bool fOpened { false };
 		DWORD dwCount { };
 		pResults->GetCount(&dwCount);
-		for (unsigned i = 0; i < dwCount; i++)
+		for (auto i = 0u; i < dwCount; ++i)
 		{
 			CComPtr<IShellItem> pItem;
 			pResults->GetItemAt(i, &pItem);
 			CComHeapPtr<wchar_t> pwstrPath;
 			pItem->GetDisplayName(SIGDN_FILESYSPATH, &pwstrPath);
-
-			CWinAppEx::OpenDocumentFile(pwstrPath);
+			const auto pDoc = CWinAppEx::OpenDocumentFile(pwstrPath);
+			fOpened = !fOpened ? pDoc != nullptr : true;
 		}
+		//In case no file has been opened (if multiple selection) we show the open file dialog again.
+		if (!fOpened)
+			OnFileOpen();
 	}
 }
 
