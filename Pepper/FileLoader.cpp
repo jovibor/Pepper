@@ -64,7 +64,9 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	m_hcs.enCreateMode = EHexCreateMode::CREATE_POPUP;
 	m_hcs.hwndParent = m_hWnd;
 	m_hcs.dwExStyle = WS_EX_APPWINDOW; //To force to the taskbar.
-
+	const auto iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
+	const auto iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
+	m_hcs.rect = { iPosX, iPosY, iPosX * 3, iPosY * 3 };
 	m_hds.hwndMsg = m_hWnd;
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
 
