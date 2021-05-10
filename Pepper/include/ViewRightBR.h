@@ -15,7 +15,7 @@
 
 using namespace LISTEX;
 
-class CWndSampledlg : public CWnd
+class CWndSampledlg final: public CWnd
 {
 public:
 	void Attach(CImageList* pImgList, CChildFrame* pChildFrame);
@@ -34,6 +34,7 @@ class CViewRightBR : public CScrollView
 	DECLARE_DYNCREATE(CViewRightBR)
 protected:
 	virtual void OnDraw(CDC* pDC);      // overridden to draw this view
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	virtual void OnInitialUpdate();     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);

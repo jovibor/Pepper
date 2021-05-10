@@ -50,6 +50,7 @@ IMPLEMENT_DYNCREATE(CViewRightBR, CScrollView)
 BEGIN_MESSAGE_MAP(CViewRightBR, CScrollView)
 	ON_WM_SIZE()
 	ON_WM_VSCROLL()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 void CViewRightBR::OnInitialUpdate()
@@ -874,7 +875,7 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	wstrData += L"}";
 }
 
-void CViewRightBR::CreateStrings(const SRESHELPER * pResHelper)
+void CViewRightBR::CreateStrings(const SRESHELPER* pResHelper)
 {
 	auto pwszResString = reinterpret_cast<LPCWSTR>(pResHelper->pData->data());
 	std::wstring wstrTmp;
@@ -893,7 +894,7 @@ void CViewRightBR::CreateStrings(const SRESHELPER * pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateGroupIconCursor(const SRESHELPER * pResHelper)
+void CViewRightBR::CreateGroupIconCursor(const SRESHELPER* pResHelper)
 {
 	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
@@ -986,7 +987,7 @@ void CViewRightBR::CreateGroupIconCursor(const SRESHELPER * pResHelper)
 	m_fDrawRes = true;
 }
 
-void CViewRightBR::CreateVersion(const SRESHELPER * pResHelper)
+void CViewRightBR::CreateVersion(const SRESHELPER* pResHelper)
 {
 #pragma pack(push, 4)
 	struct LANGANDCODEPAGE
@@ -1093,25 +1094,26 @@ void CViewRightBR::CreateToolbar(const SRESHELPER* pResHelper)
 
 void CViewRightBR::OnDraw(CDC* pDC)
 {
-	if (!m_fDrawRes)
-		return;
+	SCROLLINFO stScroll { sizeof(SCROLLINFO), SIF_ALL };
+	GetScrollInfo(SB_HORZ, &stScroll, SIF_ALL);
+	const auto nScrollHorz = stScroll.nPos;
+	GetScrollInfo(SB_VERT, &stScroll, SIF_ALL);
+	const auto nScrollVert = stScroll.nPos;
 
 	CRect rcClient;
 	GetClientRect(&rcClient);
-
-	SCROLLINFO stScroll { sizeof(SCROLLINFO), SIF_ALL };
-	GetScrollInfo(SB_HORZ, &stScroll, SIF_ALL);
-	int nScrollHorz = stScroll.nPos;
-	GetScrollInfo(SB_VERT, &stScroll, SIF_ALL);
-	int nScrollVert = stScroll.nPos;
-
 	rcClient.top += nScrollVert;
 	rcClient.bottom += nScrollVert;
 	rcClient.left += nScrollHorz;
 	rcClient.right += nScrollHorz;
-	pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
 
-	CSize sizeScroll = GetTotalSize();
+	if (!m_fDrawRes)
+	{
+		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
+		return;
+	}
+
+	const auto sizeScroll = GetTotalSize();
 	CPoint ptDrawAt;
 	int x, y;
 
@@ -1173,6 +1175,11 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	default:
 		pDC->TextOutW(0, 0, L"This Resource type is not supported.");
 	}
+}
+
+BOOL CViewRightBR::OnEraseBkgnd(CDC* pDC)
+{
+	return FALSE;
 }
 
 void CViewRightBR::OnSize(UINT nType, int cx, int cy)
