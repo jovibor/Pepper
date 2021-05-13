@@ -49,7 +49,6 @@ IMPLEMENT_DYNCREATE(CViewRightBR, CScrollView)
 
 BEGIN_MESSAGE_MAP(CViewRightBR, CScrollView)
 	ON_WM_SIZE()
-	ON_WM_VSCROLL()
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
@@ -149,72 +148,93 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
 }
 
-void CViewRightBR::ShowResource(const SRESHELPER* pResHelper)
+void CViewRightBR::OnDraw(CDC* pDC)
 {
-	m_stImgRes.DeleteImageList();
-	m_iResTypeToDraw = -1;
-	m_iImgResWidth = 0;
-	m_iImgResHeight = 0;
-	m_vecImgRes.clear();
-	m_wstrEditBRB.clear();
+	CRect rcClipBox;
+	pDC->GetClipBox(rcClipBox);
 
-	if (pResHelper)
+	if (!m_fDrawRes)
 	{
-		//Destroy Dialog Sample window if it's any other resource type now.
-		if (pResHelper->IdResType != 5 && m_wndSampledlg.m_hWnd)
-		{
-			m_wndSampledlg.SetDlgVisible(false);
-			m_wndSampledlg.DestroyWindow();
-		}
-		if (pResHelper->pData->empty())
-			return ResLoadError();
-
-		switch (pResHelper->IdResType)
-		{
-		case 1: //RT_CURSOR
-		case 3: //RT_ICON
-			CreateIconCursor(pResHelper);
-			break;
-		case 2: //RT_BITMAP
-			CreateBitmap(pResHelper);
-			break;
-			//case 4: //RT_MENU
-			//break;
-		case 5: //RT_DIALOG
-			CreateDlg(pResHelper);
-			break;
-		case 6: //RT_STRING
-			CreateStrings(pResHelper);
-			break;
-		case 12: //RT_GROUP_CURSOR
-		case 14: //RT_GROUP_ICON
-			CreateGroupIconCursor(pResHelper);
-			break;
-		case 16: //RT_VERSION
-			CreateVersion(pResHelper);
-			break;
-		case 24: //RT_MANIFEST
-			CreateManifest(pResHelper);
-			break;
-		case 241: //RT_TOOLBAR
-			CreateToolbar(pResHelper);
-			break;
-		default:
-			m_iResTypeToDraw = pResHelper->IdResType;
-			m_fDrawRes = true;
-		}
-	}
-	else
-	{
-		//Destroy Dialog Sample window if it's just Resource window Update.
-		if (m_wndSampledlg.m_hWnd)
-		{
-			m_wndSampledlg.SetDlgVisible(false);
-			m_wndSampledlg.DestroyWindow();
-		}
+		pDC->FillSolidRect(rcClipBox, RGB(255, 255, 255));
+		return;
 	}
 
-	RedrawWindow();
+	const auto sizeScroll = GetTotalSize();
+	CPoint ptDrawAt;
+	int x, y;
+
+	switch (m_iResTypeToDraw)
+	{
+	case 1: //RT_CURSOR
+	case 2: //RT_BITMAP
+	case 3: //RT_ICON
+	{
+		//Drawing in the center, independently from scroll pos.
+		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
+
+		if (sizeScroll.cx > rcClipBox.Width())
+			x = sizeScroll.cx / 2 - (m_stBmp.bmWidth / 2);
+		else
+			x = rcClipBox.Width() / 2 - (m_stBmp.bmWidth / 2);
+	
+		if (sizeScroll.cy > rcClipBox.Height())
+			y = sizeScroll.cy / 2 - (m_stBmp.bmHeight / 2);
+		else
+			y = rcClipBox.Height() / 2 - (m_stBmp.bmHeight / 2);
+
+		ptDrawAt.SetPoint(x, y);
+		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
+		break;
+	}
+	case 5: //RT_DIALOG
+		break;
+	case 12: //RT_GROUP_CURSOR
+	case 14: //RT_GROUP_ICON
+	{
+		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
+
+		if (sizeScroll.cx > rcClipBox.Width())
+			x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
+		else
+			x = rcClipBox.Width() / 2 - (m_iImgResWidth / 2);
+
+		for (const auto& iter : m_vecImgRes)
+		{
+			IMAGEINFO imginfo;
+			iter->GetImageInfo(0, &imginfo);
+			int iImgHeight = imginfo.rcImage.bottom - imginfo.rcImage.top;
+			if (sizeScroll.cy > rcClipBox.Height())
+				y = sizeScroll.cy / 2 - (iImgHeight / 2);
+			else
+				y = rcClipBox.Height() / 2 - (iImgHeight / 2);
+
+			ptDrawAt.SetPoint(x, y);
+			iter->Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
+			x += imginfo.rcImage.right - imginfo.rcImage.left;
+		}
+		break;
+	}
+	case 0xFF:
+		pDC->FillSolidRect(rcClipBox, RGB(255, 255, 255));
+		pDC->SetTextColor(RGB(255, 0, 0));
+		pDC->TextOutW(0, 0, L"Unable to load resource! It's either damaged, packed or zero-length.");
+		break;
+	default:
+		pDC->TextOutW(0, 0, L"This Resource type is not supported.");
+	}
+}
+
+BOOL CViewRightBR::OnEraseBkgnd(CDC* pDC)
+{
+	return TRUE;
+}
+
+void CViewRightBR::OnSize(UINT nType, int cx, int cy)
+{
+	CScrollView::OnSize(nType, cx, cy);
+
+	if (m_hwndActive)
+		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 void CViewRightBR::CreateIconCursor(const SRESHELPER* pResHelper)
@@ -418,6 +438,313 @@ void CViewRightBR::CreateDlg(const SRESHELPER* pResHelper)
 	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	m_hwndActive = m_EditBRB.m_hWnd;
+}
+
+int CViewRightBR::CreateListTLSCallbacks()
+{
+	PLIBPE_TLS pTLS;
+	if (m_pLibpe->GetTLS(pTLS) != S_OK)
+		return -1;
+
+	m_stlcs.dwStyle = 0;
+	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
+	m_stListTLSCallbacks->Create(m_stlcs);
+	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
+	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	m_stListTLSCallbacks->SetColumn(0, &stCol);
+
+	int listindex { };
+	WCHAR wstr[9];
+
+	for (auto& iterCallbacks : pTLS->vecTLSCallbacks)
+	{
+		swprintf_s(wstr, 9, L"%08X", iterCallbacks);
+		m_stListTLSCallbacks->InsertItem(listindex, wstr);
+		listindex++;
+	}
+
+	return 0;
+}
+
+void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
+{
+	PLIBPE_DEBUG_VEC pDebug;
+	if (m_pLibpe->GetDebug(pDebug) != S_OK)
+		return;
+
+	//At the moment only IMAGE_DEBUG_TYPE_CODEVIEW info is supported.
+	if (pDebug->at(dwEntry).stDebugDir.Type != IMAGE_DEBUG_TYPE_CODEVIEW)
+		return;
+
+	m_wstrEditBRB.clear();
+	auto& refDebug = pDebug->at(dwEntry);
+	WCHAR warr[9] { };
+
+	if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x53445352) //"RSDS"
+	{
+		m_wstrEditBRB = L"Signature: RSDS\r\n";
+		m_wstrEditBRB += L"GUID: ";
+		LPWSTR lpwstr;
+		GUID guid = *(reinterpret_cast<GUID*>(&refDebug.stDebugHdrInfo.dwHdr[1]));
+		StringFromIID(guid, &lpwstr);
+		m_wstrEditBRB += lpwstr;
+		m_wstrEditBRB += L"\r\n";
+		m_wstrEditBRB += L"Counter/Age: ";
+		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[5], warr);
+		m_wstrEditBRB += warr;
+		m_wstrEditBRB += L"\r\n";
+	}
+	else if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x3031424E) //"NB10"
+	{
+		m_wstrEditBRB = L"Signature: NB10\r\n";
+		m_wstrEditBRB += L"Offset: ";
+		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[1], warr);
+		m_wstrEditBRB += warr;
+		m_wstrEditBRB += L"\r\n";
+		m_wstrEditBRB += L"Time/Signature: ";
+		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[2], warr);
+		m_wstrEditBRB += warr;
+		m_wstrEditBRB += L"\r\n";
+		m_wstrEditBRB += L"Counter/Age: ";
+		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[3], warr);
+		m_wstrEditBRB += warr;
+		m_wstrEditBRB += L"\r\n";
+	}
+
+	if (!refDebug.stDebugHdrInfo.strPDBName.empty())
+	{
+		std::wstring wstr;
+		wstr.resize(refDebug.stDebugHdrInfo.strPDBName.size());
+		MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(refDebug.stDebugHdrInfo.strPDBName.data()),
+			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()), &wstr[0],
+			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()));
+		m_wstrEditBRB += L"PDB File: ";
+		m_wstrEditBRB += wstr;
+		m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	}
+
+	CRect rc;
+	GetClientRect(&rc);
+	m_EditBRB.SetWindowPos(this, rc.left, rc.top, rc.right, rc.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+	m_hwndActive = m_EditBRB.m_hWnd;
+}
+
+void CViewRightBR::CreateStrings(const SRESHELPER* pResHelper)
+{
+	auto pwszResString = reinterpret_cast<LPCWSTR>(pResHelper->pData->data());
+	std::wstring wstrTmp;
+	for (int i = 0; i < 16; i++)
+	{
+		m_wstrEditBRB += wstrTmp.assign(pwszResString + 1, static_cast<UINT>(*pwszResString));
+		if (i != 15)
+			m_wstrEditBRB += L"\r\n";
+		pwszResString += 1 + static_cast<UINT>(*pwszResString);
+	}
+
+	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_hwndActive = m_EditBRB.m_hWnd;
+}
+
+void CViewRightBR::CreateGroupIconCursor(const SRESHELPER* pResHelper)
+{
+	PLIBPE_RESOURCE_ROOT pstResRoot;
+	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
+		return;
+
+#pragma pack(push, 2)
+	struct GRPICONDIRENTRY
+	{
+		BYTE   bWidth;               // Width, in pixels, of the image
+		BYTE   bHeight;              // Height, in pixels, of the image
+		BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
+		BYTE   bReserved;            // Reserved
+		WORD   wPlanes;              // Color Planes
+		WORD   wBitCount;            // Bits per pixel
+		DWORD  dwBytesInRes;         // how many bytes in this resource?
+		WORD   nID;                  // the ID
+	};
+	struct GRPICONDIR
+	{
+		WORD			  idReserved;   // Reserved (must be 0)
+		WORD			  idType;	    // Resource type (1 for icons)
+		WORD			  idCount;	    // How many images?
+		GRPICONDIRENTRY   idEntries[1]; // The entries for each image
+	};
+	using LPGRPICONDIR = const GRPICONDIR*;
+#pragma pack(pop)
+
+	auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(pResHelper->pData->data());
+	HICON hIcon;
+	ICONINFO iconInfo;
+
+	for (int i = 0; i < pGRPIDir->idCount; i++)
+	{
+		auto& rootvec = pstResRoot->vecResRoot;
+		for (auto& iterRoot : rootvec)
+		{
+			if (iterRoot.stResDirEntryRoot.Id == 3 || //RT_ICON
+				iterRoot.stResDirEntryRoot.Id == 1)   //RT_CURSOR
+			{
+				auto& lvl2tup = iterRoot.stResLvL2;
+				auto& lvl2vec = lvl2tup.vecResLvL2;
+
+				for (auto& iterlvl2 : lvl2vec)
+				{
+					if (iterlvl2.stResDirEntryLvL2.Id == pGRPIDir->idEntries[i].nID)
+					{
+						auto& lvl3tup = iterlvl2.stResLvL3;
+						auto& lvl3vec = lvl3tup.vecResLvL3;
+
+						if (!lvl3vec.empty())
+						{
+							auto& data = lvl3vec.at(0).vecResRawDataLvL3;
+							if (!data.empty())
+							{
+								hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(data.data()), static_cast<DWORD>(data.size()),
+									(iterRoot.stResDirEntryRoot.Id == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+								if (!hIcon)
+									return ResLoadError();
+								if (!GetIconInfo(hIcon, &iconInfo))
+									return ResLoadError();
+								if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
+									return ResLoadError();
+
+								DeleteObject(iconInfo.hbmColor);
+								DeleteObject(iconInfo.hbmMask);
+
+								m_vecImgRes.emplace_back(std::make_unique<CImageList>());
+								auto& vecBack = m_vecImgRes.back();
+								vecBack->Create(m_stBmp.bmWidth,
+									(iterRoot.stResDirEntryRoot.Id == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
+								vecBack->SetBkColor(m_clrBkImgList);
+								m_iImgResWidth += m_stBmp.bmWidth;
+								m_iImgResHeight = max(m_stBmp.bmHeight, m_iImgResHeight);
+
+								if (vecBack->Add(hIcon) == -1)
+									return ResLoadError();
+
+								DestroyIcon(hIcon);
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
+
+	m_iResTypeToDraw = pResHelper->IdResType;
+	m_fDrawRes = true;
+}
+
+void CViewRightBR::CreateVersion(const SRESHELPER* pResHelper)
+{
+#pragma pack(push, 4)
+	struct LANGANDCODEPAGE
+	{
+		WORD wLanguage;
+		WORD wCodePage;
+	};
+#pragma pack(pop)
+
+	static const std::map<int, std::wstring> mapVerInfoStrings {
+		{ 0, L"FileDescription" },
+		{ 1, L"FileVersion" },
+		{ 2, L"InternalName" },
+		{ 3, L"CompanyName" },
+		{ 4, L"LegalCopyright" },
+		{ 5, L"OriginalFilename" },
+		{ 6, L"ProductName" },
+		{ 7, L"ProductVersion" }
+	};
+
+	LANGANDCODEPAGE* pLangAndCP;
+	UINT dwBytesOut;
+
+	//Read the list of languages and code pages.
+	VerQueryValueW(pResHelper->pData->data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
+
+	WCHAR wstrSubBlock[50];
+	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
+	//Read the file description for each language and code page.
+	for (size_t iterCodePage = 0; iterCodePage < dwLangCount; iterCodePage++)
+	{
+		for (unsigned i = 0; i < mapVerInfoStrings.size(); i++) //sizeof pstrVerInfoStrings [];
+		{
+			swprintf_s(wstrSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
+				pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(i).data());
+
+			m_wstrEditBRB += mapVerInfoStrings.at(i);
+			m_wstrEditBRB += L" - ";
+
+			WCHAR* pszBufferOut;
+			if (VerQueryValueW(pResHelper->pData->data(), wstrSubBlock, reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
+				if (dwBytesOut)
+					m_wstrEditBRB += pszBufferOut;
+			m_wstrEditBRB += L"\r\n";
+		}
+	}
+	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+	m_hwndActive = m_EditBRB.m_hWnd;
+}
+
+void CViewRightBR::CreateManifest(const SRESHELPER* pResHelper)
+{
+	m_wstrEditBRB.resize(pResHelper->pData->size());
+	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(pResHelper->pData->data()),
+		static_cast<int>(pResHelper->pData->size()), &m_wstrEditBRB[0], static_cast<int>(pResHelper->pData->size()));
+
+	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+
+	m_hwndActive = m_EditBRB.m_hWnd;
+}
+
+void CViewRightBR::CreateToolbar(const SRESHELPER* pResHelper)
+{
+	PLIBPE_RESOURCE_ROOT pstResRoot;
+	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
+		return;
+
+	auto& rootvec = pstResRoot->vecResRoot;
+	for (auto& iterRoot : rootvec)
+	{
+		if (iterRoot.stResDirEntryRoot.Id == 2) //RT_BITMAP
+		{
+			auto& lvl2tup = iterRoot.stResLvL2;
+			auto& lvl2vec = lvl2tup.vecResLvL2;
+
+			for (auto& iterlvl2 : lvl2vec)
+			{
+				if (iterlvl2.stResDirEntryLvL2.Id == pResHelper->IdResName)
+				{
+					auto& lvl3tup = iterlvl2.stResLvL3;
+					auto& lvl3vec = lvl3tup.vecResLvL3;
+
+					if (!lvl3vec.empty())
+					{
+						auto& data = lvl3vec.at(0).vecResRawDataLvL3;
+						if (!data.empty())
+						{
+							SRESHELPER rh(2, pResHelper->IdResName, static_cast<std::vector<std::byte>*>(&data));
+							ShowResource(&rh);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstring& wstrData)
@@ -875,345 +1202,72 @@ void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstrin
 	wstrData += L"}";
 }
 
-void CViewRightBR::CreateStrings(const SRESHELPER* pResHelper)
+void CViewRightBR::ShowResource(const SRESHELPER* pResHelper)
 {
-	auto pwszResString = reinterpret_cast<LPCWSTR>(pResHelper->pData->data());
-	std::wstring wstrTmp;
-	for (int i = 0; i < 16; i++)
+	m_stImgRes.DeleteImageList();
+	m_iResTypeToDraw = -1;
+	m_iImgResWidth = 0;
+	m_iImgResHeight = 0;
+	m_vecImgRes.clear();
+	m_wstrEditBRB.clear();
+
+	if (pResHelper)
 	{
-		m_wstrEditBRB += wstrTmp.assign(pwszResString + 1, static_cast<UINT>(*pwszResString));
-		if (i != 15)
-			m_wstrEditBRB += L"\r\n";
-		pwszResString += 1 + static_cast<UINT>(*pwszResString);
-	}
-
-	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
-	CRect rcClient;
-	GetClientRect(&rcClient);
-	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_hwndActive = m_EditBRB.m_hWnd;
-}
-
-void CViewRightBR::CreateGroupIconCursor(const SRESHELPER* pResHelper)
-{
-	PLIBPE_RESOURCE_ROOT pstResRoot;
-	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
-		return;
-
-#pragma pack(push, 2)
-	struct GRPICONDIRENTRY
-	{
-		BYTE   bWidth;               // Width, in pixels, of the image
-		BYTE   bHeight;              // Height, in pixels, of the image
-		BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
-		BYTE   bReserved;            // Reserved
-		WORD   wPlanes;              // Color Planes
-		WORD   wBitCount;            // Bits per pixel
-		DWORD  dwBytesInRes;         // how many bytes in this resource?
-		WORD   nID;                  // the ID
-	};
-	struct GRPICONDIR
-	{
-		WORD			  idReserved;   // Reserved (must be 0)
-		WORD			  idType;	    // Resource type (1 for icons)
-		WORD			  idCount;	    // How many images?
-		GRPICONDIRENTRY   idEntries[1]; // The entries for each image
-	};
-	using LPGRPICONDIR = const GRPICONDIR*;
-#pragma pack(pop)
-
-	auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(pResHelper->pData->data());
-	HICON hIcon;
-	ICONINFO iconInfo;
-
-	for (int i = 0; i < pGRPIDir->idCount; i++)
-	{
-		auto& rootvec = pstResRoot->vecResRoot;
-		for (auto& iterRoot : rootvec)
+		//Destroy Dialog Sample window if it's any other resource type now.
+		if (pResHelper->IdResType != 5 && m_wndSampledlg.m_hWnd)
 		{
-			if (iterRoot.stResDirEntryRoot.Id == 3 || //RT_ICON
-				iterRoot.stResDirEntryRoot.Id == 1)   //RT_CURSOR
-			{
-				auto& lvl2tup = iterRoot.stResLvL2;
-				auto& lvl2vec = lvl2tup.vecResLvL2;
+			m_wndSampledlg.SetDlgVisible(false);
+			m_wndSampledlg.DestroyWindow();
+		}
+		if (pResHelper->pData->empty())
+			return ResLoadError();
 
-				for (auto& iterlvl2 : lvl2vec)
-				{
-					if (iterlvl2.stResDirEntryLvL2.Id == pGRPIDir->idEntries[i].nID)
-					{
-						auto& lvl3tup = iterlvl2.stResLvL3;
-						auto& lvl3vec = lvl3tup.vecResLvL3;
-
-						if (!lvl3vec.empty())
-						{
-							auto& data = lvl3vec.at(0).vecResRawDataLvL3;
-							if (!data.empty())
-							{
-								hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(data.data()), static_cast<DWORD>(data.size()),
-									(iterRoot.stResDirEntryRoot.Id == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
-								if (!hIcon)
-									return ResLoadError();
-								if (!GetIconInfo(hIcon, &iconInfo))
-									return ResLoadError();
-								if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
-									return ResLoadError();
-
-								DeleteObject(iconInfo.hbmColor);
-								DeleteObject(iconInfo.hbmMask);
-
-								m_vecImgRes.emplace_back(std::make_unique<CImageList>());
-								auto& vecBack = m_vecImgRes.back();
-								vecBack->Create(m_stBmp.bmWidth,
-									(iterRoot.stResDirEntryRoot.Id == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
-								vecBack->SetBkColor(m_clrBkImgList);
-								m_iImgResWidth += m_stBmp.bmWidth;
-								m_iImgResHeight = max(m_stBmp.bmHeight, m_iImgResHeight);
-
-								if (vecBack->Add(hIcon) == -1)
-									return ResLoadError();
-
-								DestroyIcon(hIcon);
-								break;
-							}
-						}
-					}
-				}
-			}
+		switch (pResHelper->IdResType)
+		{
+		case 1: //RT_CURSOR
+		case 3: //RT_ICON
+			CreateIconCursor(pResHelper);
+			break;
+		case 2: //RT_BITMAP
+			CreateBitmap(pResHelper);
+			break;
+			//case 4: //RT_MENU
+			//break;
+		case 5: //RT_DIALOG
+			CreateDlg(pResHelper);
+			break;
+		case 6: //RT_STRING
+			CreateStrings(pResHelper);
+			break;
+		case 12: //RT_GROUP_CURSOR
+		case 14: //RT_GROUP_ICON
+			CreateGroupIconCursor(pResHelper);
+			break;
+		case 16: //RT_VERSION
+			CreateVersion(pResHelper);
+			break;
+		case 24: //RT_MANIFEST
+			CreateManifest(pResHelper);
+			break;
+		case 241: //RT_TOOLBAR
+			CreateToolbar(pResHelper);
+			break;
+		default:
+			m_iResTypeToDraw = pResHelper->IdResType;
+			m_fDrawRes = true;
 		}
 	}
-	SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
-
-	m_iResTypeToDraw = pResHelper->IdResType;
-	m_fDrawRes = true;
-}
-
-void CViewRightBR::CreateVersion(const SRESHELPER* pResHelper)
-{
-#pragma pack(push, 4)
-	struct LANGANDCODEPAGE
+	else
 	{
-		WORD wLanguage;
-		WORD wCodePage;
-	};
-#pragma pack(pop)
-
-	static const std::map<int, std::wstring> mapVerInfoStrings {
-		{ 0, L"FileDescription" },
-		{ 1, L"FileVersion" },
-		{ 2, L"InternalName" },
-		{ 3, L"CompanyName" },
-		{ 4, L"LegalCopyright" },
-		{ 5, L"OriginalFilename" },
-		{ 6, L"ProductName" },
-		{ 7, L"ProductVersion" }
-	};
-
-	LANGANDCODEPAGE* pLangAndCP;
-	UINT dwBytesOut;
-
-	//Read the list of languages and code pages.
-	VerQueryValueW(pResHelper->pData->data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
-
-	WCHAR wstrSubBlock[50];
-	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
-	//Read the file description for each language and code page.
-	for (size_t iterCodePage = 0; iterCodePage < dwLangCount; iterCodePage++)
-	{
-		for (unsigned i = 0; i < mapVerInfoStrings.size(); i++) //sizeof pstrVerInfoStrings [];
+		//Destroy Dialog Sample window if it's just Resource window Update.
+		if (m_wndSampledlg.m_hWnd)
 		{
-			swprintf_s(wstrSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
-				pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(i).data());
-
-			m_wstrEditBRB += mapVerInfoStrings.at(i);
-			m_wstrEditBRB += L" - ";
-
-			WCHAR* pszBufferOut;
-			if (VerQueryValueW(pResHelper->pData->data(), wstrSubBlock, reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
-				if (dwBytesOut)
-					m_wstrEditBRB += pszBufferOut;
-			m_wstrEditBRB += L"\r\n";
+			m_wndSampledlg.SetDlgVisible(false);
+			m_wndSampledlg.DestroyWindow();
 		}
 	}
-	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
-	CRect rcClient;
-	GetClientRect(&rcClient);
-	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
-	m_hwndActive = m_EditBRB.m_hWnd;
-}
-
-void CViewRightBR::CreateManifest(const SRESHELPER* pResHelper)
-{
-	m_wstrEditBRB.resize(pResHelper->pData->size());
-	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(pResHelper->pData->data()),
-		static_cast<int>(pResHelper->pData->size()), &m_wstrEditBRB[0], static_cast<int>(pResHelper->pData->size()));
-
-	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
-	CRect rcClient;
-	GetClientRect(&rcClient);
-	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-	m_hwndActive = m_EditBRB.m_hWnd;
-}
-
-void CViewRightBR::CreateToolbar(const SRESHELPER* pResHelper)
-{
-	PLIBPE_RESOURCE_ROOT pstResRoot;
-	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
-		return;
-
-	auto& rootvec = pstResRoot->vecResRoot;
-	for (auto& iterRoot : rootvec)
-	{
-		if (iterRoot.stResDirEntryRoot.Id == 2) //RT_BITMAP
-		{
-			auto& lvl2tup = iterRoot.stResLvL2;
-			auto& lvl2vec = lvl2tup.vecResLvL2;
-
-			for (auto& iterlvl2 : lvl2vec)
-			{
-				if (iterlvl2.stResDirEntryLvL2.Id == pResHelper->IdResName)
-				{
-					auto& lvl3tup = iterlvl2.stResLvL3;
-					auto& lvl3vec = lvl3tup.vecResLvL3;
-
-					if (!lvl3vec.empty())
-					{
-						auto& data = lvl3vec.at(0).vecResRawDataLvL3;
-						if (!data.empty())
-						{
-							SRESHELPER rh(2, pResHelper->IdResName, static_cast<std::vector<std::byte>*>(&data));
-							ShowResource(&rh);
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-void CViewRightBR::OnDraw(CDC* pDC)
-{
-	SCROLLINFO stScroll { sizeof(SCROLLINFO), SIF_ALL };
-	GetScrollInfo(SB_HORZ, &stScroll, SIF_ALL);
-	const auto nScrollHorz = stScroll.nPos;
-	GetScrollInfo(SB_VERT, &stScroll, SIF_ALL);
-	const auto nScrollVert = stScroll.nPos;
-
-	CRect rcClient;
-	GetClientRect(&rcClient);
-	rcClient.top += nScrollVert;
-	rcClient.bottom += nScrollVert;
-	rcClient.left += nScrollHorz;
-	rcClient.right += nScrollHorz;
-
-	if (!m_fDrawRes)
-	{
-		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
-		return;
-	}
-
-	const auto sizeScroll = GetTotalSize();
-	CPoint ptDrawAt;
-	int x, y;
-
-	switch (m_iResTypeToDraw)
-	{
-	case 1: //RT_CURSOR
-	case 2: //RT_BITMAP
-	case 3: //RT_ICON
-	{
-		//Draw at center independing of scrolls.
-		pDC->FillSolidRect(rcClient, m_clrBkIcons);
-
-		if (sizeScroll.cx > rcClient.Width())
-			x = sizeScroll.cx / 2 - (m_stBmp.bmWidth / 2);
-		else
-			x = rcClient.Width() / 2 - (m_stBmp.bmWidth / 2);
-		if (sizeScroll.cy > rcClient.Height())
-			y = sizeScroll.cy / 2 - (m_stBmp.bmHeight / 2);
-		else
-			y = rcClient.Height() / 2 - (m_stBmp.bmHeight / 2);
-
-		ptDrawAt.SetPoint(x, y);
-		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
-		break;
-	}
-	case 5: //RT_DIALOG
-		break;
-	case 12: //RT_GROUP_CURSOR
-	case 14: //RT_GROUP_ICON
-	{
-		pDC->FillSolidRect(rcClient, m_clrBkIcons);
-
-		if (sizeScroll.cx > rcClient.Width())
-			x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
-		else
-			x = rcClient.Width() / 2 - (m_iImgResWidth / 2);
-
-		for (const auto& iter : m_vecImgRes)
-		{
-			IMAGEINFO imginfo;
-			iter->GetImageInfo(0, &imginfo);
-			int iImgHeight = imginfo.rcImage.bottom - imginfo.rcImage.top;
-			if (sizeScroll.cy > rcClient.Height())
-				y = sizeScroll.cy / 2 - (iImgHeight / 2);
-			else
-				y = rcClient.Height() / 2 - (iImgHeight / 2);
-
-			ptDrawAt.SetPoint(x, y);
-			iter->Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
-			x += imginfo.rcImage.right - imginfo.rcImage.left;
-		}
-		break;
-	}
-	case 0xFF:
-		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
-		pDC->SetTextColor(RGB(255, 0, 0));
-		pDC->TextOutW(0, 0, L"Unable to load resource! It's either damaged, packed or zero-length.");
-		break;
-	default:
-		pDC->TextOutW(0, 0, L"This Resource type is not supported.");
-	}
-}
-
-BOOL CViewRightBR::OnEraseBkgnd(CDC* pDC)
-{
-	return FALSE;
-}
-
-void CViewRightBR::OnSize(UINT nType, int cx, int cy)
-{
-	CScrollView::OnSize(nType, cx, cy);
-
-	if (m_hwndActive)
-		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
-}
-
-int CViewRightBR::CreateListTLSCallbacks()
-{
-	PLIBPE_TLS pTLS;
-	if (m_pLibpe->GetTLS(pTLS) != S_OK)
-		return -1;
-
-	m_stlcs.dwStyle = 0;
-	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
-	m_stListTLSCallbacks->Create(m_stlcs);
-	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_stListTLSCallbacks->SetColumn(0, &stCol);
-
-	int listindex { };
-	WCHAR wstr[9];
-
-	for (auto& iterCallbacks : pTLS->vecTLSCallbacks)
-	{
-		swprintf_s(wstr, 9, L"%08X", iterCallbacks);
-		m_stListTLSCallbacks->InsertItem(listindex, wstr);
-		listindex++;
-	}
-
-	return 0;
+	RedrawWindow();
 }
 
 void CViewRightBR::ResLoadError()
@@ -1221,68 +1275,4 @@ void CViewRightBR::ResLoadError()
 	m_iResTypeToDraw = 0xFF;
 	m_fDrawRes = true;
 	RedrawWindow();
-}
-
-void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
-{
-	PLIBPE_DEBUG_VEC pDebug;
-	if (m_pLibpe->GetDebug(pDebug) != S_OK)
-		return;
-
-	//At the moment only IMAGE_DEBUG_TYPE_CODEVIEW info is supported.
-	if (pDebug->at(dwEntry).stDebugDir.Type != IMAGE_DEBUG_TYPE_CODEVIEW)
-		return;
-
-	m_wstrEditBRB.clear();
-	auto& refDebug = pDebug->at(dwEntry);
-	WCHAR warr[9] { };
-
-	if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x53445352) //"RSDS"
-	{
-		m_wstrEditBRB = L"Signature: RSDS\r\n";
-		m_wstrEditBRB += L"GUID: ";
-		LPWSTR lpwstr;
-		GUID guid = *(reinterpret_cast<GUID*>(&refDebug.stDebugHdrInfo.dwHdr[1]));
-		StringFromIID(guid, &lpwstr);
-		m_wstrEditBRB += lpwstr;
-		m_wstrEditBRB += L"\r\n";
-		m_wstrEditBRB += L"Counter/Age: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[5], warr);
-		m_wstrEditBRB += warr;
-		m_wstrEditBRB += L"\r\n";
-	}
-	else if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x3031424E) //"NB10"
-	{
-		m_wstrEditBRB = L"Signature: NB10\r\n";
-		m_wstrEditBRB += L"Offset: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[1], warr);
-		m_wstrEditBRB += warr;
-		m_wstrEditBRB += L"\r\n";
-		m_wstrEditBRB += L"Time/Signature: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[2], warr);
-		m_wstrEditBRB += warr;
-		m_wstrEditBRB += L"\r\n";
-		m_wstrEditBRB += L"Counter/Age: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[3], warr);
-		m_wstrEditBRB += warr;
-		m_wstrEditBRB += L"\r\n";
-	}
-
-	if (!refDebug.stDebugHdrInfo.strPDBName.empty())
-	{
-		std::wstring wstr;
-		wstr.resize(refDebug.stDebugHdrInfo.strPDBName.size());
-		MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(refDebug.stDebugHdrInfo.strPDBName.data()),
-			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()), &wstr[0],
-			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()));
-		m_wstrEditBRB += L"PDB File: ";
-		m_wstrEditBRB += wstr;
-		m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
-	}
-
-	CRect rc;
-	GetClientRect(&rc);
-	m_EditBRB.SetWindowPos(this, rc.left, rc.top, rc.right, rc.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-	m_hwndActive = m_EditBRB.m_hWnd;
 }
