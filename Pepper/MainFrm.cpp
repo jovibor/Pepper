@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
+* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -89,7 +89,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-BOOL CMainFrame::OnEraseMDIClientBackground(CDC* pDC)
+BOOL CMainFrame::OnEraseMDIClientBackground(CDC* /*pDC*/)
 {
 	return FALSE;
 }
@@ -110,7 +110,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	wndClass.style |= CS_DBLCLKS;
 	RegisterClassExW(&wndClass);
 
-	if (CMDIFrameWndEx::OnCreateClient(lpcs, pContext) != TRUE)
+	if (CMDIFrameWndEx::OnCreateClient(lpcs, pContext) == FALSE)
 		return FALSE;
 
 	return TRUE;

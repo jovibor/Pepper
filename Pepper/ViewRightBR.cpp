@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
+* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -9,7 +9,7 @@
 #include "stdafx.h"
 #include "MainFrm.h"
 #include "ViewRightBR.h"
-#include "constants.h"
+#include "Utility.h"
 
 BEGIN_MESSAGE_MAP(CWndSampledlg, CWnd)
 	ON_WM_PAINT()
@@ -224,7 +224,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	}
 }
 
-BOOL CViewRightBR::OnEraseBkgnd(CDC* pDC)
+BOOL CViewRightBR::OnEraseBkgnd(CDC* /*pDC*/)
 {
 	return TRUE;
 }

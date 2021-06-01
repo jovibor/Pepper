@@ -1,21 +1,27 @@
 #pragma once
 #include <map>
 #include "libpe.h"
-#include "verinfo/version.h"
 
-using namespace libpe;
+#define PRODUCT_NAME			L"Pepper"
+#define PRODUCT_DESC			L"PE files viewer, github.com/jovibor/Pepper"
+#define COPYRIGHT_NAME  		L"(C) Jovibor 2019-2021"
+#define MAJOR_VERSION			1
+#define MINOR_VERSION			2
+#define MAINTENANCE_VERSION		5
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-#define TOWSTR_HELPER(x) L##x
-#define TO_WSTR_STRING(x) TOWSTR_HELPER(x)
+#define TO_WSTR_HELPER(x) L## #x
+#define TO_WSTR(x) TO_WSTR_HELPER(x)
+#define VERSION_WSTR PRODUCT_NAME L" - PE/PE+ binaries viewer v" TO_WSTR(MAJOR_VERSION) L"."\
+		TO_WSTR(MINOR_VERSION) L"." TO_WSTR(MAINTENANCE_VERSION)
 #ifdef _WIN64
-#define PEPPER_VERSION_WSTR TO_WSTR_STRING(PRODUCT_NAME) " - PE/PE+ binaries viewer v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MAINTENANCE_VERSION) " (x64)"
+#define PEPPER_VERSION_WSTR VERSION_WSTR L" (x64)"
 #else
-#define PEPPER_VERSION_WSTR TO_WSTR_STRING(PRODUCT_NAME) " - PE/PE+ binaries viewer v" STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(MAINTENANCE_VERSION)
+#define PEPPER_VERSION_WSTR VERSION_WSTR
 #endif
 
 #define TO_WSTR_MAP(x) {x, L## #x}
+
+using namespace libpe;
 
 //Errors, that might come from libpe.
 inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {

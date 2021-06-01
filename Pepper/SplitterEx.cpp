@@ -1,15 +1,11 @@
 /****************************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
+* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
 * libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
-/************************************************************
-* Copyright (C) 2018, Jovibor: https://github.com/jovibor/	*
-* CSplitterEx class implementation.							*
-************************************************************/
 #include "stdafx.h"
 #include "SplitterEx.h"
 #include <algorithm>
@@ -20,7 +16,7 @@ BEGIN_MESSAGE_MAP(CSplitterEx, CSplitterWndEx)
 	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
-BOOL CSplitterEx::CreateStatic(CWnd * m_pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
+BOOL CSplitterEx::CreateStatic(CWnd* m_pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
 {
 	//If already created.
 	if ((!m_vecRows.empty() && !m_vecCols.empty()) || !(nRows | nCols) || (nRows | nCols) > 16)
@@ -34,7 +30,7 @@ BOOL CSplitterEx::CreateStatic(CWnd * m_pParent, int nRows, int nCols, DWORD dwS
 	return CSplitterWndEx::CreateStatic(m_pParent, nRows, nCols, dwStyle, nID);
 }
 
-BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass * pViewClass, SIZE sizeInit, CCreateContext * pContext)
+BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE sizeInit, CCreateContext* pContext)
 {
 	if (row >= static_cast<int>(m_vecRows.size()) || col >= static_cast<int>(m_vecCols.size()))
 		return FALSE;

@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
+* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -14,7 +14,6 @@
 #include "ViewRightBR.h"
 #include "ViewRightTL.h"
 #include "ViewRightTR.h"
-
 #include <algorithm>
 #include <cmath>
 

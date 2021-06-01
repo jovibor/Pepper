@@ -51,7 +51,7 @@
     <ClInclude Include="include\ChildFrm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\constants.h">
+    <ClInclude Include="include\Utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Pepper.h">

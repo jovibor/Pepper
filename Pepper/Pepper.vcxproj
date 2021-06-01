@@ -234,7 +234,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ChildFrm.h" />
-    <ClInclude Include="include\constants.h" />
+    <ClInclude Include="include\Utility.h" />
     <ClInclude Include="include\FileLoader.h" />
     <ClInclude Include="include\SplitterEx.h" />
     <ClInclude Include="include\ViewLeft.h" />

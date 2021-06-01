@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright (C) 2018-2019, Jovibor: https://github.com/jovibor/										*
+* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -11,7 +11,7 @@
 #include "MainFrm.h"
 #include "Pepper.h"
 #include "PepperDoc.h"
-#include "constants.h"
+#include "Utility.h"
 #include "res/resource.h"
 
 class CAboutDlg : public CDialogEx
@@ -140,7 +140,7 @@ void CPepperApp::OnFileOpen()
 		bool fOpened { false };
 		DWORD dwCount { };
 		pResults->GetCount(&dwCount);
-		for (auto i = 0u; i < dwCount; ++i)
+		for (auto i = 0U; i < dwCount; ++i)
 		{
 			CComPtr<IShellItem> pItem;
 			pResults->GetItemAt(i, &pItem);
