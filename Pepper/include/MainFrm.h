@@ -17,17 +17,18 @@ class CMainFrame : public CMDIFrameWndEx
 	int& GetChildFramesCount();
 	void SetCurrFramePtrNull();
 protected:
+	afx_msg void OnAppEditmode();
 	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)override;
-	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnWindowManager();
+	afx_msg void OnClose();
+	afx_msg BOOL OnEraseMDIClientBackground(CDC* pDC)override;
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
-	afx_msg void OnAppEditmode();
-	afx_msg void OnUpdateAppEditmode(CCmdUI *pCmdUI);
 	LRESULT OnTabActivate(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnClose();
+	afx_msg void OnUpdateAppEditmode(CCmdUI* pCmdUI);
+	afx_msg void OnWindowManager();
+	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	DECLARE_MESSAGE_MAP()
 private:
 	CMFCToolBar m_wndToolBar;

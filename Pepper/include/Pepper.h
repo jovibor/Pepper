@@ -12,6 +12,7 @@ class CPepperApp : public CWinAppEx
 {	
 public:
 	CPepperApp();
+	void OpenNewFile();
 private:
 	BOOL InitInstance() override;
 	int ExitInstance() override;

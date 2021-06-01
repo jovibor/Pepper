@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "ChildFrm.h"
 #include "MainFrm.h"
+#include "Pepper.h"
 #include "PepperDoc.h"
 #include "res/resource.h"
 
@@ -26,6 +27,15 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI(ID_APP_EDITMODE, &CMainFrame::OnUpdateAppEditmode)
 END_MESSAGE_MAP()
 
+BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext)
+{
+	// base class does the real work
+	if (!CMDIFrameWndEx::LoadFrame(nIDResource, dwDefaultStyle, pParentWnd, pContext))
+		return FALSE;
+
+	return TRUE;
+}
+
 int& CMainFrame::GetChildFramesCount()
 {
 	return m_iChildFrames;
@@ -34,6 +44,99 @@ int& CMainFrame::GetChildFramesCount()
 void CMainFrame::SetCurrFramePtrNull()
 {
 	m_pCurrFrameData = nullptr;
+}
+
+void CMainFrame::OnAppEditmode()
+{
+	if (const auto pFrame = GetActiveFrame(); pFrame != nullptr)
+		if (auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
+			pDoc->SetEditMode(!pDoc->IsEditMode());
+}
+
+int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CMDIFrameWndEx::OnCreate(lpCreateStruct) == -1)
+		return -1;
+
+	SetMenu(nullptr);
+
+	CMDITabInfo mdiTabParams;
+	mdiTabParams.m_style = CMFCTabCtrl::STYLE_3D_ONENOTE; // other styles available...
+	mdiTabParams.m_bActiveTabCloseButton = TRUE;      // set to FALSE to place close button at right of tab area
+	mdiTabParams.m_bTabIcons = TRUE;    // set to TRUE to enable document icons on MDI taba
+	mdiTabParams.m_bAutoColor = FALSE;    // set to FALSE to disable auto-coloring of MDI tabs
+	mdiTabParams.m_bDocumentMenu = FALSE; // enable the document menu at the right edge of the tab area
+	mdiTabParams.m_bFlatFrame = TRUE;
+	mdiTabParams.m_bEnableTabSwap = TRUE;
+	EnableMDITabbedGroups(TRUE, mdiTabParams);
+
+	m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER
+		| CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
+	m_wndToolBar.LoadToolBar(IDR_MAINFRAME_256);
+
+	//CString strToolBarName;
+	//strToolBarName.LoadStringW(IDS_TOOLBAR_STANDARD);
+	//m_wndToolBar.SetWindowTextW(strToolBarName);
+
+	//	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
+	EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndToolBar);      //CAUSES SLOW SIZING!!!
+
+	// Switch the order of document name and application name on the window title bar. This
+	// improves the usability of the taskbar because the document name is visible with the thumbnail.
+	ModifyStyle(0, FWS_PREFIXTITLE);
+
+	return 0;
+}
+
+BOOL CMainFrame::OnEraseMDIClientBackground(CDC* pDC)
+{
+	return FALSE;
+}
+
+BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
+{
+	//Default "MdiClient" class doesn't have CS_DBLCLKS flag set.
+	//We acquire class info, unregister it, set the CS_DBLCLKS flag and then register again.
+	//Now we will recieve WM_LBUTTONDBLCLK messages for m_hWndMDIClient window.
+	WNDCLASSEXW wndClass { };
+	if (!::GetClassInfoExW(AfxGetInstanceHandle(), L"MdiClient", &wndClass))
+	{
+		MessageBoxW(L"GetClassInfo(MdiClient) failed");
+		return FALSE;
+	}
+	UnregisterClassW(L"MdiClient", AfxGetInstanceHandle());
+	wndClass.cbSize = sizeof(WNDCLASSEXW);
+	wndClass.style |= CS_DBLCLKS;
+	RegisterClassExW(&wndClass);
+
+	if (CMDIFrameWndEx::OnCreateClient(lpcs, pContext) != TRUE)
+		return FALSE;
+
+	return TRUE;
+}
+
+void CMainFrame::OnClose()
+{
+	m_fClosing = true;
+
+	CMDIFrameWndEx::OnClose();
+}
+
+void CMainFrame::OnDropFiles(HDROP hDropInfo)
+{
+	PVOID pOldValue;
+	Wow64DisableWow64FsRedirection(&pOldValue);
+	CMDIFrameWndEx::OnDropFiles(hDropInfo);
+	Wow64RevertWow64FsRedirection(pOldValue);
+}
+
+void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	lpMMI->ptMinTrackSize.x = 400;
+	lpMMI->ptMinTrackSize.y = 200;
+
+	CMDIFrameWndEx::OnGetMinMaxInfo(lpMMI);
 }
 
 LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
@@ -61,39 +164,28 @@ LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 	return S_OK;
 }
 
-int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
 {
-	if (CMDIFrameWndEx::OnCreate(lpCreateStruct) == -1)
-		return -1;
+	auto pFrame = GetActiveFrame();
 
-	SetMenu(nullptr);
+	if (pFrame == nullptr)
+	{
+		pCmdUI->Enable(0);
+		return;
+	}
 
-	CMDITabInfo mdiTabParams;
-	mdiTabParams.m_style = CMFCTabCtrl::STYLE_3D_ONENOTE; // other styles available...
-	mdiTabParams.m_bActiveTabCloseButton = TRUE;      // set to FALSE to place close button at right of tab area
-	mdiTabParams.m_bTabIcons = TRUE;    // set to TRUE to enable document icons on MDI taba
-	mdiTabParams.m_bAutoColor = FALSE;    // set to FALSE to disable auto-coloring of MDI tabs
-	mdiTabParams.m_bDocumentMenu = FALSE; // enable the document menu at the right edge of the tab area
-	mdiTabParams.m_bFlatFrame = TRUE;
-	mdiTabParams.m_bEnableTabSwap = TRUE;
-	EnableMDITabbedGroups(TRUE, mdiTabParams);
+	if (auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
+	{
+		if (pDoc->IsEditMode())
+			m_wndToolBar.SetButtonStyle(m_wndToolBar.CommandToIndex(ID_APP_EDITMODE), TBBS_PRESSED);
+	}
+	else
+		pCmdUI->Enable(0);
+}
 
-	m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
-	m_wndToolBar.LoadToolBar(IDR_MAINFRAME_256);
-
-	//CString strToolBarName;
-	//strToolBarName.LoadStringW(IDS_TOOLBAR_STANDARD);
-	//m_wndToolBar.SetWindowTextW(strToolBarName);
-
-	//	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
-	EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndToolBar);      //CAUSES SLOW SIZING!!!
-
-	// Switch the order of document name and application name on the window title bar. This
-	// improves the usability of the taskbar because the document name is visible with the thumbnail.
-	ModifyStyle(0, FWS_PREFIXTITLE);
-
-	return 0;
+void CMainFrame::OnWindowManager()
+{
+	ShowWindowsDialog();
 }
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
@@ -106,10 +198,9 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
-	//Closing Tab with middle mouse button.
 	switch (pMsg->message)
 	{
-	case WM_MBUTTONDOWN:
+	case WM_MBUTTONDOWN: //Closing tabs with middle mouse button.
 	{
 		pWndMBtnCurrDown = nullptr;
 		CPoint pt = pMsg->pt;
@@ -161,75 +252,11 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		}
 	}
 	break;
+	case WM_LBUTTONDBLCLK:
+		if (pMsg->hwnd == m_hWndMDIClient)
+			static_cast<CPepperApp*>(AfxGetApp())->OpenNewFile();
+		break;
 	}
 
 	return CMDIFrameWndEx::PreTranslateMessage(pMsg);
-}
-
-void CMainFrame::OnWindowManager()
-{
-	ShowWindowsDialog();
-}
-
-BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext)
-{
-	// base class does the real work
-	if (!CMDIFrameWndEx::LoadFrame(nIDResource, dwDefaultStyle, pParentWnd, pContext))
-		return FALSE;
-
-	return TRUE;
-}
-
-BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
-{
-	return CMDIFrameWndEx::OnCreateClient(lpcs, pContext);
-}
-
-void CMainFrame::OnDropFiles(HDROP hDropInfo)
-{
-	PVOID pOldValue;
-	Wow64DisableWow64FsRedirection(&pOldValue);
-	CMDIFrameWndEx::OnDropFiles(hDropInfo);
-	Wow64RevertWow64FsRedirection(pOldValue);
-}
-
-void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
-{
-	lpMMI->ptMinTrackSize.x = 400;
-	lpMMI->ptMinTrackSize.y = 200;
-
-	CMDIFrameWndEx::OnGetMinMaxInfo(lpMMI);
-}
-
-void CMainFrame::OnAppEditmode()
-{
-	if (auto pFrame = GetActiveFrame(); pFrame != nullptr)
-		if (auto* pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
-			pDoc->SetEditMode(!pDoc->IsEditMode());
-}
-
-void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
-{
-	auto pFrame = GetActiveFrame();
-
-	if (pFrame == nullptr)
-	{
-		pCmdUI->Enable(0);
-		return;
-	}
-
-	if (auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
-	{
-		if (pDoc->IsEditMode())
-			m_wndToolBar.SetButtonStyle(m_wndToolBar.CommandToIndex(ID_APP_EDITMODE), TBBS_PRESSED);
-	}
-	else
-		pCmdUI->Enable(0);
-}
-
-void CMainFrame::OnClose()
-{
-	m_fClosing = true;
-
-	CMDIFrameWndEx::OnClose();
 }

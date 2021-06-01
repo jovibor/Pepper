@@ -48,6 +48,11 @@ CPepperApp::CPepperApp()
 	m_bHiColorIcons = TRUE;
 }
 
+void CPepperApp::OpenNewFile()
+{
+	OnFileOpen();
+}
+
 BOOL CPepperApp::InitInstance()
 {
 	CWinAppEx::InitInstance();
