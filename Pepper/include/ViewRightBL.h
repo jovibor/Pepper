@@ -9,11 +9,13 @@
 #pragma once
 #include "PepperDoc.h"
 #include "ChildFrm.h"
-#include "HexCtrl.h"
 #include "ListEx/ListEx.h"
 #include "TreeEx.h"
 #include "FileLoader.h"
 #include "Utility.h"
+
+#define HEXCTRL_SHARED_DLL
+#include "HexCtrl.h"
 
 using namespace HEXCTRL;
 using namespace LISTEX;
@@ -56,7 +58,7 @@ private:
 	CFileLoader* m_pFileLoader { };
 	HWND m_hwndActive { };
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
-	HEXCREATESTRUCT m_hcs { };
+	HEXCREATE m_hcs { };
 	LISTEXCREATESTRUCT m_stlcs;
 	IListExPtr m_listExportFuncs { CreateListEx() };
 	IListExPtr m_listImportEntry { CreateListEx() };

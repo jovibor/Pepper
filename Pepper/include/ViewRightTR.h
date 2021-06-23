@@ -9,6 +9,8 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
+
+#define HEXCTRL_SHARED_DLL
 #include "HexCtrl.h"
 
 using namespace HEXCTRL;
@@ -34,5 +36,5 @@ private:
 	CFileLoader* m_pFileLoader { };
 	HWND m_hwndActive { };
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
-	HEXCREATESTRUCT m_hcs { };
+	HEXCREATE m_hcs { };
 };

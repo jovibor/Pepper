@@ -44,17 +44,6 @@ namespace HEXCTRL
 	};
 
 	/********************************************************************************************
-	* EHexDataMode - Enum of the working data mode, used in HEXDATASTRUCT in SetData.           *
-	* DATA_MEMORY: Default standard data mode.                                                  *
-	* DATA_MSG: Data is handled through WM_NOTIFY messages in handler window.				    *
-	* DATA_VIRTUAL: Data is handled through IHexVirtData interface by derived class.            *
-	********************************************************************************************/
-	enum class EHexDataMode : std::uint8_t
-	{
-		DATA_MEMORY, DATA_MSG, DATA_VIRTUAL
-	};
-
-	/********************************************************************************************
 	* EHexWnd - HexControl's windows.                                                           *
 	********************************************************************************************/
 	enum class EHexWnd : std::uint8_t
@@ -64,43 +53,52 @@ namespace HEXCTRL
 	};
 
 	/********************************************************************************************
-	* HEXSPANSTRUCT - Data offset and size, used in some data/size related routines.            *
+	* HEXSPAN - Data offset and size, used in some data/size related routines.                  *
 	********************************************************************************************/
-	struct HEXSPANSTRUCT
+	struct HEXSPAN
 	{
 		ULONGLONG ullOffset { };
 		ULONGLONG ullSize { };
 	};
+	using HEXSPANSTRUCT [[deprecated("Struct is deprecated, use HEXSPAN instead.")]] = HEXSPAN;
 
 	/********************************************************************************************
-	* HEXBKMSTRUCT - Bookmarks.                                                                 *
+	* HEXDATAINFO - struct for a data information used in IHexVirtData.                         *
 	********************************************************************************************/
-	struct HEXBKMSTRUCT
+	struct HEXDATAINFO
 	{
-		std::vector<HEXSPANSTRUCT> vecSpan { };                //Vector of offsets and sizes.
-		std::wstring               wstrDesc { };               //Bookmark description.
-		ULONGLONG                  ullID { };                  //Bookmark ID, assigned internally by framework.
-		ULONGLONG                  ullData { };                //User defined custom data.
-		COLORREF                   clrBk { RGB(240, 240, 0) }; //Bk color.
-		COLORREF                   clrText { RGB(0, 0, 0) };   //Text color.
+		NMHDR      hdr { };    //Standard Windows header.
+		HEXSPAN    stSpan { }; //Offset and size of the data bytes.
+		std::byte* pData { };  //Data pointer.
 	};
-	using PHEXBKMSTRUCT = HEXBKMSTRUCT*;
 
 	/********************************************************************************************
 	* IHexVirtData - Pure abstract data handler class, that can be implemented by client,       *
-	* to set its own data handler routines.	Works in EHexDataMode::DATA_VIRTUAL mode.           *
-	* Pointer to this class can be set in IHexCtrl::SetData method.                             *
-	* Its usage is very similar to DATA_MSG logic, where control sends WM_NOTIFY messages       *
-	* to set window to get/set data. But in this case it's just a pointer to a custom           *
-	* routine's implementation.                                                                 *
+	* to set its own data handler routines.	Pointer to this class can be set in SetData method. *
 	* All virtual functions must be defined in client's derived class.                          *
 	********************************************************************************************/
 	class IHexVirtData
 	{
 	public:
-		[[nodiscard]] virtual std::byte* GetData(const HEXSPANSTRUCT&) = 0; //Data index and size to get.
-		virtual	void SetData(std::byte*, const HEXSPANSTRUCT&) = 0; //Routine to modify data, if HEXDATASTRUCT::fMutable == true.
+		virtual void OnHexGetData(HEXDATAINFO&) = 0; //Data beginning index and size to get.
+		virtual void OnHexSetData(const HEXDATAINFO&) = 0; //Called when data was set (changed).
 	};
+
+	/********************************************************************************************
+	* HEXBKM - Bookmarks.                                                                       *
+	********************************************************************************************/
+	struct HEXBKM
+	{
+		std::vector<HEXSPAN> vecSpan { };                //Vector of offsets and sizes.
+		std::wstring         wstrDesc { };               //Bookmark description.
+		ULONGLONG            ullID { };                  //Bookmark ID, assigned internally by framework.
+		ULONGLONG            ullData { };                //User defined custom data.
+		COLORREF             clrBk { RGB(240, 240, 0) }; //Bk color.
+		COLORREF             clrText { RGB(0, 0, 0) };   //Text color.
+	};
+	using PHEXBKMSTRUCT = HEXBKM*;
+	using PHEXBKM = HEXBKM*;
+	using HEXBKMSTRUCT [[deprecated("Struct is deprecated, use HEXBKM instead.")]] = HEXBKM;
 
 	/********************************************************************************************
 	* IHexVirtBkm - Pure abstract class for virtual bookmarks.                                  *
@@ -108,13 +106,32 @@ namespace HEXCTRL
 	class IHexVirtBkm
 	{
 	public:
-		virtual ULONGLONG Add(const HEXBKMSTRUCT& stBookmark) = 0; //Add new bookmark, return new bookmark's ID.
-		virtual void ClearAll() = 0; //Clear all bookmarks.
-		[[nodiscard]] virtual ULONGLONG GetCount() = 0; //Get total bookmarks count.
-		[[nodiscard]] virtual auto GetByID(ULONGLONG ullID)->HEXBKMSTRUCT* = 0; //Bookmark by ID.
-		[[nodiscard]] virtual auto GetByIndex(ULONGLONG ullIndex)->HEXBKMSTRUCT* = 0; //Bookmark by index (in inner list).
-		[[nodiscard]] virtual auto HitTest(ULONGLONG ullOffset)->HEXBKMSTRUCT* = 0;   //Does given offset have a bookmark?
-		virtual void RemoveByID(ULONGLONG ullID) = 0;   //Remove bookmark by given ID (returned by Add()).
+		virtual ULONGLONG OnHexBkmAdd(const HEXBKM& stBookmark) = 0; //Add new bookmark, return new bookmark's ID.
+		virtual void OnHexBkmClearAll() = 0; //Clear all bookmarks.
+		[[nodiscard]] virtual ULONGLONG OnHexBkmGetCount() = 0; //Get total bookmarks count.
+		[[nodiscard]] virtual auto OnHexBkmGetByID(ULONGLONG ullID)->HEXBKM* = 0; //Bookmark by ID.
+		[[nodiscard]] virtual auto OnHexBkmGetByIndex(ULONGLONG ullIndex)->HEXBKM* = 0; //Bookmark by index (in inner list).
+		[[nodiscard]] virtual auto OnHexBkmHitTest(ULONGLONG ullOffset)->HEXBKM* = 0;   //Does given offset have a bookmark?
+		virtual void OnHexBkmRemoveByID(ULONGLONG ullID) = 0; //Remove bookmark by given ID (returned by Add()).
+	};
+
+	/********************************************************************************************
+	* HEXBKMINFO - Bookmarks info.                                                              *
+	********************************************************************************************/
+	struct HEXBKMINFO
+	{
+		NMHDR   hdr { };  //Standard Windows header.
+		PHEXBKM pBkm { }; //Bookmark pointer.
+	};
+
+	/********************************************************************************************
+	* HEXMENUINFO - Menu info.                                                                  *
+	********************************************************************************************/
+	struct HEXMENUINFO
+	{
+		NMHDR hdr { };     //Standard Windows header.
+		POINT pt { };      //Mouse position when clicked.
+		WORD  wMenuID { }; //Menu identifier.
 	};
 
 	/********************************************************************************************
@@ -128,18 +145,28 @@ namespace HEXCTRL
 	using PHEXCOLOR = HEXCOLOR*;
 
 	/********************************************************************************************
+	* HEXCOLORINFO - struct for hex chunks' color information.                                  *
+	********************************************************************************************/
+	struct HEXCOLORINFO
+	{
+		NMHDR     hdr { };       //Standard Windows header.
+		ULONGLONG ullOffset { }; //Offset for the color.
+		PHEXCOLOR pClr { };      //Pointer to the color struct.
+	};
+
+	/********************************************************************************************
 	* IHexVirtColors - Pure abstract class for chunk colors.                                    *
 	********************************************************************************************/
 	class IHexVirtColors
 	{
 	public:
-		[[nodiscard]] virtual PHEXCOLOR GetColor(ULONGLONG ullOffset) = 0;
+		[[nodiscard]] virtual void OnHexGetColor(HEXCOLORINFO&) = 0;
 	};
 
 	/********************************************************************************************
-	* HEXCOLORSSTRUCT - All HexCtrl colors.                                                     *
+	* HEXCOLORS - All HexCtrl colors.                                                           *
 	********************************************************************************************/
-	struct HEXCOLORSSTRUCT
+	struct HEXCOLORS
 	{
 		COLORREF clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };       //Hex chunks text color.
 		COLORREF clrTextASCII { GetSysColor(COLOR_WINDOWTEXT) };     //ASCII text color.
@@ -155,14 +182,15 @@ namespace HEXCTRL
 		COLORREF clrBkCaret { RGB(0, 0, 255) };                      //Caret background color.
 		COLORREF clrBkCaretSelect { RGB(0, 0, 200) };                //Caret background color in selection.
 	};
+	using HEXCOLORSSTRUCT [[deprecated("Struct is deprecated, use HEXCREATE instead.")]] = HEXCOLORS;
 
 	/********************************************************************************************
-	* HEXCREATESTRUCT - for IHexCtrl::Create method.                                            *
+	* HEXCREATE - for IHexCtrl::Create method.                                                  *
 	********************************************************************************************/
-	struct HEXCREATESTRUCT
+	struct HEXCREATE
 	{
 		EHexCreateMode  enCreateMode { EHexCreateMode::CREATE_CHILD }; //Creation mode of the HexCtrl window.
-		HEXCOLORSSTRUCT stColor { };          //All the control's colors.
+		HEXCOLORS       stColor { };          //All the control's colors.
 		HWND            hwndParent { };       //Parent window handle.
 		const LOGFONTW* pLogFont { };         //Font to be used instead of default, it has to be monospaced.
 		RECT            rect { };             //Initial rect. If null, the window is screen centered.
@@ -171,53 +199,56 @@ namespace HEXCTRL
 		DWORD           dwExStyle { };        //Extended window styles, 0 for default.
 		double          dbWheelRatio { 1.0 }; //Ratio for how much to scroll with mouse-wheel.
 	};
+	using HEXCREATESTRUCT [[deprecated("Struct is deprecated, use HEXCREATE instead.")]] = HEXCREATE;
 
 	/********************************************************************************************
-	* HEXDATASTRUCT - for IHexCtrl::SetData method.                                             *
+	* HEXDATA - for IHexCtrl::SetData method.                                                   *
 	********************************************************************************************/
-	struct HEXDATASTRUCT
+	struct HEXDATA
 	{
-		EHexDataMode    enDataMode { EHexDataMode::DATA_MEMORY }; //Working data mode.
 		ULONGLONG       ullDataSize { };          //Size of the data to display, in bytes.
-		HWND            hwndMsg { };              //Window for DATA_MSG mode. Parent is used by default.
-		IHexVirtData*   pHexVirtData { };         //Pointer for DATA_VIRTUAL mode.
+		IHexVirtData*   pHexVirtData { };         //Pointer for Virtual mode.
 		IHexVirtColors* pHexVirtColors { };       //Pointer for Custom Colors class.
-		std::byte*      pData { };                //Data pointer for DATA_MEMORY mode. Not used in other modes.
-		DWORD           dwCacheSize { 0x800000 }; //In DATA_MSG and DATA_VIRTUAL max cached size of data to fetch.
+		std::byte*      pData { };                //Data pointer in default mode.
+		DWORD           dwCacheSize { 0x800000 }; //In Virtual mode max cached size of data to fetch.
 		bool            fMutable { false };       //Is data mutable (editable) or read-only.
 		bool            fHighLatency { false };   //Do not redraw window until scrolling completes.
 	};
+	using HEXDATASTRUCT [[deprecated("Struct is deprecated, use HEXDATA instead.")]] = HEXDATA;
 
 	/********************************************************************************************
-	* HEXNOTIFYSTRUCT - used in notifications routine.                                          *
+	* HEXNOTIFY - used in notifications routine.                                                *
 	********************************************************************************************/
-	struct HEXNOTIFYSTRUCT
+/*	struct HEXNOTIFY
 	{
-		NMHDR         hdr { };     //Standard Windows header. For hdr.code values see HEXCTRL_MSG_* messages.
-		HEXSPANSTRUCT stSpan { };  //Offset and size of the bytes.
-		ULONGLONG     ullData { }; //Data depending on message (e.g. user defined custom menu ID/caret pos).
-		std::byte*    pData { };   //Pointer to a data to get/send.
-		POINT         point { };   //Mouse position for menu notifications.
+		NMHDR      hdr { };     //Standard Windows header. For hdr.code values see HEXCTRL_MSG_* messages.
+		HEXSPAN    stSpan { };  //Offset and size of the bytes.
+		ULONGLONG  ullData { }; //Data depending on message (e.g. user defined custom menu ID/caret pos).
+		std::byte* pData { };   //Pointer to a data depending on notify message.
+		POINT      point { };   //Mouse position for menu notifications.
 	};
-	using PHEXNOTIFYSTRUCT = HEXNOTIFYSTRUCT*;
-
+	using HEXNOTIFYSTRUCT [[deprecated("Struct is deprecated, use HEXNOTIFY instead.")]] = HEXNOTIFY;
+	using PHEXNOTIFYSTRUCT = HEXNOTIFY*;
+	using PHEXNOTIFY = HEXNOTIFY*;
+	*/
 	/********************************************************************************************
-	* HEXHITTESTSTRUCT - used in HitTest method.                                                *
+	* HEXHITTEST - used in HitTest method.                                                      *
 	********************************************************************************************/
-	struct HEXHITTESTSTRUCT
+	struct HEXHITTEST
 	{
 		ULONGLONG ullOffset { };      //Offset.
 		bool      fIsAscii { false }; //Is cursor at ASCII part or at Hex.
 		bool      fIsHigh { false };  //Is it High or Low part of the byte.
 	};
+	using HEXHITTESTSTRUCT [[deprecated("Struct is deprecated, use HEXHITTEST instead.")]] = HEXHITTEST;
 
 	/********************************************************************************************
-	* HEXVISSTRUCT - Offset visibility struct, used in IsOffsetVisible method.                  *
+	* HEXVISION - Offset visibility struct, used in IsOffsetVisible method.                     *
 	* -1 - Offset is higher, or at the left, of the visible area.                               *
 	*  1 - lower, or at the right.                                                              *
 	*  0 - visible.                                                                             *
 	********************************************************************************************/
-	struct HEXVISSTRUCT
+	struct HEXVISION
 	{
 		std::int8_t i8Vert { }; //Vertical offset.
 		std::int8_t i8Horz { }; //Horizontal offset.
@@ -270,7 +301,7 @@ namespace HEXCTRL
 		EHexDataSize   enOperSize { };          //Operation data size.
 		std::byte*     pData { };               //Pointer to a data to be set.
 		ULONGLONG      ullDataSize { };         //Size of the data pData is pointing to.
-		std::vector<HEXSPANSTRUCT> vecSpan { }; //Vector of data offsets and sizes.
+		std::vector<HEXSPAN> vecSpan { };       //Vector of data offsets and sizes.
 		bool           fBigEndian { false };    //Treat the data being modified as a big endian, used only in MODIFY_OPERATION mode.
 	};
 };

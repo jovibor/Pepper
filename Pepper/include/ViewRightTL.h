@@ -9,11 +9,13 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-#include "HexCtrl.h"
 #include "ListEx/ListEx.h"
 #include "TreeEx.h"
 #include "FileLoader.h"
 #include "Utility.h"
+
+#define HEXCTRL_SHARED_DLL
+#include "HexCtrl.h"
 
 using namespace LISTEX;
 using namespace HEXCTRL;
