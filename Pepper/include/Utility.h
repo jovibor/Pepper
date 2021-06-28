@@ -7,7 +7,7 @@
 #define COPYRIGHT_NAME  		L"(C) Jovibor 2019-2021"
 #define MAJOR_VERSION			1
 #define MINOR_VERSION			2
-#define MAINTENANCE_VERSION		5
+#define MAINTENANCE_VERSION		6
 
 #define TO_WSTR_HELPER(x) L## #x
 #define TO_WSTR(x) TO_WSTR_HELPER(x)

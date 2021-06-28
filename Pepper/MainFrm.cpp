@@ -89,11 +89,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-BOOL CMainFrame::OnEraseMDIClientBackground(CDC* /*pDC*/)
-{
-	return FALSE;
-}
-
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 {
 	//Default "MdiClient" class doesn't have CS_DBLCLKS flag set.
@@ -113,6 +108,8 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	if (CMDIFrameWndEx::OnCreateClient(lpcs, pContext) == FALSE)
 		return FALSE;
 
+	SetWindowSubclass(m_hWndMDIClient, MDIClientProc, 1, reinterpret_cast<DWORD_PTR>(this));
+
 	return TRUE;
 }
 
@@ -129,6 +126,11 @@ void CMainFrame::OnDropFiles(HDROP hDropInfo)
 	Wow64DisableWow64FsRedirection(&pOldValue);
 	CMDIFrameWndEx::OnDropFiles(hDropInfo);
 	Wow64RevertWow64FsRedirection(pOldValue);
+}
+
+BOOL CMainFrame::OnEraseMDIClientBackground(CDC* /*pDC*/)
+{
+	return TRUE;
 }
 
 void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
@@ -252,11 +254,62 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 		}
 	}
 	break;
-	case WM_LBUTTONDBLCLK:
-		if (pMsg->hwnd == m_hWndMDIClient)
-			static_cast<CPepperApp*>(AfxGetApp())->OpenNewFile();
-		break;
 	}
 
 	return CMDIFrameWndEx::PreTranslateMessage(pMsg);
+}
+
+LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR dwData)
+{
+	const auto pMainFrame = reinterpret_cast<CMainFrame*>(dwData);
+	if (pMainFrame->GetChildFramesCount() != 0)
+		return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
+	switch (uMsg)
+	{
+	case WM_PAINT:
+	{
+		CPaintDC dc(FromHandle(hWnd));
+		CRect rc;
+		::GetClientRect(hWnd, rc);
+		CMemDC dcMem(dc, rc);
+		auto pDC = &dcMem.GetDC();
+		pDC->FillSolidRect(rc, RGB(190, 190, 190));
+
+		LOGFONTW lf { };
+		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+		lf.lfHeight = 10;
+		lf.lfPitchAndFamily = FIXED_PITCH;
+		CFont font;
+		font.CreateFontIndirectW(&lf);
+		pDC->SelectObject(font);
+		const int iLengthText = static_cast<int>(std::size(PRODUCT_NAME)) - 1;
+		auto stSizeText = pDC->GetTextExtent(PRODUCT_NAME, iLengthText);
+
+		while ((rc.Width() - 20) > stSizeText.cx)
+		{
+			lf.lfHeight += 2;
+			font.DeleteObject();
+			font.CreateFontIndirectW(&lf);
+			pDC->SelectObject(font);
+			stSizeText = pDC->GetTextExtent(PRODUCT_NAME, iLengthText);
+		}
+
+		pDC->SetBkMode(TRANSPARENT);
+		pDC->SetTextColor(RGB(205, 205, 205)); //Shadow color.
+		pDC->DrawTextW(PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+		pDC->SetTextColor(RGB(193, 193, 193)); //Text color.
+		rc.OffsetRect(-3, 2);
+		pDC->DrawTextW(PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+	}
+	break;
+	case WM_SIZE:
+		::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+		break;
+	case WM_LBUTTONDBLCLK:
+		static_cast<CPepperApp*>(AfxGetApp())->OpenNewFile();
+		break;
+	}
+
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }

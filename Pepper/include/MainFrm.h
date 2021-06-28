@@ -31,6 +31,7 @@ protected:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	DECLARE_MESSAGE_MAP()
 private:
+	static LRESULT MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR dwData);
 	CMFCToolBar m_wndToolBar;
 	CWnd* pWndMBtnCurrDown { };
 	std::vector<SWINDOWSTATUS>* m_pCurrFrameData { };
