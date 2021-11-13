@@ -2,14 +2,18 @@
 * Copyright © 2018-2021 Jovibor https://github.com/jovibor/                             *
 * This is a Hex Control for MFC/Win32 applications.                                     *
 * Official git repository: https://github.com/jovibor/HexCtrl/                          *
-* This software is available under the "MIT License modified with The Commons Clause".  *
-* https://github.com/jovibor/HexCtrl/blob/master/LICENSE                                *
+* This software is available under "The HexCtrl License", see the LICENSE file.         *
 ****************************************************************************************/
 #pragma once
-#include <Windows.h>
+#include <afxwin.h>
 #include <cstdint>
+#include <span>
 #include <string>
 #include <vector>
+
+#if !defined(__cpp_lib_format) || !defined(__cpp_lib_span) || !defined(__cpp_lib_bit_cast)
+#error "C++20 compiler is required for HexCtrl."
+#endif
 
 namespace HEXCTRL
 {
@@ -28,9 +32,8 @@ namespace HEXCTRL
 		CMD_CLPBRD_COPYOFFSET, CMD_CLPBRD_PASTEHEX, CMD_CLPBRD_PASTETEXT,
 		CMD_MODIFY_DLG_OPERS, CMD_MODIFY_FILLZEROS, CMD_MODIFY_DLG_FILLDATA, CMD_MODIFY_UNDO, CMD_MODIFY_REDO,
 		CMD_SEL_MARKSTART, CMD_SEL_MARKEND, CMD_SEL_ALL, CMD_SEL_ADDLEFT, CMD_SEL_ADDRIGHT, CMD_SEL_ADDUP, CMD_SEL_ADDDOWN,
-		CMD_DLG_DATAINTERP, CMD_DLG_ENCODING,
-		CMD_APPEAR_FONTINC, CMD_APPEAR_FONTDEC, CMD_APPEAR_CAPACINC, CMD_APPEAR_CAPACDEC,
-		CMD_DLG_PRINT, CMD_DLG_ABOUT,
+		CMD_DLG_DATAINTERP, CMD_DLG_ENCODING, CMD_APPEAR_FONTCHOOSE, CMD_APPEAR_FONTINC, CMD_APPEAR_FONTDEC,
+		CMD_APPEAR_CAPACINC, CMD_APPEAR_CAPACDEC, CMD_DLG_PRINT, CMD_DLG_ABOUT,
 		CMD_CARET_LEFT, CMD_CARET_RIGHT, CMD_CARET_UP, CMD_CARET_DOWN,
 		CMD_SCROLL_PAGEUP, CMD_SCROLL_PAGEDOWN
 	};
@@ -60,16 +63,15 @@ namespace HEXCTRL
 		ULONGLONG ullOffset { };
 		ULONGLONG ullSize { };
 	};
-	using HEXSPANSTRUCT [[deprecated("Struct is deprecated, use HEXSPAN instead.")]] = HEXSPAN;
 
 	/********************************************************************************************
 	* HEXDATAINFO - struct for a data information used in IHexVirtData.                         *
 	********************************************************************************************/
 	struct HEXDATAINFO
 	{
-		NMHDR      hdr { };    //Standard Windows header.
-		HEXSPAN    stSpan { }; //Offset and size of the data bytes.
-		std::byte* pData { };  //Data pointer.
+		NMHDR                hdr { };       //Standard Windows header.
+		HEXSPAN              stHexSpan { }; //Offset and size of the data bytes.
+		std::span<std::byte> spnData { };   //Data span.
 	};
 
 	/********************************************************************************************
@@ -80,8 +82,8 @@ namespace HEXCTRL
 	class IHexVirtData
 	{
 	public:
-		virtual void OnHexGetData(HEXDATAINFO&) = 0; //Data beginning index and size to get.
-		virtual void OnHexSetData(const HEXDATAINFO&) = 0; //Called when data was set (changed).
+		virtual void OnHexGetData(HEXDATAINFO&) = 0;       //Data to get.
+		virtual void OnHexSetData(const HEXDATAINFO&) = 0; //Data to set, if mutable.
 	};
 
 	/********************************************************************************************
@@ -96,9 +98,7 @@ namespace HEXCTRL
 		COLORREF             clrBk { RGB(240, 240, 0) }; //Bk color.
 		COLORREF             clrText { RGB(0, 0, 0) };   //Text color.
 	};
-	using PHEXBKMSTRUCT = HEXBKM*;
 	using PHEXBKM = HEXBKM*;
-	using HEXBKMSTRUCT [[deprecated("Struct is deprecated, use HEXBKM instead.")]] = HEXBKM;
 
 	/********************************************************************************************
 	* IHexVirtBkm - Pure abstract class for virtual bookmarks.                                  *
@@ -123,6 +123,7 @@ namespace HEXCTRL
 		NMHDR   hdr { };  //Standard Windows header.
 		PHEXBKM pBkm { }; //Bookmark pointer.
 	};
+	using PHEXBKMINFO = HEXBKMINFO*;
 
 	/********************************************************************************************
 	* HEXMENUINFO - Menu info.                                                                  *
@@ -133,6 +134,7 @@ namespace HEXCTRL
 		POINT pt { };      //Mouse position when clicked.
 		WORD  wMenuID { }; //Menu identifier.
 	};
+	using PHEXMENUINFO = HEXMENUINFO*;
 
 	/********************************************************************************************
 	* HEXCOLOR - used with the IHexVirtColors interface.                                        *
@@ -168,13 +170,13 @@ namespace HEXCTRL
 	********************************************************************************************/
 	struct HEXCOLORS
 	{
-		COLORREF clrTextHex { GetSysColor(COLOR_WINDOWTEXT) };       //Hex chunks text color.
-		COLORREF clrTextASCII { GetSysColor(COLOR_WINDOWTEXT) };     //ASCII text color.
-		COLORREF clrTextSelect { GetSysColor(COLOR_HIGHLIGHTTEXT) }; //Selected text color.
-		COLORREF clrTextDataInterp { RGB(250, 250, 250) };           //Data Interpreter text color.
-		COLORREF clrTextCaption { RGB(0, 0, 180) };                  //Caption text color
-		COLORREF clrTextInfoRect { GetSysColor(COLOR_WINDOWTEXT) };  //Text color of the bottom "Info" rect.
-		COLORREF clrTextCaret { RGB(255, 255, 255) };                //Caret text color.
+		COLORREF clrFontHex { GetSysColor(COLOR_WINDOWTEXT) };       //Hex-chunks font color.
+		COLORREF clrFontText { GetSysColor(COLOR_WINDOWTEXT) };      //Text font color.
+		COLORREF clrFontSelect { GetSysColor(COLOR_HIGHLIGHTTEXT) }; //Selected hex/text font color.
+		COLORREF clrFontDataInterp { RGB(250, 250, 250) };           //Data Interpreter text/hex font color.
+		COLORREF clrFontCaption { RGB(0, 0, 180) };                  //Caption font color
+		COLORREF clrFontInfoRect { GetSysColor(COLOR_WINDOWTEXT) };  //Font color of the bottom "Info" rect.
+		COLORREF clrFontCaret { RGB(255, 255, 255) };                //Caret font color.
 		COLORREF clrBk { GetSysColor(COLOR_WINDOW) };                //Background color.
 		COLORREF clrBkSelect { GetSysColor(COLOR_HIGHLIGHT) };       //Background color of the selected Hex/ASCII.
 		COLORREF clrBkDataInterp { RGB(147, 58, 22) };               //Data Interpreter Bk color.
@@ -182,65 +184,45 @@ namespace HEXCTRL
 		COLORREF clrBkCaret { RGB(0, 0, 255) };                      //Caret background color.
 		COLORREF clrBkCaretSelect { RGB(0, 0, 200) };                //Caret background color in selection.
 	};
-	using HEXCOLORSSTRUCT [[deprecated("Struct is deprecated, use HEXCREATE instead.")]] = HEXCOLORS;
 
 	/********************************************************************************************
 	* HEXCREATE - for IHexCtrl::Create method.                                                  *
 	********************************************************************************************/
 	struct HEXCREATE
 	{
-		EHexCreateMode  enCreateMode { EHexCreateMode::CREATE_CHILD }; //Creation mode of the HexCtrl window.
-		HEXCOLORS       stColor { };          //All the control's colors.
-		HWND            hwndParent { };       //Parent window handle.
-		const LOGFONTW* pLogFont { };         //Font to be used instead of default, it has to be monospaced.
-		RECT            rect { };             //Initial rect. If null, the window is screen centered.
-		UINT            uID { };              //Control ID.
-		DWORD           dwStyle { };          //Window styles, 0 for default.
-		DWORD           dwExStyle { };        //Extended window styles, 0 for default.
-		double          dbWheelRatio { 1.0 }; //Ratio for how much to scroll with mouse-wheel.
+		EHexCreateMode enCreateMode { EHexCreateMode::CREATE_CHILD }; //Creation mode of the HexCtrl window.
+		HEXCOLORS      stColor { };          //All the control's colors.
+		HWND           hwndParent { };       //Parent window handle.
+		PLOGFONTW      pLogFont { };         //Font to be used instead of default, it has to be monospaced.
+		RECT           rect { };             //Initial rect. If null, the window is screen centered.
+		UINT           uID { };              //Control ID.
+		DWORD          dwStyle { };          //Window styles, 0 for default.
+		DWORD          dwExStyle { };        //Extended window styles, 0 for default.
+		double         dbWheelRatio { 1.0 }; //Ratio for how much to scroll with mouse-wheel.
 	};
-	using HEXCREATESTRUCT [[deprecated("Struct is deprecated, use HEXCREATE instead.")]] = HEXCREATE;
 
 	/********************************************************************************************
 	* HEXDATA - for IHexCtrl::SetData method.                                                   *
 	********************************************************************************************/
 	struct HEXDATA
 	{
-		ULONGLONG       ullDataSize { };          //Size of the data to display, in bytes.
-		IHexVirtData*   pHexVirtData { };         //Pointer for Virtual mode.
-		IHexVirtColors* pHexVirtColors { };       //Pointer for Custom Colors class.
-		std::byte*      pData { };                //Data pointer in default mode.
-		DWORD           dwCacheSize { 0x800000 }; //In Virtual mode max cached size of data to fetch.
-		bool            fMutable { false };       //Is data mutable (editable) or read-only.
-		bool            fHighLatency { false };   //Do not redraw window until scrolling completes.
+		std::span<std::byte> spnData { };              //Data to display.
+		IHexVirtData*        pHexVirtData { };         //Pointer for Virtual mode.
+		IHexVirtColors*      pHexVirtColors { };       //Pointer for Custom Colors class.
+		DWORD                dwCacheSize { 0x800000 }; //In Virtual mode max cached size of data to fetch.
+		bool                 fMutable { false };       //Is data mutable (editable) or read-only.
+		bool                 fHighLatency { false };   //Do not redraw window until scrolling completes.
 	};
-	using HEXDATASTRUCT [[deprecated("Struct is deprecated, use HEXDATA instead.")]] = HEXDATA;
 
-	/********************************************************************************************
-	* HEXNOTIFY - used in notifications routine.                                                *
-	********************************************************************************************/
-/*	struct HEXNOTIFY
-	{
-		NMHDR      hdr { };     //Standard Windows header. For hdr.code values see HEXCTRL_MSG_* messages.
-		HEXSPAN    stSpan { };  //Offset and size of the bytes.
-		ULONGLONG  ullData { }; //Data depending on message (e.g. user defined custom menu ID/caret pos).
-		std::byte* pData { };   //Pointer to a data depending on notify message.
-		POINT      point { };   //Mouse position for menu notifications.
-	};
-	using HEXNOTIFYSTRUCT [[deprecated("Struct is deprecated, use HEXNOTIFY instead.")]] = HEXNOTIFY;
-	using PHEXNOTIFYSTRUCT = HEXNOTIFY*;
-	using PHEXNOTIFY = HEXNOTIFY*;
-	*/
 	/********************************************************************************************
 	* HEXHITTEST - used in HitTest method.                                                      *
 	********************************************************************************************/
 	struct HEXHITTEST
 	{
-		ULONGLONG ullOffset { };      //Offset.
-		bool      fIsAscii { false }; //Is cursor at ASCII part or at Hex.
-		bool      fIsHigh { false };  //Is it High or Low part of the byte.
+		ULONGLONG ullOffset { };     //Offset.
+		bool      fIsText { false }; //Is cursor at Text or Hex area.
+		bool      fIsHigh { false }; //Is it High or Low part of the byte.
 	};
-	using HEXHITTESTSTRUCT [[deprecated("Struct is deprecated, use HEXHITTEST instead.")]] = HEXHITTEST;
 
 	/********************************************************************************************
 	* HEXVISION - Offset visibility struct, used in IsOffsetVisible method.                     *
@@ -260,7 +242,7 @@ namespace HEXCTRL
 	********************************************************************************************/
 	enum class EHexModifyMode : std::uint8_t
 	{
-		MODIFY_DEFAULT, MODIFY_REPEAT, MODIFY_OPERATION, MODIFY_RANDOM
+		MODIFY_ONCE, MODIFY_REPEAT, MODIFY_OPERATION, MODIFY_RAND_MT19937, MODIFY_RAND_FAST
 	};
 
 	/********************************************************************************************
@@ -284,24 +266,24 @@ namespace HEXCTRL
 
 	/********************************************************************************************
 	* HEXMODIFY - used to represent data modification parameters.                               *
-	* When enModifyMode is set to EHexModifyMode::MODIFY_DEFAULT, bytes from pData just replace *
-	* corresponding data bytes as is. If enModifyMode is equal to EHexModifyMode::MODIFY_REPEAT *
+	* When enModifyMode is set to EHexModifyMode::MODIFY_ONCE, bytes from spnData.data() just   *
+	* replace corresponding data bytes as is.                                                   *
+	* If enModifyMode is equal to EHexModifyMode::MODIFY_REPEAT                                 *
 	* then block by block replacement takes place few times.                                    *
-	*   For example : if SUM(vecSpan.ullSize) = 9, ullDataSize = 3 and enModifyMode is set to   *
-	* EHexModifyMode::MODIFY_REPEAT, bytes in memory at vecSpan.ullOffset position are          *
-	* 123456789, and bytes pointed to by pData are 345, then, after modification, bytes at      *
-	* vecSpan.ullOffset will be 345345345.                                                      *
+	*   For example : if SUM(vecSpan.ullSize) == 9, spnData.size() == 3 and enModifyMode is set *
+	* to EHexModifyMode::MODIFY_REPEAT, bytes in memory at vecSpan.ullOffset position are       *
+	* `010203040506070809`, and bytes pointed to by spnData.data() are `030405`, then after     *
+	* modification bytes at vecSpan.ullOffset will be `030405030405030405.                      *
 	* If enModifyMode is equal to MODIFY_OPERATION then enOperMode comes into play, showing     *
 	* what kind of operation must be performed on data, with the enOperSize showing the size.   *
 	********************************************************************************************/
 	struct HEXMODIFY
 	{
-		EHexModifyMode enModifyMode { EHexModifyMode::MODIFY_DEFAULT }; //Modify mode.
-		EHexOperMode   enOperMode { };          //Operation mode, used only if enModifyMode == MODIFY_OPERATION.
-		EHexDataSize   enOperSize { };          //Operation data size.
-		std::byte*     pData { };               //Pointer to a data to be set.
-		ULONGLONG      ullDataSize { };         //Size of the data pData is pointing to.
-		std::vector<HEXSPAN> vecSpan { };       //Vector of data offsets and sizes.
-		bool           fBigEndian { false };    //Treat the data being modified as a big endian, used only in MODIFY_OPERATION mode.
+		EHexModifyMode       enModifyMode { EHexModifyMode::MODIFY_ONCE }; //Modify mode.
+		EHexOperMode         enOperMode { };       //Operation mode, used only in MODIFY_OPERATION mode.
+		EHexDataSize         enOperSize { };       //Operation data size.
+		std::span<std::byte> spnData { };          //Data span.
+		std::vector<HEXSPAN> vecSpan { };          //Vector of data offsets and sizes.
+		bool                 fBigEndian { false }; //Treat the data as a big endian, used only in MODIFY_OPERATION mode.
 	};
 };

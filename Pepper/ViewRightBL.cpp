@@ -54,10 +54,14 @@ void CViewRightBL::OnInitialUpdate()
 	m_stlcs.pParent = this;
 	m_stlcs.fSortable = true;
 
-	m_lf.lfHeight = 16;
+	auto pDC = GetDC();
+	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
+	m_lf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
+	m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
+	ReleaseDC(pDC);
+
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
 	m_stlcs.pListLogFont = &m_lf;
-	m_hdrlf.lfHeight = 17;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
 	m_stlcs.pHdrLogFont = &m_hdrlf;

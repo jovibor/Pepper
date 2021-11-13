@@ -85,8 +85,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexC
 		m_hds.pHexVirtData = this;
 
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
-	m_hds.pData = pData;
-	m_hds.ullDataSize = static_cast<ULONGLONG>(m_stFileSize.QuadPart);
+	m_hds.spnData = { pData, static_cast<std::size_t>(m_stFileSize.QuadPart) };
 
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
 		[pHexCtrl](const QUERYDATA& r) {return r.hWnd == pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN); });
@@ -168,8 +167,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	}
 
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
-	m_hds.pData = pData;
-	m_hds.ullDataSize = ullSize;
+	m_hds.spnData = { pData, static_cast<std::size_t>(ullSize) };
 	pHexCtrl->SetData(m_hds);
 
 	return S_OK;
@@ -292,12 +290,12 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 void CFileLoader::OnHexGetData(HEXDATAINFO& hdi)
 {
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[hWnd=hdi.hdr.hwndFrom](const QUERYDATA& rData) {return rData.hWnd == hWnd; });
+		[hWnd = hdi.hdr.hwndFrom](const QUERYDATA& rData) {return rData.hWnd == hWnd; });
 	if (iter == m_vecQuery.end())
 		return;
 
 	std::byte* pData { };
-	auto ullOffset = hdi.stSpan.ullOffset + iter->ullOffsetDelta;
+	auto ullOffset = hdi.stHexSpan.ullOffset + iter->ullOffsetDelta;
 
 	if (m_fMapViewOfFileWhole && ullOffset < static_cast<ULONGLONG>(m_stFileSize.QuadPart))
 		pData = (static_cast<std::byte*>(m_lpBase)) + ullOffset;
@@ -312,7 +310,7 @@ void CFileLoader::OnHexGetData(HEXDATAINFO& hdi)
 		}
 	}
 
-	hdi.pData = pData;
+	hdi.spnData = { pData, hdi.stHexSpan.ullSize };
 }
 
 void CFileLoader::OnHexSetData(const HEXDATAINFO& hdi)

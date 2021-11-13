@@ -34,8 +34,11 @@ void CViewRightTL::OnInitialUpdate()
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	LOGFONTW lf { };
-	StringCchCopyW(lf.lfFaceName, 18, L"Consolas");
-	lf.lfHeight = 22;
+	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
+	auto pDC = GetDC();
+	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
+	ReleaseDC(pDC);
+	lf.lfHeight = -MulDiv(14, iLOGPIXELSY, 72);
 	if (!m_fontSummary.CreateFontIndirectW(&lf))
 	{
 		StringCchCopyW(lf.lfFaceName, 18, L"Times New Roman");
@@ -76,10 +79,10 @@ void CViewRightTL::OnInitialUpdate()
 	m_stlcs.dwHdrHeight = 39;
 	m_stlcs.fSortable = true;
 
-	m_lf.lfHeight = 16;
+	m_lf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
+	m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
 	m_stlcs.pListLogFont = &m_lf;
-	m_hdrlf.lfHeight = 17;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
 	m_stlcs.pHdrLogFont = &m_hdrlf;
@@ -239,7 +242,7 @@ void CViewRightTL::OnDraw(CDC* pDC)
 		return;
 
 	CMemDC memDC(*pDC, this);
-	CDC& rDC = memDC.GetDC();
+	auto& rDC = memDC.GetDC();
 
 	CRect rc;
 	rDC.GetClipBox(rc);
@@ -250,8 +253,8 @@ void CViewRightTL::OnDraw(CDC* pDC)
 		GetTextExtentPoint32W(rDC.m_hDC, m_wstrPepperVersion.data(), static_cast<int>(m_wstrPepperVersion.size()), &sizeTextToDraw);
 	else
 		GetTextExtentPoint32W(rDC.m_hDC, m_wstrFullPath.data(), static_cast<int>(m_wstrFullPath.size()), &sizeTextToDraw);
-	int iRectLeft = 20;
-	int iRectTop = 20;
+	constexpr auto iRectLeft = 20;
+	constexpr auto iRectTop = 20;
 	rc.SetRect(iRectLeft, iRectTop, iRectLeft + sizeTextToDraw.cx + 40, sizeTextToDraw.cy * 6);
 	rDC.Rectangle(&rc);
 

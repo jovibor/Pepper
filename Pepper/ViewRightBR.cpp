@@ -87,10 +87,14 @@ void CViewRightBR::OnInitialUpdate()
 	m_stlcs.pParent = this;
 	m_stlcs.dwHdrHeight = 35;
 
-	m_lf.lfHeight = 16;
+	auto pDC = GetDC();
+	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
+	m_lf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
+	m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
+	ReleaseDC(pDC);
+
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
 	m_stlcs.pListLogFont = &m_lf;
-	m_hdrlf.lfHeight = 17;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
 	m_stlcs.pHdrLogFont = &m_hdrlf;
@@ -176,7 +180,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 			x = sizeScroll.cx / 2 - (m_stBmp.bmWidth / 2);
 		else
 			x = rcClipBox.Width() / 2 - (m_stBmp.bmWidth / 2);
-	
+
 		if (sizeScroll.cy > rcClipBox.Height())
 			y = sizeScroll.cy / 2 - (m_stBmp.bmHeight / 2);
 		else
@@ -269,18 +273,19 @@ void CViewRightBR::CreateIconCursor(const SRESHELPER* pResHelper)
 
 void CViewRightBR::CreateBitmap(const SRESHELPER* pResHelper)
 {
-	auto* pDIBInfo = reinterpret_cast<BITMAPINFO*>(pResHelper->pData->data());
-	int iColors = pDIBInfo->bmiHeader.biClrUsed ? pDIBInfo->bmiHeader.biClrUsed : 1 << pDIBInfo->bmiHeader.biBitCount;
+	auto* pBMPInfo = reinterpret_cast<PBITMAPINFO>(pResHelper->pData->data());
+	auto* pBMPHdr = &pBMPInfo->bmiHeader;
+	const auto nNumColors = pBMPHdr->biClrUsed > 0 ? pBMPHdr->biClrUsed : 1 << pBMPHdr->biBitCount;
+
 	LPVOID pDIBBits;
-
-	if (pDIBInfo->bmiHeader.biBitCount > 8)
-		pDIBBits = static_cast<LPVOID>(reinterpret_cast<PDWORD>(pDIBInfo->bmiColors + pDIBInfo->bmiHeader.biClrUsed) +
-			((pDIBInfo->bmiHeader.biCompression == BI_BITFIELDS) ? 3 : 0));
+	if (pBMPHdr->biBitCount > 8)
+		pDIBBits = static_cast<LPVOID>(reinterpret_cast<PDWORD>(pBMPInfo->bmiColors + pBMPHdr->biClrUsed) +
+			((pBMPHdr->biCompression == BI_BITFIELDS) ? 3 : 0));
 	else
-		pDIBBits = static_cast<LPVOID>(pDIBInfo->bmiColors + iColors);
+		pDIBBits = static_cast<LPVOID>(pBMPInfo->bmiColors + nNumColors);
 
-	HDC hDC = ::GetDC(m_hWnd);
-	HBITMAP hBitmap = CreateDIBitmap(hDC, &pDIBInfo->bmiHeader, CBM_INIT, pDIBBits, pDIBInfo, DIB_RGB_COLORS);
+	auto hDC = ::GetDC(m_hWnd);
+	auto hBitmap = CreateDIBitmap(hDC, pBMPHdr, CBM_INIT, pDIBBits, pBMPInfo, DIB_RGB_COLORS);
 	::ReleaseDC(m_hWnd, hDC);
 	if (!hBitmap)
 		return ResLoadError();
