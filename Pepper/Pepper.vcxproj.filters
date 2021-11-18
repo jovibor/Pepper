@@ -115,10 +115,13 @@
     <Image Include="res\Toolbar256.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="res\TreeMain_Dirs.ico">
+    <Image Include="res\IDI_TREE_PEDIRS.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="res\TreeMain_Header.ico">
+    <Image Include="res\IDI_TREE_PEHEADER.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\IDI_TREE_PERESOURCE.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

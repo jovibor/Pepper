@@ -71,9 +71,11 @@ END
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "Pepper.ico"
 
-IDI_TREE_MAIN_HEADER_ICON ICON                    "TreeMain_Header.ico"
+IDI_TREE_PEHEADER       ICON                    "IDI_TREE_PEHEADER.ico"
 
-IDI_TREE_MAIN_DIR_ICON  ICON                    "TreeMain_Dirs.ico"
+IDI_TREE_PEDIRS         ICON                    "IDI_TREE_PEDIRS.ico"
+
+IDI_TREE_PERESOURCE     ICON                    "IDI_TREE_PERESOURCE.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////

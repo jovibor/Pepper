@@ -29,9 +29,15 @@ void CViewLeft::OnInitialUpdate()
 	if (m_pLibpe->GetImageInfo(dwFileInfo) != S_OK)
 		return;
 
-	m_ImgListRootTree.Create(16, 16, ILC_COLORDDB, 0, 2);
-	const int iconHdr = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_HEADER_ICON));
-	const int iconDirs = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_DIR_ICON));
+	//Scaling factor for HighDPI displays.
+	auto pDC = GetDC();
+	const auto fScale = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY) / 96.0f;
+	ReleaseDC(pDC);
+	const auto iImgSize = static_cast<int>(16 * fScale);
+
+	m_ImgListRootTree.Create(iImgSize, iImgSize, ILC_COLOR32, 0, 2);
+	const int iconHdr = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_PEHEADER));
+	const int iconDirs = m_ImgListRootTree.Add(AfxGetApp()->LoadIconW(IDI_TREE_PEDIRS));
 
 	CRect rect;
 	GetClientRect(&rect);
@@ -185,7 +191,7 @@ BOOL CViewLeft::OnEraseBkgnd(CDC* /*pDC*/)
 void CViewLeft::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
-	
+
 	if (m_fCreated)
 		m_stTreeMain.SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }

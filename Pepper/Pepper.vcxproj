@@ -160,8 +160,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\TreeMain_Dirs.ico" />
-    <Image Include="res\TreeMain_Header.ico" />
+    <Image Include="res\IDI_TREE_PEDIRS.ico" />
+    <Image Include="res\IDI_TREE_PEHEADER.ico" />
+    <Image Include="res\IDI_TREE_PERESOURCE.ico" />
     <Image Include="res\Pepper.ico" />
     <Image Include="res\Toolbar256.bmp" />
   </ItemGroup>

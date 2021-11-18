@@ -775,8 +775,14 @@ int CViewRightBL::CreateTreeResources()
 
 	WCHAR wstr[MAX_PATH];
 
-	m_imglTreeRes.Create(16, 16, ILC_COLOR32, 0, 4);
-	const int iconDirs = m_imglTreeRes.Add(AfxGetApp()->LoadIconW(IDI_TREE_MAIN_DIR_ICON));
+	//Scaling factor for HighDPI displays.
+	auto pDC = GetDC();
+	const auto fScale = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY) / 96.0f;
+	ReleaseDC(pDC);
+	const auto iImgSize = static_cast<int>(16 * fScale);
+
+	m_imglTreeRes.Create(iImgSize, iImgSize, ILC_COLOR32, 0, 4);
+	const auto iconDirs = m_imglTreeRes.Add(AfxGetApp()->LoadIconW(IDI_TREE_PERESOURCE));
 	m_treeResBottom.SetImageList(&m_imglTreeRes, TVSIL_NORMAL);
 	long ilvlRoot = 0;
 
