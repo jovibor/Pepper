@@ -1,5 +1,5 @@
 #pragma once
-#include <map>
+#include <unordered_map>
 #include "libpe.h"
 
 #define PRODUCT_NAME			L"Pepper"
@@ -24,7 +24,7 @@
 using namespace libpe;
 
 //Errors, that might come from libpe.
-inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {
+inline const std::unordered_map<DWORD, std::wstring> g_mapLibpeErrors {
 	TO_WSTR_MAP(E_CALL_LOADPE_FIRST),
 	TO_WSTR_MAP(E_FILE_CREATEFILE_FAILED),
 	TO_WSTR_MAP(E_FILE_SIZE_TOO_SMALL),
@@ -58,7 +58,7 @@ inline const std::map<DWORD, std::wstring> g_mapLibpeErrors {
 };
 
 //All possible PE Resource types.
-inline const std::map<WORD, std::wstring> g_mapResType {
+inline const std::unordered_map<WORD, std::wstring> g_mapResType {
 	{ 1, L"RT_CURSOR" },
 	{ 2, L"RT_BITMAP" },
 	{ 3, L"RT_ICON" },
@@ -93,7 +93,7 @@ struct SPEREFLECTION
 	DWORD dwOffset;			//Field offset.
 	std::wstring wstrName;	//Field name.
 };
-using map_hdr = std::map<DWORD, SPEREFLECTION>;
+using map_hdr = std::unordered_map<DWORD, SPEREFLECTION>;
 
 //Standard headers' maps.
 inline const map_hdr g_mapDOSHeader {
@@ -205,7 +205,7 @@ inline const map_hdr g_mapOptHeader64 {
 	{ 28, { sizeof(DWORD), 108, L"NumberOfRvaAndSizes" } }
 };
 
-inline const std::map<WORD, std::wstring> g_mapDataDirs {
+inline const std::unordered_map<WORD, std::wstring> g_mapDataDirs {
 	{ IMAGE_DIRECTORY_ENTRY_EXPORT, L"Export Directory" },
 	{ IMAGE_DIRECTORY_ENTRY_IMPORT, L"Import Directory" },
 	{ IMAGE_DIRECTORY_ENTRY_RESOURCE, L"Resource Directory" },
@@ -375,10 +375,8 @@ inline const map_hdr g_mapComDir {
 ////////////////////////////////////////////////////////////
 
 //Helper struct for resources interchange between views.
-struct SRESHELPER
+struct SRESDATA
 {
-	SRESHELPER() {}
-	SRESHELPER(WORD type, WORD name, std::vector<std::byte>* data) : IdResType(type), IdResName(name), pData(data) {}
 	WORD IdResType { };
 	WORD IdResName { };
 	std::vector<std::byte>* pData { };

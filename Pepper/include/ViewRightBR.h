@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
+* Copyright Â© 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -12,6 +12,7 @@
 #include "ChildFrm.h"
 #include "ListEx/ListEx.h"
 #include "Utility.h"
+#include <span>
 
 using namespace LISTEX;
 
@@ -37,20 +38,20 @@ class CViewRightBR final : public CScrollView
 	virtual void OnInitialUpdate();     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
-	void CreateIconCursor(const SRESHELPER* pResHelper);
-	void CreateBitmap(const SRESHELPER* pResHelper);
+	void CreateIconCursor(const SRESDATA& stResData);
+	void CreateBitmap(const SRESDATA& stResData);
 	void CreateDebugEntry(DWORD dwEntry);
-	void CreateDlg(const SRESHELPER* pResHelper);
-	void CreateStrings(const SRESHELPER* pResHelper);
-	void CreateGroupIconCursor(const SRESHELPER* pResHelper);
-	void CreateVersion(const SRESHELPER* pResHelper);
-	void CreateManifest(const SRESHELPER* pResHelper);
-	void CreateToolbar(const SRESHELPER* pResHelper);
+	void CreateDlg(const SRESDATA& stResData);
+	void CreateStrings(const SRESDATA& stResData);
+	void CreateGroupIconCursor(const SRESDATA& stResData);
+	void CreateVersion(const SRESDATA& stResData);
+	void CreateManifest(const SRESDATA& stResData);
+	void CreateToolbar(const SRESDATA& stResData);
 	int CreateListTLSCallbacks();
-	void ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstring& wstrData);
 	void ResLoadError();
-	void ShowResource(const SRESHELPER*);
+	void ShowResource(const SRESDATA* pResData);
 	DECLARE_MESSAGE_MAP()
+	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
 private:
 	HWND m_hwndActive { };
 	libpe_ptr m_pLibpe;

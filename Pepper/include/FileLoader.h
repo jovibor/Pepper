@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
+* Copyright Â© 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -26,12 +26,15 @@ public:
 	//First function to call.
 	HRESULT LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc);
 	[[nodiscard]] bool IsWritable()const { return m_fWritable; }
+
 	//Shows arbitrary offset in already loaded file (LoadFile)
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
 	HRESULT ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexCtrl* pHexCtrl = nullptr);
+
 	//Shows only a piece of the whole loaded file.
 	//If pHexCtrl == nullptr inner CHexCtrl object is used.
 	HRESULT ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrl* pHexCtrl = nullptr);
+
 	//Has file been modified in memory or not.
 	[[nodiscard]] bool IsModified()const { return m_fModified; }
 	bool Flush(); //Writes memory mapped file on disk.
@@ -41,7 +44,7 @@ private:
 	/****************************************************************************
 	* This is a helper structure for query information.							*
 	* Every window (hWnd) can have its own set of mapped data.					*
-	* So we can map different parts, of the big file,							*
+	* So we can map different parts of the big file								*
 	* for different windows (CHexCtrl instances) simultaneously.				*
 	****************************************************************************/
 	struct QUERYDATA
@@ -54,9 +57,17 @@ private:
 		LPVOID		lpData { };                  //File's Mapped data.
 		bool		fShowPiece { false };        //Whether used in ShowOffset (false) or in ShowFilePiece (true).
 	};
+	void OnHexGetData(HEXDATAINFO& hdi)override; //For Virtual HexCtrl retrives next byte on demand.
+	void OnHexSetData(const HEXDATAINFO& hdi)override;
+	HRESULT MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD dwSize = 0); //Main routine for mapping big file's parts.
+	HRESULT UnmapFileOffset(QUERYDATA& rData);
+	[[nodiscard]] bool IsLoaded()const;
+	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+	void CreateHexCtrlWnd();
+private:
 	bool m_fLoaded { false };
 	CPepperDoc* m_pMainDoc { };
-	IHexCtrlPtr m_pHex { CreateHexCtrl() };
+	IHexCtrlPtr m_pHex { HEXCTRL::CreateHexCtrl() };
 	HEXCREATE m_hcs;
 	HEXDATA m_hds;
 	LARGE_INTEGER m_stFileSize { };	 //Size of the loaded PE file.
@@ -73,11 +84,4 @@ private:
 	const int IDC_HEX_CTRL = 0xFF; //Id of inner IHexCtrl.
 	bool m_fModified { false };
 	bool m_fWritable { false };
-private:
-	void OnHexGetData(HEXDATAINFO& hdi)override; //For Virtual HexCtrl retrives next byte on demand.
-	void OnHexSetData(const HEXDATAINFO& hdi)override;
-	HRESULT MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD dwSize = 0); //Main routine for mapping big file's parts.
-	HRESULT UnmapFileOffset(QUERYDATA& rData);
-	[[nodiscard]] bool IsLoaded()const;
-	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };

@@ -77,6 +77,8 @@ IDI_TREE_PEDIRS         ICON                    "IDI_TREE_PEDIRS.ico"
 
 IDI_TREE_PERESOURCE     ICON                    "IDI_TREE_PERESOURCE.ico"
 
+IDI_HEXCTRL_LOGO        ICON                    "IDI_HEXCTRL_LOGO.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
+* Copyright Â© 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -8,8 +8,9 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "MainFrm.h"
-#include "ViewRightBR.h"
 #include "Utility.h"
+#include "ViewRightBR.h"
+#include <format>
 
 BEGIN_MESSAGE_MAP(CWndSampledlg, CWnd)
 	ON_WM_PAINT()
@@ -71,7 +72,7 @@ void CViewRightBR::OnInitialUpdate()
 	lf.lfHeight = 18;
 	if (!m_fontEditRes.CreateFontIndirectW(&lf))
 	{
-		NONCLIENTMETRICSW ncm;
+		NONCLIENTMETRICSW ncm { };
 		ncm.cbSize = sizeof(NONCLIENTMETRICS);
 		SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
 		m_fontEditRes.CreateFontIndirectW(&ncm.lfMessageFont);
@@ -89,8 +90,7 @@ void CViewRightBR::OnInitialUpdate()
 
 	auto pDC = GetDC();
 	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
-	m_lf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
-	m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
+	m_lf.lfHeight = m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
 	ReleaseDC(pDC);
 
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
@@ -136,7 +136,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case IDC_SHOW_RESOURCE_RBR:
-		ShowResource(reinterpret_cast<SRESHELPER*>(pHint));
+		ShowResource(reinterpret_cast<SRESDATA*>(pHint));
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
@@ -154,12 +154,11 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 
 void CViewRightBR::OnDraw(CDC* pDC)
 {
-	CRect rcClipBox;
-	pDC->GetClipBox(rcClipBox);
+	CRect rcClient;
+	GetClientRect(rcClient);
 
-	if (!m_fDrawRes)
-	{
-		pDC->FillSolidRect(rcClipBox, RGB(255, 255, 255));
+	if (!m_fDrawRes) {
+		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
 		return;
 	}
 
@@ -174,17 +173,17 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case 3: //RT_ICON
 	{
 		//Drawing in the center, independently from scroll pos.
-		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
+		pDC->FillSolidRect(rcClient, m_clrBkIcons);
 
-		if (sizeScroll.cx > rcClipBox.Width())
+		if (sizeScroll.cx > rcClient.Width())
 			x = sizeScroll.cx / 2 - (m_stBmp.bmWidth / 2);
 		else
-			x = rcClipBox.Width() / 2 - (m_stBmp.bmWidth / 2);
+			x = rcClient.Width() / 2 - (m_stBmp.bmWidth / 2);
 
-		if (sizeScroll.cy > rcClipBox.Height())
+		if (sizeScroll.cy > rcClient.Height())
 			y = sizeScroll.cy / 2 - (m_stBmp.bmHeight / 2);
 		else
-			y = rcClipBox.Height() / 2 - (m_stBmp.bmHeight / 2);
+			y = rcClient.Height() / 2 - (m_stBmp.bmHeight / 2);
 
 		ptDrawAt.SetPoint(x, y);
 		m_stImgRes.Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
@@ -195,22 +194,22 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case 12: //RT_GROUP_CURSOR
 	case 14: //RT_GROUP_ICON
 	{
-		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
+		pDC->FillSolidRect(rcClient, m_clrBkIcons);
 
-		if (sizeScroll.cx > rcClipBox.Width())
+		if (sizeScroll.cx > rcClient.Width())
 			x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
 		else
-			x = rcClipBox.Width() / 2 - (m_iImgResWidth / 2);
+			x = rcClient.Width() / 2 - (m_iImgResWidth / 2);
 
 		for (const auto& iter : m_vecImgRes)
 		{
 			IMAGEINFO imginfo;
 			iter->GetImageInfo(0, &imginfo);
 			int iImgHeight = imginfo.rcImage.bottom - imginfo.rcImage.top;
-			if (sizeScroll.cy > rcClipBox.Height())
+			if (sizeScroll.cy > rcClient.Height())
 				y = sizeScroll.cy / 2 - (iImgHeight / 2);
 			else
-				y = rcClipBox.Height() / 2 - (iImgHeight / 2);
+				y = rcClient.Height() / 2 - (iImgHeight / 2);
 
 			ptDrawAt.SetPoint(x, y);
 			iter->Draw(pDC, 0, ptDrawAt, ILD_NORMAL);
@@ -219,11 +218,12 @@ void CViewRightBR::OnDraw(CDC* pDC)
 		break;
 	}
 	case 0xFF:
-		pDC->FillSolidRect(rcClipBox, RGB(255, 255, 255));
+		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
 		pDC->SetTextColor(RGB(255, 0, 0));
 		pDC->TextOutW(0, 0, L"Unable to load resource! It's either damaged, packed or zero-length.");
 		break;
 	default:
+		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
 		pDC->TextOutW(0, 0, L"This Resource type is not supported.");
 	}
 }
@@ -241,13 +241,13 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBR::CreateIconCursor(const SRESHELPER* pResHelper)
+void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 {
 	HICON hIcon;
 	ICONINFO iconInfo;
 
-	hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(pResHelper->pData->data()), static_cast<DWORD>(pResHelper->pData->size()),
-		(pResHelper->IdResType == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+	hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(stResData.pData->data()), static_cast<DWORD>(stResData.pData->size()),
+		(stResData.IdResType == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 	if (!hIcon)
 		return ResLoadError();
 	if (!GetIconInfo(hIcon, &iconInfo))
@@ -258,29 +258,31 @@ void CViewRightBR::CreateIconCursor(const SRESHELPER* pResHelper)
 	DeleteObject(iconInfo.hbmMask);
 
 	m_stImgRes.Create(m_stBmp.bmWidth,
-		(pResHelper->IdResType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
+		(stResData.IdResType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
 	m_stImgRes.SetBkColor(m_clrBkImgList);
 	if (m_stImgRes.Add(hIcon) == -1)
 		return ResLoadError();
 
 	DestroyIcon(hIcon);
 	SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth,
-		(pResHelper->IdResType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth));
+		(stResData.IdResType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth));
 
-	m_iResTypeToDraw = pResHelper->IdResType;
+	m_iResTypeToDraw = stResData.IdResType;
 	m_fDrawRes = true;
 }
 
-void CViewRightBR::CreateBitmap(const SRESHELPER* pResHelper)
+void CViewRightBR::CreateBitmap(const SRESDATA& stResData)
 {
-	auto* pBMPInfo = reinterpret_cast<PBITMAPINFO>(pResHelper->pData->data());
+	auto* pBMPInfo = reinterpret_cast<PBITMAPINFO>(stResData.pData->data());
 	auto* pBMPHdr = &pBMPInfo->bmiHeader;
 	const auto nNumColors = pBMPHdr->biClrUsed > 0 ? pBMPHdr->biClrUsed : 1 << pBMPHdr->biBitCount;
 
 	LPVOID pDIBBits;
 	if (pBMPHdr->biBitCount > 8)
+	{
 		pDIBBits = static_cast<LPVOID>(reinterpret_cast<PDWORD>(pBMPInfo->bmiColors + pBMPHdr->biClrUsed) +
 			((pBMPHdr->biCompression == BI_BITFIELDS) ? 3 : 0));
+	}
 	else
 		pDIBBits = static_cast<LPVOID>(pBMPInfo->bmiColors + nNumColors);
 
@@ -307,7 +309,7 @@ void CViewRightBR::CreateBitmap(const SRESHELPER* pResHelper)
 	bmp.DeleteObject();
 }
 
-void CViewRightBR::CreateDlg(const SRESHELPER* pResHelper)
+void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 {
 #pragma pack(push, 4)
 	struct DLGTEMPLATEEX //Helper struct. Not completed.
@@ -326,13 +328,17 @@ void CViewRightBR::CreateDlg(const SRESHELPER* pResHelper)
 	};
 #pragma pack(pop)
 
-	ParceDlgTemplate(reinterpret_cast<PBYTE>(pResHelper->pData->data()), pResHelper->pData->size(), m_wstrEditBRB);
+	const auto optData = ParceDlgTemplate({ stResData.pData->data(), stResData.pData->size() });
+	if (!optData)
+		return ResLoadError();
 
-	bool fDlgEx = *((reinterpret_cast<PWORD>(pResHelper->pData->data())) + 1) == 0xFFFF;
+	m_wstrEditBRB = std::move(*optData);
+
+	bool fDlgEx = *((reinterpret_cast<PWORD>(stResData.pData->data())) + 1) == 0xFFFF;
 
 	//Pointer to 'Style' dword.
-	PDWORD pStyle { fDlgEx ? &(reinterpret_cast<DLGTEMPLATEEX*>(pResHelper->pData->data()))->style :
-		&(reinterpret_cast<DLGTEMPLATE*>(pResHelper->pData->data()))->style };
+	PDWORD pStyle { fDlgEx ? &(reinterpret_cast<DLGTEMPLATEEX*>(stResData.pData->data()))->style :
+		&(reinterpret_cast<DLGTEMPLATE*>(stResData.pData->data()))->style };
 
 	bool fWS_VISIBLE { false };
 	if (*pStyle & WS_VISIBLE) //Remove WS_VISIBLE flag if exists, so that dialog not steal the focus on creation.
@@ -342,7 +348,7 @@ void CViewRightBR::CreateDlg(const SRESHELPER* pResHelper)
 	}
 
 	auto hwndResDlg = CreateDialogIndirectParamW(nullptr,
-		reinterpret_cast<LPCDLGTEMPLATEW>(pResHelper->pData->data()), m_hWnd, nullptr, 0);
+		reinterpret_cast<LPCDLGTEMPLATEW>(stResData.pData->data()), m_hWnd, nullptr, 0);
 
 	if (!hwndResDlg)
 	{
@@ -356,17 +362,17 @@ void CViewRightBR::CreateDlg(const SRESHELPER* pResHelper)
 		WORD wOld;
 		if (fDlgEx) //DLGTEMPLATEEX
 		{
-			pWordDlgItems = &(reinterpret_cast<DLGTEMPLATEEX*>(pResHelper->pData->data()))->cDlgItems;
+			pWordDlgItems = &(reinterpret_cast<DLGTEMPLATEEX*>(stResData.pData->data()))->cDlgItems;
 			wOld = *pWordDlgItems;
 		}
 		else //DLGTEMPLATE
 		{
-			pWordDlgItems = &(reinterpret_cast<DLGTEMPLATE*>(pResHelper->pData->data()))->cdit;
+			pWordDlgItems = &(reinterpret_cast<DLGTEMPLATE*>(stResData.pData->data()))->cdit;
 			wOld = *pWordDlgItems;
 		}
 		*pWordDlgItems = 0;
 		hwndResDlg = CreateDialogIndirectParamW(nullptr,
-			reinterpret_cast<LPCDLGTEMPLATEW>(pResHelper->pData->data()), m_hWnd, nullptr, 0);
+			reinterpret_cast<LPCDLGTEMPLATEW>(stResData.pData->data()), m_hWnd, nullptr, 0);
 		*pWordDlgItems = wOld;
 	}
 
@@ -400,8 +406,7 @@ void CViewRightBR::CreateDlg(const SRESHELPER* pResHelper)
 	::SelectObject(hDCMemory, hBitmap);
 
 	//To avoid window pop-up removing Windows animation temporarily, then restore back.
-	ANIMATIONINFO aninfo;
-	aninfo.cbSize = sizeof(ANIMATIONINFO);
+	ANIMATIONINFO aninfo { .cbSize { sizeof(ANIMATIONINFO) } };
 	SystemParametersInfoW(SPI_GETANIMATION, aninfo.cbSize, &aninfo, 0);
 	int iMinAnimate = aninfo.iMinAnimate;
 	if (iMinAnimate) {
@@ -535,9 +540,9 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateStrings(const SRESHELPER* pResHelper)
+void CViewRightBR::CreateStrings(const SRESDATA& stResData)
 {
-	auto pwszResString = reinterpret_cast<LPCWSTR>(pResHelper->pData->data());
+	auto pwszResString = reinterpret_cast<LPCWSTR>(stResData.pData->data());
 	std::wstring wstrTmp;
 	for (int i = 0; i < 16; i++)
 	{
@@ -554,7 +559,7 @@ void CViewRightBR::CreateStrings(const SRESHELPER* pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateGroupIconCursor(const SRESHELPER* pResHelper)
+void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 {
 	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
@@ -582,7 +587,7 @@ void CViewRightBR::CreateGroupIconCursor(const SRESHELPER* pResHelper)
 	using LPGRPICONDIR = const GRPICONDIR*;
 #pragma pack(pop)
 
-	auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(pResHelper->pData->data());
+	auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(stResData.pData->data());
 	HICON hIcon;
 	ICONINFO iconInfo;
 
@@ -643,11 +648,11 @@ void CViewRightBR::CreateGroupIconCursor(const SRESHELPER* pResHelper)
 	}
 	SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
 
-	m_iResTypeToDraw = pResHelper->IdResType;
+	m_iResTypeToDraw = stResData.IdResType;
 	m_fDrawRes = true;
 }
 
-void CViewRightBR::CreateVersion(const SRESHELPER* pResHelper)
+void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 {
 #pragma pack(push, 4)
 	struct LANGANDCODEPAGE
@@ -657,7 +662,7 @@ void CViewRightBR::CreateVersion(const SRESHELPER* pResHelper)
 	};
 #pragma pack(pop)
 
-	static const std::map<int, std::wstring> mapVerInfoStrings {
+	static const std::unordered_map<int, std::wstring> mapVerInfoStrings {
 		{ 0, L"FileDescription" },
 		{ 1, L"FileVersion" },
 		{ 2, L"InternalName" },
@@ -668,11 +673,11 @@ void CViewRightBR::CreateVersion(const SRESHELPER* pResHelper)
 		{ 7, L"ProductVersion" }
 	};
 
-	LANGANDCODEPAGE* pLangAndCP;
+	LANGANDCODEPAGE* pLangAndCP { };
 	UINT dwBytesOut;
 
 	//Read the list of languages and code pages.
-	VerQueryValueW(pResHelper->pData->data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
+	VerQueryValueW(stResData.pData->data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
 
 	WCHAR wstrSubBlock[50];
 	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
@@ -687,10 +692,11 @@ void CViewRightBR::CreateVersion(const SRESHELPER* pResHelper)
 			m_wstrEditBRB += mapVerInfoStrings.at(i);
 			m_wstrEditBRB += L" - ";
 
-			WCHAR* pszBufferOut;
-			if (VerQueryValueW(pResHelper->pData->data(), wstrSubBlock, reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
+			if (WCHAR* pszBufferOut { }; VerQueryValueW(stResData.pData->data(), wstrSubBlock, reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
+			{
 				if (dwBytesOut)
 					m_wstrEditBRB += pszBufferOut;
+			}
 			m_wstrEditBRB += L"\r\n";
 		}
 	}
@@ -702,11 +708,11 @@ void CViewRightBR::CreateVersion(const SRESHELPER* pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateManifest(const SRESHELPER* pResHelper)
+void CViewRightBR::CreateManifest(const SRESDATA& stResData)
 {
-	m_wstrEditBRB.resize(pResHelper->pData->size());
-	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(pResHelper->pData->data()),
-		static_cast<int>(pResHelper->pData->size()), &m_wstrEditBRB[0], static_cast<int>(pResHelper->pData->size()));
+	m_wstrEditBRB.resize(stResData.pData->size());
+	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(stResData.pData->data()),
+		static_cast<int>(stResData.pData->size()), &m_wstrEditBRB[0], static_cast<int>(stResData.pData->size()));
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
 	CRect rcClient;
@@ -716,7 +722,7 @@ void CViewRightBR::CreateManifest(const SRESHELPER* pResHelper)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateToolbar(const SRESHELPER* pResHelper)
+void CViewRightBR::CreateToolbar(const SRESDATA& stResData)
 {
 	PLIBPE_RESOURCE_ROOT pstResRoot;
 	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
@@ -732,7 +738,7 @@ void CViewRightBR::CreateToolbar(const SRESHELPER* pResHelper)
 
 			for (auto& iterlvl2 : lvl2vec)
 			{
-				if (iterlvl2.stResDirEntryLvL2.Id == pResHelper->IdResName)
+				if (iterlvl2.stResDirEntryLvL2.Id == stResData.IdResName)
 				{
 					auto& lvl3tup = iterlvl2.stResLvL3;
 					auto& lvl3vec = lvl3tup.vecResLvL3;
@@ -742,8 +748,8 @@ void CViewRightBR::CreateToolbar(const SRESHELPER* pResHelper)
 						auto& data = lvl3vec.at(0).vecResRawDataLvL3;
 						if (!data.empty())
 						{
-							SRESHELPER rh(2, pResHelper->IdResName, static_cast<std::vector<std::byte>*>(&data));
-							ShowResource(&rh);
+							SRESDATA rh { .IdResType { 2 }, .IdResName { stResData.IdResName }, .pData { &data } };
+							CreateBitmap(rh);
 						}
 					}
 				}
@@ -752,462 +758,7 @@ void CViewRightBR::CreateToolbar(const SRESHELPER* pResHelper)
 	}
 }
 
-void CViewRightBR::ParceDlgTemplate(PBYTE pDataDlgRes, size_t nSize, std::wstring& wstrData)
-{
-	//If data is from PE resources, then it is packed.
-#pragma pack(push, 4)
-	struct DLGTEMPLATEEX //Helper struct. Not completed.
-	{
-		WORD      dlgVer;
-		WORD      signature;
-		DWORD     helpID;
-		DWORD     exStyle;
-		DWORD     style;
-		WORD      cDlgItems;
-		short     x;
-		short     y;
-		short     cx;
-		short     cy;
-		WORD      menu;
-	};
-	struct DLGITEMTEMPLATEEX //Helper struct. Not completed.
-	{
-		DWORD     helpID;
-		DWORD     exStyle;
-		DWORD     style;
-		short     x;
-		short     y;
-		short     cx;
-		short     cy;
-		DWORD     id;
-	};
-#pragma pack(pop)
-
-	//All Window and Dialog styles except default (0).
-	static const std::map<DWORD, std::wstring> mapDlgStyles {
-		TO_WSTR_MAP(DS_3DLOOK),
-		TO_WSTR_MAP(DS_ABSALIGN),
-		TO_WSTR_MAP(DS_CENTER),
-		TO_WSTR_MAP(DS_CENTERMOUSE),
-		TO_WSTR_MAP(DS_CONTEXTHELP),
-		TO_WSTR_MAP(DS_CONTROL),
-		TO_WSTR_MAP(DS_FIXEDSYS),
-		TO_WSTR_MAP(DS_LOCALEDIT),
-		TO_WSTR_MAP(DS_MODALFRAME),
-		TO_WSTR_MAP(DS_NOFAILCREATE),
-		TO_WSTR_MAP(DS_NOIDLEMSG),
-		TO_WSTR_MAP(DS_SETFONT),
-		TO_WSTR_MAP(DS_SETFOREGROUND),
-		TO_WSTR_MAP(DS_SHELLFONT),
-		TO_WSTR_MAP(DS_SYSMODAL),
-		TO_WSTR_MAP(WS_BORDER),
-		TO_WSTR_MAP(WS_CAPTION),
-		TO_WSTR_MAP(WS_CHILD),
-		TO_WSTR_MAP(WS_CHILDWINDOW),
-		TO_WSTR_MAP(WS_CLIPCHILDREN),
-		TO_WSTR_MAP(WS_CLIPSIBLINGS),
-		TO_WSTR_MAP(WS_DISABLED),
-		TO_WSTR_MAP(WS_DLGFRAME),
-		TO_WSTR_MAP(WS_HSCROLL),
-		TO_WSTR_MAP(WS_MAXIMIZE),
-		TO_WSTR_MAP(WS_MAXIMIZEBOX),
-		TO_WSTR_MAP(WS_MINIMIZE),
-		TO_WSTR_MAP(WS_MINIMIZEBOX),
-		TO_WSTR_MAP(WS_POPUP),
-		TO_WSTR_MAP(WS_SYSMENU),
-		TO_WSTR_MAP(WS_THICKFRAME),
-		TO_WSTR_MAP(WS_VISIBLE),
-		TO_WSTR_MAP(WS_VSCROLL)
-	};
-
-	//All Extended Window styles except default (0).
-	static const std::map<DWORD, std::wstring> mapDlgExStyles
-	{
-		TO_WSTR_MAP(WS_EX_ACCEPTFILES),
-		TO_WSTR_MAP(WS_EX_APPWINDOW),
-		TO_WSTR_MAP(WS_EX_CLIENTEDGE),
-		TO_WSTR_MAP(WS_EX_COMPOSITED),
-		TO_WSTR_MAP(WS_EX_CONTEXTHELP),
-		TO_WSTR_MAP(WS_EX_CONTROLPARENT),
-		TO_WSTR_MAP(WS_EX_DLGMODALFRAME),
-		TO_WSTR_MAP(WS_EX_LAYERED),
-		TO_WSTR_MAP(WS_EX_LAYOUTRTL),
-		TO_WSTR_MAP(WS_EX_LEFTSCROLLBAR),
-		TO_WSTR_MAP(WS_EX_MDICHILD),
-		TO_WSTR_MAP(WS_EX_NOACTIVATE),
-		TO_WSTR_MAP(WS_EX_NOINHERITLAYOUT),
-		TO_WSTR_MAP(WS_EX_NOPARENTNOTIFY),
-		TO_WSTR_MAP(WS_EX_RIGHT),
-		TO_WSTR_MAP(WS_EX_RTLREADING),
-		TO_WSTR_MAP(WS_EX_STATICEDGE),
-		TO_WSTR_MAP(WS_EX_TOOLWINDOW),
-		TO_WSTR_MAP(WS_EX_TOPMOST),
-		TO_WSTR_MAP(WS_EX_TRANSPARENT),
-		TO_WSTR_MAP(WS_EX_WINDOWEDGE),
-	};
-
-	PBYTE pDataHdr = pDataDlgRes;
-	bool fDlgEx { false };
-	if (*((reinterpret_cast<PWORD>(pDataHdr)) + 1) == 0xFFFF) //DLGTEMPLATEEX
-		fDlgEx = true;
-
-	DWORD dwStyles, dwExStyles;
-	WORD wDlgItems;
-	short x, y, cx, cy;
-	WCHAR* pwstrMenuRes { }; size_t lengthMenuRes { }; WORD wMenuResOrdinal { };
-	WCHAR* pwstrTypeFace { }; size_t lengthTypeFace { };
-
-	if (fDlgEx) //DLGTEMPLATEEX
-	{
-		dwStyles = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->style;
-		dwExStyles = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->exStyle;
-		wDlgItems = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->cDlgItems;
-		x = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->x;
-		y = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->y;
-		cx = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->cx;
-		cy = (reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->cy;
-
-		wstrData = L"DIALOGEX ";
-
-		//Menu.
-		if ((reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->menu == 0) //No menu.
-			pDataHdr += sizeof(DLGTEMPLATEEX);
-		else if ((reinterpret_cast<DLGTEMPLATEEX*>(pDataHdr))->menu == 0xFFFF) //Menu ordinal.
-		{
-			wMenuResOrdinal = *reinterpret_cast<PWORD>(pDataHdr + sizeof(WORD));
-			pDataHdr += sizeof(WORD) * 2; //Ordinal's WORD follows ((DLGTEMPLATEEX*)pDataHdr)->menu.
-		}
-		else //Menu wstring.
-		{
-			pDataHdr += sizeof(DLGTEMPLATEEX);
-			pwstrMenuRes = reinterpret_cast<WCHAR*>(pDataHdr);
-			if (StringCbLengthW(pwstrMenuRes, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthMenuRes) != S_OK)
-				return ResLoadError();
-			pDataHdr += lengthMenuRes + sizeof(WCHAR); //Plus null terminating.
-		}
-	}
-	else //DLGTEMPLATE
-	{
-		dwStyles = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->style;
-		dwExStyles = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->dwExtendedStyle;
-		wDlgItems = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->cdit;
-		x = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->x;
-		y = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->y;
-		cx = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->cx;
-		cy = (reinterpret_cast<DLGTEMPLATE*>(pDataHdr))->cy;
-		pDataHdr += sizeof(DLGTEMPLATE);
-
-		wstrData = L"DIALOG ";
-
-		//Menu.
-		if (*reinterpret_cast<PWORD>(pDataHdr) == 0) //No menu.
-			pDataHdr += sizeof(WORD);
-		else if (*reinterpret_cast<PWORD>(pDataHdr) == 0xFFFF) //Menu ordinal.
-		{
-			wMenuResOrdinal = *reinterpret_cast<PWORD>(pDataHdr + sizeof(WORD));
-			pDataHdr += sizeof(WORD) * 2; //Ordinal's WORD follows menu WORD.
-		}
-		else //Menu wstring.
-		{
-			pwstrMenuRes = reinterpret_cast<WCHAR*>(&pDataHdr);
-			if (StringCbLengthW(pwstrMenuRes, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthMenuRes) != S_OK)
-				return ResLoadError();
-			pDataHdr += lengthMenuRes + sizeof(WCHAR); //Plus null terminating.
-		}
-	}
-
-	WCHAR wpsz[128];
-	swprintf_s(wpsz, L"%i, %i, %i, %i\r\n", x, y, cx, cy);
-	wstrData += wpsz;
-
-	//Dialog styles stringanize.
-	std::wstring wstrStyles;
-	for (auto& i : mapDlgStyles)
-	{
-		if (i.first & dwStyles)
-		{
-			if (!wstrStyles.empty())
-				wstrStyles += L" | " + i.second;
-			else
-				wstrStyles += i.second;
-		}
-	}
-
-	wstrData += L"DIALOG STYLES: " + wstrStyles + L"\r\n";
-	if (dwExStyles) //ExStyle sringanize.
-	{
-		wstrStyles.clear();
-		for (auto& i : mapDlgExStyles)
-		{
-			if (i.first & dwExStyles)
-			{
-				if (!wstrStyles.empty())
-					wstrStyles += L" | " + i.second;
-				else
-					wstrStyles += i.second;
-			}
-		}
-		wstrData += L"DIALOG EXTENDED STYLES: " + wstrStyles + L"\r\n";
-	}
-
-	//////////////////////////////////////////////////////////////////
-	//Next goes Class Name and Title that common for both templates.
-	//////////////////////////////////////////////////////////////////
-
-	//Class name.
-	if (*reinterpret_cast<PWORD>(pDataHdr) == 0xFFFF) //Class name is ordinal.
-	{
-		WORD wClassOrdinal = *reinterpret_cast<PWORD>(pDataHdr + sizeof(WORD));
-		pDataHdr += sizeof(WORD) * 2; //Class name WORD plus Ordinal WORD.
-
-		wstrData += L"DIALOG CLASS ORDINAL: ";
-		swprintf_s(wpsz, L"0x%X\r\n", wClassOrdinal);
-		wstrData += wpsz;
-	}
-	else //Class name is WString.
-	{
-		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL then there is a need to align.
-			pDataHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataHdr) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
-		size_t lengthClassName;
-		auto* pwstrClassName = reinterpret_cast<WCHAR*>(pDataHdr);
-		if (StringCbLengthW(pwstrClassName, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
-			reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthClassName) != S_OK)
-			return ResLoadError();
-		pDataHdr += lengthClassName + sizeof(WCHAR); //Plus null terminating.
-
-		wstrData += L"DIALOG CLASS NAME: \"";
-		wstrData += pwstrClassName;
-		wstrData += L"\"\r\n";
-	}
-
-	//Title (Caption)
-	if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL then there is a need to align.
-		pDataHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataHdr) -
-			reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
-	size_t lengthTitle;
-	auto* pwstrTitle = reinterpret_cast<WCHAR*>(pDataHdr);
-	if (StringCbLengthW(pwstrTitle, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
-		reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthTitle) != S_OK)
-		return ResLoadError();
-	pDataHdr += lengthTitle + sizeof(WCHAR); //Plus null terminating.
-
-	wstrData += L"DIALOG CAPTION: \"";
-	wstrData += pwstrTitle;
-	wstrData += L"\"\r\n";
-
-	//Menu.
-	if (pwstrMenuRes && lengthMenuRes)
-	{
-		wstrData += L"DIALOG MENU RESOURCE NAME: \"";
-		wstrData += pwstrMenuRes;
-		wstrData += L"\"\r\n";
-	}
-	else if (wMenuResOrdinal)
-	{
-		wstrData += L"DIALOG MENU RESOURCE ORDINAL: ";
-		swprintf_s(wpsz, L"0x%X\r\n", wMenuResOrdinal);
-		wstrData += wpsz;
-	}
-
-	//Font related stuff has little differences between templates.
-	wstrData += L"DIALOG FONT: ";
-	WORD wFontPointSize { };
-	if (fDlgEx && ((dwStyles & DS_SETFONT) || (dwStyles & DS_SHELLFONT))) //DLGTEMPLATEEX
-	{
-		//Font related. Only if DS_SETFONT or DS_SHELLFONT styles present.
-
-		wFontPointSize = *reinterpret_cast<PWORD>(pDataHdr);
-		pDataHdr += sizeof(wFontPointSize);
-
-		WORD wFontWeight = *reinterpret_cast<PWORD>(pDataHdr);
-		pDataHdr += sizeof(wFontWeight);
-
-		BYTE bItalic = *pDataHdr;
-		pDataHdr += sizeof(bItalic);
-
-		BYTE bCharset = *pDataHdr;
-		pDataHdr += sizeof(bCharset);
-
-		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000) //If not NULL nedd to align.
-			pDataHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataHdr) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
-		pwstrTypeFace = reinterpret_cast<WCHAR*>(pDataHdr);
-		if (StringCbLengthW(pwstrTypeFace, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
-			reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthTypeFace) != S_OK)
-			return ResLoadError();
-		pDataHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
-
-		wstrData += L"NAME: \"";
-		wstrData += pwstrTypeFace;
-		wstrData += L"\"";
-		//These Font params are only in DLGTEMPLATEEX.
-		swprintf_s(wpsz, L", SIZE: %hu, WEIGHT: %hu, IS ITALIC: %hhu, CHARSET: %hhu", wFontPointSize, wFontWeight, bItalic, bCharset);
-		wstrData += wpsz;
-		wstrData += L"\r\n";
-	}
-	else if (!fDlgEx && (dwStyles & DS_SETFONT)) //DLGTEMPLATE
-	{
-		//Font related. Only if DS_SETFONT style present.
-
-		wFontPointSize = *reinterpret_cast<PWORD>(pDataHdr);
-		pDataHdr += sizeof(wFontPointSize);
-
-		if (*reinterpret_cast<PWORD>(pDataHdr) != 0x0000)
-			pDataHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataHdr) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
-		pwstrTypeFace = reinterpret_cast<WCHAR*>(pDataHdr);
-		if (StringCbLengthW(pwstrTypeFace, nSize - (reinterpret_cast<DWORD_PTR>(pDataHdr) -
-			reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthTypeFace) != S_OK)
-			return ResLoadError();
-		pDataHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
-
-		wstrData += L"NAME \"";
-		wstrData += pwstrTypeFace;
-		wstrData += L"\"";
-		swprintf_s(wpsz, L", SIZE: %hu", wFontPointSize); //Only SIZE in DLGTEMPLATE.
-		wstrData += wpsz;
-		wstrData += L"\r\n";
-	}
-
-	wstrData += L"DIALOG ITEMS: ";
-	swprintf_s(wpsz, L"%i\r\n", wDlgItems);
-	wstrData += wpsz;
-	//DLGTEMPLATE(EX) end. ///////////////////////////////////////////
-
-	//////////////////////////////////////////////////////////////////
-	//Now go DLGITEMTEMPLATE(EX) data structures.
-	//////////////////////////////////////////////////////////////////
-	PBYTE pDataItems = pDataHdr; //Just to differentiate.
-
-	wstrData += L"{\r\n"; //Open bracer for stringanize.
-	for (WORD items = 0; items < wDlgItems; items++)
-	{
-		pDataItems += (sizeof(DWORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
-			reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 3)) & 3; //DWORD Aligning.
-		//Out of bounds checking.
-		if (reinterpret_cast<DWORD_PTR>(pDataItems) >= reinterpret_cast<DWORD_PTR>(pDataDlgRes) + nSize)
-			break;
-
-		DWORD dwItemStyles, dwItemExStyles;
-		short xItem, yItem, cxItem, cyItem;
-		WCHAR wpszItemStyles[128]; //Styles, ExStyles, ItemID and Coords.
-		if (fDlgEx) //DLGITEMTEMPLATEEX
-		{
-			dwItemStyles = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->style;
-			dwItemExStyles = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->exStyle;
-			xItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->x;
-			yItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->y;
-			cxItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->cx;
-			cyItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->cy;
-			DWORD dwIDItem = (reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems))->id;
-
-			pDataItems += sizeof(DLGITEMTEMPLATEEX);
-
-			//Styles, ExStyles, ItemID and Coords. ItemID is DWORD;
-			swprintf_s(wpszItemStyles, L"Styles: 0x%08lX, ExStyles: 0x%08lX, ItemID: 0x%08lX, Coords: x=%i, y=%i, cx=%i, cy=%i",
-				dwItemStyles, dwItemExStyles, dwIDItem, xItem, yItem, cxItem, cyItem);
-		}
-		else //DLGITEMTEMPLATE
-		{
-			dwItemStyles = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->style;
-			dwItemExStyles = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->dwExtendedStyle;
-			xItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->x;
-			yItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->y;
-			cxItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->cx;
-			cyItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->cy;
-			WORD wIDItem = (reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems))->id;
-
-			pDataItems += sizeof(DLGITEMTEMPLATE);
-
-			//Styles, ExStyles, ItemID and Coords. ItemID is WORD;
-			swprintf_s(wpszItemStyles, L"Styles: 0x%08lX, ExStyles: 0x%08lX, ItemID: 0x%04hX, Coords: x=%i, y=%i, cx=%i, cy=%i",
-				dwItemStyles, dwItemExStyles, wIDItem, xItem, yItem, cxItem, cyItem);
-		}
-
-		static const std::map<WORD, std::wstring> mapItemClassOrd {
-			{ 0x0080, L"Button" },
-			{ 0x0081, L"Edit" },
-			{ 0x0082, L"Static" },
-			{ 0x0083, L"List box" },
-			{ 0x0084, L"Scroll bar" },
-			{ 0x0085, L"Combo box" },
-		};
-		std::wstring wstrItem = L"    ";
-
-		//Item Class name.
-		if (*reinterpret_cast<PWORD>(pDataItems) == 0xFFFF) //Class is ordinal
-		{
-			WORD wClassOrdinalItem = *reinterpret_cast<PWORD>(pDataItems + sizeof(WORD));
-			pDataItems += sizeof(WORD) * 2;
-
-			swprintf_s(wpsz, L"Class ordinal: 0x%04X", wClassOrdinalItem);
-			wstrItem += wpsz;
-			auto iter = mapItemClassOrd.find(wClassOrdinalItem);
-			if (iter != mapItemClassOrd.end())
-				wstrItem += L" (\"" + iter->second + L"\")";
-			wstrItem += L", ";
-		}
-		else //Class name is Wstring.
-		{
-			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
-			size_t lengthClassNameItem;
-			auto* pwstrClassNameItem = reinterpret_cast<WCHAR*>(pDataItems);
-			if (StringCbLengthW(pwstrClassNameItem, nSize - (reinterpret_cast<DWORD_PTR>(pDataItems) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthClassNameItem) != S_OK)
-				return ResLoadError();
-			pDataItems += lengthClassNameItem + sizeof(WCHAR); //Plus null terminating.
-
-			wstrItem += L"Class name: \"";
-			wstrItem += pwstrClassNameItem;
-			wstrItem += L"\", ";
-		}
-
-		//Item Title (Caption).
-		if (*reinterpret_cast<PWORD>(pDataItems) == 0xFFFF) //Item Title is ordinal
-		{
-			WORD wTitleOrdinalItem = *reinterpret_cast<PWORD>(pDataItems + sizeof(WORD));
-			pDataItems += sizeof(WORD) * 2;
-
-			swprintf_s(wpsz, L"Caption ordinal: 0x%04X, ", wTitleOrdinalItem);
-			wstrItem += wpsz;
-		}
-		else //Title is wstring.
-		{
-			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
-			size_t lengthTitleItem;
-			auto* pwstrTitleItem = reinterpret_cast<WCHAR*>(pDataItems);
-			if (StringCbLengthW(pwstrTitleItem, nSize - (reinterpret_cast<DWORD_PTR>(pDataItems) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)), &lengthTitleItem) != S_OK)
-				return ResLoadError();
-			pDataItems += lengthTitleItem + sizeof(WCHAR); //Plus null terminating.
-
-			wstrItem += L"Caption: \"";
-			wstrItem += pwstrTitleItem;
-			wstrItem += L"\", ";
-		}
-
-		//Extra count Item.
-		WORD wExtraCountItem = *reinterpret_cast<PWORD>(pDataItems);
-		pDataItems += sizeof(WORD);
-		if (wExtraCountItem)
-		{
-			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
-				reinterpret_cast<DWORD_PTR>(pDataDlgRes)) & 1)) & 1; //WORD Aligning.
-			pDataItems += wExtraCountItem;
-		}
-
-		wstrItem += wpszItemStyles;
-		wstrData += wstrItem + L"\r\n";
-	}
-	wstrData += L"}";
-}
-
-void CViewRightBR::ShowResource(const SRESHELPER* pResHelper)
+void CViewRightBR::ShowResource(const SRESDATA* pResData)
 {
 	m_stImgRes.DeleteImageList();
 	m_iResTypeToDraw = -1;
@@ -1216,49 +767,49 @@ void CViewRightBR::ShowResource(const SRESHELPER* pResHelper)
 	m_vecImgRes.clear();
 	m_wstrEditBRB.clear();
 
-	if (pResHelper)
+	if (pResData != nullptr)
 	{
 		//Destroy Dialog Sample window if it's any other resource type now.
-		if (pResHelper->IdResType != 5 && m_wndSampledlg.m_hWnd)
+		if (pResData->IdResType != 5 && m_wndSampledlg.m_hWnd)
 		{
 			m_wndSampledlg.SetDlgVisible(false);
 			m_wndSampledlg.DestroyWindow();
 		}
-		if (pResHelper->pData->empty())
+		if (pResData->pData->empty())
 			return ResLoadError();
 
-		switch (pResHelper->IdResType)
+		switch (pResData->IdResType)
 		{
 		case 1: //RT_CURSOR
 		case 3: //RT_ICON
-			CreateIconCursor(pResHelper);
+			CreateIconCursor(*pResData);
 			break;
 		case 2: //RT_BITMAP
-			CreateBitmap(pResHelper);
+			CreateBitmap(*pResData);
 			break;
 			//case 4: //RT_MENU
 			//break;
 		case 5: //RT_DIALOG
-			CreateDlg(pResHelper);
+			CreateDlg(*pResData);
 			break;
 		case 6: //RT_STRING
-			CreateStrings(pResHelper);
+			CreateStrings(*pResData);
 			break;
 		case 12: //RT_GROUP_CURSOR
 		case 14: //RT_GROUP_ICON
-			CreateGroupIconCursor(pResHelper);
+			CreateGroupIconCursor(*pResData);
 			break;
 		case 16: //RT_VERSION
-			CreateVersion(pResHelper);
+			CreateVersion(*pResData);
 			break;
 		case 24: //RT_MANIFEST
-			CreateManifest(pResHelper);
+			CreateManifest(*pResData);
 			break;
 		case 241: //RT_TOOLBAR
-			CreateToolbar(pResHelper);
+			CreateToolbar(*pResData);
 			break;
 		default:
-			m_iResTypeToDraw = pResHelper->IdResType;
+			m_iResTypeToDraw = pResData->IdResType;
 			m_fDrawRes = true;
 		}
 	}
@@ -1280,4 +831,404 @@ void CViewRightBR::ResLoadError()
 	m_iResTypeToDraw = 0xFF;
 	m_fDrawRes = true;
 	RedrawWindow();
+}
+
+auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>
+{
+#pragma pack(push, 4) //When data comes from PE resources it is packed.
+
+	//Helper struct as described in https://docs.microsoft.com/en-us/windows/win32/dlgbox/dlgtemplateex
+	//It can not be completely defined because of its variadic nature.
+	struct DLGTEMPLATEEX {
+		WORD  dlgVer;
+		WORD  signature;
+		DWORD helpID;
+		DWORD exStyle;
+		DWORD style;
+		WORD  cDlgItems;
+		short x;
+		short y;
+		short cx;
+		short cy;
+		WORD  menu;
+	};
+
+	//Helper struct as described in https://docs.microsoft.com/en-us/windows/win32/dlgbox/dlgitemtemplateex
+	//It can not be completely defined because of its variadic nature.
+	struct DLGITEMTEMPLATEEX {
+		DWORD helpID;
+		DWORD exStyle;
+		DWORD style;
+		short x;
+		short y;
+		short cx;
+		short cy;
+		DWORD id;
+	};
+#pragma pack(pop)
+
+	const auto pDataDlg = spnData.data();
+	const auto nSizeDataDlg = spnData.size();
+	auto pDataDlgHdr = pDataDlg;
+	const bool fDlgEx { *((reinterpret_cast<PWORD>(pDataDlgHdr)) + 1) == 0xFFFF }; //DLGTEMPLATEEX ?.
+	DWORD dwDlgStyles;
+	DWORD dwDlgStylesEx;
+	WORD wCountDlgItems;
+	WCHAR* pwszDlgMenu { };
+	size_t nSizeDlgMenu { };
+	WORD wDlgMenuOrdinal { };
+	std::wstring wstrRet; //String to return.
+
+	if (fDlgEx) //DLGTEMPLATEEX.
+	{
+		const auto pDlgEx = reinterpret_cast<DLGTEMPLATEEX*>(pDataDlgHdr);
+		wstrRet = std::format(L"DIALOGEX {}, {}, {}, {}\r\n", pDlgEx->x, pDlgEx->y, pDlgEx->cx, pDlgEx->cy);
+		dwDlgStyles = pDlgEx->style;
+		dwDlgStylesEx = pDlgEx->exStyle;
+		wCountDlgItems = pDlgEx->cDlgItems;
+
+		//Menu.
+		if ((reinterpret_cast<DLGTEMPLATEEX*>(pDataDlgHdr))->menu == 0) //No menu.
+			pDataDlgHdr += sizeof(DLGTEMPLATEEX);
+		else if ((reinterpret_cast<DLGTEMPLATEEX*>(pDataDlgHdr))->menu == 0xFFFF) //Menu ordinal.
+		{
+			wDlgMenuOrdinal = *reinterpret_cast<PWORD>(pDataDlgHdr + sizeof(WORD));
+			pDataDlgHdr += sizeof(WORD) * 2; //Ordinal's WORD follows ((DLGTEMPLATEEX*)pDataDlgHdr)->menu.
+		}
+		else //Menu wstring.
+		{
+			pDataDlgHdr += sizeof(DLGTEMPLATEEX);
+			pwszDlgMenu = reinterpret_cast<WCHAR*>(pDataDlgHdr);
+			if (StringCbLengthW(pwszDlgMenu, nSizeDataDlg - (reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)), &nSizeDlgMenu) != S_OK)
+				return std::nullopt;
+
+			pDataDlgHdr += nSizeDlgMenu + sizeof(WCHAR); //Plus null terminating.
+		}
+	}
+	else //DLGTEMPLATE.
+	{
+		const auto pDlg = reinterpret_cast<DLGTEMPLATE*>(pDataDlgHdr);
+		wstrRet = std::format(L"DIALOG {}, {}, {}, {}\r\n", pDlg->x, pDlg->y, pDlg->cx, pDlg->cy);
+		dwDlgStyles = pDlg->style;
+		dwDlgStylesEx = pDlg->dwExtendedStyle;
+		wCountDlgItems = pDlg->cdit;
+		pDataDlgHdr += sizeof(DLGTEMPLATE);
+
+		//Menu.
+		if (*reinterpret_cast<PWORD>(pDataDlgHdr) == 0) //No menu.
+			pDataDlgHdr += sizeof(WORD);
+		else if (*reinterpret_cast<PWORD>(pDataDlgHdr) == 0xFFFF) //Menu ordinal.
+		{
+			wDlgMenuOrdinal = *reinterpret_cast<PWORD>(pDataDlgHdr + sizeof(WORD));
+			pDataDlgHdr += sizeof(WORD) * 2; //Ordinal's WORD follows menu WORD.
+		}
+		else //Menu wstring.
+		{
+			pwszDlgMenu = reinterpret_cast<WCHAR*>(&pDataDlgHdr);
+			if (StringCbLengthW(pwszDlgMenu, nSizeDataDlg - (reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)), &nSizeDlgMenu) != S_OK)
+				return std::nullopt;
+
+			pDataDlgHdr += nSizeDlgMenu + sizeof(WCHAR); //Plus null terminating.
+		}
+	}
+
+	//Dialog styles.
+	std::wstring wstrStyles;
+	const std::unordered_map<DWORD, std::wstring> mapDlgStyles { //All Window and Dialog styles except default (0).
+		{ DS_3DLOOK, L"DS_3DLOOK" },
+		{ DS_ABSALIGN, L"DS_ABSALIGN" },
+		{ DS_CENTER, L"DS_CENTER" },
+		{ DS_CENTERMOUSE, L"DS_CENTERMOUSE" },
+		{ DS_CONTEXTHELP, L"DS_CONTEXTHELP" },
+		{ DS_CONTROL, L"DS_CONTROL" },
+		{ DS_FIXEDSYS, L"DS_FIXEDSYS" },
+		{ DS_LOCALEDIT, L"DS_LOCALEDIT" },
+		{ DS_MODALFRAME, L"DS_MODALFRAME" },
+		{ DS_NOFAILCREATE, L"DS_NOFAILCREATE" },
+		{ DS_NOIDLEMSG, L"DS_NOIDLEMSG" },
+		{ DS_SETFONT, L"DS_SETFONT" },
+		{ DS_SETFOREGROUND, L"DS_SETFOREGROUND" },
+		{ DS_SHELLFONT, L"DS_SHELLFONT" },
+		{ DS_SYSMODAL, L"DS_SYSMODAL" },
+		{ WS_BORDER, L"WS_BORDER" },
+		{ WS_CAPTION, L"WS_CAPTION" },
+		{ WS_CHILD, L"WS_CHILD" },
+		{ WS_CHILDWINDOW, L"WS_CHILDWINDOW" },
+		{ WS_CLIPCHILDREN, L"WS_CLIPCHILDREN" },
+		{ WS_CLIPSIBLINGS, L"WS_CLIPSIBLINGS" },
+		{ WS_DISABLED, L"WS_DISABLED" },
+		{ WS_DLGFRAME, L"WS_DLGFRAME" },
+		{ WS_HSCROLL, L"WS_HSCROLL" },
+		{ WS_MAXIMIZE, L"WS_MAXIMIZE" },
+		{ WS_MAXIMIZEBOX, L"WS_MAXIMIZEBOX" },
+		{ WS_MINIMIZE, L"WS_MINIMIZE" },
+		{ WS_MINIMIZEBOX, L"WS_MINIMIZEBOX" },
+		{ WS_POPUP, L"WS_POPUP" },
+		{ WS_SYSMENU, L"WS_SYSMENU" },
+		{ WS_THICKFRAME, L"WS_THICKFRAME" },
+		{ WS_VISIBLE, L"WS_VISIBLE" },
+		{ WS_VSCROLL, L"WS_VSCROLL" }
+	};
+
+	for (const auto& iter : mapDlgStyles)
+	{
+		if (iter.first & dwDlgStyles)
+		{
+			if (!wstrStyles.empty())
+				wstrStyles += L" | " + iter.second;
+			else
+				wstrStyles += iter.second;
+		}
+	}
+	wstrRet += L"DIALOG STYLES: " + wstrStyles + L"\r\n";
+	wstrStyles.clear();
+
+	if (dwDlgStylesEx) //ExStyle stringify.
+	{
+		const std::unordered_map<DWORD, std::wstring> mapDlgExStyles { //All Extended Window and Dialog styles except default (0).
+			{ WS_EX_ACCEPTFILES, L"WS_EX_ACCEPTFILES" },
+			{ WS_EX_APPWINDOW, L"WS_EX_APPWINDOW" },
+			{ WS_EX_CLIENTEDGE, L"WS_EX_CLIENTEDGE" },
+			{ WS_EX_COMPOSITED, L"WS_EX_COMPOSITED" },
+			{ WS_EX_CONTEXTHELP, L"WS_EX_CONTEXTHELP" },
+			{ WS_EX_CONTROLPARENT, L"WS_EX_CONTROLPARENT" },
+			{ WS_EX_DLGMODALFRAME, L"WS_EX_DLGMODALFRAME" },
+			{ WS_EX_LAYERED, L"WS_EX_LAYERED" },
+			{ WS_EX_LAYOUTRTL, L"WS_EX_LAYOUTRTL" },
+			{ WS_EX_LEFTSCROLLBAR, L"WS_EX_LEFTSCROLLBAR" },
+			{ WS_EX_MDICHILD, L"WS_EX_MDICHILD" },
+			{ WS_EX_NOACTIVATE, L"WS_EX_NOACTIVATE" },
+			{ WS_EX_NOINHERITLAYOUT, L"WS_EX_NOINHERITLAYOUT" },
+			{ WS_EX_NOPARENTNOTIFY, L"WS_EX_NOPARENTNOTIFY" },
+			{ WS_EX_RIGHT, L"WS_EX_RIGHT" },
+			{ WS_EX_RTLREADING, L"WS_EX_RTLREADING" },
+			{ WS_EX_STATICEDGE, L"WS_EX_STATICEDGE" },
+			{ WS_EX_TOOLWINDOW, L"WS_EX_TOOLWINDOW" },
+			{ WS_EX_TOPMOST, L"WS_EX_TOPMOST" },
+			{ WS_EX_TRANSPARENT, L"WS_EX_TRANSPARENT" },
+			{ WS_EX_WINDOWEDGE, L"WS_EX_WINDOWEDGE" }
+		};
+
+		for (const auto& iter : mapDlgExStyles)
+		{
+			if (iter.first & dwDlgStylesEx)
+			{
+				if (!wstrStyles.empty())
+					wstrStyles += L" | " + iter.second;
+				else
+					wstrStyles += iter.second;
+			}
+		}
+		wstrRet += L"DIALOG EXTENDED STYLES: " + wstrStyles + L"\r\n";
+	}
+
+	//Next go "Class Name" and "Title" that common for both templates.
+
+	//Class name.
+	if (*reinterpret_cast<PWORD>(pDataDlgHdr) == 0xFFFF) //Class name is ordinal.
+	{
+		const auto wClassOrdinal = *reinterpret_cast<PWORD>(pDataDlgHdr + sizeof(WORD));
+		pDataDlgHdr += sizeof(WORD) * 2; //Class name WORD plus Ordinal WORD.
+		wstrRet += std::format(L"DIALOG CLASS ORDINAL: 0x{:X}\r\n", wClassOrdinal);
+	}
+	else //Class Name is wstring.
+	{
+		if (*reinterpret_cast<PWORD>(pDataDlgHdr) != 0x0000) //If not NULL then there is a need to align.
+		{
+			pDataDlgHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
+		}
+
+		size_t lengthClassName { };
+		const auto* pwstrClassName = reinterpret_cast<WCHAR*>(pDataDlgHdr);
+		if (StringCbLengthW(pwstrClassName, nSizeDataDlg - (reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+			reinterpret_cast<DWORD_PTR>(pDataDlg)), &lengthClassName) != S_OK)
+			return std::nullopt;
+
+		pDataDlgHdr += lengthClassName + sizeof(WCHAR); //Plus null terminating.
+		wstrRet += L"DIALOG CLASS NAME: \"" + std::wstring { pwstrClassName } + L"\"\r\n";
+	}
+
+	//Title (Caption).
+	if (*reinterpret_cast<PWORD>(pDataDlgHdr) != 0x0000) //If not NULL then there is a need to align.
+	{
+		pDataDlgHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+			reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
+	}
+
+	size_t lengthTitle { };
+	const auto* pwstrTitle = reinterpret_cast<WCHAR*>(pDataDlgHdr);
+	if (StringCbLengthW(pwstrTitle, nSizeDataDlg - (reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+		reinterpret_cast<DWORD_PTR>(pDataDlg)), &lengthTitle) != S_OK)
+		return std::nullopt;
+
+	pDataDlgHdr += lengthTitle + sizeof(WCHAR); //Plus null terminating.
+	wstrRet += L"DIALOG CAPTION: \"" + std::wstring { pwstrTitle } + L"\"\r\n";
+
+	//Menu.
+	if (pwszDlgMenu != nullptr && nSizeDlgMenu > 0) {
+		wstrRet += L"DIALOG MENU RESOURCE NAME: \"" + std::wstring { pwszDlgMenu } + L"\"\r\n";
+	}
+	else if (wDlgMenuOrdinal > 0) {
+		wstrRet += std::format(L"DIALOG MENU RESOURCE ORDINAL: 0x{:X}\r\n", wDlgMenuOrdinal);
+	}
+
+	//Font related stuff, has small differences between templates.
+	wstrRet += L"DIALOG FONT: ";
+
+	//DLGTEMPLATEEX font related, only if DS_SETFONT or DS_SHELLFONT styles present.
+	if (fDlgEx && ((dwDlgStyles & DS_SETFONT) || (dwDlgStyles & DS_SHELLFONT)))
+	{
+		const auto wFontPointSize = *reinterpret_cast<PWORD>(pDataDlgHdr);
+		pDataDlgHdr += sizeof(wFontPointSize);
+		const auto wFontWeight = *reinterpret_cast<PWORD>(pDataDlgHdr);
+		pDataDlgHdr += sizeof(wFontWeight);
+		const auto bItalic = static_cast<BYTE>(*pDataDlgHdr);
+		pDataDlgHdr += sizeof(bItalic);
+		const auto bCharset = static_cast<BYTE>(*pDataDlgHdr);
+		pDataDlgHdr += sizeof(bCharset);
+
+		if (*reinterpret_cast<PWORD>(pDataDlgHdr) != 0x0000) //If not NULL then there is a need to align.
+		{
+			pDataDlgHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
+		}
+
+		size_t lengthTypeFace { };
+		const auto pwstrTypeFace = reinterpret_cast<WCHAR*>(pDataDlgHdr);
+		if (StringCbLengthW(pwstrTypeFace, nSizeDataDlg - (reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+			reinterpret_cast<DWORD_PTR>(pDataDlg)), &lengthTypeFace) != S_OK)
+			return std::nullopt;
+
+		pDataDlgHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
+		wstrRet += L"NAME: \"" + std::wstring { pwstrTypeFace } + L"\"";
+
+		//These font params are only in DLGTEMPLATEEX.
+		wstrRet += std::format(L", SIZE: {}, WEIGHT: {}, IS ITALIC: {}, CHARSET: {}\r\n", wFontPointSize, wFontWeight, bItalic, bCharset);
+	}
+	else if (!fDlgEx && (dwDlgStyles & DS_SETFONT)) //DLGTEMPLATE font related, only if DS_SETFONT style is present.
+	{
+		const auto wFontPointSize = *reinterpret_cast<PWORD>(pDataDlgHdr);
+		pDataDlgHdr += sizeof(wFontPointSize);
+
+		if (*reinterpret_cast<PWORD>(pDataDlgHdr) != 0x0000)
+		{
+			pDataDlgHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
+		}
+
+		size_t lengthTypeFace { };
+		const auto pwstrTypeFace = reinterpret_cast<WCHAR*>(pDataDlgHdr);
+		if (StringCbLengthW(pwstrTypeFace, nSizeDataDlg - (reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
+			reinterpret_cast<DWORD_PTR>(pDataDlg)), &lengthTypeFace) != S_OK)
+			return std::nullopt;
+
+		pDataDlgHdr += lengthTypeFace + sizeof(WCHAR); //Plus null terminating.
+		wstrRet += L"NAME \"" + std::wstring { pwstrTypeFace } + L"\"";
+		wstrRet += std::format(L", SIZE: {}\r\n", wFontPointSize); //Only SIZE in DLGTEMPLATE.
+	}
+
+	wstrRet += std::format(L"DIALOG ITEMS: {}\r\n", wCountDlgItems);
+	//DLGTEMPLATE(EX) end. ///////////////////////////////////////////
+
+	//Now go DLGITEMTEMPLATE(EX) data structures.
+	auto pDataItems = pDataDlgHdr; //Just to differentiate.
+
+	wstrRet += L"{\r\n";
+	for (WORD items = 0; items < wCountDlgItems; ++items)
+	{
+		pDataItems += (sizeof(DWORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
+			reinterpret_cast<DWORD_PTR>(pDataDlg)) & 3)) & 3; //DWORD Aligning.
+		//Out of bounds checking.
+		if (reinterpret_cast<DWORD_PTR>(pDataItems) >= reinterpret_cast<DWORD_PTR>(pDataDlg) + nSizeDataDlg)
+			break;
+
+		std::wstring wstrItemStyles; //Styles, ExStyles, ItemID and Coords.
+		if (fDlgEx) //DLGITEMTEMPLATEEX.
+		{
+			const auto pItemEx = reinterpret_cast<DLGITEMTEMPLATEEX*>(pDataItems);
+			//Styles, ExStyles, ItemID and Coords. ItemID is DWORD;
+			wstrItemStyles = std::format(L"Styles: 0x{:08X}, ExStyles: 0x{:08X}, ItemID: 0x{:08X}, Coords: x={}, y={}, cx={}, cy={}",
+				pItemEx->style, pItemEx->exStyle, pItemEx->id, pItemEx->x, pItemEx->y, pItemEx->cx, pItemEx->cy);
+			pDataItems += sizeof(DLGITEMTEMPLATEEX);
+		}
+		else //DLGITEMTEMPLATE.
+		{
+			const auto pItem = reinterpret_cast<DLGITEMTEMPLATE*>(pDataItems);
+			//Styles, ExStyles, ItemID and Coords. ItemID is WORD;
+			wstrItemStyles = std::format(L"Styles: 0x{:08X}, ExStyles: 0x{:08X}, ItemID: 0x{:04X}, Coords: x={}, y={}, cx={}, cy={}",
+				pItem->style, pItem->dwExtendedStyle, pItem->id, pItem->x, pItem->y, pItem->cx, pItem->cy);
+			pDataItems += sizeof(DLGITEMTEMPLATE);
+		}
+
+		std::wstring wstrItem = L"    ";
+
+		//Item Class name.
+		if (*reinterpret_cast<PWORD>(pDataItems) == 0xFFFF) //Class is ordinal.
+		{
+			const auto wClassOrdinalItem = *reinterpret_cast<PWORD>(pDataItems + sizeof(WORD));
+			pDataItems += sizeof(WORD) * 2;
+			wstrItem += std::format(L"Class ordinal: 0x{:04X}", wClassOrdinalItem);
+
+			const std::unordered_map<WORD, std::wstring> mapItemClassOrd {
+				{ 0x0080, L"Button" }, { 0x0081, L"Edit" }, { 0x0082, L"Static" },
+				{ 0x0083, L"List box" }, { 0x0084, L"Scroll bar" }, { 0x0085, L"Combo box" },
+			};
+			if (const auto iter = mapItemClassOrd.find(wClassOrdinalItem); iter != mapItemClassOrd.end())
+				wstrItem += L" (\"" + iter->second + L"\")";
+			wstrItem += L", ";
+		}
+		else //Class Name is wstring.
+		{
+			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
+			size_t lengthClassNameItem { };
+			const auto* pwstrClassNameItem = reinterpret_cast<WCHAR*>(pDataItems);
+			if (StringCbLengthW(pwstrClassNameItem, nSizeDataDlg - (reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)), &lengthClassNameItem) != S_OK)
+				return std::nullopt;
+
+			pDataItems += lengthClassNameItem + sizeof(WCHAR); //Plus null terminating.
+			wstrItem += L"Class name: \"" + std::wstring { pwstrClassNameItem } + L"\", ";
+		}
+
+		//Item Title (Caption).
+		if (*reinterpret_cast<PWORD>(pDataItems) == 0xFFFF) //Item Title is ordinal
+		{
+			const auto wTitleOrdinalItem = *reinterpret_cast<PWORD>(pDataItems + sizeof(WORD));
+			pDataItems += sizeof(WORD) * 2;
+			wstrItem += std::format(L"Caption ordinal: 0x{:04X}, ", wTitleOrdinalItem);
+		}
+		else //Title is wstring.
+		{
+			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
+			size_t lengthTitleItem { };
+			const auto* pwstrTitleItem = reinterpret_cast<WCHAR*>(pDataItems);
+			if (StringCbLengthW(pwstrTitleItem, nSizeDataDlg - (reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)), &lengthTitleItem) != S_OK)
+				return std::nullopt;
+
+			pDataItems += lengthTitleItem + sizeof(WCHAR); //Plus null terminating.
+			wstrItem += L"Caption: \"" + std::wstring { pwstrTitleItem } + L"\", ";
+		}
+
+		//Extra count Item.
+		const auto wExtraCountItem = *reinterpret_cast<PWORD>(pDataItems);
+		pDataItems += sizeof(WORD);
+		if (wExtraCountItem)
+		{
+			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
+				reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
+			pDataItems += wExtraCountItem;
+		}
+
+		wstrItem += wstrItemStyles;
+		wstrRet += wstrItem + L"\r\n";
+	}
+	wstrRet += L"}";
+
+	return { std::move(wstrRet) };
 }

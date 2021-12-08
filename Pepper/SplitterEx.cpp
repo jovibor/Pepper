@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
+* Copyright Â© 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -22,10 +22,8 @@ BOOL CSplitterEx::CreateStatic(CWnd* m_pParent, int nRows, int nCols, DWORD dwSt
 	if ((!m_vecRows.empty() && !m_vecCols.empty()) || !(nRows | nCols) || (nRows | nCols) > 16)
 		return FALSE;
 
-	for (int i = 0; i < nRows; i++)
-		m_vecRows.emplace_back(true);
-	for (int i = 0; i < nCols; i++)
-		m_vecCols.emplace_back(true);
+	m_vecRows.resize(nRows, true);
+	m_vecCols.resize(nCols, true);
 
 	return CSplitterWndEx::CreateStatic(m_pParent, nRows, nCols, dwStyle, nID);
 }
@@ -49,12 +47,13 @@ bool CSplitterEx::AddNested(int row, int col, CWnd* pNested)
 		return false;
 
 	for (auto& iter : m_vecPanes)
+	{
 		if (iter.iRow == row && iter.iCol == col)
 		{
 			iter = { row, col, pNested };
 			return true;
 		}
-
+	}
 	m_vecPanes.emplace_back(SPANES { row, col, pNested });
 
 	return true;
@@ -115,16 +114,16 @@ void CSplitterEx::RecalcPanes()
 	std::vector<int> vecColsOrdered;
 	vecColsOrdered.reserve(m_vecCols.size());
 	int iIndex { 0 };
-	for (auto i : m_vecCols)
+	for (const auto iter : m_vecCols)
 	{
-		if (i)
+		if (iter)
 			vecColsOrdered.emplace_back(iIndex);
 		++iIndex;
 	}
 	iIndex = 0;
-	for (auto i : m_vecCols)
+	for (const auto iter : m_vecCols)
 	{
-		if (!i)
+		if (!iter)
 			vecColsOrdered.emplace_back(iIndex);
 		++iIndex;
 	}
@@ -132,24 +131,24 @@ void CSplitterEx::RecalcPanes()
 	std::vector<int> vecRowsOrdered;
 	vecRowsOrdered.reserve(m_vecRows.size());
 	iIndex = 0;
-	for (auto i : m_vecRows)
+	for (const auto iter : m_vecRows)
 	{
-		if (i)
+		if (iter)
 			vecRowsOrdered.emplace_back(iIndex);
 		++iIndex;
 	}
 	iIndex = 0;
-	for (auto i : m_vecRows)
+	for (const auto iter : m_vecRows)
 	{
-		if (!i)
+		if (!iter)
 			vecRowsOrdered.emplace_back(iIndex);
 		++iIndex;
 	}
 
 	//Recalculating DlgCtrlId based on visible/hidden status.
-	for (unsigned iterRow = 0; iterRow < m_vecRows.size(); iterRow++)
+	for (auto iterRow = 0U; iterRow < m_vecRows.size(); ++iterRow)
 	{
-		for (unsigned iterCol = 0; iterCol < m_vecCols.size(); iterCol++)
+		for (auto iterCol = 0U; iterCol < m_vecCols.size(); ++iterCol)
 		{
 			//Finding an exact pane.
 			if (const auto iterPane = std::find_if(m_vecPanes.begin(), m_vecPanes.end(), [=](const SPANES& refData)
@@ -162,7 +161,6 @@ void CSplitterEx::RecalcPanes()
 			}
 		}
 	}
-
 	RecalcLayout();
 }
 

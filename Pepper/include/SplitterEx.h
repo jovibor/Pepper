@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
+* Copyright Â© 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -41,7 +41,7 @@ public:
 	bool HideCol(UINT nCol);
 	bool ShowCol(UINT nCol);
 	DECLARE_MESSAGE_MAP()
-protected:
+private:
 	void RecalcPanes();
 	afx_msg void OnMouseMove(UINT nFlags, CPoint pt);
 	void OnInvertTracker(const CRect& rect)override;

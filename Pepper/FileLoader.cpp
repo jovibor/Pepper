@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
+* Copyright Â© 2018-2021 Jovibor https://github.com/jovibor/   										*
 * This software is available under the "MIT License".                                               *
 * https://github.com/jovibor/Pepper/blob/master/LICENSE												*
 * Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
@@ -7,6 +7,7 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
+#include "res/resource.h"
 #include "FileLoader.h"
 #include "PepperDoc.h"
 #include "Utility.h"
@@ -74,7 +75,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexC
 	if (!pHexCtrl)
 	{
 		if (!m_pHex->IsCreated())
-			m_pHex->Create(m_hcs);
+			CreateHexCtrlWnd();
 		pHexCtrl = m_pHex.get();
 	}
 
@@ -133,7 +134,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	if (!pHexCtrl)
 	{
 		if (!m_pHex->IsCreated())
-			m_pHex->Create(m_hcs);
+			CreateHexCtrlWnd();
 		pHexCtrl = m_pHex.get();
 	}
 
@@ -287,6 +288,17 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	return CWnd::OnNotify(wParam, lParam, pResult);
 }
 
+void CFileLoader::CreateHexCtrlWnd()
+{
+	m_pHex->Create(m_hcs);
+	const auto hIconSmall = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 0, 0, 0));
+	const auto hIconBig = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 96, 96, 0));
+	if (hIconSmall != nullptr) {
+		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
+		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
+	}
+}
+
 void CFileLoader::OnHexGetData(HEXDATAINFO& hdi)
 {
 	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
@@ -313,7 +325,7 @@ void CFileLoader::OnHexGetData(HEXDATAINFO& hdi)
 	hdi.spnData = { pData, hdi.stHexSpan.ullSize };
 }
 
-void CFileLoader::OnHexSetData(const HEXDATAINFO& hdi)
+void CFileLoader::OnHexSetData(const HEXDATAINFO& /*hdi*/)
 {
 	m_fModified = true;
 }

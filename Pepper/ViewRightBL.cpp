@@ -56,8 +56,7 @@ void CViewRightBL::OnInitialUpdate()
 
 	auto pDC = GetDC();
 	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
-	m_lf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
-	m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
+	m_lf.lfHeight = m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
 	ReleaseDC(pDC);
 
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
@@ -195,7 +194,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 					{
 						auto data = &lvl3vec[idlvl3].vecResRawDataLvL3;
 						//Resource data and resource type to show in CViewRightBR.
-						SRESHELPER stResHelper { };
+						SRESDATA stResHelper { };
 						stResHelper.IdResType = rootvec[idlvlRoot].stResDirEntryRoot.Id;
 						stResHelper.IdResName = lvl2vec[idlvl2].stResDirEntryLvL2.Id;
 						stResHelper.pData = data;
@@ -205,8 +204,10 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 			}
 		}
 		else
-			//Update by default, with no data — to clear view.
+		{
+			//Update by default, with no data — to clear the view.
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), nullptr);
+		}
 	}
 
 	return CView::OnNotify(wParam, lParam, pResult);
@@ -696,7 +697,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	if (m_pLibpe->GetRelocations(pReloc) != S_OK || dwEntry >= pReloc->size())
 		return -1;
 
-	const std::map<WORD, std::wstring> mapRelocTypes {
+	const std::unordered_map<WORD, std::wstring> mapRelocTypes {
 		TO_WSTR_MAP(IMAGE_REL_BASED_ABSOLUTE),
 		TO_WSTR_MAP(IMAGE_REL_BASED_HIGH),
 		TO_WSTR_MAP(IMAGE_REL_BASED_LOW),

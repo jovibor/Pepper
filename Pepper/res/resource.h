@@ -18,6 +18,7 @@
 #define IDI_TREE_PEHEADER               314
 #define IDI_TREE_PEDIRS                 315
 #define IDI_TREE_PERESOURCE             318
+#define IDI_HEXCTRL_LOGO                319
 #define IDC_LINK_PEPPER                 1006
 #define IDC_LINK_LIBPE                  1007
 #define IDC_LINK_HEXCTRL                1008
@@ -36,7 +37,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        319
+#define _APS_NEXT_RESOURCE_VALUE        320
 #define _APS_NEXT_COMMAND_VALUE         32798
 #define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           310
