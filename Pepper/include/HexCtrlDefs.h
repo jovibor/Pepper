@@ -27,23 +27,15 @@ namespace HEXCTRL
 		CMD_NAV_PAGEBEG, CMD_NAV_PAGEEND, CMD_NAV_LINEBEG, CMD_NAV_LINEEND,
 		CMD_GROUPBY_BYTE, CMD_GROUPBY_WORD, CMD_GROUPBY_DWORD, CMD_GROUPBY_QWORD,
 		CMD_BKM_ADD, CMD_BKM_REMOVE, CMD_BKM_NEXT, CMD_BKM_PREV, CMD_BKM_CLEARALL, CMD_BKM_DLG_MANAGER,
-		CMD_CLPBRD_COPYHEX, CMD_CLPBRD_COPYHEXLE, CMD_CLPBRD_COPYHEXFMT, CMD_CLPBRD_COPYTEXT,
-		CMD_CLPBRD_COPYBASE64, CMD_CLPBRD_COPYCARR, CMD_CLPBRD_COPYGREPHEX, CMD_CLPBRD_COPYPRNTSCRN,
-		CMD_CLPBRD_COPYOFFSET, CMD_CLPBRD_PASTEHEX, CMD_CLPBRD_PASTETEXT,
+		CMD_CLPBRD_COPY_HEX, CMD_CLPBRD_COPY_HEXLE, CMD_CLPBRD_COPY_HEXFMT, CMD_CLPBRD_COPY_TEXTUTF16,
+		CMD_CLPBRD_COPY_BASE64, CMD_CLPBRD_COPY_CARR, CMD_CLPBRD_COPY_GREPHEX, CMD_CLPBRD_COPY_PRNTSCRN,
+		CMD_CLPBRD_COPY_OFFSET, CMD_CLPBRD_PASTE_HEX, CMD_CLPBRD_PASTE_TEXTUTF16, CMD_CLPBRD_PASTE_TEXTCP,
 		CMD_MODIFY_DLG_OPERS, CMD_MODIFY_FILLZEROS, CMD_MODIFY_DLG_FILLDATA, CMD_MODIFY_UNDO, CMD_MODIFY_REDO,
 		CMD_SEL_MARKSTART, CMD_SEL_MARKEND, CMD_SEL_ALL, CMD_SEL_ADDLEFT, CMD_SEL_ADDRIGHT, CMD_SEL_ADDUP, CMD_SEL_ADDDOWN,
 		CMD_DLG_DATAINTERP, CMD_DLG_ENCODING, CMD_APPEAR_FONTCHOOSE, CMD_APPEAR_FONTINC, CMD_APPEAR_FONTDEC,
 		CMD_APPEAR_CAPACINC, CMD_APPEAR_CAPACDEC, CMD_DLG_PRINT, CMD_DLG_ABOUT,
 		CMD_CARET_LEFT, CMD_CARET_RIGHT, CMD_CARET_UP, CMD_CARET_DOWN,
 		CMD_SCROLL_PAGEUP, CMD_SCROLL_PAGEDOWN
-	};
-
-	/********************************************************************************************
-	* EHexCreateMode - Enum of HexCtrl creation mode.                                           *
-	********************************************************************************************/
-	enum class EHexCreateMode : std::uint8_t
-	{
-		CREATE_CHILD, CREATE_POPUP, CREATE_CUSTOMCTRL
 	};
 
 	/********************************************************************************************
@@ -190,15 +182,15 @@ namespace HEXCTRL
 	********************************************************************************************/
 	struct HEXCREATE
 	{
-		EHexCreateMode enCreateMode { EHexCreateMode::CREATE_CHILD }; //Creation mode of the HexCtrl window.
-		HEXCOLORS      stColor { };          //All the control's colors.
-		HWND           hwndParent { };       //Parent window handle.
-		PLOGFONTW      pLogFont { };         //Font to be used instead of default, it has to be monospaced.
-		RECT           rect { };             //Initial rect. If null, the window is screen centered.
-		UINT           uID { };              //Control ID.
-		DWORD          dwStyle { };          //Window styles, 0 for default.
-		DWORD          dwExStyle { };        //Extended window styles, 0 for default.
-		double         dbWheelRatio { 1.0 }; //Ratio for how much to scroll with mouse-wheel.
+		HEXCOLORS stColor { };          //All HexCtrl colors.
+		HWND      hWndParent { };       //Parent window handle.
+		PLOGFONTW pLogFont { };         //Monospaced font to be used, or nullptr for default.
+		RECT      rect { };             //Initial window rect.
+		UINT      uID { };              //Control ID if it's a child window.
+		DWORD     dwStyle { };          //Window styles.
+		DWORD     dwExStyle { };        //Extended window styles.
+		double    dbWheelRatio { 1.0 }; //Ratio for how much to scroll with mouse-wheel.
+		bool      fCustom { false };    //If it's a custom control in a dialog.
 	};
 
 	/********************************************************************************************

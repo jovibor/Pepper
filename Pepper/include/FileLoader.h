@@ -70,6 +70,8 @@ private:
 	IHexCtrlPtr m_pHex { HEXCTRL::CreateHexCtrl() };
 	HEXCREATE m_hcs;
 	HEXDATA m_hds;
+	const DWORD m_dwStyle { WS_POPUP | WS_OVERLAPPEDWINDOW };
+	const DWORD m_dwExStyle { WS_EX_APPWINDOW }; //To force to the taskbar.
 	LARGE_INTEGER m_stFileSize { };	 //Size of the loaded PE file.
 	HANDLE m_hFile { };
 	HANDLE m_hMapObject { };	     //Returned by CreateFileMappingW.

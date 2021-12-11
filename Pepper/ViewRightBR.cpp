@@ -12,18 +12,18 @@
 #include "ViewRightBR.h"
 #include <format>
 
-BEGIN_MESSAGE_MAP(CWndSampledlg, CWnd)
+BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
-void CWndSampledlg::Attach(CImageList* pImgList, CChildFrame* pChildFrame)
+void CWndSampleDlg::Attach(CImageList* pImgList, CChildFrame* pChildFrame)
 {
 	m_pImgRes = pImgList;
 	m_pChildFrame = pChildFrame;
 }
 
-void CWndSampledlg::SetDlgVisible(bool fVisible)
+void CWndSampleDlg::SetDlgVisible(bool fVisible)
 {
 	if (m_pChildFrame == nullptr)
 		return;
@@ -32,14 +32,14 @@ void CWndSampledlg::SetDlgVisible(bool fVisible)
 	m_pChildFrame->SetWindowStatus(m_hWnd, fVisible);
 }
 
-void CWndSampledlg::OnPaint()
+void CWndSampleDlg::OnPaint()
 {
 	CPaintDC dc(this);
 	if (m_pImgRes)
 		m_pImgRes->Draw(&dc, 0, POINT { 0, 0 }, ILD_NORMAL);
 }
 
-void CWndSampledlg::OnClose()
+void CWndSampleDlg::OnClose()
 {
 	SetDlgVisible(false);
 	CWnd::OnClose();

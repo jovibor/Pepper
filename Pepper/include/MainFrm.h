@@ -16,7 +16,7 @@ class CMainFrame : public CMDIFrameWndEx
 		CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr)override;
 	int& GetChildFramesCount();
 	void SetCurrFramePtrNull();
-protected:
+private:
 	afx_msg void OnAppEditmode();
 	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)override;
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -32,6 +32,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	static LRESULT MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR dwData);
+	static void MDIClientSize(HWND hWnd, WPARAM wParam, LPARAM lParam);
+	inline static CFont m_fontMDIClient;
 	CMFCToolBar m_wndToolBar;
 	CWnd* pWndMBtnCurrDown { };
 	std::vector<SWINDOWSTATUS>* m_pCurrFrameData { };

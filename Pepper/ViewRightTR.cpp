@@ -33,10 +33,10 @@ void CViewRightTR::OnInitialUpdate()
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	//Hex control for Resources raw.
-	m_hcs.hwndParent = m_hWnd;
+	m_hcs.hWndParent = m_hWnd;
 	m_hcs.uID = IDC_HEX_RIGHT_TR;
-	if (m_stHexEdit->Create(m_hcs))
-		::ShowWindow(m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN), SW_HIDE);
+	m_hcs.dwStyle = WS_CHILD;
+	m_stHexEdit->Create(m_hcs);
 }
 
 void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)

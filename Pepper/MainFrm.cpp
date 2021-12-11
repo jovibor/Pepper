@@ -274,27 +274,10 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		::GetClientRect(hWnd, rc);
 		CMemDC dcMem(dc, rc);
 		auto pDC = &dcMem.GetDC();
+		constexpr auto iLengthText = static_cast<int>(std::size(PRODUCT_NAME)) - 1;
+
 		pDC->FillSolidRect(rc, RGB(190, 190, 190));
-
-		LOGFONTW lf { };
-		StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
-		lf.lfHeight = 10;
-		lf.lfPitchAndFamily = FIXED_PITCH;
-		CFont font;
-		font.CreateFontIndirectW(&lf);
-		pDC->SelectObject(font);
-		const int iLengthText = static_cast<int>(std::size(PRODUCT_NAME)) - 1;
-		auto stSizeText = pDC->GetTextExtent(PRODUCT_NAME, iLengthText);
-
-		while ((rc.Width() - 20) > stSizeText.cx)
-		{
-			lf.lfHeight += 2;
-			font.DeleteObject();
-			font.CreateFontIndirectW(&lf);
-			pDC->SelectObject(font);
-			stSizeText = pDC->GetTextExtent(PRODUCT_NAME, iLengthText);
-		}
-
+		pDC->SelectObject(m_fontMDIClient);
 		pDC->SetBkMode(TRANSPARENT);
 		pDC->SetTextColor(RGB(205, 205, 205)); //Shadow color.
 		pDC->DrawTextW(PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
@@ -304,7 +287,7 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 	break;
 	case WM_SIZE:
-		::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
+		MDIClientSize(hWnd, wParam, lParam);
 		break;
 	case WM_LBUTTONDBLCLK:
 		static_cast<CPepperApp*>(AfxGetApp())->OpenNewFile();
@@ -312,4 +295,28 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 
 	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+void CMainFrame::MDIClientSize(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+	constexpr auto iLengthText = static_cast<int>(std::size(PRODUCT_NAME)) - 1;
+	const auto pDC = CDC::FromHandle(::GetDC(hWnd));
+	const auto iWidthNew = LOWORD(lParam);
+	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
+	auto iFontSizeMin = 10;
+	LOGFONTW lf { .lfHeight { -MulDiv(iFontSizeMin, iLOGPIXELSY, 72) }, .lfPitchAndFamily { FIXED_PITCH }, .lfFaceName { L"Consolas" } };
+
+	m_fontMDIClient.DeleteObject();
+	m_fontMDIClient.CreateFontIndirectW(&lf);
+	CSize stSizeText { };
+	while (stSizeText.cx < (iWidthNew - 20)) //Until the text size not big enough to fill the window's width.
+	{
+		m_fontMDIClient.DeleteObject();
+		lf.lfHeight = -MulDiv(++iFontSizeMin, iLOGPIXELSY, 72);
+		m_fontMDIClient.CreateFontIndirectW(&lf);
+		pDC->SelectObject(m_fontMDIClient);
+		stSizeText = pDC->GetTextExtent(PRODUCT_NAME, iLengthText);
+	}
+	::ReleaseDC(hWnd, pDC->m_hDC);
+	::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
 }

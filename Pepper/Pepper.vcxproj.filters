@@ -124,8 +124,9 @@
     <Image Include="res\IDI_TREE_PERESOURCE.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="IDI_HEXCTRL_LOGO.ico" />
-    <Image Include="res\IDI_HEXCTRL_LOGO.ico" />
+    <Image Include="res\IDI_HEXCTRL_LOGO.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

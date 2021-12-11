@@ -1729,9 +1729,9 @@ int CViewRightTL::CreateListDebug()
 		m_listDebugDir->SetItemText(listindex, 4, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDebug->Type);
 		m_listDebugDir->SetItemText(listindex, 5, wstr);
-		auto iter = mapDebugType.find(pDebug->Type);
-		if (iter != mapDebugType.end())
-			m_listDebugDir->SetCellTooltip(listindex, 5, iter->second.data(), L"Debug type:");
+		auto iterDType = mapDebugType.find(pDebug->Type);
+		if (iterDType != mapDebugType.end())
+			m_listDebugDir->SetCellTooltip(listindex, 5, iterDType->second.data(), L"Debug type:");
 		swprintf_s(wstr, 9, L"%08X", pDebug->SizeOfData);
 		m_listDebugDir->SetItemText(listindex, 6, wstr);
 		swprintf_s(wstr, 9, L"%08X", pDebug->AddressOfRawData);

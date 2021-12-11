@@ -160,7 +160,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="IDI_HEXCTRL_LOGO.ico" />
     <Image Include="res\IDI_HEXCTRL_LOGO.ico" />
     <Image Include="res\IDI_TREE_PEDIRS.ico" />
     <Image Include="res\IDI_TREE_PEHEADER.ico" />

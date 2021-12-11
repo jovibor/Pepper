@@ -39,10 +39,10 @@ void CViewRightBL::OnInitialUpdate()
 		return;
 
 	//Hex control for SecurityDir and TLSdir.
-	m_hcs.hwndParent = m_hWnd;
+	m_hcs.hWndParent = m_hWnd;
 	m_hcs.uID = IDC_HEX_RIGHT_BL;
+	m_hcs.dwStyle = WS_CHILD;
 	m_stHexEdit->Create(m_hcs);
-	::ShowWindow(m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN), SW_HIDE);
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);

@@ -16,7 +16,7 @@
 
 using namespace LISTEX;
 
-class CWndSampledlg final : public CWnd
+class CWndSampleDlg final : public CWnd
 {
 public:
 	void Attach(CImageList* pImgList, CChildFrame* pChildFrame);
@@ -58,7 +58,7 @@ private:
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CImageList m_stImgRes;
-	CWndSampledlg m_wndSampledlg;
+	CWndSampleDlg m_wndSampledlg;
 	LISTEXCREATESTRUCT m_stlcs;
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
 	LOGFONTW m_lf { }, m_hdrlf { };

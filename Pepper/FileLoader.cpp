@@ -13,6 +13,39 @@
 #include "Utility.h"
 #include <algorithm>
 
+void CFileLoader::CreateHexCtrlWnd()
+{
+	m_pHex->Create(m_hcs);
+
+	const auto hWndHex = m_pHex->GetWindowHandle(EHexWnd::WND_MAIN);
+	const auto iWidthActual = m_pHex->GetActualWidth() + GetSystemMetrics(SM_CXVSCROLL);
+	CRect rcHex(0, 0, iWidthActual, iWidthActual); //Square window.
+	AdjustWindowRectEx(rcHex, m_dwStyle, FALSE, m_dwExStyle);
+	const auto iWidth = rcHex.Width();
+	const auto iHeight = rcHex.Height() - rcHex.Height() / 3;
+	const auto iPosX = GetSystemMetrics(SM_CXSCREEN) / 2 - iWidth / 2;
+	const auto iPosY = GetSystemMetrics(SM_CYSCREEN) / 2 - iHeight / 2;
+	::SetWindowPos(hWndHex, nullptr, iPosX, iPosY, iWidth, iHeight, SWP_SHOWWINDOW);
+
+	const auto hIconSmall = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 0, 0, 0));
+	const auto hIconBig = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 96, 96, 0));
+	if (hIconSmall != nullptr) {
+		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
+		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
+	}
+}
+
+bool CFileLoader::Flush()
+{
+	if (!IsLoaded())
+		return false;
+
+	if (IsModified())
+		FlushViewOfFile(m_lpBase, 0);
+
+	return false;
+}
+
 HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 {
 	if (IsLoaded() || !pDoc)
@@ -59,12 +92,9 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	m_fWritable = fWritable;
 	m_pMainDoc = pDoc;
 
-	m_hcs.enCreateMode = EHexCreateMode::CREATE_POPUP;
-	m_hcs.hwndParent = m_hWnd;
-	m_hcs.dwExStyle = WS_EX_APPWINDOW; //To force to the taskbar.
-	const auto iPosX = GetSystemMetrics(SM_CXSCREEN) / 4;
-	const auto iPosY = GetSystemMetrics(SM_CYSCREEN) / 4;
-	m_hcs.rect = { iPosX, iPosY, iPosX * 3, iPosY * 3 };
+	m_hcs.dwStyle = m_dwStyle;
+	m_hcs.dwExStyle = m_dwExStyle; //To force to the taskbar.
+	m_hcs.hWndParent = m_hWnd;
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
 
 	return S_OK;
@@ -225,17 +255,6 @@ HRESULT CFileLoader::UnmapFileOffset(QUERYDATA& rData)
 	return S_OK;
 }
 
-bool CFileLoader::Flush()
-{
-	if (!IsLoaded())
-		return false;
-
-	if (IsModified())
-		FlushViewOfFile(m_lpBase, 0);
-
-	return false;
-}
-
 HRESULT CFileLoader::UnloadFile()
 {
 	if (!m_fLoaded)
@@ -286,17 +305,6 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	}
 
 	return CWnd::OnNotify(wParam, lParam, pResult);
-}
-
-void CFileLoader::CreateHexCtrlWnd()
-{
-	m_pHex->Create(m_hcs);
-	const auto hIconSmall = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 0, 0, 0));
-	const auto hIconBig = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 96, 96, 0));
-	if (hIconSmall != nullptr) {
-		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
-		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
-	}
 }
 
 void CFileLoader::OnHexGetData(HEXDATAINFO& hdi)
