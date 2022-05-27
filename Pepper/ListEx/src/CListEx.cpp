@@ -44,7 +44,7 @@ namespace LISTEX
 			SITEMDATA(int iIconIndex, CRect rect) : iIconIndex(iIconIndex), rect(rect) {}; //Ctor for just image index.
 			SITEMDATA(std::wstring_view wstrText, std::wstring_view wstrLink, std::wstring_view wstrTitle,
 				CRect rect, bool fLink = false, bool fTitle = false) :
-				wstrText(wstrText), wstrLink(wstrLink), wstrTitle(wstrTitle), rect(rect), fLink(fLink), fTitle(fTitle) {}
+				wstrText(wstrText), wstrLink(wstrLink), wstrTitle(wstrTitle), rect(rect), fLink(fLink), fTitle(fTitle) {};
 			std::wstring wstrText { };  //Visible text.
 			std::wstring wstrLink { };  //Text within link <link="textFromHere"> tag.
 			std::wstring wstrTitle { }; //Text within title <...title="textFromHere"> tag.

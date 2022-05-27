@@ -54,7 +54,7 @@ class CViewRightBR final : public CScrollView
 	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
 private:
 	HWND m_hwndActive { };
-	libpe_ptr m_pLibpe;
+	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CImageList m_stImgRes;

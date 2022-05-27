@@ -29,7 +29,7 @@ void CViewRightTR::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->m_pLibpe;
+	m_pLibpe = m_pMainDoc->m_pLibpe.get();
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	//Hex control for Resources raw.
@@ -104,9 +104,7 @@ void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes)
 	if (m_hwndActive)
 		::ShowWindow(m_hwndActive, SW_HIDE);
 
-	DWORD dwOffset { };
-	m_pLibpe->GetOffsetFromRVA(pRes->OffsetToData, dwOffset);
-
+	const auto dwOffset = m_pLibpe->GetOffsetFromRVA(pRes->OffsetToData);
 	m_pFileLoader->ShowFilePiece(dwOffset, pRes->Size, m_stHexEdit.get());
 	m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);

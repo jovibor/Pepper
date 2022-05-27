@@ -27,7 +27,7 @@ BOOL CAboutDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(PEPPER_VERSION_WSTR);
 	std::wstring wstrlibpeVer = L"libpe - PE/PE+ binaries library v";
-	wstrlibpeVer += libpeInfo()->pwszVersion;
+	wstrlibpeVer += GetLibInfo().pwszVersion;
 	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrlibpeVer.data());
 	wstrlibpeVer = L"HexCtrl - ";
 	wstrlibpeVer += GetHexCtrlInfo()->pwszVersion;

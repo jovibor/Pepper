@@ -2,6 +2,9 @@
 ## Eclipse
 #################
 
+*stacktrace.*
+*.zip
+*.rar
 *.exe
 *.pydevproject
 .project
@@ -40,12 +43,12 @@ local.properties
 .vs/
 
 # User-specific files
-*solution_suppressions.cfg
 *.suppress
 *.suo
 *.user
 *.sln.docstates
 *.opendb
+*solution_suppressions.cfg
 
 # Build results
 

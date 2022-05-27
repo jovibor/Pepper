@@ -23,11 +23,8 @@ void CViewLeft::OnInitialUpdate()
 	CView::OnInitialUpdate();
 
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->m_pLibpe;
-
-	DWORD dwFileInfo;
-	if (m_pLibpe->GetImageInfo(dwFileInfo) != S_OK)
-		return;
+	m_pLibpe = m_pMainDoc->m_pLibpe.get();
+	const auto stFileInfo = m_pLibpe->GetFileInfo();
 
 	//Scaling factor for HighDPI displays.
 	auto pDC = GetDC();
@@ -50,12 +47,12 @@ void CViewLeft::OnInitialUpdate()
 	m_stTreeMain.SetItemState(hTreeRoot, TVIS_BOLD, TVIS_BOLD);
 	m_stTreeMain.SetItemData(hTreeRoot, IDC_SHOW_FILE_SUMMARY);
 
-	if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_DOSHEADER))
+	if (stFileInfo.fHasDosHdr)
 	{
 		const auto hTreeDosHeader = m_stTreeMain.InsertItem(L"MS-DOS Header [IMAGE_DOS_HEADER]", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeDosHeader, IDC_LIST_DOSHEADER);
 	}
-	if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_RICHHEADER))
+	if (stFileInfo.fHasRichHdr)
 	{
 		const auto hTreeDosRich = m_stTreeMain.InsertItem(L"\u00ABRich\u00BB Header", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeDosRich, IDC_LIST_RICHHEADER);
@@ -64,39 +61,38 @@ void CViewLeft::OnInitialUpdate()
 	HTREEITEM hTreeNTHeaders { };
 	HTREEITEM hTreeOptHeader { };
 
-	if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_PE32) && ImageHasFlag(dwFileInfo, IMAGE_FLAG_NTHEADER))
+	if (stFileInfo.fIsx86 && stFileInfo.fHasNTHdr)
 		hTreeNTHeaders = m_stTreeMain.InsertItem(L"NT Header [IMAGE_NT_HEADERS32]", iconHdr, iconHdr, hTreeRoot);
-	else if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_PE64) && ImageHasFlag(dwFileInfo, IMAGE_FLAG_NTHEADER))
+	else if (stFileInfo.fIsx64 && stFileInfo.fHasNTHdr)
 		hTreeNTHeaders = m_stTreeMain.InsertItem(L"NT Header [IMAGE_NT_HEADERS64]", iconHdr, iconHdr, hTreeRoot);
 
 	if (hTreeNTHeaders)
 	{
 		m_stTreeMain.SetItemData(hTreeNTHeaders, IDC_LIST_NTHEADER);
 
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_FILEHEADER))
+		if (stFileInfo.fHasNTHdr)
 		{
 			const auto hTreeFileHeader = m_stTreeMain.InsertItem(L"File Header [IMAGE_FILE_HEADER]", iconHdr, iconHdr,
 				hTreeNTHeaders);
 			m_stTreeMain.SetItemData(hTreeFileHeader, IDC_LIST_FILEHEADER);
 		}
 
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_PE32) && ImageHasFlag(dwFileInfo, IMAGE_FLAG_OPTHEADER))
+		if (stFileInfo.fIsx86 && stFileInfo.fHasNTHdr)
 			hTreeOptHeader = m_stTreeMain.InsertItem(L"Optional Header [IMAGE_OPTIONAL_HEADER32]", iconHdr, iconHdr, hTreeNTHeaders);
-		else if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_PE64) && ImageHasFlag(dwFileInfo, IMAGE_FLAG_OPTHEADER))
+		else if (stFileInfo.fIsx64 && stFileInfo.fHasNTHdr)
 			hTreeOptHeader = m_stTreeMain.InsertItem(L"Optional Header [IMAGE_OPTIONAL_HEADER64]", iconHdr, iconHdr, hTreeNTHeaders);
 
 		m_stTreeMain.SetItemData(hTreeOptHeader, IDC_LIST_OPTIONALHEADER);
 		m_stTreeMain.Expand(hTreeNTHeaders, TVE_EXPAND);
 	}
 
-	if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_SECTIONS))
+	if (stFileInfo.fHasSections)
 	{
 		const auto hTreeSecHeaders = m_stTreeMain.InsertItem(L"Sections Headers [IMAGE_SECTION_HEADER]", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeSecHeaders, IDC_LIST_SECHEADERS);
 	}
 
-	PLIBPE_DATADIRS_VEC vecDataDirs;
-	if (m_pLibpe->GetDataDirectories(vecDataDirs) == S_OK)
+	if (const auto vecDataDirs = m_pLibpe->GetDataDirs(); vecDataDirs != nullptr)
 	{
 		if (hTreeOptHeader)
 		{
@@ -104,63 +100,63 @@ void CViewLeft::OnInitialUpdate()
 			m_stTreeMain.SetItemData(hTreeDataDirs, IDC_LIST_DATADIRECTORIES);
 			m_stTreeMain.Expand(hTreeOptHeader, TVE_EXPAND);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_EXPORT)) {
+		if (stFileInfo.fHasExport) {
 			const auto hTreeExportDir = m_stTreeMain.InsertItem(L"Export Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeExportDir, IDC_LIST_EXPORT);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_IMPORT)) {
+		if (stFileInfo.fHasImport) {
 			const auto hTreeImportDir = m_stTreeMain.InsertItem(L"Import Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeImportDir, IDC_LIST_IMPORT);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_RESOURCE)) {
+		if (stFileInfo.fHasResource) {
 			const auto hTreeResourceDir = m_stTreeMain.InsertItem(L"Resource Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeResourceDir, IDC_TREE_RESOURCE);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_EXCEPTION)) {
+		if (stFileInfo.fHasException) {
 			const auto hTreeExceptionDir = m_stTreeMain.InsertItem(L"Exception Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeExceptionDir, IDC_LIST_EXCEPTIONS);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_SECURITY)) {
+		if (stFileInfo.fHasSecurity) {
 			const auto hTreeSecurityDir = m_stTreeMain.InsertItem(L"Security Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeSecurityDir, IDC_LIST_SECURITY);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_BASERELOC)) {
+		if (stFileInfo.fHasReloc) {
 			const auto hTreeRelocationDir = m_stTreeMain.InsertItem(L"Relocations Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeRelocationDir, IDC_LIST_RELOCATIONS);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_DEBUG)) {
+		if (stFileInfo.fHasDebug) {
 			const auto hTreeDebugDir = m_stTreeMain.InsertItem(L"Debug Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeDebugDir, IDC_LIST_DEBUG);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_ARCHITECTURE)) {
+		if (stFileInfo.fHasArchitect) {
 			const auto hTreeArchitectureDir = m_stTreeMain.InsertItem(L"Architecture Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeArchitectureDir, IDC_LIST_ARCHITECTURE);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_GLOBALPTR)) {
+		if (stFileInfo.fHasGlobalPtr) {
 			const auto hTreeGlobalPTRDir = m_stTreeMain.InsertItem(L"GlobalPTR Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeGlobalPTRDir, IDC_LIST_GLOBALPTR);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_TLS)) {
+		if (stFileInfo.fHasTLS) {
 			const auto hTreeTLSDir = m_stTreeMain.InsertItem(L"TLS Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeTLSDir, IDC_LIST_TLS);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_LOADCONFIG)) {
+		if (stFileInfo.fHasLoadCFG) {
 			const auto hTreeLoadConfigDir = m_stTreeMain.InsertItem(L"Load Config Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeLoadConfigDir, IDC_LIST_LOADCONFIG);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_BOUNDIMPORT)) {
+		if (stFileInfo.fHasBoundImp) {
 			const auto hTreeBoundImportDir = m_stTreeMain.InsertItem(L"Bound Import Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeBoundImportDir, IDC_LIST_BOUNDIMPORT);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_IAT)) {
+		if (stFileInfo.fHasIAT) {
 			const auto hTreeIATDir = m_stTreeMain.InsertItem(L"IAT Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeIATDir, IDC_LIST_IAT);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_DELAYIMPORT)) {
+		if (stFileInfo.fHasDelayImp) {
 			const auto hTreeDelayImportDir = m_stTreeMain.InsertItem(L"Delay Import Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeDelayImportDir, IDC_LIST_DELAYIMPORT);
 		}
-		if (ImageHasFlag(dwFileInfo, IMAGE_FLAG_COMDESCRIPTOR)) {
+		if (stFileInfo.fHasCOMDescr) {
 			const auto hTreeCOMDescriptorDir = m_stTreeMain.InsertItem(L"COM Descriptor Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeCOMDescriptorDir, IDC_LIST_COMDESCRIPTOR);
 		}

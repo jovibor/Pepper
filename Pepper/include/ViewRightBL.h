@@ -52,7 +52,8 @@ protected:
 	void OnDocEditMode();
 	DECLARE_MESSAGE_MAP()
 private:
-	libpe_ptr m_pLibpe;
+	Ilibpe* m_pLibpe { };
+	PEFILEINFO stFileInfo;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CFileLoader* m_pFileLoader { };
@@ -65,7 +66,6 @@ private:
 	IListExPtr m_listDelayImportEntry { CreateListEx() };
 	IListExPtr m_listRelocsEntry { CreateListEx() };
 	CTreeEx m_treeResBottom;
-	DWORD m_dwFileInfo { };
 	CImageList m_imglTreeRes;
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONTW m_lf { }, m_hdrlf { };

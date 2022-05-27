@@ -58,10 +58,9 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	{
 		m_hFile = CreateFileW(lpszFileName, GENERIC_READ, FILE_SHARE_READ,
 			nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-		if (m_hFile == INVALID_HANDLE_VALUE)
-		{
+		if (m_hFile == INVALID_HANDLE_VALUE) {
 			MessageBoxW(L"CreateFileW call in FileLoader::LoadFile failed.", L"Error", MB_ICONERROR);
-			return E_FILE_CREATEFILE_FAILED;
+			return E_ABORT;
 		}
 	}
 	else
@@ -70,11 +69,10 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	::GetFileSizeEx(m_hFile, &m_stFileSize);
 
 	m_hMapObject = CreateFileMappingW(m_hFile, nullptr, fWritable ? PAGE_READWRITE : PAGE_READONLY, 0, 0, nullptr);
-	if (!m_hMapObject)
-	{
+	if (!m_hMapObject) {
 		CloseHandle(m_hFile);
 		MessageBoxW(L"CreateFileMappingW call in FileLoader::LoadFile failed.", L"Error", MB_ICONERROR);
-		return E_FILE_CREATEFILEMAPPING_FAILED;
+		return E_ABORT;
 	}
 	m_fLoaded = true;
 
@@ -232,7 +230,7 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD 
 	DWORD dwOffsetLow = ullStartOffsetMapped & 0xFFFFFFFFUL;
 	LPVOID lpData { };
 	if ((lpData = MapViewOfFile(m_hMapObject, FILE_MAP_READ, dwOffsetHigh, dwOffsetLow, dwSizeToMap)) == nullptr)
-		return E_FILE_MAPVIEWOFFILE_SECTION_FAILED;
+		return E_ABORT;
 
 	rData.ullStartOffsetMapped = ullStartOffsetMapped;
 	rData.ullEndOffsetMapped = ullStartOffsetMapped + dwSizeToMap;

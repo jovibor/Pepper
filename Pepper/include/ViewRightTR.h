@@ -30,7 +30,7 @@ protected:
 	void CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes);
 	DECLARE_MESSAGE_MAP()
 private:
-	libpe_ptr m_pLibpe;
+	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CFileLoader* m_pFileLoader { };

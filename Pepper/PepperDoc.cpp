@@ -41,14 +41,13 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		return FALSE;
 	}
 
-	HRESULT hr;
-	if ((hr = m_pLibpe->LoadPe(lpszPathName)) != S_OK)
+	if (const auto err = m_pLibpe->LoadPe(lpszPathName) != PEOK)
 	{
 		WCHAR wstrMsg[MAX_PATH];
-		if (const auto it = g_mapLibpeErrors.find(hr); it != g_mapLibpeErrors.end())
-			swprintf_s(wstrMsg, L"File load failed with libpe error code: 0x0%X\n%s", hr, it->second.data());
+		if (const auto it = g_mapLibpeErrors.find(err); it != g_mapLibpeErrors.end())
+			swprintf_s(wstrMsg, L"File load failed with libpe error code: 0x0%X\n%s", err, it->second.data());
 		else
-			swprintf_s(wstrMsg, L"File load failed with libpe error code: 0x0%X", hr);
+			swprintf_s(wstrMsg, L"File load failed with libpe error code: 0x0%X", err);
 
 		std::wstring wstrFile = lpszPathName;
 		if (const auto sSlash = wstrFile.find_last_of(L'\\'); sSlash > 0)

@@ -24,7 +24,7 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	DECLARE_MESSAGE_MAP()
 private:
-	libpe_ptr m_pLibpe;
+	Ilibpe* m_pLibpe { };
 	CPepperDoc* m_pMainDoc { };
 	CTreeEx m_stTreeMain;
 	CImageList m_ImgListRootTree;

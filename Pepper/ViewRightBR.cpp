@@ -60,7 +60,7 @@ void CViewRightBR::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->m_pLibpe;
+	m_pLibpe = m_pMainDoc->m_pLibpe.get();
 
 	m_EditBRB.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);
@@ -452,8 +452,8 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 
 int CViewRightBR::CreateListTLSCallbacks()
 {
-	PLIBPE_TLS pTLS;
-	if (m_pLibpe->GetTLS(pTLS) != S_OK)
+	const auto pTLS = m_pLibpe->GetTLS();
+	if (pTLS == nullptr)
 		return -1;
 
 	m_stlcs.dwStyle = 0;
@@ -478,8 +478,8 @@ int CViewRightBR::CreateListTLSCallbacks()
 
 void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 {
-	PLIBPE_DEBUG_VEC pDebug;
-	if (m_pLibpe->GetDebug(pDebug) != S_OK)
+	const auto pDebug = m_pLibpe->GetDebug();
+	if (pDebug)
 		return;
 
 	//At the moment only IMAGE_DEBUG_TYPE_CODEVIEW info is supported.
@@ -561,28 +561,28 @@ void CViewRightBR::CreateStrings(const SRESDATA& stResData)
 
 void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 {
-	PLIBPE_RESOURCE_ROOT pstResRoot;
-	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
+	const auto pstResRoot = m_pLibpe->GetResources();
+	if (pstResRoot == nullptr)
 		return;
 
 #pragma pack(push, 2)
 	struct GRPICONDIRENTRY
 	{
-		BYTE   bWidth;               // Width, in pixels, of the image
-		BYTE   bHeight;              // Height, in pixels, of the image
-		BYTE   bColorCount;          // Number of colors in image (0 if >=8bpp)
-		BYTE   bReserved;            // Reserved
-		WORD   wPlanes;              // Color Planes
-		WORD   wBitCount;            // Bits per pixel
-		DWORD  dwBytesInRes;         // how many bytes in this resource?
-		WORD   nID;                  // the ID
+		BYTE  bWidth;       // Width, in pixels, of the image
+		BYTE  bHeight;      // Height, in pixels, of the image
+		BYTE  bColorCount;  // Number of colors in image (0 if >=8bpp)
+		BYTE  bReserved;    // Reserved
+		WORD  wPlanes;      // Color Planes
+		WORD  wBitCount;    // Bits per pixel
+		DWORD dwBytesInRes; // how many bytes in this resource?
+		WORD  nID;          // the ID
 	};
 	struct GRPICONDIR
 	{
-		WORD			  idReserved;   // Reserved (must be 0)
-		WORD			  idType;	    // Resource type (1 for icons)
-		WORD			  idCount;	    // How many images?
-		GRPICONDIRENTRY   idEntries[1]; // The entries for each image
+		WORD			idReserved;   // Reserved (must be 0)
+		WORD			idType;       // Resource type (1 for icons)
+		WORD			idCount;      // How many images?
+		GRPICONDIRENTRY idEntries[1]; // The entries for each image
 	};
 	using LPGRPICONDIR = const GRPICONDIR*;
 #pragma pack(pop)
@@ -593,29 +593,29 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 
 	for (int i = 0; i < pGRPIDir->idCount; i++)
 	{
-		auto& rootvec = pstResRoot->vecResRoot;
+		auto& rootvec = pstResRoot->vecResData;
 		for (auto& iterRoot : rootvec)
 		{
-			if (iterRoot.stResDirEntryRoot.Id == 3 || //RT_ICON
-				iterRoot.stResDirEntryRoot.Id == 1)   //RT_CURSOR
+			if (iterRoot.stResDirEntry.Id == 3 || //RT_ICON
+				iterRoot.stResDirEntry.Id == 1)   //RT_CURSOR
 			{
 				auto& lvl2tup = iterRoot.stResLvL2;
-				auto& lvl2vec = lvl2tup.vecResLvL2;
+				auto& lvl2vec = lvl2tup.vecResData;
 
 				for (auto& iterlvl2 : lvl2vec)
 				{
-					if (iterlvl2.stResDirEntryLvL2.Id == pGRPIDir->idEntries[i].nID)
+					if (iterlvl2.stResDirEntry.Id == pGRPIDir->idEntries[i].nID)
 					{
 						auto& lvl3tup = iterlvl2.stResLvL3;
-						auto& lvl3vec = lvl3tup.vecResLvL3;
+						auto& lvl3vec = lvl3tup.vecResData;
 
 						if (!lvl3vec.empty())
 						{
-							auto& data = lvl3vec.at(0).vecResRawDataLvL3;
+							auto& data = lvl3vec.at(0).vecRawResData;
 							if (!data.empty())
 							{
 								hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(data.data()), static_cast<DWORD>(data.size()),
-									(iterRoot.stResDirEntryRoot.Id == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+									(iterRoot.stResDirEntry.Id == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 								if (!hIcon)
 									return ResLoadError();
 								if (!GetIconInfo(hIcon, &iconInfo))
@@ -629,7 +629,7 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 								m_vecImgRes.emplace_back(std::make_unique<CImageList>());
 								auto& vecBack = m_vecImgRes.back();
 								vecBack->Create(m_stBmp.bmWidth,
-									(iterRoot.stResDirEntryRoot.Id == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
+									(iterRoot.stResDirEntry.Id == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
 								vecBack->SetBkColor(m_clrBkImgList);
 								m_iImgResWidth += m_stBmp.bmWidth;
 								m_iImgResHeight = max(m_stBmp.bmHeight, m_iImgResHeight);
@@ -724,28 +724,28 @@ void CViewRightBR::CreateManifest(const SRESDATA& stResData)
 
 void CViewRightBR::CreateToolbar(const SRESDATA& stResData)
 {
-	PLIBPE_RESOURCE_ROOT pstResRoot;
-	if (m_pLibpe->GetResources(pstResRoot) != S_OK)
+	const auto pstResRoot = m_pLibpe->GetResources();
+	if (pstResRoot == nullptr)
 		return;
 
-	auto& rootvec = pstResRoot->vecResRoot;
+	auto& rootvec = pstResRoot->vecResData;
 	for (auto& iterRoot : rootvec)
 	{
-		if (iterRoot.stResDirEntryRoot.Id == 2) //RT_BITMAP
+		if (iterRoot.stResDirEntry.Id == 2) //RT_BITMAP
 		{
 			auto& lvl2tup = iterRoot.stResLvL2;
-			auto& lvl2vec = lvl2tup.vecResLvL2;
+			auto& lvl2vec = lvl2tup.vecResData;
 
 			for (auto& iterlvl2 : lvl2vec)
 			{
-				if (iterlvl2.stResDirEntryLvL2.Id == stResData.IdResName)
+				if (iterlvl2.stResDirEntry.Id == stResData.IdResName)
 				{
 					auto& lvl3tup = iterlvl2.stResLvL3;
-					auto& lvl3vec = lvl3tup.vecResLvL3;
+					auto& lvl3vec = lvl3tup.vecResData;
 
 					if (!lvl3vec.empty())
 					{
-						auto& data = lvl3vec.at(0).vecResRawDataLvL3;
+						auto& data = lvl3vec.at(0).vecRawResData;
 						if (!data.empty())
 						{
 							SRESDATA rh { .IdResType { 2 }, .IdResName { stResData.IdResName }, .pData { &data } };

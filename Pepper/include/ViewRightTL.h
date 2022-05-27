@@ -47,7 +47,8 @@ protected:
 	void SortImportData();
 	DECLARE_MESSAGE_MAP()
 private:
-	libpe_ptr m_pLibpe;
+	Ilibpe* m_pLibpe { };
+	PEFILEINFO stFileInfo;
 	CFont m_fontSummary;
 	std::wstring m_wstrPepperVersion { };
 	std::wstring m_wstrFileName { };
@@ -82,12 +83,10 @@ private:
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	HTREEITEM m_hTreeResDir { };
 	bool m_fFileSummaryShow { true };
-	ULONG m_dwPeStart { };
-	DWORD m_dwFileInfo { };
-	PLIBPE_SECHEADERS_VEC m_pSecHeaders { };
-	PLIBPE_IMPORT_VEC m_pImport { };
-	PLIBPE_EXCEPTION_VEC m_pExceptionDir { };
-	PLIBPE_RELOCATION_VEC m_pRelocTable { };
+	PESECHDR_VEC* m_pSecHeaders { };
+	PEIMPORT_VEC* m_pImport { };
+	PEEXCEPTION_VEC* m_pExceptionDir { };
+	PERELOC_VEC* m_pRelocTable { };
 	CWnd* m_pwndActive { };
 	LOGFONTW m_lf { }, m_hdrlf { };
 	CMenu m_menuList;

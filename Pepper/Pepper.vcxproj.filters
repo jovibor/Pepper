@@ -46,6 +46,9 @@
     <ClCompile Include="ListEx\src\CListExHdr.cpp">
       <Filter>ListEx\src</Filter>
     </ClCompile>
+    <ClCompile Include="libpe\libpe.cpp">
+      <Filter>libpe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ChildFrm.h">
@@ -102,6 +105,9 @@
     <ClInclude Include="ListEx\src\CListExHdr.h">
       <Filter>ListEx\src</Filter>
     </ClInclude>
+    <ClInclude Include="libpe\libpe.h">
+      <Filter>libpe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\Pepper.rc">
@@ -143,6 +149,9 @@
     </Filter>
     <Filter Include="ListEx\src">
       <UniqueIdentifier>{800c295d-05bb-4244-b815-c17969a20963}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libpe">
+      <UniqueIdentifier>{f8db6cd1-0956-4922-9246-354d3922ab5d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

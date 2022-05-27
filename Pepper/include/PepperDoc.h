@@ -16,10 +16,10 @@ class CPepperDoc : public CDocument
 {
 public:
 	DECLARE_DYNCREATE(CPepperDoc)
-	libpe_ptr m_pLibpe { };
+	IlibpePtr m_pLibpe { };
 	CFileLoader m_stFileLoader;
 	void SetEditMode(bool fEditMode);
-	bool IsEditMode() { return m_fEditMode; }
+	[[nodiscard]] bool IsEditMode() { return m_fEditMode; }
 private:
 	BOOL OnOpenDocument(LPCTSTR lpszPathName) override;
 	virtual void OnCloseDocument();
