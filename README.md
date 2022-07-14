@@ -1,4 +1,9 @@
 ## Pepper 
+## Installation
+`git clone https://github.com/jovibor/Pepper.git --recursive`
+
+## Features
+
 #### [PE/PE+](https://docs.microsoft.com/en-us/windows/win32/debug/pe-format) binaries viewer, built on top of [libpe](https://github.com/jovibor/libpe).
 * Supports PE(x86) and PE+(x64) binaries of any size
 * All inner PE/PE+ data structures, headers and layouts
@@ -29,6 +34,3 @@
 
 ## License
 This software is available under the **"MIT License"**.
-
-## Links
-[Latest release page](https://github.com/jovibor/Pepper/releases/latest)
