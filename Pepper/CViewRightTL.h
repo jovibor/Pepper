@@ -10,8 +10,8 @@
 #include "ChildFrm.h"
 #include "PepperDoc.h"
 #include "ListEx/ListEx.h"
-#include "TreeEx.h"
-#include "FileLoader.h"
+#include "CTreeEx.h"
+#include "CFileLoader.h"
 #include "Utility.h"
 
 #define HEXCTRL_SHARED_DLL

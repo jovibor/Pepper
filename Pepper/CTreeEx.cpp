@@ -7,7 +7,7 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
-#include "TreeEx.h"
+#include "CTreeEx.h"
 
 IMPLEMENT_DYNAMIC(CTreeEx, CTreeCtrl)
 
@@ -28,7 +28,7 @@ void CTreeEx::OnPaint()
 	CMemDC memDC(dc, rc);
 	CDC& rDC = memDC.GetDC();
 	rDC.GetClipBox(rc);
-	rDC.FillSolidRect(rc, RGB(255,255,255));
+	rDC.FillSolidRect(rc, RGB(255, 255, 255));
 
 	DefWindowProcW(WM_PAINT, reinterpret_cast<WPARAM>(rDC.m_hDC), static_cast<LPARAM>(0));
 }

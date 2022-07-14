@@ -9,11 +9,11 @@
 #include "stdafx.h"
 #include "ChildFrm.h"
 #include "MainFrm.h"
-#include "ViewLeft.h"
-#include "ViewRightBL.h"
-#include "ViewRightBR.h"
-#include "ViewRightTL.h"
-#include "ViewRightTR.h"
+#include "CViewLeft.h"
+#include "CViewRightBL.h"
+#include "CViewRightBR.h"
+#include "CViewRightTL.h"
+#include "CViewRightTR.h"
 #include <algorithm>
 #include <cmath>
 

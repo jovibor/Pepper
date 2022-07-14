@@ -7,7 +7,7 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
-#include "ViewRightBL.h"
+#include "CViewRightBL.h"
 #include "Utility.h"
 #include "res/resource.h"
 

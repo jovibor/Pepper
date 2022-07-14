@@ -8,7 +8,7 @@
 ****************************************************************************************************/
 #pragma once
 #include "libpe.h"
-#include "FileLoader.h"
+#include "CFileLoader.h"
 
 using namespace libpe;
 

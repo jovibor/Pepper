@@ -7,7 +7,7 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
-#include "SplitterEx.h"
+#include "CSplitterEx.h"
 #include <algorithm>
 
 IMPLEMENT_DYNAMIC(CSplitterEx, CSplitterWndEx)

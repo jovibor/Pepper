@@ -50,14 +50,14 @@
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\</IntDir>
     <TargetName>$(ProjectName)d</TargetName>
-    <IncludePath>include;libpe;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>subm\libpe\src;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>include;libpe;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>subm\libpe\src;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <TargetName>$(ProjectName)</TargetName>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
@@ -70,6 +70,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -106,6 +107,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -142,26 +144,26 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
-    <ClCompile Include="FileLoader.cpp" />
-    <ClCompile Include="libpe\libpe.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="CFileLoader.cpp" />
     <ClCompile Include="ListEx\src\CListEx.cpp" />
     <ClCompile Include="ListEx\src\CListExHdr.cpp" />
-    <ClCompile Include="SplitterEx.cpp" />
-    <ClCompile Include="ViewLeft.cpp" />
+    <ClCompile Include="CSplitterEx.cpp" />
+    <ClCompile Include="CViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Pepper.cpp" />
     <ClCompile Include="PepperDoc.cpp" />
-    <ClCompile Include="ViewRightBL.cpp" />
-    <ClCompile Include="ViewRightTR.cpp" />
-    <ClCompile Include="ViewRightBR.cpp" />
-    <ClCompile Include="ViewRightTL.cpp" />
-    <ClCompile Include="TreeEx.cpp" />
+    <ClCompile Include="CViewRightBL.cpp" />
+    <ClCompile Include="CViewRightTR.cpp" />
+    <ClCompile Include="CViewRightBR.cpp" />
+    <ClCompile Include="CViewRightTL.cpp" />
+    <ClCompile Include="CTreeEx.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="subm\libpe\src\libpe.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -176,25 +178,26 @@
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\ChildFrm.h" />
-    <ClInclude Include="include\Utility.h" />
-    <ClInclude Include="include\FileLoader.h" />
-    <ClInclude Include="include\SplitterEx.h" />
-    <ClInclude Include="include\ViewLeft.h" />
-    <ClInclude Include="include\MainFrm.h" />
-    <ClInclude Include="include\Pepper.h" />
-    <ClInclude Include="include\PepperDoc.h" />
-    <ClInclude Include="include\ViewRightBL.h" />
-    <ClInclude Include="include\ViewRightBR.h" />
-    <ClInclude Include="include\ViewRightTL.h" />
-    <ClInclude Include="include\TreeEx.h" />
-    <ClInclude Include="include\stdafx.h" />
-    <ClInclude Include="include\ViewRightTR.h" />
-    <ClInclude Include="libpe\libpe.h" />
+    <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="CFileLoader.h" />
+    <ClInclude Include="HexCtrl.h" />
+    <ClInclude Include="HexCtrlDefs.h" />
     <ClInclude Include="ListEx\ListEx.h" />
     <ClInclude Include="ListEx\src\CListEx.h" />
     <ClInclude Include="ListEx\src\CListExHdr.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="Pepper.h" />
+    <ClInclude Include="PepperDoc.h" />
     <ClInclude Include="res\resource.h" />
+    <ClInclude Include="CSplitterEx.h" />
+    <ClInclude Include="CTreeEx.h" />
+    <ClInclude Include="subm\libpe\src\libpe.h" />
+    <ClInclude Include="Utility.h" />
+    <ClInclude Include="CViewLeft.h" />
+    <ClInclude Include="CViewRightBL.h" />
+    <ClInclude Include="CViewRightBR.h" />
+    <ClInclude Include="CViewRightTL.h" />
+    <ClInclude Include="CViewRightTR.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\Pepper.rc" />

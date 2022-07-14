@@ -9,7 +9,7 @@
 #include "stdafx.h"
 #include "MainFrm.h"
 #include "Utility.h"
-#include "ViewRightBR.h"
+#include "CViewRightBR.h"
 #include <format>
 
 BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)

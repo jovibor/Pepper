@@ -1,0 +1,3 @@
+[submodule "Pepper/subm/libpe"]
+	path = Pepper/subm/libpe
+	url = https://github.com/jovibor/libpe.git

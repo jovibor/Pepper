@@ -7,7 +7,7 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #pragma once
-#include "TreeEx.h"
+#include "CTreeEx.h"
 #include "PepperDoc.h"
 
 class CViewLeft : public CView

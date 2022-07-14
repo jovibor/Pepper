@@ -7,7 +7,7 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
-#include "ViewRightTR.h"
+#include "CViewRightTR.h"
 #include "Utility.h"
 
 IMPLEMENT_DYNCREATE(CViewRightTR, CView)

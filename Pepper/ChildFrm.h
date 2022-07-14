@@ -8,7 +8,7 @@
 ****************************************************************************************************/
 #pragma once
 #include "Utility.h"
-#include "SplitterEx.h"
+#include "CSplitterEx.h"
 
 class CChildFrame : public CMDIChildWndEx
 {

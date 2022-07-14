@@ -55,7 +55,7 @@ namespace LISTEX::INTERNAL
 		void SetSortable(bool fSortable, PFNLVCOMPARE pfnCompare, EListExSortMode enSortMode)override;
 		DECLARE_DYNAMIC(CListEx)
 		DECLARE_MESSAGE_MAP()
-	protected:
+	private:
 		[[nodiscard]] long GetFontSize();
 		CListExHdr& GetHeaderCtrl()override { return m_stListHeader; }
 		void FontSizeIncDec(bool fInc);
@@ -106,7 +106,7 @@ namespace LISTEX::INTERNAL
 		LVHITTESTINFO m_stCurrCell { }; //Cell's hit struct for tool-tip.
 		LVHITTESTINFO m_stCurrLink { }; //Cell's link hit struct for tool-tip.
 		DWORD m_dwGridWidth { 1 };		//Grid width.
-		int m_iSortColumn { };          //Currently clicked header column.
+		int m_iSortColumn { -1 };       //Currently clicked header column.
 		PFNLVCOMPARE m_pfnCompare { nullptr };  //Pointer to user provided compare func.
 		EListExSortMode m_enDefSortMode { EListExSortMode::SORT_LEX }; //Default sorting mode.
 		CRect m_rcLinkCurr { };         //Current link's rect;

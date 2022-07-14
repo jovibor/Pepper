@@ -8,7 +8,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "res/resource.h"
-#include "FileLoader.h"
+#include "CFileLoader.h"
 #include "PepperDoc.h"
 #include "Utility.h"
 #include <algorithm>

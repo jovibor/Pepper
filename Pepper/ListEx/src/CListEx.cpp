@@ -6,7 +6,6 @@
 ****************************************************************************************/
 #include "stdafx.h"
 #include "CListEx.h"
-#include "strsafe.h"
 #include <algorithm>
 #include <cassert>
 #include <limits>
@@ -44,7 +43,7 @@ namespace LISTEX
 			SITEMDATA(int iIconIndex, CRect rect) : iIconIndex(iIconIndex), rect(rect) {}; //Ctor for just image index.
 			SITEMDATA(std::wstring_view wstrText, std::wstring_view wstrLink, std::wstring_view wstrTitle,
 				CRect rect, bool fLink = false, bool fTitle = false) :
-				wstrText(wstrText), wstrLink(wstrLink), wstrTitle(wstrTitle), rect(rect), fLink(fLink), fTitle(fTitle) {};
+				wstrText(wstrText), wstrLink(wstrLink), wstrTitle(wstrTitle), rect(rect), fLink(fLink), fTitle(fTitle) {}
 			std::wstring wstrText { };  //Visible text.
 			std::wstring wstrLink { };  //Text within link <link="textFromHere"> tag.
 			std::wstring wstrTitle { }; //Text within title <...title="textFromHere"> tag.
@@ -263,6 +262,7 @@ int CALLBACK CListEx::DefCompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lPar
 	return iResult;
 }
 
+
 BOOL CListEx::DeleteAllItems()
 {
 	assert(IsCreated());
@@ -414,7 +414,7 @@ int CListEx::InsertColumn(int nCol, const LVCOLUMN* pColumn)
 
 	HDITEMW hdi { };
 	hdi.mask = HDI_LPARAM;
-	hdi.lParam = distrib(gen);
+	hdi.lParam = static_cast<LPARAM>(distrib(gen));
 	refHdr.SetItem(iNewIndex, &hdi);
 
 	return iNewIndex;
@@ -445,7 +445,7 @@ int CListEx::InsertColumn(int nCol, LPCTSTR lpszColumnHeading, int nFormat, int 
 
 	HDITEMW hdi { };
 	hdi.mask = HDI_LPARAM;
-	hdi.lParam = distrib(gen);
+	hdi.lParam = static_cast<LPARAM>(distrib(gen));
 	refHdr.SetItem(iNewIndex, &hdi);
 
 	return iNewIndex;
@@ -1216,9 +1216,9 @@ BOOL CListEx::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	{
 		if (IsColumnSortable(pNMLV->iItem))
 		{
-			m_iSortColumn = pNMLV->iItem;
 			m_fSortAscending = pNMLV->iItem == m_iSortColumn ? !m_fSortAscending : true;
-			GetHeaderCtrl().SetSortArrow(m_iSortColumn, m_fSortAscending);
+			GetHeaderCtrl().SetSortArrow(pNMLV->iItem, m_fSortAscending);
+			m_iSortColumn = pNMLV->iItem;
 		}
 		else
 			m_iSortColumn = -1;
