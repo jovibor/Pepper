@@ -50,14 +50,14 @@
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\</IntDir>
     <TargetName>$(ProjectName)d</TargetName>
-    <IncludePath>subm\libpe\src;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\</IntDir>
-    <IncludePath>subm\libpe\src;$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <TargetName>$(ProjectName)</TargetName>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
@@ -71,6 +71,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>submodules\libpe\src\;submodules\HexCtrl\HexCtrl;submodules\HexCtrl\HexCtrl\dep;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -108,6 +109,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>submodules\libpe\src\;submodules\HexCtrl\HexCtrl;submodules\HexCtrl\HexCtrl\dep;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -145,8 +147,6 @@
   <ItemGroup>
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="CFileLoader.cpp" />
-    <ClCompile Include="ListEx\src\CListEx.cpp" />
-    <ClCompile Include="ListEx\src\CListExHdr.cpp" />
     <ClCompile Include="CSplitterEx.cpp" />
     <ClCompile Include="CViewLeft.cpp" />
     <ClCompile Include="MainFrm.cpp" />
@@ -161,7 +161,24 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="subm\libpe\src\libpe.cpp">
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\dep\ListEx\CListEx.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexBookmarks.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexSelection.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgAbout.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgEncoding.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgFillData.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexPropGridCtrl.cpp" />
+    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\HexUtility.cpp" />
+    <ClCompile Include="submodules\libpe\src\libpe.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -182,16 +199,33 @@
     <ClInclude Include="CFileLoader.h" />
     <ClInclude Include="HexCtrl.h" />
     <ClInclude Include="HexCtrlDefs.h" />
-    <ClInclude Include="ListEx\ListEx.h" />
-    <ClInclude Include="ListEx\src\CListEx.h" />
-    <ClInclude Include="ListEx\src\CListExHdr.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="Pepper.h" />
     <ClInclude Include="PepperDoc.h" />
     <ClInclude Include="res\resource.h" />
     <ClInclude Include="CSplitterEx.h" />
     <ClInclude Include="CTreeEx.h" />
-    <ClInclude Include="subm\libpe\src\libpe.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\dep\ListEx\ListEx.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\HexCtrl.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\HexCtrlDefs.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\res\HexCtrlRes.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexBookmarks.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexSelection.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgAbout.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgEncoding.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgFillData.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexPropGridCtrl.h" />
+    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\HexUtility.h" />
+    <ClInclude Include="submodules\libpe\src\libpe.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="CViewLeft.h" />
     <ClInclude Include="CViewRightBL.h" />
@@ -201,6 +235,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="res\Pepper.rc" />
+    <ResourceCompile Include="submodules\HexCtrl\HexCtrl\res\HexCtrl.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

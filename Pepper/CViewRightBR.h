@@ -59,7 +59,7 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	CImageList m_stImgRes;
 	CWndSampleDlg m_wndSampledlg;
-	LISTEXCREATESTRUCT m_stlcs;
+	LISTEXCREATE m_stlcs;
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
 	LOGFONTW m_lf { }, m_hdrlf { };
 	bool m_fDrawRes { false };

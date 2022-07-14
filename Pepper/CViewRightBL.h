@@ -13,8 +13,6 @@
 #include "CTreeEx.h"
 #include "CFileLoader.h"
 #include "Utility.h"
-
-#define HEXCTRL_SHARED_DLL
 #include "HexCtrl.h"
 
 using namespace HEXCTRL;
@@ -60,7 +58,7 @@ private:
 	HWND m_hwndActive { };
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
 	HEXCREATE m_hcs { };
-	LISTEXCREATESTRUCT m_stlcs;
+	LISTEXCREATE m_stlcs;
 	IListExPtr m_listExportFuncs { CreateListEx() };
 	IListExPtr m_listImportEntry { CreateListEx() };
 	IListExPtr m_listDelayImportEntry { CreateListEx() };

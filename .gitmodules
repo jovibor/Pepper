@@ -1,3 +1,6 @@
-[submodule "Pepper/subm/libpe"]
-	path = Pepper/subm/libpe
+[submodule "Pepper/submodules/HexCtrl"]
+	path = Pepper/submodules/HexCtrl
+	url = https://github.com/jovibor/HexCtrl.git
+[submodule "Pepper/submodules/libpe"]
+	path = Pepper/submodules/libpe
 	url = https://github.com/jovibor/libpe.git

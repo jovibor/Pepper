@@ -13,8 +13,6 @@
 #include "CTreeEx.h"
 #include "CFileLoader.h"
 #include "Utility.h"
-
-#define HEXCTRL_SHARED_DLL
 #include "HexCtrl.h"
 
 using namespace LISTEX;
@@ -56,7 +54,7 @@ private:
 	std::wstring m_wstrFullPath { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
-	LISTEXCREATESTRUCT m_stlcs;
+	LISTEXCREATE m_stlcs;
 	IListExPtr m_listDOSHeader { CreateListEx() };
 	IListExPtr m_listRichHdr { CreateListEx() };
 	IListExPtr m_listNTHeader { CreateListEx() };
