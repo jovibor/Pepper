@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pepper", "Pepper\Pepper.vcxproj", "{F667DFFD-7C78-478C-AEBB-B9E183D19580}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pepper", "Pepper.vcxproj", "{F667DFFD-7C78-478C-AEBB-B9E183D19580}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
