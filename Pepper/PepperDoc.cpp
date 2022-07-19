@@ -41,7 +41,7 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		return FALSE;
 	}
 
-	if (const auto err = m_pLibpe->LoadPe(lpszPathName) != PEOK)
+	if (const auto err = m_pLibpe->LoadPe(lpszPathName); err != PEOK)
 	{
 		WCHAR wstrMsg[MAX_PATH];
 		if (const auto it = g_mapLibpeErrors.find(err); it != g_mapLibpeErrors.end())
