@@ -48,7 +48,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)bin\obj\$(Configuration)\$(Platform)\</IntDir>
     <TargetName>$(ProjectName)d</TargetName>
     <IncludePath>$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
@@ -56,7 +56,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)bin\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)bin\obj\$(Configuration)\$(Platform)\</IntDir>
     <IncludePath>$(IncludePath)$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <TargetName>$(ProjectName)</TargetName>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>

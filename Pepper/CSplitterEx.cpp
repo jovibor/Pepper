@@ -33,9 +33,8 @@ BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE s
 	if (row >= static_cast<int>(m_vecRows.size()) || col >= static_cast<int>(m_vecCols.size()))
 		return FALSE;
 
-	BOOL ret = CSplitterWnd::CreateView(row, col, pViewClass, sizeInit, pContext);
-
-	CWnd* pPane = GetPane(row, col);
+	const auto ret = CSplitterWnd::CreateView(row, col, pViewClass, sizeInit, pContext);
+	auto* const pPane = GetPane(row, col);
 	m_vecPanes.emplace_back(SPANES { row, col, pPane });
 
 	return ret;

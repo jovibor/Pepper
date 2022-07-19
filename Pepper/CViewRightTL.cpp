@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "CViewRightTL.h"
 #include <algorithm>
+#include <format>
 
 IMPLEMENT_DYNCREATE(CViewRightTL, CView)
 
@@ -1856,90 +1857,45 @@ int CViewRightTL::CreateListLCD()
 		{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT\n Shift to right-justify Guard CF function table stride" }
 	};
 
-	WCHAR wstr[MAX_PATH];
-	std::wstring wstrTooltip;
-	if (stFileInfo.fIsx86)
+	auto lmbLCD = [&](auto& stPELCD, auto& mapLCD)
 	{
-		const auto pLCD32 = &pLCD->unLCD.stLCD32;
-		for (unsigned i = 0; i < g_mapLCD32.size(); i++)
+		for (unsigned iterMap { 0 }; iterMap < mapLCD.size(); ++iterMap)
 		{
-			auto& ref = g_mapLCD32.at(i);
-			if (ref.dwOffset >= pLCD32->Size)
+			auto& ref = mapLCD.at(iterMap);
+			if (ref.dwOffset >= stPELCD.Size) //No-more than the size of the struct, that is the first struct's member.
 				break;
 
-			DWORD dwOffset = ref.dwOffset;
-			DWORD dwSize = ref.dwSize;
-			DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pLCD32) + dwOffset)) &
-				(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+			const auto dwOffset = ref.dwOffset;
+			const auto dwSize = ref.dwSize;
+			const auto ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(&stPELCD) + dwOffset))
+				& (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8)); //Masking to remove structure's adjacent fields data.
 
-			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffset + dwOffset);
-			m_listLCD->InsertItem(i, wstr);
-			m_listLCD->SetItemText(i, 1, ref.wstrName.data());
-			swprintf_s(wstr, 17, L"%lu", dwSize);
-			m_listLCD->SetItemText(i, 2, wstr);
-			swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
-			m_listLCD->SetItemText(i, 3, wstr);
+			m_listLCD->InsertItem(iterMap, std::format(L"{:08X}", pLCD->dwOffset + dwOffset).data());
+			m_listLCD->SetItemText(iterMap, 1, ref.wstrName.data());
+			m_listLCD->SetItemText(iterMap, 2, std::format(L"{}", dwSize).data());
+			m_listLCD->SetItemText(iterMap, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : (dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}"),
+				std::make_wformat_args(ullValue)).data());
 
-			if (i == 1) //TimeDateStamp
-			{
-				if (pLCD32->TimeDateStamp) {
-					__time64_t time = pLCD32->TimeDateStamp;
-					_wctime64_s(wstr, MAX_PATH, &time);
-					m_listLCD->SetCellTooltip(i, 2, wstr, L"Time / Date:");
+			if (iterMap == 1) { //TimeDateStamp
+				if (const auto time = static_cast<__time64_t>(stPELCD.TimeDateStamp); stPELCD.TimeDateStamp > 0) {
+					wchar_t buff[64];
+					_wctime64_s(buff, std::size(buff), &time);
+					m_listLCD->SetCellTooltip(iterMap, 2, buff, L"Time / Date:");
 				}
 			}
-			else if (i == 24) //GuardFlags
-			{
-				wstrTooltip.clear();
-				for (auto& it : mapGuardFlags)
-					if (it.first & pLCD32->GuardFlags)
+			else if (iterMap == 24) { //GuardFlags
+				std::wstring wstrTooltip;
+				for (auto& it : mapGuardFlags) {
+					if (it.first & stPELCD.GuardFlags)
 						wstrTooltip += it.second + L"\n";
-				if (!wstrTooltip.empty())
-					m_listLCD->SetCellTooltip(i, 3, wstrTooltip.data(), L"GuardFlags:");
-			}
-		}
-	}
-	else if (stFileInfo.fIsx64)
-	{
-		const auto pLCD64 = &pLCD->unLCD.stLCD64;
-		for (auto iter = 0U; iter < g_mapLCD64.size(); ++iter)
-		{
-			auto& ref = g_mapLCD64.at(iter);
-			if (ref.dwOffset >= pLCD64->Size)
-				break;
-
-			DWORD dwOffset = ref.dwOffset;
-			DWORD dwSize = ref.dwSize;
-			ULONGLONG ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(pLCD64) + dwOffset)) &
-				(ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
-
-			swprintf_s(wstr, 9, L"%08lX", pLCD->dwOffset + dwOffset);
-			m_listLCD->InsertItem(iter, wstr);
-			m_listLCD->SetItemText(iter, 1, ref.wstrName.data());
-			swprintf_s(wstr, 17, L"%lu", dwSize);
-			m_listLCD->SetItemText(iter, 2, wstr);
-			swprintf_s(wstr, 17, dwSize == 2 ? L"%04X" : (dwSize == 4 ? L"%08X" : L"%016llX"), ullValue);
-			m_listLCD->SetItemText(iter, 3, wstr);
-
-			if (iter == 1) //TimeDateStamp
-			{
-				if (pLCD64->TimeDateStamp) {
-					__time64_t time = pLCD64->TimeDateStamp;
-					_wctime64_s(wstr, MAX_PATH, &time);
-					m_listLCD->SetCellTooltip(iter, 2, wstr, L"Time / Date:");
 				}
-			}
-			else if (iter == 24) //GuardFlags
-			{
-				wstrTooltip.clear();
-				for (auto & it : mapGuardFlags)
-					if (it.first & pLCD64->GuardFlags)
-						wstrTooltip += it.second + L"\n";
 				if (!wstrTooltip.empty())
-					m_listLCD->SetCellTooltip(iter, 3, wstrTooltip.data(), L"GuardFlags:");
+					m_listLCD->SetCellTooltip(iterMap, 3, wstrTooltip.data(), L"GuardFlags:");
 			}
 		}
-	}
+	};
+
+	stFileInfo.fIsx86 ? lmbLCD(pLCD->unLCD.stLCD32, g_mapLCD32) : lmbLCD(pLCD->unLCD.stLCD64, g_mapLCD64);
 
 	return 0;
 }

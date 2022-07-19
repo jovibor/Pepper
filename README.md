@@ -1,6 +1,6 @@
 ## Pepper 
 ## Installation
-`git clone https://github.com/jovibor/Pepper.git --recursive`
+`git clone https://github.com/jovibor/Pepper.git --recurse-submodules`
 
 ## Features
 
@@ -31,6 +31,3 @@
 ![](docs/img/Pepper_Dos.JPG)
 ![](docs/img/Pepper_Imp.JPG)
 ![](docs/img/Pepper_Resources.JPG)
-
-## License
-This software is available under the **"MIT License"**.
