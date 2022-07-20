@@ -21,6 +21,15 @@
 
 #define TO_WSTR_MAP(x) {x, L## #x}
 
+//Multibyte to Wide string convertion.
+[[nodiscard]] inline auto StrToWstr(std::string_view str, UINT uCodePage = CP_UTF8)->std::wstring
+{
+	const auto iSize = MultiByteToWideChar(uCodePage, 0, str.data(), static_cast<int>(str.size()), nullptr, 0);
+	std::wstring wstr(iSize, 0);
+	MultiByteToWideChar(uCodePage, 0, str.data(), static_cast<int>(str.size()), &wstr[0], iSize);
+	return wstr;
+}
+
 using namespace libpe;
 
 //Errors, that might come from libpe.

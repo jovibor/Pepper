@@ -1973,40 +1973,28 @@ int CViewRightTL::CreateListDelayImport()
 	m_listDelayImportDir->InsertColumn(8, L"UnloadInformationTableRVA", LVCFMT_CENTER, 190);
 	m_listDelayImportDir->InsertColumn(9, L"TimeDateStamp", LVCFMT_CENTER, 115);
 
-	int listindex = 0;
-	WCHAR wstr[MAX_PATH];
-
+	int listindex { };
 	for (auto& iter : *pDelayImp)
 	{
-		swprintf_s(wstr, 9, L"%08X", iter.dwOffset);
-		m_listDelayImportDir->InsertItem(listindex, wstr);
+		m_listDelayImportDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 
-		const IMAGE_DELAYLOAD_DESCRIPTOR* pDelayImpDir = &iter.stDelayImpDesc;
-		swprintf_s(wstr, MAX_PATH, L"%S (%zu)", iter.strModuleName.data(), iter.vecDelayImpFunc.size());
-		m_listDelayImportDir->SetItemText(listindex, 1, wstr);
-		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->Attributes.AllAttributes);
-		m_listDelayImportDir->SetItemText(listindex, 2, wstr);
-		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->DllNameRVA);
-		m_listDelayImportDir->SetItemText(listindex, 3, wstr);
-		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->ModuleHandleRVA);
-		m_listDelayImportDir->SetItemText(listindex, 4, wstr);
-		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->ImportAddressTableRVA);
-		m_listDelayImportDir->SetItemText(listindex, 5, wstr);
-		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->ImportNameTableRVA);
-		m_listDelayImportDir->SetItemText(listindex, 6, wstr);
-		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->BoundImportAddressTableRVA);
-		m_listDelayImportDir->SetItemText(listindex, 7, wstr);
-		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->UnloadInformationTableRVA);
-		m_listDelayImportDir->SetItemText(listindex, 8, wstr);
-		swprintf_s(wstr, 9, L"%08X", pDelayImpDir->TimeDateStamp);
-		m_listDelayImportDir->SetItemText(listindex, 9, wstr);
-		if (pDelayImpDir->TimeDateStamp) {
-			__time64_t time = pDelayImpDir->TimeDateStamp;
-			_wctime64_s(wstr, MAX_PATH, &time);
-			m_listDelayImportDir->SetCellTooltip(listindex, 8, wstr, L"Time / Date:");
+		const auto pDescr = &iter.stDelayImpDesc;
+		m_listDelayImportDir->SetItemText(listindex, 1, std::format(L"{} ({})", StrToWstr(iter.strModuleName), iter.vecDelayImpFunc.size()).data());
+		m_listDelayImportDir->SetItemText(listindex, 2, std::format(L"{:08X}", pDescr->Attributes.AllAttributes).data());
+		m_listDelayImportDir->SetItemText(listindex, 3, std::format(L"{:08X}", pDescr->DllNameRVA).data());
+		m_listDelayImportDir->SetItemText(listindex, 4, std::format(L"{:08X}", pDescr->ModuleHandleRVA).data());
+		m_listDelayImportDir->SetItemText(listindex, 5, std::format(L"{:08X}", pDescr->ImportAddressTableRVA).data());
+		m_listDelayImportDir->SetItemText(listindex, 6, std::format(L"{:08X}", pDescr->ImportNameTableRVA).data());
+		m_listDelayImportDir->SetItemText(listindex, 7, std::format(L"{:08X}", pDescr->BoundImportAddressTableRVA).data());
+		m_listDelayImportDir->SetItemText(listindex, 8, std::format(L"{:08X}", pDescr->UnloadInformationTableRVA).data());
+		m_listDelayImportDir->SetItemText(listindex, 9, std::format(L"{:08X}", pDescr->TimeDateStamp).data());
+		if (const auto time = static_cast<__time64_t>(pDescr->TimeDateStamp); time > 0) {
+			wchar_t buff[64];
+			_wctime64_s(buff, std::size(buff), &time);
+			m_listDelayImportDir->SetCellTooltip(listindex, 8, buff, L"Time / Date:");
 		}
 
-		listindex++;
+		++listindex;
 	}
 
 	return 0;
@@ -2043,27 +2031,23 @@ int CViewRightTL::CreateListCOM()
 	const auto pCom = &pCOMDesc->stCorHdr;
 	for (auto iter = 0U; iter < g_mapComDir.size(); ++iter)
 	{
-		WCHAR wstr[18];
-		std::wstring wstrToolTip;
-		auto& ref = g_mapComDir.at(iter);
-		DWORD dwOffset = ref.dwOffset;
-		DWORD dwSize = ref.dwSize;
-		DWORD dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pCom) + dwOffset)) &
-			(DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
+		const auto& ref = g_mapComDir.at(iter);
+		const auto dwOffset = ref.dwOffset;
+		const auto dwSize = ref.dwSize;
+		const auto dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pCom) + dwOffset))
+			& (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
-		swprintf_s(wstr, 9, L"%08lX", pCOMDesc->dwOffset + dwOffset);
-		m_listCOMDir->InsertItem(iter, wstr);
+		m_listCOMDir->InsertItem(iter, std::format(L"{:08X}", pCOMDesc->dwOffset + dwOffset).data());
 		m_listCOMDir->SetItemText(iter, 1, ref.wstrName.data());
-		swprintf_s(wstr, 17, L"%lu", dwSize);
-		m_listCOMDir->SetItemText(iter, 2, wstr);
-		swprintf_s(wstr, 9, dwSize == 2 ? L"%04X" : L"%08X", dwValue);
-		m_listCOMDir->SetItemText(iter, 3, wstr);
+		m_listCOMDir->SetItemText(iter, 2, std::format(L"{}", dwSize).data());
+		m_listCOMDir->SetItemText(iter, 3, std::vformat(dwSize == 2 ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
 
-		if (iter == 5)
-		{
-			for (auto& iterFlags : mapFlags)
+		if (iter == 5) {
+			std::wstring wstrToolTip;
+			for (auto& iterFlags : mapFlags) {
 				if (iterFlags.first & pCOMDesc->stCorHdr.Flags)
 					wstrToolTip += iterFlags.second + L"\n";
+			}
 			if (!wstrToolTip.empty())
 				m_listCOMDir->SetCellTooltip(iter, 3, wstrToolTip.data(), L"Flags:");
 		}
@@ -2077,62 +2061,43 @@ void CViewRightTL::SortImportData()
 	std::sort(m_pImport->begin(), m_pImport->end(),
 		[&](const auto& ref1, const auto& ref2)
 		{
-			std::wstring wstr1, wstr2;
-			wstr1.resize(32);
-			wstr2.resize(32);
-
 			int iCompare { };
 			switch (m_listImport->GetSortColumn())
 			{
 			case 0:
-				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.dwOffset));
-				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.dwOffset));
-				iCompare = wstr1.compare(wstr2);
+				iCompare = ref1.dwOffset < ref2.dwOffset ? -1 : 1;
 				break;
 			case 1:
 				iCompare = ref1.strModuleName.compare(ref2.strModuleName);
 				break;
 			case 2:
-				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.OriginalFirstThunk));
-				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.OriginalFirstThunk));
-				iCompare = wstr1.compare(wstr2);
+				iCompare = ref1.stImportDesc.OriginalFirstThunk < ref2.stImportDesc.OriginalFirstThunk ? -1 : 1;
 				break;
 			case 3:
-				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.TimeDateStamp));
-				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.TimeDateStamp));
-				iCompare = wstr1.compare(wstr2);
+				iCompare = ref1.stImportDesc.TimeDateStamp < ref2.stImportDesc.TimeDateStamp ? -1 : 1;
 				break;
 			case 4:
-				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.ForwarderChain));
-				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.ForwarderChain));
-				iCompare = wstr1.compare(wstr2);
+				iCompare = ref1.stImportDesc.ForwarderChain < ref2.stImportDesc.ForwarderChain ? -1 : 1;
 				break;
 			case 5:
-				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.Name));
-				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.Name));
-				iCompare = wstr1.compare(wstr2);
+				iCompare = ref1.stImportDesc.Name < ref2.stImportDesc.Name ? -1 : 1;
 				break;
 			case 6:
-				wstr1.resize(swprintf_s(wstr1.data(), 9, L"%08X", ref1.stImportDesc.FirstThunk));
-				wstr2.resize(swprintf_s(wstr2.data(), 9, L"%08X", ref2.stImportDesc.FirstThunk));
-				iCompare = wstr1.compare(wstr2);
+				iCompare = ref1.stImportDesc.FirstThunk < ref2.stImportDesc.FirstThunk ? -1 : 1;
 				break;
 			}
 
 			bool result { false };
-			if (m_listImport->GetSortAscending())
-			{
+			if (m_listImport->GetSortAscending()) {
 				if (iCompare < 0)
 					result = true;
 			}
-			else
-			{
+			else {
 				if (iCompare > 0)
 					result = true;
 			}
 
 			return result;
-
 		});
 
 	m_listImport->RedrawWindow();
