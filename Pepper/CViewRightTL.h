@@ -20,15 +20,12 @@ using namespace HEXCTRL;
 
 class CViewRightTL : public CView
 {
-	DECLARE_DYNCREATE(CViewRightTL)
-protected:
-	CViewRightTL() {}
-	virtual ~CViewRightTL() {}
-	void OnInitialUpdate() override;
-	void OnUpdate(CView*, LPARAM, CObject*) override;
+private:
+	void OnInitialUpdate()override;
+	void OnUpdate(CView*, LPARAM, CObject*)override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)override;
 	BOOL OnCommand(WPARAM wParam, LPARAM lParam)override;
-	void OnDraw(CDC* pDC) override; // overridden to draw this view.
+	void OnDraw(CDC* pDC)override; // overridden to draw this view.
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnListSectionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
@@ -42,8 +39,28 @@ protected:
 	void OnListBoundImpMenuSelect(WORD wMenuID);
 	void OnListCOMDescMenuSelect(WORD wMenuID);
 	afx_msg void OnTreeResTopSelChange(NMHDR *pNMHDR, LRESULT *pResult);
-	void SortImportData();
+	DECLARE_DYNCREATE(CViewRightTL)
 	DECLARE_MESSAGE_MAP()
+	void CreateListDOSHeader();
+	void CreateListRichHeader();
+	void CreateListNTHeader();
+	void CreateListFileHeader();
+	void CreateListOptHeader();
+	void CreateListDataDirs();
+	void CreateListSecHeaders();
+	void CreateListExport();
+	void CreateListImport();
+	void CreateTreeResources();
+	void CreateListExceptions();
+	void CreateListSecurity();
+	void CreateListRelocations();
+	void CreateListDebug();
+	void CreateListTLS();
+	void CreateListLCD();
+	void CreateListBoundImport();
+	void CreateListDelayImport();
+	void CreateListCOM();
+	void SortImportData();
 private:
 	Ilibpe* m_pLibpe { };
 	PEFILEINFO stFileInfo;
@@ -80,7 +97,6 @@ private:
 	//resource's index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	HTREEITEM m_hTreeResDir { };
-	bool m_fFileSummaryShow { true };
 	PESECHDR_VEC* m_pSecHeaders { };
 	PEIMPORT_VEC* m_pImport { };
 	PEEXCEPTION_VEC* m_pExceptionDir { };
@@ -92,24 +108,5 @@ private:
 	UINT_PTR m_iListID { };      //List ID munu clicked at.
 	int m_iListItem { };    //List item munu clicked at.
 	int m_iListSubItem { }; //List SubItem menu clicked at.
-
-	int CreateListDOSHeader();
-	int CreateListRichHeader();
-	int CreateListNTHeader();
-	int CreateListFileHeader();
-	int CreateListOptHeader();
-	int CreateListDataDirectories();
-	int CreateListSecHeaders();
-	int CreateListExport();
-	int CreateListImport();
-	int CreateTreeResources();
-	int CreateListExceptions();
-	int CreateListSecurity();
-	int CreateListRelocations();
-	int CreateListDebug();
-	int CreateListTLS();
-	int CreateListLCD();
-	int CreateListBoundImport();
-	int CreateListDelayImport();
-	int CreateListCOM();
+	bool m_fFileSummaryShow { true };
 };
