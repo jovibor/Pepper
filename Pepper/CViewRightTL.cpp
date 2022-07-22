@@ -409,47 +409,46 @@ void CViewRightTL::OnListSectionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/
 
 	if (pItem->mask & LVIF_TEXT)
 	{
+		const auto& refAt = m_pSecHeaders->at(pItem->iItem);
+		const auto& refDescr = refAt.stSecHdr;
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).dwOffset);
+			*std::format_to(pItem->pszText, L"{:08X}", refAt.dwOffset) = '\0';
 			break;
 		case 1:
-		{
-			auto& rstr = m_pSecHeaders->at(pItem->iItem);
-			if (rstr.strSecName.empty())
-				swprintf_s(pItem->pszText, pItem->cchTextMax, L"%.8S", rstr.stSecHdr.Name);
+			if (refAt.strSecName.empty())
+				*std::format_to(pItem->pszText, L"{:.8}", StrToWstr(std::string_view(reinterpret_cast<const char*>(refDescr.Name), 8))) = '\0';
 			else
-				swprintf_s(pItem->pszText, pItem->cchTextMax, L"%.8S (%S)", rstr.stSecHdr.Name,
-					m_pSecHeaders->at(pItem->iItem).strSecName.data());
-		}
-		break;
+				*std::format_to(pItem->pszText, L"{:.8} ({})", StrToWstr(std::string_view(reinterpret_cast<const char*>(refDescr.Name), 8)),
+					StrToWstr(refAt.strSecName)) = '\0';
+			break;
 		case 2:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.Misc.VirtualSize);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.Misc.VirtualSize) = '\0';
 			break;
 		case 3:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.VirtualAddress);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.VirtualAddress) = '\0';
 			break;
 		case 4:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.SizeOfRawData);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.SizeOfRawData) = '\0';
 			break;
 		case 5:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToRawData);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.PointerToRawData) = '\0';
 			break;
 		case 6:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToRelocations);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.PointerToRelocations) = '\0';
 			break;
 		case 7:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.PointerToLinenumbers);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.PointerToLinenumbers) = '\0';
 			break;
 		case 8:
-			swprintf_s(pItem->pszText, 5, L"%04X", m_pSecHeaders->at(pItem->iItem).stSecHdr.NumberOfRelocations);
+			*std::format_to(pItem->pszText, L"{:04X}", refDescr.NumberOfRelocations) = '\0';
 			break;
 		case 9:
-			swprintf_s(pItem->pszText, 5, L"%04X", m_pSecHeaders->at(pItem->iItem).stSecHdr.NumberOfLinenumbers);
+			*std::format_to(pItem->pszText, L"{:04X}", refDescr.NumberOfLinenumbers) = '\0';
 			break;
 		case 10:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pSecHeaders->at(pItem->iItem).stSecHdr.Characteristics);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.Characteristics) = '\0';
 			break;
 		}
 	}
@@ -462,30 +461,30 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 	if (pItem->mask & LVIF_TEXT)
 	{
-		const auto* pImpDesc = &m_pImport->at(pItem->iItem).stImportDesc;
+		const auto& refAt = m_pImport->at(pItem->iItem);
+		const auto& refDescr = refAt.stImportDesc;
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pImport->at(pItem->iItem).dwOffset);
+			*std::format_to(pItem->pszText, L"{:08X}", refAt.dwOffset) = '\0';
 			break;
 		case 1:
-			swprintf_s(pItem->pszText, pItem->cchTextMax, L"%S (%zu)", m_pImport->at(pItem->iItem).strModuleName.data(),
-				m_pImport->at(pItem->iItem).vecImportFunc.size());
+			*std::format_to(pItem->pszText, L"{} ({})", StrToWstr(refAt.strModuleName), refAt.vecImportFunc.size()) = '\0';
 			break;
 		case 2:
-			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->OriginalFirstThunk);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.OriginalFirstThunk) = '\0';
 			break;
 		case 3:
-			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->TimeDateStamp);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.TimeDateStamp) = '\0';
 			break;
 		case 4:
-			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->ForwarderChain);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.ForwarderChain) = '\0';
 			break;
 		case 5:
-			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->Name);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.Name) = '\0';
 			break;
 		case 6:
-			swprintf_s(pItem->pszText, 9, L"%08X", pImpDesc->FirstThunk);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.FirstThunk) = '\0';
 			break;
 		}
 	}
@@ -498,20 +497,20 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 	if (pItem->mask & LVIF_TEXT)
 	{
-		const IMAGE_BASE_RELOCATION* pReloc = &m_pRelocTable->at(pItem->iItem).stBaseReloc;
+		const auto& refDescr = m_pRelocTable->at(pItem->iItem).stBaseReloc;
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pRelocTable->at(pItem->iItem).dwOffset);
+			*std::format_to(pItem->pszText, L"{:08X}", m_pRelocTable->at(pItem->iItem).dwOffset) = '\0';
 			break;
 		case 1:
-			swprintf_s(pItem->pszText, 9, L"%08X", pReloc->VirtualAddress);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.VirtualAddress) = '\0';
 			break;
 		case 2:
-			swprintf_s(pItem->pszText, 9, L"%08X", pReloc->SizeOfBlock);
+			*std::format_to(pItem->pszText, L"{:08X}", refDescr.SizeOfBlock) = '\0';
 			break;
 		case 3:
-			swprintf_s(pItem->pszText, pItem->cchTextMax, L"%zu", (pReloc->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD));
+			*std::format_to(pItem->pszText, L"{}", (refDescr.SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD)) = '\0';
 			break;
 		}
 	}
@@ -524,21 +523,24 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult
 
 	if (pItem->mask & LVIF_TEXT)
 	{
+		const auto& ref = m_pExceptionDir->at(pItem->iItem);
+		DWORD dwFmtData { };
 		switch (pItem->iSubItem)
 		{
 		case 0:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).dwOffset);
+			dwFmtData = ref.dwOffset;
 			break;
 		case 1:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.BeginAddress);
+			dwFmtData = ref.stRuntimeFuncEntry.BeginAddress;
 			break;
 		case 2:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.EndAddress);
+			dwFmtData = ref.stRuntimeFuncEntry.EndAddress;
 			break;
 		case 3:
-			swprintf_s(pItem->pszText, 9, L"%08X", m_pExceptionDir->at(pItem->iItem).stRuntimeFuncEntry.UnwindData);
+			dwFmtData = ref.stRuntimeFuncEntry.UnwindData;
 			break;
 		}
+		*std::format_to(pItem->pszText, L"{:08X}", dwFmtData) = '\0';
 	}
 }
 
@@ -595,10 +597,10 @@ void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	};
 
 	std::wstring wstrTipText;
-	for (const auto& flags : mapSecFlags)
+	for (const auto& flags : mapSecFlags) {
 		if (flags.first & m_pSecHeaders->at(pNMI->iItem).stSecHdr.Characteristics)
 			wstrTipText += flags.second + L"\n";
-
+	}
 	if (!wstrTipText.empty())
 	{
 		static LISTEXTOOLTIP stTT { { }, L"Section Flags:" };
@@ -656,9 +658,10 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 
 void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 {
-	bool fx32 = stFileInfo.fIsx86;
-	bool fx64 = stFileInfo.fIsx64;
-	DWORD dwOffset { }, dwSize = 0;
+	const auto fx32 = stFileInfo.fIsx86;
+	const auto fx64 = stFileInfo.fIsx64;
+	DWORD dwOffset { };
+	DWORD dwSize = 0;
 
 	switch (wMenuID)
 	{
@@ -703,9 +706,10 @@ void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 
 void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 {
-	bool fx32 = stFileInfo.fIsx86;
-	bool fx64 = stFileInfo.fIsx64;
-	DWORD dwOffset { }, dwSize = 0;
+	const auto fx32 = stFileInfo.fIsx86;
+	const auto fx64 = stFileInfo.fIsx64;
+	DWORD dwOffset { };
+	DWORD dwSize = 0;
 
 	const auto pTLSDir = m_pLibpe->GetTLS();
 	if (pTLSDir == nullptr)
@@ -744,7 +748,7 @@ void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 		}
 		else if (fx64)
 		{
-			const IMAGE_TLS_DIRECTORY64* pTLSDir64 = &pTLSDir->unTLS.stTLSDir64;
+			const auto pTLSDir64 = &pTLSDir->unTLS.stTLSDir64;
 
 			switch (m_iListItem)
 			{
@@ -1270,16 +1274,16 @@ void CViewRightTL::CreateListExport()
 		m_listExportDir->SetItemText(iter, 1, ref.wstrName.data());
 		m_listExportDir->SetItemText(iter, 2, std::format(L"{}", dwSize).data());
 
-		if (const auto time = static_cast<__time64_t>(pDescr->TimeDateStamp); iter == 1 && time > 0) {
-			wchar_t buff[64];
-			_wctime64_s(buff, std::size(buff), &time);
-			m_listExportDir->SetCellTooltip(iter, 3, buff, L"Time / Date:");
-		}
-
 		if (iter == 4) //Name
 			m_listExportDir->SetItemText(iter, 3, std::format(L"{:08X} ({})", dwValue, StrToWstr(pExport->strModuleName)).data());
 		else
 			m_listExportDir->SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
+
+		if (const auto time = static_cast<__time64_t>(pDescr->TimeDateStamp); iter == 1 && time > 0) { //TimeDate
+			wchar_t buff[64];
+			_wctime64_s(buff, std::size(buff), &time);
+			m_listExportDir->SetCellTooltip(iter, 3, buff, L"Time / Date:");
+		}
 	}
 }
 
