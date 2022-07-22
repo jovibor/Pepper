@@ -439,13 +439,3 @@ constexpr auto IDM_LIST_GOTODATAOFFSET = 0x8002;
 
 //Color of the list's "Offset" column
 constexpr COLORREF g_clrOffset = RGB(150, 150, 150);
-inline const wchar_t* const g_pwszHexMap { L"0123456789ABCDEF" };
-
-inline void DwordToWchars(DWORD dw, wchar_t* pwsz)
-{
-	for (size_t i = 0; i < sizeof(DWORD); i++)
-	{
-		pwsz[i * 2] = g_pwszHexMap[((dw >> ((4 - 1 - i) << 3)) >> 4) & 0x0F];
-		pwsz[i * 2 + 1] = g_pwszHexMap[(dw >> ((4 - 1 - i) << 3)) & 0x0F];
-	}
-}

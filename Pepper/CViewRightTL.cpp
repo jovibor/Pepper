@@ -278,8 +278,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
 
 	//Menu for lists.
-	if (pNMI->hdr.code == NM_RCLICK && (
-		pNMI->hdr.idFrom == IDC_LIST_EXPORT || pNMI->hdr.idFrom == IDC_LIST_IMPORT
+	if (pNMI->hdr.code == NM_RCLICK && (pNMI->hdr.idFrom == IDC_LIST_EXPORT || pNMI->hdr.idFrom == IDC_LIST_IMPORT
 		|| pNMI->hdr.idFrom == IDC_LIST_IAT || pNMI->hdr.idFrom == IDC_LIST_TLS
 		|| pNMI->hdr.idFrom == IDC_LIST_BOUNDIMPORT || pNMI->hdr.idFrom == IDC_LIST_COMDESCRIPTOR)
 		)
@@ -494,8 +493,8 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	auto *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
-	auto* pItem = &pDispInfo->item;
+	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	const auto* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -520,8 +519,8 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	auto *pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
-	auto* pItem = &pDispInfo->item;
+	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
+	const auto* pItem = &pDispInfo->item;
 
 	if (pItem->mask & LVIF_TEXT)
 	{
@@ -546,7 +545,6 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult
 void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
 	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-
 	if (pNMI->iSubItem != 10)
 		return;
 
@@ -597,7 +595,7 @@ void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	};
 
 	std::wstring wstrTipText;
-	for (auto& flags : mapSecFlags)
+	for (const auto& flags : mapSecFlags)
 		if (flags.first & m_pSecHeaders->at(pNMI->iItem).stSecHdr.Characteristics)
 			wstrTipText += flags.second + L"\n";
 
@@ -958,6 +956,10 @@ void CViewRightTL::CreateListNTHeader()
 	const auto dwSignSwapped = ((pDescr->Signature & 0xFF000000) >> 24) | ((pDescr->Signature & 0x00FF0000) >> 8)
 		| ((pDescr->Signature & 0x0000FF00) << 8) | ((pDescr->Signature & 0x000000FF) << 24);
 	m_listNTHeader->SetItemText(0, 3, std::format(L"{:08X}", dwSignSwapped).data());
+
+	const auto iterSigASCII = reinterpret_cast<const char*>(&pDescr->Signature);
+	const auto iterSigASCIIEnd = iterSigASCII + sizeof(pDescr->Signature);
+	m_listNTHeader->SetCellTooltip(0, 3, std::wstring(iterSigASCII, iterSigASCIIEnd), L"Signature as ASCII:");
 }
 
 void CViewRightTL::CreateListFileHeader()

@@ -27,7 +27,7 @@ void CViewLeft::OnInitialUpdate()
 	const auto stFileInfo = m_pLibpe->GetFileInfo();
 
 	//Scaling factor for HighDPI displays.
-	auto pDC = GetDC();
+	const auto pDC = GetDC();
 	const auto fScale = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY) / 96.0f;
 	ReleaseDC(pDC);
 	const auto iImgSize = static_cast<int>(16 * fScale);

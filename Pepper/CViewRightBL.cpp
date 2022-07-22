@@ -211,6 +211,12 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	return CView::OnNotify(wParam, lParam, pResult);
 }
 
+void CViewRightBL::OnDocEditMode()
+{
+	if (m_stHexEdit->IsDataSet())
+		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
+}
+
 int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 {
 	if (dwEntry >= g_mapDOSHeader.size())
@@ -864,10 +870,4 @@ int CViewRightBL::CreateHexTLS()
 	m_pFileLoader->ShowFilePiece(dwOffsetStart, dwSize, m_stHexEdit.get());
 
 	return 0;
-}
-
-void CViewRightBL::OnDocEditMode()
-{
-	if (m_stHexEdit->IsDataSet())
-		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
 }

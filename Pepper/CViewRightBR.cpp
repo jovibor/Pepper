@@ -88,7 +88,7 @@ void CViewRightBR::OnInitialUpdate()
 	m_stlcs.pParent = this;
 	m_stlcs.dwHdrHeight = 35;
 
-	auto pDC = GetDC();
+	const auto pDC = GetDC();
 	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
 	m_lf.lfHeight = m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
 	ReleaseDC(pDC);
@@ -243,13 +243,12 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 
 void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 {
-	HICON hIcon;
-	ICONINFO iconInfo;
-
-	hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(stResData.pData->data()), static_cast<DWORD>(stResData.pData->size()),
+	const auto hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(stResData.pData->data()), static_cast<DWORD>(stResData.pData->size()),
 		(stResData.IdResType == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 	if (!hIcon)
 		return ResLoadError();
+
+	ICONINFO iconInfo;
 	if (!GetIconInfo(hIcon, &iconInfo))
 		return ResLoadError();
 	if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
@@ -274,7 +273,7 @@ void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 void CViewRightBR::CreateBitmap(const SRESDATA& stResData)
 {
 	auto* pBMPInfo = reinterpret_cast<PBITMAPINFO>(stResData.pData->data());
-	auto* pBMPHdr = &pBMPInfo->bmiHeader;
+	const auto* pBMPHdr = &pBMPInfo->bmiHeader;
 	const auto nNumColors = pBMPHdr->biClrUsed > 0 ? pBMPHdr->biClrUsed : 1 << pBMPHdr->biBitCount;
 
 	LPVOID pDIBBits;
@@ -479,7 +478,7 @@ int CViewRightBR::CreateListTLSCallbacks()
 void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 {
 	const auto pDebug = m_pLibpe->GetDebug();
-	if (pDebug)
+	if (pDebug == nullptr)
 		return;
 
 	//At the moment only IMAGE_DEBUG_TYPE_CODEVIEW info is supported.
@@ -488,50 +487,24 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 
 	m_wstrEditBRB.clear();
 	auto& refDebug = pDebug->at(dwEntry);
-	WCHAR warr[9] { };
 
-	if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x53445352) //"RSDS"
-	{
-		m_wstrEditBRB = L"Signature: RSDS\r\n";
-		m_wstrEditBRB += L"GUID: ";
+	if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x53445352) { //"RSDS"
+		m_wstrEditBRB = L"Signature: RSDS\r\nGUID: ";
+		const auto guid = *(reinterpret_cast<GUID*>(&refDebug.stDebugHdrInfo.dwHdr[1]));
 		LPWSTR lpwstr;
-		GUID guid = *(reinterpret_cast<GUID*>(&refDebug.stDebugHdrInfo.dwHdr[1]));
 		StringFromIID(guid, &lpwstr);
 		m_wstrEditBRB += lpwstr;
-		m_wstrEditBRB += L"\r\n";
-		m_wstrEditBRB += L"Counter/Age: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[5], warr);
-		m_wstrEditBRB += warr;
-		m_wstrEditBRB += L"\r\n";
+		m_wstrEditBRB += std::format(L"\r\nCounter/Age: {}\r\n", refDebug.stDebugHdrInfo.dwHdr[5]);
 	}
-	else if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x3031424E) //"NB10"
-	{
-		m_wstrEditBRB = L"Signature: NB10\r\n";
-		m_wstrEditBRB += L"Offset: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[1], warr);
-		m_wstrEditBRB += warr;
-		m_wstrEditBRB += L"\r\n";
-		m_wstrEditBRB += L"Time/Signature: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[2], warr);
-		m_wstrEditBRB += warr;
-		m_wstrEditBRB += L"\r\n";
-		m_wstrEditBRB += L"Counter/Age: ";
-		DwordToWchars(refDebug.stDebugHdrInfo.dwHdr[3], warr);
-		m_wstrEditBRB += warr;
-		m_wstrEditBRB += L"\r\n";
+	else if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x3031424E) { //"NB10"
+		m_wstrEditBRB += std::format(L"Signature: NB10\r\nOffset: {}\r\nTime/Signature: {}\r\nCounter/Age: {}\r\n",
+			refDebug.stDebugHdrInfo.dwHdr[1], refDebug.stDebugHdrInfo.dwHdr[2], refDebug.stDebugHdrInfo.dwHdr[3]);
 	}
 
-	if (!refDebug.stDebugHdrInfo.strPDBName.empty())
-	{
-		std::wstring wstr;
-		wstr.resize(refDebug.stDebugHdrInfo.strPDBName.size());
-		MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(refDebug.stDebugHdrInfo.strPDBName.data()),
-			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()), &wstr[0],
-			static_cast<int>(refDebug.stDebugHdrInfo.strPDBName.size()));
-		m_wstrEditBRB += L"PDB File: ";
-		m_wstrEditBRB += wstr;
-		m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	if (!refDebug.stDebugHdrInfo.strPDBName.empty()) {
+		m_wstrEditBRB += L"PDB File: " + StrToWstr(refDebug.stDebugHdrInfo.strPDBName);
 	}
+	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
 
 	CRect rc;
 	GetClientRect(&rc);
@@ -588,10 +561,8 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 #pragma pack(pop)
 
 	auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(stResData.pData->data());
-	HICON hIcon;
-	ICONINFO iconInfo;
 
-	for (int i = 0; i < pGRPIDir->idCount; i++)
+	for (int i = 0; i < pGRPIDir->idCount; ++i)
 	{
 		auto& rootvec = pstResRoot->vecResData;
 		for (auto& iterRoot : rootvec)
@@ -614,10 +585,12 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 							auto& data = lvl3vec.at(0).vecRawResData;
 							if (!data.empty())
 							{
-								hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(data.data()), static_cast<DWORD>(data.size()),
+								const auto hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(data.data()), static_cast<DWORD>(data.size()),
 									(iterRoot.stResDirEntry.Id == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 								if (!hIcon)
 									return ResLoadError();
+
+								ICONINFO iconInfo;
 								if (!GetIconInfo(hIcon, &iconInfo))
 									return ResLoadError();
 								if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
