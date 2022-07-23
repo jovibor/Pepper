@@ -52,7 +52,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_stlcs.pParent = this;
 	m_stlcs.fSortable = true;
 
-	auto pDC = GetDC();
+	const auto pDC = GetDC();
 	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
 	m_lf.lfHeight = m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
 	ReleaseDC(pDC);
@@ -172,7 +172,7 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 	{
 		const auto pstResRoot = m_pLibpe->GetResources();
 		if (pstResRoot == nullptr)
-			return -1;
+			return FALSE;
 
 		const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
 		if (idlvl2 >= 0)
@@ -217,10 +217,10 @@ void CViewRightBL::OnDocEditMode()
 		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
 }
 
-int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
+void CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 {
 	if (dwEntry >= g_mapDOSHeader.size())
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -234,15 +234,13 @@ int CViewRightBL::CreateHexDosHeaderEntry(DWORD dwEntry)
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	const auto& ref = g_mapDOSHeader.at(dwEntry);
 	m_pFileLoader->ShowOffset(ref.dwOffset, ref.dwSize, m_stHexEdit.get());
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
+void CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 {
 	const auto pRichHeader = m_pLibpe->GetRichHeader();
 	if (pRichHeader == nullptr || dwEntry >= pRichHeader->size())
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -255,15 +253,13 @@ int CViewRightBL::CreateHexRichHeaderEntry(DWORD dwEntry)
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	//Each «Rich» takes 8 bytes (two DWORDs).
 	m_pFileLoader->ShowOffset(pRichHeader->at(dwEntry).dwOffset, 8, m_stHexEdit.get());
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexNtHeaderEntry()
+void CViewRightBL::CreateHexNtHeaderEntry()
 {
 	const auto pNTHdr = m_pLibpe->GetNTHeader();
 	if (pNTHdr == nullptr)
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -275,15 +271,13 @@ int CViewRightBL::CreateHexNtHeaderEntry()
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_pFileLoader->ShowOffset(pNTHdr->dwOffset, sizeof(DWORD), m_stHexEdit.get()); //Shows NTHDR signature.
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
+void CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 {
 	const auto pNTHdr = m_pLibpe->GetNTHeader();
 	if (pNTHdr == nullptr || dwEntry >= g_mapFileHeader.size())
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -296,15 +290,13 @@ int CViewRightBL::CreateHexFileHeaderEntry(DWORD dwEntry)
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	DWORD dwOffset = pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, FileHeader) + g_mapFileHeader.at(dwEntry).dwOffset;
 	m_pFileLoader->ShowOffset(dwOffset, g_mapFileHeader.at(dwEntry).dwSize, m_stHexEdit.get());
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
+void CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 {
 	const auto pNTHdr = m_pLibpe->GetNTHeader();
 	if (pNTHdr == nullptr)
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -329,15 +321,13 @@ int CViewRightBL::CreateHexOptHeaderEntry(DWORD dwEntry)
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_pFileLoader->ShowOffset(dwOffset, dwSize, m_stHexEdit.get());
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
+void CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 {
 	const auto pNTHdr = m_pLibpe->GetNTHeader();
 	if (pNTHdr == nullptr)
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -358,15 +348,13 @@ int CViewRightBL::CreateHexDataDirsEntry(DWORD dwEntry)
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_pFileLoader->ShowOffset(dwOffset, dwSize, m_stHexEdit.get());
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
+void CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 {
 	const auto pSecHeaders = m_pLibpe->GetSecHeaders();
 	if (pSecHeaders == nullptr || dwEntry >= pSecHeaders->size())
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -380,15 +368,13 @@ int CViewRightBL::CreateHexSecHeadersEntry(DWORD dwEntry)
 
 	const auto& rImageSecHeader = pSecHeaders->at(dwEntry).stSecHdr;
 	m_pFileLoader->ShowFilePiece(rImageSecHeader.PointerToRawData, rImageSecHeader.SizeOfRawData, m_stHexEdit.get());
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
+void CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 {
 	const auto pLCD = m_pLibpe->GetLoadConfig();
 	if (pLCD == nullptr || dwEntry >= g_mapLCD32.size())
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -413,11 +399,9 @@ int CViewRightBL::CreateHexLCDEntry(DWORD dwEntry)
 		dwSize = g_mapLCD64.at(dwEntry).dwSize;
 	}
 	m_pFileLoader->ShowOffset(dwOffset, dwSize, m_stHexEdit.get());
-
-	return 0;
 }
 
-int CViewRightBL::CreateListExportFuncs()
+void CViewRightBL::CreateListExportFuncs()
 {
 	if (!m_listExportFuncs->IsCreated())
 	{
@@ -437,7 +421,7 @@ int CViewRightBL::CreateListExportFuncs()
 
 	const auto pExport = m_pLibpe->GetExport();
 	if (pExport == nullptr)
-		return -1;
+		return;
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
@@ -461,11 +445,9 @@ int CViewRightBL::CreateListExportFuncs()
 		listindex++;
 	}
 	m_listExportFuncs->SetRedraw(TRUE);
-
-	return 0;
 }
 
-int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
+void CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 {
 	if (!m_listImportEntry->IsCreated())
 	{
@@ -486,7 +468,7 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 
 	const auto m_pImport = m_pLibpe->GetImport();
 	if (m_pImport == nullptr || dwEntry >= m_pImport->size())
-		return -1;
+		return;
 
 	if (m_hwndActive)
 		::ShowWindow(m_hwndActive, SW_HIDE);
@@ -547,15 +529,13 @@ int CViewRightBL::CreateListImportEntry(DWORD dwEntry)
 	CRect rect;
 	GetClientRect(&rect);
 	m_listImportEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
+void CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 {
 	const auto pSec = m_pLibpe->GetSecurity();
 	if (pSec == nullptr || nSertId >= pSec->size())
-		return -1;
+		return;
 
 	const auto& secEntry = pSec->at(nSertId).stWinSert;
 	DWORD dwStart = pSec->at(nSertId).dwOffset + offsetof(WIN_CERTIFICATE, bCertificate);
@@ -571,11 +551,9 @@ int CViewRightBL::CreateHexSecurityEntry(unsigned nSertId)
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-	return 0;
 }
 
-int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
+void CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 {
 	if (!m_listDelayImportEntry->IsCreated())
 	{
@@ -598,7 +576,7 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 
 	const auto pDelayImport = m_pLibpe->GetDelayImport();
 	if (pDelayImport == nullptr || dwEntry >= pDelayImport->size())
-		return -1;
+		return;
 
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
@@ -666,11 +644,9 @@ int CViewRightBL::CreateListDelayImportEntry(DWORD dwEntry)
 	GetClientRect(&rect);
 	m_listDelayImportEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_hwndActive = m_listDelayImportEntry->m_hWnd;
-
-	return 0;
 }
 
-int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
+void CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 {
 	if (!m_listRelocsEntry->IsCreated())
 	{
@@ -690,7 +666,7 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 
 	const auto pReloc = m_pLibpe->GetRelocations();
 	if (pReloc == nullptr || dwEntry >= pReloc->size())
-		return -1;
+		return;
 
 	const std::unordered_map<WORD, std::wstring> mapRelocTypes {
 		TO_WSTR_MAP(IMAGE_REL_BASED_ABSOLUTE),
@@ -733,15 +709,13 @@ int CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	GetClientRect(&rect);
 	m_listRelocsEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_hwndActive = m_listRelocsEntry->m_hWnd;
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
+void CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 {
 	const auto pDebug = m_pLibpe->GetDebug();
 	if (pDebug == nullptr || dwEntry >= pDebug->size())
-		return -1;
+		return;
 
 	const auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
 	m_pFileLoader->ShowFilePiece(rDebugDir.PointerToRawData, rDebugDir.SizeOfData, m_stHexEdit.get());
@@ -755,15 +729,13 @@ int CViewRightBL::CreateHexDebugEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
-	return 0;
 }
 
-int CViewRightBL::CreateTreeResources()
+void CViewRightBL::CreateTreeResources()
 {
 	const auto pstResRoot = m_pLibpe->GetResources();
 	if (pstResRoot == nullptr)
-		return -1;
+		return;
 
 	m_treeResBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_BOTTOM);
@@ -828,15 +800,13 @@ int CViewRightBL::CreateTreeResources()
 		}
 		ilvlRoot++;
 	}
-
-	return 0;
 }
 
-int CViewRightBL::CreateHexTLS()
+void CViewRightBL::CreateHexTLS()
 {
 	const auto pTLS = m_pLibpe->GetTLS();
 	if (pTLS == nullptr)
-		return -1;
+		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
 	{
@@ -868,6 +838,4 @@ int CViewRightBL::CreateHexTLS()
 		dwSize = dwOffsetEnd - dwOffsetStart;
 
 	m_pFileLoader->ShowFilePiece(dwOffsetStart, dwSize, m_stHexEdit.get());
-
-	return 0;
 }

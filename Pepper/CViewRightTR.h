@@ -9,18 +9,13 @@
 #pragma once
 #include "ChildFrm.h"
 #include "PepperDoc.h"
-
-#define HEXCTRL_SHARED_DLL
 #include "HexCtrl.h"
 
 using namespace HEXCTRL;
 
 class CViewRightTR : public CView
 {
-	DECLARE_DYNCREATE(CViewRightTR)
-protected:
-	CViewRightTR() {}
-	virtual ~CViewRightTR() {}
+private:
 	virtual void OnDraw(CDC* pDC);
 	virtual void OnInitialUpdate();
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
@@ -29,6 +24,7 @@ protected:
 	void OnDocEditMode();
 	void CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes);
 	DECLARE_MESSAGE_MAP()
+	DECLARE_DYNCREATE(CViewRightTR)
 private:
 	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };

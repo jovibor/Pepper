@@ -49,7 +49,7 @@ void CMainFrame::SetCurrFramePtrNull()
 void CMainFrame::OnAppEditmode()
 {
 	if (const auto pFrame = GetActiveFrame(); pFrame != nullptr)
-		if (auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
+		if (const auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
 			pDoc->SetEditMode(!pDoc->IsEditMode());
 }
 
@@ -168,7 +168,7 @@ LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 
 void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
 {
-	auto pFrame = GetActiveFrame();
+	const auto pFrame = GetActiveFrame();
 
 	if (pFrame == nullptr)
 	{
@@ -176,8 +176,7 @@ void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
 		return;
 	}
 
-	if (auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
-	{
+	if (const auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr) {
 		if (pDoc->IsEditMode())
 			m_wndToolBar.SetButtonStyle(m_wndToolBar.CommandToIndex(ID_APP_EDITMODE), TBBS_PRESSED);
 	}

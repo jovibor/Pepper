@@ -17,7 +17,7 @@ public:
 	void SetWindowStatus(HWND hWnd, bool fVisible);
 	DECLARE_DYNCREATE(CChildFrame)
 	CSplitterEx m_stSplitterMain, m_stSplitterRight, m_stSplitterRightTop, m_stSplitterRightBottom;
-protected:
+private:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnClose();

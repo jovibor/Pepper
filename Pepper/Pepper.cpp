@@ -57,15 +57,14 @@ BOOL CPepperApp::InitInstance()
 {
 	CWinAppEx::InitInstance();
 
-	SetRegistryKey(L"Pepper - PE files viewer");
+	SetRegistryKey(L"Pepper");
 
 	//Modern looking tooltips.
 	CMFCToolTipInfo ttParams;
 	ttParams.m_bVislManagerTheme = TRUE;
 	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL, RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
 
-	CMultiDocTemplate* pDocTemplate;
-	pDocTemplate = new CMultiDocTemplate(IDR_PepperTYPE,
+	CMultiDocTemplate* pDocTemplate = new CMultiDocTemplate(IDR_PepperTYPE,
 		RUNTIME_CLASS(CPepperDoc), RUNTIME_CLASS(CChildFrame), nullptr);
 
 	AddDocTemplate(pDocTemplate);
@@ -77,6 +76,7 @@ BOOL CPepperApp::InitInstance()
 		delete pMainFrame;
 		return FALSE;
 	}
+
 	m_pMainWnd = pMainFrame;
 
 	//For Drag'n Drop working, even in elevated state.
@@ -153,8 +153,4 @@ void CPepperApp::OnFileOpen()
 		if (!fOpened)
 			OnFileOpen();
 	}
-}
-
-void CPepperApp::PreLoadState()
-{
 }

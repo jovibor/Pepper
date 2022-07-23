@@ -116,8 +116,10 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexC
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
 	m_hds.spnData = { pData, static_cast<std::size_t>(m_stFileSize.QuadPart) };
 
-	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[pHexCtrl](const QUERYDATA& r) {return r.hWnd == pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN); });
+	const auto iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(), [pHexCtrl](const QUERYDATA& r)
+		{
+			return r.hWnd == pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN);
+		});
 
 	bool fExist { false };
 	if (iter == m_vecQuery.end())
@@ -184,8 +186,10 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		m_hds.pHexVirtData = this;
 
 	//Checking for given HWND existence in m_vecQuery. If there is no, create.
-	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[pHexCtrl](const QUERYDATA& rData) {return rData.hWnd == pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN); });
+	const auto iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(), [pHexCtrl](const QUERYDATA& rData)
+		{
+			return rData.hWnd == pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN);
+		});
 
 	if (iter == m_vecQuery.end())
 		m_vecQuery.emplace_back(QUERYDATA { pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN), 0, 0, ullOffset, 0, nullptr, true });
@@ -218,7 +222,7 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD 
 	else
 		ullStartOffsetMapped = 0;
 
-	DWORD dwDelta = ullStartOffsetMapped % m_stSysInfo.dwAllocationGranularity;
+	const DWORD dwDelta = ullStartOffsetMapped % m_stSysInfo.dwAllocationGranularity;
 	if (dwDelta > 0)
 		ullStartOffsetMapped = (ullStartOffsetMapped < m_stSysInfo.dwAllocationGranularity) ? 0 :
 		(ullStartOffsetMapped - dwDelta);
@@ -226,10 +230,10 @@ HRESULT CFileLoader::MapFileOffset(QUERYDATA& rData, ULONGLONG ullOffset, DWORD 
 	if (static_cast<LONGLONG>(ullStartOffsetMapped + dwSizeToMap) > m_stFileSize.QuadPart)
 		dwSizeToMap = static_cast<DWORD_PTR>(m_stFileSize.QuadPart - static_cast<LONGLONG>(ullStartOffsetMapped));
 
-	DWORD dwOffsetHigh = (ullStartOffsetMapped >> 32) & 0xFFFFFFFFUL;
-	DWORD dwOffsetLow = ullStartOffsetMapped & 0xFFFFFFFFUL;
+	const DWORD dwOffsetHigh = (ullStartOffsetMapped >> 32) & 0xFFFFFFFFUL;
+	const DWORD dwOffsetLow = ullStartOffsetMapped & 0xFFFFFFFFUL;
 	LPVOID lpData { };
-	if ((lpData = MapViewOfFile(m_hMapObject, FILE_MAP_READ, dwOffsetHigh, dwOffsetLow, dwSizeToMap)) == nullptr)
+	if (lpData = MapViewOfFile(m_hMapObject, FILE_MAP_READ, dwOffsetHigh, dwOffsetLow, dwSizeToMap); lpData == nullptr)
 		return E_ABORT;
 
 	rData.ullStartOffsetMapped = ullStartOffsetMapped;
@@ -284,7 +288,7 @@ bool CFileLoader::IsLoaded()const
 
 BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
-	auto pHdr = reinterpret_cast<NMHDR*>(lParam);
+	const auto pHdr = reinterpret_cast<NMHDR*>(lParam);
 
 	switch (pHdr->code)
 	{
@@ -307,13 +311,17 @@ BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 
 void CFileLoader::OnHexGetData(HEXDATAINFO& hdi)
 {
-	auto const& iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
-		[hWnd = hdi.hdr.hwndFrom](const QUERYDATA& rData) {return rData.hWnd == hWnd; });
+	const auto iter = std::find_if(m_vecQuery.begin(), m_vecQuery.end(),
+		[hWnd = hdi.hdr.hwndFrom](const QUERYDATA& rData)
+	{
+		return rData.hWnd == hWnd;
+	});
+
 	if (iter == m_vecQuery.end())
 		return;
 
 	std::byte* pData { };
-	auto ullOffset = hdi.stHexSpan.ullOffset + iter->ullOffsetDelta;
+	const auto ullOffset = hdi.stHexSpan.ullOffset + iter->ullOffsetDelta;
 
 	if (m_fMapViewOfFileWhole && ullOffset < static_cast<ULONGLONG>(m_stFileSize.QuadPart))
 		pData = (static_cast<std::byte*>(m_lpBase)) + ullOffset;

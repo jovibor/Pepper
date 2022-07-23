@@ -861,9 +861,9 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 		wCountDlgItems = pDlgEx->cDlgItems;
 
 		//Menu.
-		if ((reinterpret_cast<DLGTEMPLATEEX*>(pDataDlgHdr))->menu == 0) //No menu.
+		if (pDlgEx->menu == 0) //No menu.
 			pDataDlgHdr += sizeof(DLGTEMPLATEEX);
-		else if ((reinterpret_cast<DLGTEMPLATEEX*>(pDataDlgHdr))->menu == 0xFFFF) //Menu ordinal.
+		else if (pDlgEx->menu == 0xFFFF) //Menu ordinal.
 		{
 			wDlgMenuOrdinal = *reinterpret_cast<PWORD>(pDataDlgHdr + sizeof(WORD));
 			pDataDlgHdr += sizeof(WORD) * 2; //Ordinal's WORD follows ((DLGTEMPLATEEX*)pDataDlgHdr)->menu.

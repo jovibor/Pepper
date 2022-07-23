@@ -21,7 +21,7 @@ public:
 	void SetEditMode(bool fEditMode);
 	[[nodiscard]] bool IsEditMode() { return m_fEditMode; }
 private:
-	BOOL OnOpenDocument(LPCTSTR lpszPathName) override;
-	virtual void OnCloseDocument();
+	BOOL OnOpenDocument(LPCTSTR lpszPathName)override;
+	void OnCloseDocument()override;
 	bool m_fEditMode { false };
 };

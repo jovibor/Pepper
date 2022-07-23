@@ -65,6 +65,8 @@ private:
 	void CreateHexCtrlWnd();
 private:
 	bool m_fLoaded { false };
+	bool m_fModified { false };
+	bool m_fWritable { false };
 	CPepperDoc* m_pMainDoc { };
 	IHexCtrlPtr m_pHex { HEXCTRL::CreateHexCtrl() };
 	HEXCREATE m_hcs;
@@ -82,7 +84,4 @@ private:
 	//Needed for dwAllocationGranularity.
 	SYSTEM_INFO m_stSysInfo { };
 	std::vector<QUERYDATA> m_vecQuery;
-	const int IDC_HEX_CTRL = 0xFF; //Id of inner IHexCtrl.
-	bool m_fModified { false };
-	bool m_fWritable { false };
 };

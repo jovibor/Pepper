@@ -856,7 +856,7 @@ void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 				if (!lvl3vec.empty())
 				{
-					auto data = &lvl3vec.at(idlvl3).stResDataEntry;
+					const auto data = &lvl3vec.at(idlvl3).stResDataEntry;
 					//Send data pointer to CViewRightTR to display raw data.
 					m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), reinterpret_cast<CObject*>(data));
 				}
@@ -885,7 +885,7 @@ void CViewRightTL::CreateListDOSHeader()
 
 	for (auto iter { 0U }; iter < g_mapDOSHeader.size(); ++iter)
 	{
-		auto& ref = g_mapDOSHeader.at(iter);
+		const auto& ref = g_mapDOSHeader.at(iter);
 		const auto dwOffset = ref.dwOffset;
 		const auto dwSize = ref.dwSize;
 		//Get a pointer to an offset and then take only needed amount of bytes (by &...).
@@ -1037,7 +1037,7 @@ void CViewRightTL::CreateListFileHeader()
 	for (unsigned iter { 0 }; iter < g_mapFileHeader.size(); ++iter)
 	{
 		const auto pDescr = &pNTHdr->unHdr.stNTHdr32.FileHeader;
-		auto& ref = g_mapFileHeader.at(iter);
+		const auto& ref = g_mapFileHeader.at(iter);
 		const auto dwOffset = ref.dwOffset;
 		const auto dwSize = ref.dwSize;
 		const auto dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pDescr) + dwOffset))
@@ -1137,7 +1137,7 @@ void CViewRightTL::CreateListOptHeader()
 	{
 		for (auto iter { 0U }; iter < mapOptHdr.size(); ++iter)
 		{
-			auto& ref = mapOptHdr.at(iter);
+			const auto& ref = mapOptHdr.at(iter);
 			const auto dwOffset = ref.dwOffset;
 			const auto dwSize = ref.dwSize;
 			const auto ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(&stOptHdr) + dwOffset))
@@ -1264,7 +1264,7 @@ void CViewRightTL::CreateListExport()
 	const auto pDescr = &pExport->stExportDesc;
 	for (auto iter { 0U }; iter < g_mapExport.size(); ++iter)
 	{
-		auto& ref = g_mapExport.at(iter);
+		const auto& ref = g_mapExport.at(iter);
 		const auto dwOffset = ref.dwOffset;
 		const auto dwSize = ref.dwSize;
 		const auto dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pDescr) + dwOffset))
@@ -1584,7 +1584,7 @@ void CViewRightTL::CreateListTLS()
 	{
 		for (auto iterMap { 0U }; iterMap < mapTLS.size(); ++iterMap)
 		{
-			auto& ref = mapTLS.at(iterMap);
+			const auto& ref = mapTLS.at(iterMap);
 			const auto dwOffset = ref.dwOffset;
 			const auto dwSize = ref.dwSize;
 			const auto ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(&stPETLS) + dwOffset))
@@ -1642,7 +1642,7 @@ void CViewRightTL::CreateListLCD()
 	{
 		for (auto iterMap { 0U }; iterMap < mapLCD.size(); ++iterMap)
 		{
-			auto& ref = mapLCD.at(iterMap);
+			const auto& ref = mapLCD.at(iterMap);
 			if (ref.dwOffset >= stPELCD.Size) //No-more than the size of the struct, that is the first struct's member.
 				break;
 
@@ -1698,7 +1698,7 @@ void CViewRightTL::CreateListBoundImport()
 	m_listBoundImportDir->InsertColumn(4, L"NumberOfModuleForwarderRefs", LVCFMT_CENTER, 220);
 
 	int listindex { };
-	for (auto& iter : *pBoundImp)
+	for (const auto& iter : *pBoundImp)
 	{
 		m_listBoundImportDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 
@@ -1741,7 +1741,7 @@ void CViewRightTL::CreateListDelayImport()
 	m_listDelayImportDir->InsertColumn(9, L"TimeDateStamp", LVCFMT_CENTER, 115);
 
 	int listindex { };
-	for (auto& iter : *pDelayImp)
+	for (const auto& iter : *pDelayImp)
 	{
 		m_listDelayImportDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 

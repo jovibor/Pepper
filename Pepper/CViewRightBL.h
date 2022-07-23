@@ -20,35 +20,33 @@ using namespace LISTEX;
 
 class CViewRightBL : public CView
 {
-	DECLARE_DYNCREATE(CViewRightBL)
-protected:
-	CViewRightBL() {}
-	virtual ~CViewRightBL() {}
-	void OnInitialUpdate() override;
-	void OnUpdate(CView*, LPARAM, CObject*) override;
-	void OnDraw(CDC* pDC) override; // overridden to draw this view
+private:
+	void OnInitialUpdate()override;
+	void OnUpdate(CView*, LPARAM, CObject*)override;
+	void OnDraw(CDC* pDC)override; // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	int CreateHexDosHeaderEntry(DWORD dwEntry);
-	int CreateHexRichHeaderEntry(DWORD dwEntry);
-	int CreateHexNtHeaderEntry(); //There is only one entry in this header, no dwEntry needed.
-	int CreateHexFileHeaderEntry(DWORD dwEntry);
-	int CreateHexOptHeaderEntry(DWORD dwEntry);
-	int CreateHexDataDirsEntry(DWORD dwEntry);
-	int CreateHexSecHeadersEntry(DWORD dwEntry);
-	int CreateHexLCDEntry(DWORD dwEntry);
-	int CreateListExportFuncs();
-	int CreateListImportEntry(DWORD dwEntry);
-	int CreateListDelayImportEntry(DWORD dwEntry);
-	int CreateListRelocsEntry(DWORD dwEntry);
-	int CreateHexDebugEntry(DWORD dwEntry);
-	int CreateTreeResources();
-	int CreateHexTLS();
-	int CreateHexSecurityEntry(unsigned nSertId);
+	void CreateHexDosHeaderEntry(DWORD dwEntry);
+	void CreateHexRichHeaderEntry(DWORD dwEntry);
+	void CreateHexNtHeaderEntry(); //There is only one entry in this header, no dwEntry needed.
+	void CreateHexFileHeaderEntry(DWORD dwEntry);
+	void CreateHexOptHeaderEntry(DWORD dwEntry);
+	void CreateHexDataDirsEntry(DWORD dwEntry);
+	void CreateHexSecHeadersEntry(DWORD dwEntry);
+	void CreateHexLCDEntry(DWORD dwEntry);
+	void CreateListExportFuncs();
+	void CreateListImportEntry(DWORD dwEntry);
+	void CreateListDelayImportEntry(DWORD dwEntry);
+	void CreateListRelocsEntry(DWORD dwEntry);
+	void CreateHexDebugEntry(DWORD dwEntry);
+	void CreateTreeResources();
+	void CreateHexTLS();
+	void CreateHexSecurityEntry(unsigned nSertId);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void OnDocEditMode();
 	DECLARE_MESSAGE_MAP()
+	DECLARE_DYNCREATE(CViewRightBL)
 private:
 	Ilibpe* m_pLibpe { };
 	PEFILEINFO stFileInfo;

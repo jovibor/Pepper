@@ -96,11 +96,11 @@ auto CChildFrame::GetWndStatData() -> std::vector<SWINDOWSTATUS>&
 
 void CChildFrame::SetWindowStatus(HWND hWnd, bool fVisible)
 {
-	if (auto iter = std::find_if(m_vecWndStatus.begin(), m_vecWndStatus.end(),
+	if (const auto iter = std::find_if(m_vecWndStatus.begin(), m_vecWndStatus.end(),
 		[hWnd](const SWINDOWSTATUS& ref) {return ref.hWnd == hWnd; }); iter != m_vecWndStatus.end())
 		iter->fVisible = fVisible;
 	else
-		m_vecWndStatus.emplace_back(SWINDOWSTATUS { hWnd, fVisible });
+		m_vecWndStatus.emplace_back(hWnd, fVisible);
 }
 
 void CChildFrame::OnSize(UINT nType, int cx, int cy)

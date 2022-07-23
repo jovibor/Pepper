@@ -44,8 +44,9 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR)
 		return;
 
-	CRect rcParent, rcClient;
+	CRect rcParent;
 	GetParent()->GetWindowRect(&rcParent);
+	CRect rcClient;
 	GetClientRect(&rcClient);
 
 	switch (LOWORD(lHint))
@@ -97,8 +98,9 @@ void CViewRightTR::OnDocEditMode()
 
 void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes)
 {
-	CRect rcParent, rcClient;
+	CRect rcParent;
 	GetParent()->GetWindowRect(&rcParent);
+	CRect rcClient;
 	GetClientRect(&rcClient);
 
 	if (m_hwndActive)
