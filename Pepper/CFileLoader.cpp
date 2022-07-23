@@ -107,7 +107,7 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexC
 		pHexCtrl = m_pHex.get();
 	}
 
-	std::byte* pData;
+	std::byte* pData { };
 	if (m_fMapViewOfFileWhole)
 		pData = static_cast<std::byte*>(m_lpBase);
 	else
@@ -176,7 +176,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	if (ullOffset + ullSize > static_cast<ULONGLONG>(m_stFileSize.QuadPart)) //Overflow check.
 		ullSize = static_cast<ULONGLONG>(m_stFileSize.QuadPart) - ullOffset;
 
-	std::byte* pData;
+	std::byte* pData { };
 	if (m_fMapViewOfFileWhole)
 	{
 		m_hds.pHexVirtData = nullptr;

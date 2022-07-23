@@ -668,31 +668,16 @@ void CViewRightBL::CreateListRelocsEntry(DWORD dwEntry)
 	if (pReloc == nullptr || dwEntry >= pReloc->size())
 		return;
 
-	const std::unordered_map<WORD, std::wstring> mapRelocTypes {
-		TO_WSTR_MAP(IMAGE_REL_BASED_ABSOLUTE),
-		TO_WSTR_MAP(IMAGE_REL_BASED_HIGH),
-		TO_WSTR_MAP(IMAGE_REL_BASED_LOW),
-		TO_WSTR_MAP(IMAGE_REL_BASED_HIGHLOW),
-		TO_WSTR_MAP(IMAGE_REL_BASED_HIGHADJ),
-		TO_WSTR_MAP(IMAGE_REL_BASED_MACHINE_SPECIFIC_5),
-		TO_WSTR_MAP(IMAGE_REL_BASED_RESERVED),
-		TO_WSTR_MAP(IMAGE_REL_BASED_MACHINE_SPECIFIC_7),
-		TO_WSTR_MAP(IMAGE_REL_BASED_MACHINE_SPECIFIC_8),
-		TO_WSTR_MAP(IMAGE_REL_BASED_MACHINE_SPECIFIC_9),
-		TO_WSTR_MAP(IMAGE_REL_BASED_DIR64)
-	};
-
 	int listindex = 0;
 	WCHAR wstr[MAX_PATH];
 
 	m_listRelocsEntry->SetRedraw(FALSE);
-	for (auto& iterRelocs : pReloc->at(dwEntry).vecRelocData)
+	for (const auto& iterRelocs : pReloc->at(dwEntry).vecRelocData)
 	{
 		swprintf_s(wstr, 9, L"%08X", iterRelocs.dwOffset);
 		m_listRelocsEntry->InsertItem(listindex, wstr);
 
-		auto it = mapRelocTypes.find(iterRelocs.wRelocType);
-		if (it != mapRelocTypes.end())
+		if (const auto it = MapRelocType.find(iterRelocs.wRelocType); it != MapRelocType.end())
 			swprintf_s(wstr, MAX_PATH, L"%s", it->second.data());
 		else
 			swprintf_s(wstr, MAX_PATH, L"%u", iterRelocs.wRelocType);
@@ -744,7 +729,7 @@ void CViewRightBL::CreateTreeResources()
 	WCHAR wstr[MAX_PATH];
 
 	//Scaling factor for HighDPI displays.
-	auto pDC = GetDC();
+	const auto pDC = GetDC();
 	const auto fScale = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY) / 96.0f;
 	ReleaseDC(pDC);
 	const auto iImgSize = static_cast<int>(16 * fScale);
@@ -757,16 +742,15 @@ void CViewRightBL::CreateTreeResources()
 	//Creating a treeCtrl and setting, with SetItemData(),
 	//a unique id for each node, that is an index in vector (m_vecResId),
 	//that holds tuple of three IDs of resource — Type, Name, LangID.
-	for (auto& iterRoot : pstResRoot->vecResData)
+	for (const auto& iterRoot : pstResRoot->vecResData)
 	{
-		const IMAGE_RESOURCE_DIRECTORY_ENTRY* pResDirEntry = &iterRoot.stResDirEntry;
+		const auto* pResDirEntry = &iterRoot.stResDirEntry;
 		if (pResDirEntry->NameIsString)
 			//Enclose in double quotes.
 			swprintf_s(wstr, MAX_PATH, L"\u00AB%s\u00BB", iterRoot.wstrResName.data());
 		else
 		{	//Setting Treectrl root node name depending on Resource typeID.
-			auto iter = g_mapResType.find(pResDirEntry->Id);
-			if (iter != g_mapResType.end())
+			if (const auto iter = MapResID.find(pResDirEntry->Id); iter != MapResID.end())
 				swprintf_s(wstr, MAX_PATH, L"%s [Id: %u]", iter->second.data(), pResDirEntry->Id);
 			else
 				swprintf_s(wstr, MAX_PATH, L"%u", pResDirEntry->Id);
@@ -776,15 +760,15 @@ void CViewRightBL::CreateTreeResources()
 		m_vecResId.emplace_back(ilvlRoot, -1, -1);
 		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
 		long ilvl2 = 0;
-		auto& refResLvL2 = iterRoot.stResLvL2; //Resource level 2.
+		const auto& refResLvL2 = iterRoot.stResLvL2; //Resource level 2.
 
-		for (auto& iterLvL2 : refResLvL2.vecResData)
+		for (const auto& iterLvL2 : refResLvL2.vecResData)
 		{
 			m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
 			long ilvl3 = 0;
-			auto& refResLvL3 = iterLvL2.stResLvL3;
+			const auto& refResLvL3 = iterLvL2.stResLvL3;
 
-			for (auto& iterLvL3 : refResLvL3.vecResData)
+			for (const auto& iterLvL3 : refResLvL3.vecResData)
 			{
 				pResDirEntry = &iterLvL3.stResDirEntry;
 				if (pResDirEntry->NameIsString)
@@ -794,11 +778,11 @@ void CViewRightBL::CreateTreeResources()
 
 				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
 				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(wstr, treeRoot), m_vecResId.size() - 1);
-				ilvl3++;
+				++ilvl3;
 			}
-			ilvl2++;
+			++ilvl2;
 		}
-		ilvlRoot++;
+		++ilvlRoot;
 	}
 }
 

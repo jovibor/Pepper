@@ -550,56 +550,10 @@ void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	if (pNMI->iSubItem != 10)
 		return;
 
-	static const std::unordered_map<DWORD, std::wstring> mapSecFlags {
-		{ 0x00000000, L"IMAGE_SCN_TYPE_REG\n Reserved." },
-		{ 0x00000001, L"IMAGE_SCN_TYPE_DSECT\n Reserved." },
-		{ 0x00000002, L"IMAGE_SCN_TYPE_NOLOAD\n Reserved." },
-		{ 0x00000004, L"IMAGE_SCN_TYPE_GROUP\n Reserved." },
-		{ IMAGE_SCN_TYPE_NO_PAD, L"IMAGE_SCN_TYPE_NO_PAD\n Reserved." },
-		{ 0x00000010, L"IMAGE_SCN_TYPE_COPY\n Reserved." },
-		{ IMAGE_SCN_CNT_CODE, L"IMAGE_SCN_CNT_CODE\n Section contains code." },
-		{ IMAGE_SCN_CNT_INITIALIZED_DATA, L"IMAGE_SCN_CNT_INITIALIZED_DATA\n Section contains initialized data." },
-		{ IMAGE_SCN_CNT_UNINITIALIZED_DATA, L"IMAGE_SCN_CNT_UNINITIALIZED_DATA\n Section contains uninitialized data." },
-		{ IMAGE_SCN_LNK_OTHER, L"IMAGE_SCN_LNK_OTHER\n Reserved." },
-		{ IMAGE_SCN_LNK_INFO, L"IMAGE_SCN_LNK_INFO\n Section contains comments or some other type of information." },
-		{ 0x00000400, L"IMAGE_SCN_TYPE_OVER\n Reserved." },
-		{ IMAGE_SCN_LNK_REMOVE, L"IMAGE_SCN_LNK_REMOVE\n Section contents will not become part of image." },
-		{ IMAGE_SCN_LNK_COMDAT, L"IMAGE_SCN_LNK_COMDAT\n Section contents comdat." },
-		{ IMAGE_SCN_NO_DEFER_SPEC_EXC, L"IMAGE_SCN_NO_DEFER_SPEC_EXC\n Reset speculative exceptions handling bits in the TLB entries for this section." },
-		{ IMAGE_SCN_GPREL, L"IMAGE_SCN_GPREL\n Section content can be accessed relative to GP" },
-		{ 0x00010000, L"IMAGE_SCN_MEM_SYSHEAP\n Obsolete" },
-		{ IMAGE_SCN_MEM_PURGEABLE, L"IMAGE_SCN_MEM_PURGEABLE" },
-		{ IMAGE_SCN_MEM_LOCKED, L"IMAGE_SCN_MEM_LOCKED" },
-		{ IMAGE_SCN_MEM_PRELOAD, L"IMAGE_SCN_MEM_PRELOAD" },
-		{ IMAGE_SCN_ALIGN_1BYTES, L"IMAGE_SCN_ALIGN_1BYTES" },
-		{ IMAGE_SCN_ALIGN_2BYTES, L"IMAGE_SCN_ALIGN_2BYTES" },
-		{ IMAGE_SCN_ALIGN_4BYTES, L"IMAGE_SCN_ALIGN_4BYTES" },
-		{ IMAGE_SCN_ALIGN_8BYTES, L"IMAGE_SCN_ALIGN_8BYTES" },
-		{ IMAGE_SCN_ALIGN_16BYTES, L"IMAGE_SCN_ALIGN_16BYTES\n Default alignment if no others are specified." },
-		{ IMAGE_SCN_ALIGN_32BYTES, L"IMAGE_SCN_ALIGN_32BYTES" },
-		{ IMAGE_SCN_ALIGN_64BYTES, L"IMAGE_SCN_ALIGN_64BYTES" },
-		{ IMAGE_SCN_ALIGN_128BYTES, L"IMAGE_SCN_ALIGN_128BYTES" },
-		{ IMAGE_SCN_ALIGN_256BYTES, L"IMAGE_SCN_ALIGN_256BYTES" },
-		{ IMAGE_SCN_ALIGN_512BYTES, L"IMAGE_SCN_ALIGN_512BYTES" },
-		{ IMAGE_SCN_ALIGN_1024BYTES, L"IMAGE_SCN_ALIGN_1024BYTES" },
-		{ IMAGE_SCN_ALIGN_2048BYTES, L"IMAGE_SCN_ALIGN_2048BYTES" },
-		{ IMAGE_SCN_ALIGN_4096BYTES, L"IMAGE_SCN_ALIGN_4096BYTES" },
-		{ IMAGE_SCN_ALIGN_8192BYTES, L"IMAGE_SCN_ALIGN_8192BYTES" },
-		{ IMAGE_SCN_ALIGN_MASK, L"IMAGE_SCN_ALIGN_MASK" },
-		{ IMAGE_SCN_LNK_NRELOC_OVFL, L"IMAGE_SCN_LNK_NRELOC_OVFL\n Section contains extended relocations." },
-		{ IMAGE_SCN_MEM_DISCARDABLE, L"IMAGE_SCN_MEM_DISCARDABLE\n Section can be discarded." },
-		{ IMAGE_SCN_MEM_NOT_CACHED, L"IMAGE_SCN_MEM_NOT_CACHED\n Section is not cachable." },
-		{ IMAGE_SCN_MEM_NOT_PAGED, L"IMAGE_SCN_MEM_NOT_PAGED\n Section is not pageable." },
-		{ IMAGE_SCN_MEM_SHARED, L"IMAGE_SCN_MEM_SHARED\n Section is shareable." },
-		{ IMAGE_SCN_MEM_EXECUTE, L"IMAGE_SCN_MEM_EXECUTE\n Section is executable." },
-		{ IMAGE_SCN_MEM_READ, L"IMAGE_SCN_MEM_READ\n Section is readable." },
-		{ IMAGE_SCN_MEM_WRITE, L"IMAGE_SCN_MEM_WRITE\n Section is writeable." }
-	};
-
 	std::wstring wstrTipText;
-	for (const auto& flags : mapSecFlags) {
+	for (const auto& flags : MapSecHdrCharact) {
 		if (flags.first & m_pSecHeaders->at(pNMI->iItem).stSecHdr.Characteristics)
-			wstrTipText += flags.second + L"\n";
+			wstrTipText += std::wstring { flags.second } + L"\n";
 	}
 	if (!wstrTipText.empty())
 	{
@@ -611,8 +565,6 @@ void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 {
-	bool fx32 = stFileInfo.fIsx86;
-	bool fx64 = stFileInfo.fIsx64;
 	DWORD dwOffset { }, dwSize = 0;
 
 	const auto pExport = m_pLibpe->GetExport();
@@ -984,56 +936,6 @@ void CViewRightTL::CreateListFileHeader()
 	m_listFileHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listFileHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
-	const std::unordered_map<WORD, std::wstring> mapMachineType {
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_UNKNOWN),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_TARGET_HOST),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_I386),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_R3000),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_R4000),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_R10000),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_WCEMIPSV2),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_ALPHA),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_SH3),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_SH3DSP),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_SH3E),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_SH4),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_SH5),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_ARM),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_THUMB),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_ARMNT),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_AM33),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_POWERPC),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_POWERPCFP),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_IA64),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_MIPS16),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_ALPHA64),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_MIPSFPU),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_MIPSFPU16),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_TRICORE),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_CEF),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_EBC),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_AMD64),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_M32R),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_ARM64),
-		TO_WSTR_MAP(IMAGE_FILE_MACHINE_CEE),
-	};
-	const std::unordered_map<WORD, std::wstring> mapCharacteristics {
-		TO_WSTR_MAP(IMAGE_FILE_RELOCS_STRIPPED),
-		TO_WSTR_MAP(IMAGE_FILE_EXECUTABLE_IMAGE),
-		TO_WSTR_MAP(IMAGE_FILE_LINE_NUMS_STRIPPED),
-		TO_WSTR_MAP(IMAGE_FILE_LOCAL_SYMS_STRIPPED),
-		TO_WSTR_MAP(IMAGE_FILE_AGGRESIVE_WS_TRIM),
-		TO_WSTR_MAP(IMAGE_FILE_LARGE_ADDRESS_AWARE),
-		TO_WSTR_MAP(IMAGE_FILE_BYTES_REVERSED_LO),
-		TO_WSTR_MAP(IMAGE_FILE_32BIT_MACHINE),
-		TO_WSTR_MAP(IMAGE_FILE_DEBUG_STRIPPED),
-		TO_WSTR_MAP(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP),
-		TO_WSTR_MAP(IMAGE_FILE_NET_RUN_FROM_SWAP),
-		TO_WSTR_MAP(IMAGE_FILE_SYSTEM),
-		TO_WSTR_MAP(IMAGE_FILE_DLL),
-		TO_WSTR_MAP(IMAGE_FILE_UP_SYSTEM_ONLY),
-		TO_WSTR_MAP(IMAGE_FILE_BYTES_REVERSED_HI)
-	};
 	for (unsigned iter { 0 }; iter < g_mapFileHeader.size(); ++iter)
 	{
 		const auto pDescr = &pNTHdr->unHdr.stNTHdr32.FileHeader;
@@ -1049,7 +951,7 @@ void CViewRightTL::CreateListFileHeader()
 		m_listFileHeader->SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
 
 		if (iter == 0) { //Machine
-			if (const auto iterMachine = mapMachineType.find(pDescr->Machine); iterMachine != mapMachineType.end())
+			if (const auto iterMachine = MapFileHdrMachine.find(pDescr->Machine); iterMachine != MapFileHdrMachine.end())
 				m_listFileHeader->SetCellTooltip(iter, 3, iterMachine->second.data(), L"Machine:");
 		}
 		else if (iter == 2) { //TimeDateStamp	
@@ -1061,9 +963,9 @@ void CViewRightTL::CreateListFileHeader()
 		}
 		else if (iter == 6) { //Characteristics
 			std::wstring  wstrCharact;
-			for (const auto& it : mapCharacteristics) {
+			for (const auto& it : MapFileHdrCharact) {
 				if (it.first & pDescr->Characteristics)
-					wstrCharact += it.second + L"\n";
+					wstrCharact += std::wstring { it.second } + L"\n";
 			}
 			if (!wstrCharact.empty()) {
 				wstrCharact.erase(wstrCharact.size() - 1); //to remove last '\n'
@@ -1091,46 +993,6 @@ void CViewRightTL::CreateListOptHeader()
 	m_listOptHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listOptHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 140);
 
-	const std::unordered_map<WORD, std::wstring> mapSubSystem {
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_UNKNOWN),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_NATIVE),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_WINDOWS_GUI),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_WINDOWS_CUI),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_OS2_CUI),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_POSIX_CUI),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_NATIVE_WINDOWS),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_WINDOWS_CE_GUI),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_EFI_APPLICATION),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_EFI_ROM),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_XBOX),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION),
-		TO_WSTR_MAP(IMAGE_SUBSYSTEM_XBOX_CODE_CATALOG)
-	};
-	const std::unordered_map<WORD, std::wstring> mapMagic {
-		TO_WSTR_MAP(IMAGE_NT_OPTIONAL_HDR32_MAGIC),
-		TO_WSTR_MAP(IMAGE_NT_OPTIONAL_HDR64_MAGIC),
-		TO_WSTR_MAP(IMAGE_ROM_OPTIONAL_HDR_MAGIC)
-	};
-	const std::unordered_map<WORD, std::wstring> mapDllCharacteristics {
-		{ 0x0001, L"IMAGE_LIBRARY_PROCESS_INIT" },
-		{ 0x0002, L"IMAGE_LIBRARY_PROCESS_TERM" },
-		{ 0x0004, L"IMAGE_LIBRARY_THREAD_INIT" },
-		{ 0x0008, L"IMAGE_LIBRARY_THREAD_TERM" },
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NX_COMPAT),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_ISOLATION),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_SEH),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_NO_BIND),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_APPCONTAINER),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_GUARD_CF),
-		TO_WSTR_MAP(IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE)
-	};
-
 	const auto dwOffsetBase = stFileInfo.fIsx86 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) :
 		pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader);
 	const auto lmbOptHdr = [&](const auto& stOptHdr, const auto& mapOptHdr)
@@ -1150,18 +1012,18 @@ void CViewRightTL::CreateListOptHeader()
 				: (dwSize == sizeof(WORD) ? L"{:04X}" : (dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}")), std::make_wformat_args(ullValue)).data());
 
 			if (iter == 0) { //Magic
-				if (const auto it = mapMagic.find(stOptHdr.Magic); it != mapMagic.end())
+				if (const auto it = MapOptHdrMagic.find(stOptHdr.Magic); it != MapOptHdrMagic.end())
 					m_listOptHeader->SetCellTooltip(iter, 3, it->second.data(), L"Magic:");
 			}
-			else if (iter == 21) { //Subsystem
-				if (const auto it = mapSubSystem.find(stOptHdr.Subsystem); it != mapSubSystem.end())
+			else if ((stFileInfo.fIsx86 && iter == 22) || (stFileInfo.fIsx64 && iter == 21)) { //Subsystem (offset is different in x86 and x64)
+				if (const auto it = MapOptHdrSubsystem.find(stOptHdr.Subsystem); it != MapOptHdrSubsystem.end())
 					m_listOptHeader->SetCellTooltip(iter, 3, it->second.data(), L"Subsystem:");
 			}
-			else if (iter == 22) { //Dllcharacteristics
+			else if ((stFileInfo.fIsx86 && iter == 23) || (stFileInfo.fIsx64 && iter == 22)) { //DllCharacteristics (offset is different in x86 and x64)
 				std::wstring wstrTooltip;
-				for (const auto& iterCharact : mapDllCharacteristics) {
+				for (const auto& iterCharact : MapOptHdrDllCharact) {
 					if (iterCharact.first & stOptHdr.DllCharacteristics)
-						wstrTooltip += iterCharact.second + L"\n";
+						wstrTooltip += std::wstring { iterCharact.second } + L"\n";
 				}
 				if (!wstrTooltip.empty()) {
 					wstrTooltip.erase(wstrTooltip.size() - 1); //to remove last '\n'
@@ -1331,7 +1193,7 @@ void CViewRightTL::CreateTreeResources()
 			wstr = std::format(L"Entry: {} [Name: {}]", ilvlRoot, iterRoot.wstrResName);
 		else
 		{
-			if (const auto iter = g_mapResType.find(pResDirEntryRoot->Id); iter != g_mapResType.end())
+			if (const auto iter = MapResID.find(pResDirEntryRoot->Id); iter != MapResID.end())
 				wstr = std::format(L"Entry: {} [Id: {}, {}]", ilvlRoot, pResDirEntryRoot->Id, iter->second);
 			else
 				wstr = std::format(L"Entry: {} [Id: {}]", ilvlRoot, pResDirEntryRoot->Id);
@@ -1430,17 +1292,6 @@ void CViewRightTL::CreateListSecurity()
 	m_listSecurityDir->InsertColumn(2, L"wRevision", LVCFMT_CENTER, 100);
 	m_listSecurityDir->InsertColumn(3, L"wCertificateType", LVCFMT_CENTER, 180);
 
-	const std::unordered_map<WORD, std::wstring> mapSertRevision {
-		TO_WSTR_MAP(WIN_CERT_REVISION_1_0),
-		TO_WSTR_MAP(WIN_CERT_REVISION_2_0)
-	};
-	const std::unordered_map<WORD, std::wstring> mapSertType {
-		TO_WSTR_MAP(WIN_CERT_TYPE_X509),
-		TO_WSTR_MAP(WIN_CERT_TYPE_PKCS_SIGNED_DATA),
-		TO_WSTR_MAP(WIN_CERT_TYPE_RESERVED_1),
-		TO_WSTR_MAP(WIN_CERT_TYPE_TS_STACK_SIGNED),
-	};
-
 	int listindex { };
 	for (const auto& iter : *pSecurityDir)
 	{
@@ -1448,10 +1299,10 @@ void CViewRightTL::CreateListSecurity()
 		const auto pDescr = &iter.stWinSert;
 		m_listSecurityDir->SetItemText(listindex, 1, std::format(L"{:08X}", pDescr->dwLength).data());
 		m_listSecurityDir->SetItemText(listindex, 2, std::format(L"{:04X}", pDescr->wRevision).data());
-		if (const auto iterRevision = mapSertRevision.find(pDescr->wRevision); iterRevision != mapSertRevision.end())
+		if (const auto iterRevision = MapWinCertRevision.find(pDescr->wRevision); iterRevision != MapWinCertRevision.end())
 			m_listSecurityDir->SetCellTooltip(listindex, 2, iterRevision->second.data(), L"Certificate revision:");
 		m_listSecurityDir->SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->wCertificateType).data());
-		if (const auto iterType = mapSertType.find(pDescr->wCertificateType); iterType != mapSertType.end())
+		if (const auto iterType = MapWinCertType.find(pDescr->wCertificateType); iterType != MapWinCertType.end())
 			m_listSecurityDir->SetCellTooltip(listindex, 3, iterType->second.data(), L"Certificate type:");
 
 		++listindex;
@@ -1500,26 +1351,6 @@ void CViewRightTL::CreateListDebug()
 	m_listDebugDir->InsertColumn(7, L"AddressOfRawData", LVCFMT_CENTER, 170);
 	m_listDebugDir->InsertColumn(8, L"PointerToRawData", LVCFMT_CENTER, 140);
 
-	const std::unordered_map<DWORD, std::wstring> mapDebugType {
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_UNKNOWN),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_COFF),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_CODEVIEW),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_FPO),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_MISC),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_EXCEPTION),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_FIXUP),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_OMAP_TO_SRC),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_OMAP_FROM_SRC),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_BORLAND),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_RESERVED10),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_CLSID),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_VC_FEATURE),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_POGO),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_ILTCG),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_MPX),
-		TO_WSTR_MAP(IMAGE_DEBUG_TYPE_REPRO)
-	};
-
 	int listindex { 0 };
 	for (const auto& iter : *pDebugDir)
 	{
@@ -1536,7 +1367,7 @@ void CViewRightTL::CreateListDebug()
 		m_listDebugDir->SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->MajorVersion).data());
 		m_listDebugDir->SetItemText(listindex, 4, std::format(L"{:04X}", pDescr->MinorVersion).data());
 		m_listDebugDir->SetItemText(listindex, 5, std::format(L"{:08X}", pDescr->Type).data());
-		if (const auto iterDType = mapDebugType.find(pDescr->Type); iterDType != mapDebugType.end())
+		if (const auto iterDType = MapDbgType.find(pDescr->Type); iterDType != MapDbgType.end())
 			m_listDebugDir->SetCellTooltip(listindex, 5, iterDType->second.data(), L"Debug type:");
 		m_listDebugDir->SetItemText(listindex, 6, std::format(L"{:08X}", pDescr->SizeOfData).data());
 		m_listDebugDir->SetItemText(listindex, 7, std::format(L"{:08X}", pDescr->AddressOfRawData).data());
@@ -1563,23 +1394,6 @@ void CViewRightTL::CreateListTLS()
 	m_listTLSDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
 	m_listTLSDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 150);
 
-	const std::unordered_map<DWORD, std::wstring> mapCharact {
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_1BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_2BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_4BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_8BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_16BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_32BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_64BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_128BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_256BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_512BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_1024BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_2048BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_4096BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_8192BYTES),
-		TO_WSTR_MAP(IMAGE_SCN_ALIGN_MASK)
-	};
 	const auto lmbTLS = [&](auto& stPETLS, auto& mapTLS)
 	{
 		for (auto iterMap { 0U }; iterMap < mapTLS.size(); ++iterMap)
@@ -1596,7 +1410,7 @@ void CViewRightTL::CreateListTLS()
 			m_listTLSDir->SetItemText(iterMap, 3, std::vformat(dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}", std::make_wformat_args(ullValue)).data());
 
 			if (iterMap == 5) { //Characteristics
-				if (const auto iterCharact = mapCharact.find(stPETLS.Characteristics); iterCharact != mapCharact.end())
+				if (const auto iterCharact = MapTLSCharact.find(stPETLS.Characteristics); iterCharact != MapTLSCharact.end())
 					m_listTLSDir->SetCellTooltip(iterMap, 3, iterCharact->second.data(), L"Characteristics:");
 			}
 		}
@@ -1622,22 +1436,6 @@ void CViewRightTL::CreateListLCD()
 	m_listLCD->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
 	m_listLCD->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
-	const std::unordered_map<WORD, std::wstring> mapGuardFlags {
-		{ IMAGE_GUARD_CF_INSTRUMENTED, L"IMAGE_GUARD_CF_INSTRUMENTED\n Module performs control flow integrity checks using system-supplied support" },
-		{ IMAGE_GUARD_CFW_INSTRUMENTED, L"IMAGE_GUARD_CFW_INSTRUMENTED\n Module performs control flow and write integrity checks" },
-		{ IMAGE_GUARD_CF_FUNCTION_TABLE_PRESENT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_PRESENT\n Module contains valid control flow target metadata" },
-		{ IMAGE_GUARD_SECURITY_COOKIE_UNUSED, L"IMAGE_GUARD_SECURITY_COOKIE_UNUSED\n Module does not make use of the /GS security cookie" },
-		{ IMAGE_GUARD_PROTECT_DELAYLOAD_IAT, L"IMAGE_GUARD_PROTECT_DELAYLOAD_IAT\n Module supports read only delay load IAT" },
-		{ IMAGE_GUARD_DELAYLOAD_IAT_IN_ITS_OWN_SECTION, L"IMAGE_GUARD_DELAYLOAD_IAT_IN_ITS_OWN_SECTION\n Delayload import table in its own .didat section (with nothing else in it) that can be freely reprotected" },
-		{ IMAGE_GUARD_CF_EXPORT_SUPPRESSION_INFO_PRESENT, L"IMAGE_GUARD_CF_EXPORT_SUPPRESSION_INFO_PRESENT\n Module contains suppressed export information. This also infers that the address taken IAT table is also present in the load config." },
-		{ IMAGE_GUARD_CF_ENABLE_EXPORT_SUPPRESSION, L"IMAGE_GUARD_CF_ENABLE_EXPORT_SUPPRESSION\n Module enables suppression of exports" },
-		{ IMAGE_GUARD_CF_LONGJUMP_TABLE_PRESENT, L"IMAGE_GUARD_CF_LONGJUMP_TABLE_PRESENT\n Module contains longjmp target information" },
-		{ IMAGE_GUARD_RF_INSTRUMENTED, L"IMAGE_GUARD_RF_INSTRUMENTED\n Module contains return flow instrumentation and metadata" },
-		{ IMAGE_GUARD_RF_ENABLE, L"IMAGE_GUARD_RF_ENABLE\n Module requests that the OS enable return flow protection" },
-		{ IMAGE_GUARD_RF_STRICT, L"IMAGE_GUARD_RF_STRICT\n Module requests that the OS enable return flow protection in strict mode" },
-		{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK\n Stride of Guard CF function table encoded in these bits (additional count of bytes per element)" },
-		{ IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT, L"IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT\n Shift to right-justify Guard CF function table stride" }
-	};
 	const auto lmbLCD = [&](auto& stPELCD, auto& mapLCD)
 	{
 		for (auto iterMap { 0U }; iterMap < mapLCD.size(); ++iterMap)
@@ -1666,9 +1464,9 @@ void CViewRightTL::CreateListLCD()
 			}
 			else if (iterMap == 24) { //GuardFlags
 				std::wstring wstrTooltip;
-				for (auto& it : mapGuardFlags) {
+				for (const auto& it : MapLCDGuardFlags) {
 					if (it.first & stPELCD.GuardFlags)
-						wstrTooltip += it.second + L"\n";
+						wstrTooltip += std::wstring { it.second } + L"\n";
 				}
 				if (!wstrTooltip.empty())
 					m_listLCD->SetCellTooltip(iterMap, 3, wstrTooltip.data(), L"GuardFlags:");
@@ -1782,16 +1580,6 @@ void CViewRightTL::CreateListCOM()
 	m_listCOMDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listCOMDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
-	const std::unordered_map<DWORD, std::wstring> mapFlags {
-		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_ILONLY, L"COMIMAGE_FLAGS_ILONLY" },
-		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITREQUIRED, L"COMIMAGE_FLAGS_32BITREQUIRED" },
-		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_IL_LIBRARY, L"COMIMAGE_FLAGS_IL_LIBRARY" },
-		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_STRONGNAMESIGNED, L"COMIMAGE_FLAGS_STRONGNAMESIGNED" },
-		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_NATIVE_ENTRYPOINT, L"COMIMAGE_FLAGS_NATIVE_ENTRYPOINT" },
-		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_TRACKDEBUGDATA, L"COMIMAGE_FLAGS_TRACKDEBUGDATA" },
-		{ ReplacesCorHdrNumericDefines::COMIMAGE_FLAGS_32BITPREFERRED, L"COMIMAGE_FLAGS_32BITPREFERRED" }
-	};
-
 	for (auto iter = 0U; iter < g_mapComDir.size(); ++iter)
 	{
 		const auto& ref = g_mapComDir.at(iter);
@@ -1807,9 +1595,9 @@ void CViewRightTL::CreateListCOM()
 
 		if (iter == 5) {
 			std::wstring wstrToolTip;
-			for (auto& iterFlags : mapFlags) {
+			for (auto& iterFlags : MapCOR20Flags) {
 				if (iterFlags.first & pCOMDesc->stCorHdr.Flags)
-					wstrToolTip += iterFlags.second + L"\n";
+					wstrToolTip += std::wstring { iterFlags.second } + L"\n";
 			}
 			if (!wstrToolTip.empty())
 				m_listCOMDir->SetCellTooltip(iter, 3, wstrToolTip.data(), L"Flags:");

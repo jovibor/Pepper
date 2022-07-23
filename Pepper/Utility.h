@@ -41,34 +41,6 @@ inline const std::unordered_map<DWORD, std::wstring> g_mapLibpeErrors {
 	TO_WSTR_MAP(ERR_FILE_NODOSHDR)
 };
 
-//All possible PE Resource types.
-inline const std::unordered_map<WORD, std::wstring> g_mapResType {
-	{ 1, L"RT_CURSOR" },
-	{ 2, L"RT_BITMAP" },
-	{ 3, L"RT_ICON" },
-	{ 4, L"RT_MENU" },
-	{ 5, L"RT_DIALOG" },
-	{ 6, L"RT_STRING" },
-	{ 7, L"RT_FONTDIR" },
-	{ 8, L"RT_FONT" },
-	{ 9, L"RT_ACCELERATOR" },
-	{ 10, L"RT_RCDATA" },
-	{ 11, L"RT_MESSAGETABLE" },
-	{ 12, L"RT_GROUP_CURSOR" },
-	{ 14, L"RT_GROUP_ICON" },
-	{ 16, L"RT_VERSION" },
-	{ 17, L"RT_DLGINCLUDE" },
-	{ 19, L"RT_PLUGPLAY" },
-	{ 20, L"RT_VXD" },
-	{ 21, L"RT_ANICURSOR" },
-	{ 22, L"RT_ANIICON" },
-	{ 23, L"RT_HTML" },
-	{ 24, L"RT_MANIFEST" },
-	{ 28, L"RT_RIBBON_XML" },
-	{ 240, L"RT_DLGINIT" },
-	{ 241, L"RT_TOOLBAR" }
-};
-
 //Helper struct for PE structs' fields offsets and sizes.
 //Reflection kind of.
 struct SPEREFLECTION
@@ -189,7 +161,7 @@ inline const map_hdr g_mapOptHeader64 {
 	{ 28, { sizeof(DWORD), 108, L"NumberOfRvaAndSizes" } }
 };
 
-inline const std::unordered_map<WORD, std::wstring> g_mapDataDirs {
+inline const std::unordered_map<DWORD, std::wstring_view> g_mapDataDirs {
 	{ IMAGE_DIRECTORY_ENTRY_EXPORT, L"Export Directory" },
 	{ IMAGE_DIRECTORY_ENTRY_IMPORT, L"Import Directory" },
 	{ IMAGE_DIRECTORY_ENTRY_RESOURCE, L"Resource Directory" },

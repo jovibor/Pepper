@@ -38,7 +38,7 @@ BOOL CTreeEx::OnEraseBkgnd(CDC* /*pDC*/)
 	return TRUE;
 }
 
-void CTreeEx::OnKillFocus(CWnd* pNewWnd)
+void CTreeEx::OnKillFocus(CWnd* /*pNewWnd*/)
 {
 }
 

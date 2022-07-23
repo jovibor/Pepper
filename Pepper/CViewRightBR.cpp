@@ -11,6 +11,7 @@
 #include "Utility.h"
 #include "CViewRightBR.h"
 #include <format>
+#pragma comment(lib, "Mincore.lib") //VerQueryValueW
 
 BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)
 	ON_WM_PAINT()
@@ -1145,7 +1146,7 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 			pDataItems += sizeof(WORD) * 2;
 			wstrItem += std::format(L"Class ordinal: 0x{:04X}", wClassOrdinalItem);
 
-			const std::unordered_map<WORD, std::wstring> mapItemClassOrd {
+			const std::unordered_map<DWORD, std::wstring> mapItemClassOrd {
 				{ 0x0080, L"Button" }, { 0x0081, L"Edit" }, { 0x0082, L"Static" },
 				{ 0x0083, L"List box" }, { 0x0084, L"Scroll bar" }, { 0x0085, L"Combo box" },
 			};

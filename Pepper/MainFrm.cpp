@@ -296,7 +296,7 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
-void CMainFrame::MDIClientSize(HWND hWnd, WPARAM wParam, LPARAM lParam)
+void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam)
 {
 	constexpr auto iLengthText = static_cast<int>(std::size(PRODUCT_NAME)) - 1;
 	const auto pDC = CDC::FromHandle(::GetDC(hWnd));
