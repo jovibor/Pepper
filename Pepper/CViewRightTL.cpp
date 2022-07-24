@@ -995,6 +995,8 @@ void CViewRightTL::CreateListOptHeader()
 
 	const auto dwOffsetBase = stFileInfo.fIsx86 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) :
 		pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader);
+	const auto dwSubsystemPos = stFileInfo.fIsx86 ? 22U : 21U;  //Position in struct is different in x86 and x64.
+	const auto dwDllCharactPos = stFileInfo.fIsx86 ? 23U : 22U; //Position in struct is different in x86 and x64.
 	const auto lmbOptHdr = [&](const auto& stOptHdr, const auto& mapOptHdr)
 	{
 		for (auto iter { 0U }; iter < mapOptHdr.size(); ++iter)
@@ -1011,15 +1013,15 @@ void CViewRightTL::CreateListOptHeader()
 			m_listOptHeader->SetItemText(iter, 3, std::vformat(dwSize == sizeof(BYTE) ? L"{:02X}"
 				: (dwSize == sizeof(WORD) ? L"{:04X}" : (dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}")), std::make_wformat_args(ullValue)).data());
 
-			if (iter == 0) { //Magic
+			if (iter == 0) { //Magic.
 				if (const auto it = MapOptHdrMagic.find(stOptHdr.Magic); it != MapOptHdrMagic.end())
 					m_listOptHeader->SetCellTooltip(iter, 3, it->second.data(), L"Magic:");
 			}
-			else if ((stFileInfo.fIsx86 && iter == 22) || (stFileInfo.fIsx64 && iter == 21)) { //Subsystem (offset is different in x86 and x64)
+			else if (iter == dwSubsystemPos) { //Subsystem.
 				if (const auto it = MapOptHdrSubsystem.find(stOptHdr.Subsystem); it != MapOptHdrSubsystem.end())
 					m_listOptHeader->SetCellTooltip(iter, 3, it->second.data(), L"Subsystem:");
 			}
-			else if ((stFileInfo.fIsx86 && iter == 23) || (stFileInfo.fIsx64 && iter == 22)) { //DllCharacteristics (offset is different in x86 and x64)
+			else if (iter == dwDllCharactPos) { //DllCharacteristics.
 				std::wstring wstrTooltip;
 				for (const auto& iterCharact : MapOptHdrDllCharact) {
 					if (iterCharact.first & stOptHdr.DllCharacteristics)

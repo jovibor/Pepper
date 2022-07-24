@@ -16,7 +16,9 @@ class CPepperDoc : public CDocument
 {
 public:
 	DECLARE_DYNCREATE(CPepperDoc)
-	IlibpePtr m_pLibpe { };
+	IlibpePtr m_pLibpe {
+		Createlibpe()
+	};
 	CFileLoader m_stFileLoader;
 	void SetEditMode(bool fEditMode);
 	[[nodiscard]] bool IsEditMode() { return m_fEditMode; }

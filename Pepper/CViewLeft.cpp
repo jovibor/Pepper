@@ -54,7 +54,7 @@ void CViewLeft::OnInitialUpdate()
 	}
 	if (stFileInfo.fHasRichHdr)
 	{
-		const auto hTreeDosRich = m_stTreeMain.InsertItem(L"\u00ABRich\u00BB Header", iconHdr, iconHdr, hTreeRoot);
+		const auto hTreeDosRich = m_stTreeMain.InsertItem(L"«Rich» Header", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeDosRich, IDC_LIST_RICHHEADER);
 	}
 

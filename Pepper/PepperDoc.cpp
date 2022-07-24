@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "PepperDoc.h"
 #include "Utility.h"
+#include <format>
 
 IMPLEMENT_DYNCREATE(CPepperDoc, CDocument)
 
@@ -36,24 +37,16 @@ void CPepperDoc::SetEditMode(bool fEditMode)
 
 BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-	if (!(m_pLibpe = Createlibpe())) {
-		MessageBoxW(nullptr, L"Createlibpe() failed.", L"Error", MB_ICONERROR);
-		return FALSE;
-	}
-
 	if (const auto err = m_pLibpe->LoadPe(lpszPathName); err != PEOK)
 	{
-		WCHAR wstrMsg[MAX_PATH];
-		if (const auto it = g_mapLibpeErrors.find(err); it != g_mapLibpeErrors.end())
-			swprintf_s(wstrMsg, L"File load failed with libpe error code: 0x0%X\n%s", err, it->second.data());
-		else
-			swprintf_s(wstrMsg, L"File load failed with libpe error code: 0x0%X", err);
-
-		std::wstring wstrFile = lpszPathName;
-		if (const auto sSlash = wstrFile.find_last_of(L'\\'); sSlash > 0)
-			wstrFile = wstrFile.substr(sSlash + 1);
-		wstrFile += L" File load failed.";
-		MessageBoxW(nullptr, wstrMsg, wstrFile.data(), MB_ICONERROR);
+		std::wstring wstrFileName = lpszPathName;
+		if (const auto sSlash = wstrFileName.find_last_of(L'\\'); sSlash > 0)
+			wstrFileName = wstrFileName.substr(sSlash + 1);
+		wstrFileName += L" File Load Failed.";
+		const auto it = g_mapLibpeErrors.find(err);
+		MessageBoxW(nullptr, std::vformat(L"File load failed with libpe error code: 0x{:04X}\n{}",
+			std::make_wformat_args(err, it != g_mapLibpeErrors.end() ? it->second : L"N/A")).data(),
+			wstrFileName.data(), MB_ICONERROR);
 
 		return FALSE;
 	}
