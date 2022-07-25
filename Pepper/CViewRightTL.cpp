@@ -16,7 +16,7 @@ IMPLEMENT_DYNCREATE(CViewRightTL, CView)
 BEGIN_MESSAGE_MAP(CViewRightTL, CView)
 	ON_WM_SIZE()
 	ON_WM_MOUSEWHEEL()
-	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_SECHEADERS, &CViewRightTL::OnListSectionsGetDispInfo)
+	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_SECHEADERS, &CViewRightTL::OnListSecHdrGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_IMPORT, &CViewRightTL::OnListImportGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_RELOCATIONS, &CViewRightTL::OnListRelocsGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_EXCEPTIONS, &CViewRightTL::OnListExceptionsGetDispInfo)
@@ -402,7 +402,7 @@ void CViewRightTL::OnSize(UINT nType, int cx, int cy)
 		m_pwndActive->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightTL::OnListSectionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
+void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
 	auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	auto* pItem = &pDispInfo->item;
@@ -451,6 +451,26 @@ void CViewRightTL::OnListSectionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/
 			*std::format_to(pItem->pszText, L"{:08X}", refDescr.Characteristics) = '\0';
 			break;
 		}
+	}
+}
+
+void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
+{
+	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	if (pNMI->iSubItem != 10)
+		return;
+
+	std::wstring wstrTipText;
+	for (const auto& flags : MapSecHdrCharact) {
+		if (flags.first & m_pSecHeaders->at(pNMI->iItem).stSecHdr.Characteristics) {
+			wstrTipText += flags.second;
+			wstrTipText += L"\n";
+		}
+	}
+	if (!wstrTipText.empty()) {
+		static LISTEXTOOLTIP stTT { { }, L"Section Flags:" };
+		stTT.wstrText = std::move(wstrTipText);
+		pNMI->lParam = reinterpret_cast<LPARAM>(&stTT); //Tooltip pointer.
 	}
 }
 
@@ -541,25 +561,6 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult
 			break;
 		}
 		*std::format_to(pItem->pszText, L"{:08X}", dwFmtData) = '\0';
-	}
-}
-
-void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
-{
-	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	if (pNMI->iSubItem != 10)
-		return;
-
-	std::wstring wstrTipText;
-	for (const auto& flags : MapSecHdrCharact) {
-		if (flags.first & m_pSecHeaders->at(pNMI->iItem).stSecHdr.Characteristics)
-			wstrTipText += std::wstring { flags.second } + L"\n";
-	}
-	if (!wstrTipText.empty())
-	{
-		static LISTEXTOOLTIP stTT { { }, L"Section Flags:" };
-		stTT.wstrText = std::move(wstrTipText);
-		pNMI->lParam = reinterpret_cast<LPARAM>(&stTT); //Tooltip pointer.
 	}
 }
 
@@ -963,9 +964,11 @@ void CViewRightTL::CreateListFileHeader()
 		}
 		else if (iter == 6) { //Characteristics
 			std::wstring  wstrCharact;
-			for (const auto& it : MapFileHdrCharact) {
-				if (it.first & pDescr->Characteristics)
-					wstrCharact += std::wstring { it.second } + L"\n";
+			for (const auto& flags : MapFileHdrCharact) {
+				if (flags.first & pDescr->Characteristics) {
+					wstrCharact += flags.second;
+					wstrCharact += L"\n";
+				}
 			}
 			if (!wstrCharact.empty()) {
 				wstrCharact.erase(wstrCharact.size() - 1); //to remove last '\n'
@@ -1022,14 +1025,16 @@ void CViewRightTL::CreateListOptHeader()
 					m_listOptHeader->SetCellTooltip(iter, 3, it->second.data(), L"Subsystem:");
 			}
 			else if (iter == dwDllCharactPos) { //DllCharacteristics.
-				std::wstring wstrTooltip;
-				for (const auto& iterCharact : MapOptHdrDllCharact) {
-					if (iterCharact.first & stOptHdr.DllCharacteristics)
-						wstrTooltip += std::wstring { iterCharact.second } + L"\n";
+				std::wstring wstrCharact;
+				for (const auto& flags : MapOptHdrDllCharact) {
+					if (flags.first & stOptHdr.DllCharacteristics) {
+						wstrCharact += flags.second;
+						wstrCharact += L"\n";
+					}
 				}
-				if (!wstrTooltip.empty()) {
-					wstrTooltip.erase(wstrTooltip.size() - 1); //to remove last '\n'
-					m_listOptHeader->SetCellTooltip(iter, 3, wstrTooltip.data(), L"DllCharacteristics:");
+				if (!wstrCharact.empty()) {
+					wstrCharact.erase(wstrCharact.size() - 1); //to remove last '\n'
+					m_listOptHeader->SetCellTooltip(iter, 3, wstrCharact.data(), L"DllCharacteristics:");
 				}
 			}
 		}
@@ -1396,7 +1401,7 @@ void CViewRightTL::CreateListTLS()
 	m_listTLSDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
 	m_listTLSDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 150);
 
-	const auto lmbTLS = [&](auto& stPETLS, auto& mapTLS)
+	const auto lmbTLS = [&](const auto& stPETLS, const auto& mapTLS)
 	{
 		for (auto iterMap { 0U }; iterMap < mapTLS.size(); ++iterMap)
 		{
@@ -1438,7 +1443,7 @@ void CViewRightTL::CreateListLCD()
 	m_listLCD->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
 	m_listLCD->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
-	const auto lmbLCD = [&](auto& stPELCD, auto& mapLCD)
+	const auto lmbLCD = [&](const auto& stPELCD, const auto& mapLCD)
 	{
 		for (auto iterMap { 0U }; iterMap < mapLCD.size(); ++iterMap)
 		{
@@ -1465,13 +1470,15 @@ void CViewRightTL::CreateListLCD()
 				}
 			}
 			else if (iterMap == 24) { //GuardFlags
-				std::wstring wstrTooltip;
-				for (const auto& it : MapLCDGuardFlags) {
-					if (it.first & stPELCD.GuardFlags)
-						wstrTooltip += std::wstring { it.second } + L"\n";
+				std::wstring wstrGFlags;
+				for (const auto& flags : MapLCDGuardFlags) {
+					if (flags.first & stPELCD.GuardFlags) {
+						wstrGFlags += flags.second;
+						wstrGFlags += L"\n";
+					}
 				}
-				if (!wstrTooltip.empty())
-					m_listLCD->SetCellTooltip(iterMap, 3, wstrTooltip.data(), L"GuardFlags:");
+				if (!wstrGFlags.empty())
+					m_listLCD->SetCellTooltip(iterMap, 3, wstrGFlags.data(), L"GuardFlags:");
 			}
 		}
 	};
@@ -1596,13 +1603,15 @@ void CViewRightTL::CreateListCOM()
 		m_listCOMDir->SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
 
 		if (iter == 5) {
-			std::wstring wstrToolTip;
-			for (auto& iterFlags : MapCOR20Flags) {
-				if (iterFlags.first & pCOMDesc->stCorHdr.Flags)
-					wstrToolTip += std::wstring { iterFlags.second } + L"\n";
+			std::wstring wstrFlags;
+			for (const auto& flags : MapCOR20Flags) {
+				if (flags.first & pCOMDesc->stCorHdr.Flags) {
+					wstrFlags += flags.second;
+					wstrFlags += L"\n";
+				}
 			}
-			if (!wstrToolTip.empty())
-				m_listCOMDir->SetCellTooltip(iter, 3, wstrToolTip.data(), L"Flags:");
+			if (!wstrFlags.empty())
+				m_listCOMDir->SetCellTooltip(iter, 3, wstrFlags.data(), L"Flags:");
 		}
 	}
 }

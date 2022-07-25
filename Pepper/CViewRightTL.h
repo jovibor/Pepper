@@ -28,7 +28,7 @@ private:
 	void OnDraw(CDC* pDC)override; // overridden to draw this view.
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnListSectionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnListSecHdrGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListImportGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListRelocsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnListExceptionsGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult);
