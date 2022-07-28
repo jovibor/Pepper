@@ -26,22 +26,22 @@ private:
 	void OnDraw(CDC* pDC)override; // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	void CreateHexDosHeaderEntry(DWORD dwEntry);
-	void CreateHexRichHeaderEntry(DWORD dwEntry);
-	void CreateHexNtHeaderEntry(); //There is only one entry in this header, no dwEntry needed.
-	void CreateHexFileHeaderEntry(DWORD dwEntry);
-	void CreateHexOptHeaderEntry(DWORD dwEntry);
-	void CreateHexDataDirsEntry(DWORD dwEntry);
-	void CreateHexSecHeadersEntry(DWORD dwEntry);
-	void CreateHexLCDEntry(DWORD dwEntry);
+	void ShowDosHdrHexEntry(DWORD dwEntry);
+	void ShowRichHdrHexEntry(DWORD dwEntry);
+	void ShowNtHdrHexEntry(); //There is only one entry in this header, no dwEntry needed.
+	void ShowFileHdrHexEntry(DWORD dwEntry);
+	void ShowOptHdrHexEntry(DWORD dwEntry);
+	void ShowDataDirsHexEntry(DWORD dwEntry);
+	void ShowSecHdrHexEntry(DWORD dwEntry);
+	void ShowLCDHexEntry(DWORD dwEntry);
 	void CreateListExportFuncs();
-	void CreateListImportEntry(DWORD dwEntry);
-	void CreateListDelayImportEntry(DWORD dwEntry);
-	void CreateListRelocsEntry(DWORD dwEntry);
-	void CreateHexDebugEntry(DWORD dwEntry);
+	void ShowImportListEntry(DWORD dwEntry);
+	void ShowDelayImpListEntry(DWORD dwEntry);
+	void ShowRelocsListEntry(DWORD dwEntry);
+	void ShowDebugHexEntry(DWORD dwEntry);
 	void CreateTreeResources();
-	void CreateHexTLS();
-	void CreateHexSecurityEntry(unsigned nSertId);
+	void ShowTLSHex();
+	void ShowSecurityHexEntry(unsigned nSertId);
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void OnDocEditMode();

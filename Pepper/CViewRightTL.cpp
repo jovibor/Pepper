@@ -122,114 +122,81 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		m_pwndActive->ShowWindow(SW_HIDE);
 
 	m_fFileSummaryShow = false;
-
-	CRect rcClient, rc;
-	::GetClientRect(AfxGetMainWnd()->m_hWnd, &rcClient);
-	GetClientRect(&rc);
-
+	bool fShowRow { true };
 	switch (LOWORD(lHint))
 	{
 	case IDC_SHOW_FILE_SUMMARY:
 		m_fFileSummaryShow = true;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
+		m_pwndActive = nullptr;
 		break;
 	case IDC_LIST_DOSHEADER:
-		m_listDOSHeader->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listDOSHeader;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_RICHHEADER:
-		m_listRichHdr->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listRichHdr;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_NTHEADER:
-		m_listNTHeader->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listNTHeader;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_FILEHEADER:
-		m_listFileHeader->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listFileHeader;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_OPTIONALHEADER:
-		m_listOptHeader->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listOptHeader;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_DATADIRECTORIES:
-		m_listDataDirs->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listDataDirs;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_SECHEADERS:
-		m_listSecHeaders->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listSecHeaders;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_EXPORT:
-		m_listExportDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listExportDir;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_IAT:
 	case IDC_LIST_IMPORT:
-		m_listImport->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listImport;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_TREE_RESOURCE:
-		m_treeResTop.SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &m_treeResTop;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_EXCEPTIONS:
-		m_listExceptionDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listExceptionDir;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		fShowRow = false;
 		break;
 	case IDC_LIST_SECURITY:
-		m_listSecurityDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listSecurityDir;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_RELOCATIONS:
-		m_listRelocDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listRelocDir;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_DEBUG:
-		m_listDebugDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listDebugDir;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_TLS:
-		m_listTLSDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listTLSDir;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_LOADCONFIG:
-		m_listLCD->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listLCD;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_BOUNDIMPORT:
-		m_listBoundImportDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listBoundImportDir;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_DELAYIMPORT:
-		m_listDelayImportDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listDelayImportDir;
-		m_pChildFrame->m_stSplitterRight.ShowRow(1);
 		break;
 	case IDC_LIST_COMDESCRIPTOR:
-		m_listCOMDir->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_pwndActive = &*m_listCOMDir;
-		m_pChildFrame->m_stSplitterRight.HideRow(1);
+		fShowRow = false;
 		break;
 	}
+	if (m_pwndActive) {
+		CRect rcClient;
+		GetClientRect(&rcClient);
+		m_pwndActive->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	}
+
+	fShowRow ? m_pChildFrame->m_stSplitterRight.ShowRow(1) : m_pChildFrame->m_stSplitterRight.HideRow(1);
 	m_pChildFrame->m_stSplitterRight.RecalcLayout();
 }
 
@@ -679,7 +646,7 @@ void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 		break;
 	case IDM_LIST_GOTODATAOFFSET:
 	{
-		dwSize = 1;
+		dwSize = 1; //Just highlight a starting address of one of a TLS field.
 		if (fx32)
 		{
 			const auto pTLSDir32 = &pTLSDir->unTLS.stTLSDir32;
@@ -722,7 +689,7 @@ void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 	break;
 	}
 
-	if (dwSize)
+	if (dwSize > 0)
 		m_pFileLoader->ShowOffset(dwOffset, dwSize);
 }
 
