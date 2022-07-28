@@ -450,11 +450,11 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-int CViewRightBR::CreateListTLSCallbacks()
+void CViewRightBR::CreateListTLSCallbacks()
 {
 	const auto pTLS = m_pLibpe->GetTLS();
 	if (pTLS == nullptr)
-		return -1;
+		return;
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
@@ -464,16 +464,10 @@ int CViewRightBR::CreateListTLSCallbacks()
 	m_stListTLSCallbacks->SetColumn(0, &stCol);
 
 	int listindex { };
-	WCHAR wstr[9];
-
-	for (auto& iterCallbacks : pTLS->vecTLSCallbacks)
-	{
-		swprintf_s(wstr, 9, L"%08X", iterCallbacks);
-		m_stListTLSCallbacks->InsertItem(listindex, wstr);
-		listindex++;
+	for (const auto& iterCallbacks : pTLS->vecTLSCallbacks) {
+		m_stListTLSCallbacks->InsertItem(listindex, std::format(L"{:08X}", iterCallbacks).data());
+		++listindex;
 	}
-
-	return 0;
 }
 
 void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
@@ -510,7 +504,6 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	m_EditBRB.SetWindowPos(this, rc.left, rc.top, rc.right, rc.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
@@ -636,7 +629,7 @@ void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 	};
 #pragma pack(pop)
 
-	static const std::unordered_map<int, std::wstring> mapVerInfoStrings {
+	static const std::unordered_map<int, std::wstring_view> mapVerInfoStrings {
 		{ 0, L"FileDescription" },
 		{ 1, L"FileVersion" },
 		{ 2, L"InternalName" },
@@ -653,22 +646,18 @@ void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 	//Read the list of languages and code pages.
 	VerQueryValueW(stResData.pData->data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
 
-	WCHAR wstrSubBlock[50];
 	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
-	//Read the file description for each language and code page.
-	for (size_t iterCodePage = 0; iterCodePage < dwLangCount; iterCodePage++)
+	for (size_t iterCodePage = 0; iterCodePage < dwLangCount; ++iterCodePage) //Read the file description for each language and code page.
 	{
-		for (unsigned i = 0; i < mapVerInfoStrings.size(); i++) //sizeof pstrVerInfoStrings [];
+		for (unsigned iterMap = 0; iterMap < mapVerInfoStrings.size(); ++iterMap) //sizeof pstrVerInfoStrings [];
 		{
-			swprintf_s(wstrSubBlock, 50, L"\\StringFileInfo\\%04x%04x\\%s",
-				pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(i).data());
-
-			m_wstrEditBRB += mapVerInfoStrings.at(i);
+			m_wstrEditBRB += mapVerInfoStrings.at(iterMap);
 			m_wstrEditBRB += L" - ";
-
-			if (WCHAR* pszBufferOut { }; VerQueryValueW(stResData.pData->data(), wstrSubBlock, reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
+			if (wchar_t* pszBufferOut { }; VerQueryValueW(stResData.pData->data(), std::format(L"\\StringFileInfo\\{:04x}{:04x}\\{}",
+				pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(iterMap)).data(),
+				reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
 			{
-				if (dwBytesOut)
+				if (dwBytesOut > 0)
 					m_wstrEditBRB += pszBufferOut;
 			}
 			m_wstrEditBRB += L"\r\n";
@@ -678,7 +667,6 @@ void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
@@ -744,13 +732,14 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 	if (pResData != nullptr)
 	{
 		//Destroy Dialog Sample window if it's any other resource type now.
-		if (pResData->IdResType != 5 && m_wndSampledlg.m_hWnd)
-		{
+		if (pResData->IdResType != 5 && m_wndSampledlg.m_hWnd) {
 			m_wndSampledlg.SetDlgVisible(false);
 			m_wndSampledlg.DestroyWindow();
 		}
-		if (pResData->pData->empty())
+
+		if (pResData->pData->empty()) {
 			return ResLoadError();
+		}
 
 		switch (pResData->IdResType)
 		{

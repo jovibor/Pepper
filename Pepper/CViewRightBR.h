@@ -32,26 +32,27 @@ private:
 
 class CViewRightBR final : public CScrollView
 {
-	DECLARE_DYNCREATE(CViewRightBR)
-	virtual void OnDraw(CDC* pDC);
+private:
+	void OnDraw(CDC* pDC)override;
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	virtual void OnInitialUpdate();     // first time after construct
+	void OnInitialUpdate()override;     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
+	void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)override;
 	void CreateIconCursor(const SRESDATA& stResData);
 	void CreateBitmap(const SRESDATA& stResData);
 	void CreateDebugEntry(DWORD dwEntry);
 	void CreateDlg(const SRESDATA& stResData);
+	void CreateListTLSCallbacks();
 	void CreateStrings(const SRESDATA& stResData);
 	void CreateGroupIconCursor(const SRESDATA& stResData);
 	void CreateVersion(const SRESDATA& stResData);
 	void CreateManifest(const SRESDATA& stResData);
 	void CreateToolbar(const SRESDATA& stResData);
-	int CreateListTLSCallbacks();
 	void ResLoadError();
 	void ShowResource(const SRESDATA* pResData);
-	DECLARE_MESSAGE_MAP()
 	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
+	DECLARE_DYNCREATE(CViewRightBR)
+	DECLARE_MESSAGE_MAP()
 private:
 	HWND m_hwndActive { };
 	Ilibpe* m_pLibpe { };
@@ -62,7 +63,6 @@ private:
 	LISTEXCREATE m_stlcs;
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
 	LOGFONTW m_lf { }, m_hdrlf { };
-	bool m_fDrawRes { false };
 	COLORREF m_clrBkIcons { RGB(230, 230, 230) };
 	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
 	BITMAP m_stBmp { };
@@ -72,4 +72,5 @@ private:
 	std::wstring m_wstrEditBRB; //WString for m_EditBRB.
 	CEdit m_EditBRB;            //Edit control for RT_STRING, RT_VERSION, RT_MANIFEST, Debug additional info
 	CFont m_fontEditRes;        //Font for m_EditBRB.
+	bool m_fDrawRes { false };
 };
