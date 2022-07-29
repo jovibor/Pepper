@@ -65,7 +65,10 @@ void CViewRightBL::OnInitialUpdate()
 	m_stlcs.pHdrLogFont = &m_hdrlf;
 
 	CreateListExportFuncs();
+	CreateListImportFuncs();
 	CreateTreeResources();
+	CreateListRelocsEntry();
+	CreateListDelayImpFuncs();
 }
 
 void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
@@ -252,6 +255,24 @@ void CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs->SetRedraw(TRUE);
 }
 
+void CViewRightBL::CreateListImportFuncs()
+{
+	if (m_pLibpe->GetImport() == nullptr)
+		return;
+
+	m_stlcs.dwStyle = 0;
+	m_stlcs.uID = IDC_LIST_IMPORT_ENTRY;
+	m_listImportEntry->Create(m_stlcs);
+	m_listImportEntry->InsertColumn(0, L"Offset", 0, 90);
+	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	m_listImportEntry->SetColumn(0, &stCol);
+	m_listImportEntry->SetHdrColumnColor(0, g_clrOffset);
+	m_listImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 175);
+	m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
+	m_listImportEntry->InsertColumn(3, L"AddressOfData", LVCFMT_CENTER, 150);
+	m_listImportEntry->InsertColumn(4, L"Thunk RVA", LVCFMT_CENTER, 150);
+}
+
 void CViewRightBL::CreateTreeResources()
 {
 	const auto pstResRoot = m_pLibpe->GetResources();
@@ -323,6 +344,43 @@ void CViewRightBL::CreateTreeResources()
 	}
 }
 
+void CViewRightBL::CreateListRelocsEntry()
+{
+	if (m_pLibpe->GetRelocations() == nullptr)
+		return;
+
+	m_stlcs.dwStyle = 0;
+	m_stlcs.uID = IDC_LIST_RELOCATIONS_ENTRY;
+	m_listRelocsEntry->Create(m_stlcs);
+	m_listRelocsEntry->ShowWindow(SW_HIDE);
+	m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	m_listRelocsEntry->SetColumn(0, &stCol);
+	m_listRelocsEntry->SetHdrColumnColor(0, g_clrOffset);
+	m_listRelocsEntry->InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
+	m_listRelocsEntry->InsertColumn(2, L"Offset to apply", LVCFMT_CENTER, 120);
+}
+
+void CViewRightBL::CreateListDelayImpFuncs()
+{
+	if (m_pLibpe->GetDelayImport() == nullptr)
+		return;
+
+	m_stlcs.dwStyle = 0;
+	m_stlcs.uID = IDC_LIST_DELAYIMPORT_ENTRY;
+	m_listDelayImportEntry->Create(m_stlcs);
+	m_listDelayImportEntry->InsertColumn(0, L"Offset", 0, 90);
+	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	m_listDelayImportEntry->SetColumn(0, &stCol);
+	m_listDelayImportEntry->SetHdrColumnColor(0, g_clrOffset);
+	m_listDelayImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 300);
+	m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
+	m_listDelayImportEntry->InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
+	m_listDelayImportEntry->InsertColumn(4, L"IAT AddresOfData", LVCFMT_CENTER, 200);
+	m_listDelayImportEntry->InsertColumn(5, L"BoundIAT AddresOfData", LVCFMT_CENTER, 230);
+	m_listDelayImportEntry->InsertColumn(6, L"UnloadInfoTable AddresOfData", LVCFMT_CENTER, 240);
+}
+
 void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry)
 {
 	if (dwEntry >= g_mapDOSHeader.size())
@@ -340,52 +398,6 @@ void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry)
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	const auto& ref = g_mapDOSHeader.at(dwEntry);
 	m_pFileLoader->ShowOffset(ref.dwOffset, ref.dwSize, m_stHexEdit.get());
-}
-
-void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry)
-{
-	if (!m_listRelocsEntry->IsCreated())
-	{
-		m_stlcs.dwStyle = 0;
-		m_stlcs.uID = IDC_LIST_RELOCATIONS_ENTRY;
-		m_listRelocsEntry->Create(m_stlcs);
-		m_listRelocsEntry->ShowWindow(SW_HIDE);
-		m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-		m_listRelocsEntry->SetColumn(0, &stCol);
-		m_listRelocsEntry->SetHdrColumnColor(0, g_clrOffset);
-		m_listRelocsEntry->InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
-		m_listRelocsEntry->InsertColumn(2, L"Offset to apply", LVCFMT_CENTER, 120);
-	}
-	else
-		m_listRelocsEntry->DeleteAllItems();
-
-	const auto pReloc = m_pLibpe->GetRelocations();
-	if (pReloc == nullptr || dwEntry >= pReloc->size())
-		return;
-
-	int listindex = 0;
-	m_listRelocsEntry->SetRedraw(FALSE);
-	for (const auto& iterRelocs : pReloc->at(dwEntry).vecRelocData)
-	{
-		m_listRelocsEntry->InsertItem(listindex, std::format(L"{:08X}", iterRelocs.dwOffset).data());
-
-		if (const auto type = MapRelocType.find(iterRelocs.wRelocType); type != MapRelocType.end()) {
-			m_listRelocsEntry->SetItemText(listindex, 1, type->second.data());
-		}
-		else {
-			m_listRelocsEntry->SetItemText(listindex, 1, std::format(L"{}", iterRelocs.wRelocType).data());
-		}
-
-		m_listRelocsEntry->SetItemText(listindex, 2, std::format(L"{:04X}", iterRelocs.wRelocOffset).data());
-		++listindex;
-	}
-	m_listRelocsEntry->SetRedraw(TRUE);
-
-	CRect rc;
-	GetClientRect(&rc);
-	m_listRelocsEntry->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_hwndActive = m_listRelocsEntry->m_hWnd;
 }
 
 void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry)
@@ -546,26 +558,11 @@ void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 {
-	if (!m_listImportEntry->IsCreated())
-	{
-		m_stlcs.dwStyle = 0;
-		m_stlcs.uID = IDC_LIST_IMPORT_ENTRY;
-		m_listImportEntry->Create(m_stlcs);
-		m_listImportEntry->InsertColumn(0, L"Offset", 0, 90);
-		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-		m_listImportEntry->SetColumn(0, &stCol);
-		m_listImportEntry->SetHdrColumnColor(0, g_clrOffset);
-		m_listImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 175);
-		m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
-		m_listImportEntry->InsertColumn(3, L"AddressOfData", LVCFMT_CENTER, 150);
-		m_listImportEntry->InsertColumn(4, L"Thunk RVA", LVCFMT_CENTER, 150);
-	}
-	else
-		m_listImportEntry->DeleteAllItems();
-
 	const auto pImport = m_pLibpe->GetImport();
 	if (pImport == nullptr || dwEntry >= pImport->size())
 		return;
+
+	m_listImportEntry->DeleteAllItems();
 
 	if (m_hwndActive)
 		::ShowWindow(m_hwndActive, SW_HIDE);
@@ -619,8 +616,7 @@ void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId)
 	const auto dwCertSize = static_cast<DWORD_PTR>(secEntry.dwLength) - offsetof(WIN_CERTIFICATE, bCertificate);
 	m_pFileLoader->ShowFilePiece(dwStart, dwCertSize, m_stHexEdit.get());
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -630,30 +626,44 @@ void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId)
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
+void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry)
+{
+	const auto pReloc = m_pLibpe->GetRelocations();
+	if (pReloc == nullptr || dwEntry >= pReloc->size())
+		return;
+
+	m_listRelocsEntry->DeleteAllItems();
+	int listindex = 0;
+	m_listRelocsEntry->SetRedraw(FALSE);
+	for (const auto& iterRelocs : pReloc->at(dwEntry).vecRelocData)
+	{
+		m_listRelocsEntry->InsertItem(listindex, std::format(L"{:08X}", iterRelocs.dwOffset).data());
+
+		if (const auto type = MapRelocType.find(iterRelocs.wRelocType); type != MapRelocType.end()) {
+			m_listRelocsEntry->SetItemText(listindex, 1, type->second.data());
+		}
+		else {
+			m_listRelocsEntry->SetItemText(listindex, 1, std::format(L"{}", iterRelocs.wRelocType).data());
+		}
+
+		m_listRelocsEntry->SetItemText(listindex, 2, std::format(L"{:04X}", iterRelocs.wRelocOffset).data());
+		++listindex;
+	}
+	m_listRelocsEntry->SetRedraw(TRUE);
+
+	CRect rc;
+	GetClientRect(&rc);
+	m_listRelocsEntry->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_hwndActive = m_listRelocsEntry->m_hWnd;
+}
+
 void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 {
-	if (!m_listDelayImportEntry->IsCreated())
-	{
-		m_stlcs.dwStyle = 0;
-		m_stlcs.uID = IDC_LIST_DELAYIMPORT_ENTRY;
-		m_listDelayImportEntry->Create(m_stlcs);
-		m_listDelayImportEntry->InsertColumn(0, L"Offset", 0, 90);
-		LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-		m_listDelayImportEntry->SetColumn(0, &stCol);
-		m_listDelayImportEntry->SetHdrColumnColor(0, g_clrOffset);
-		m_listDelayImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 300);
-		m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
-		m_listDelayImportEntry->InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
-		m_listDelayImportEntry->InsertColumn(4, L"IAT AddresOfData", LVCFMT_CENTER, 200);
-		m_listDelayImportEntry->InsertColumn(5, L"BoundIAT AddresOfData", LVCFMT_CENTER, 230);
-		m_listDelayImportEntry->InsertColumn(6, L"UnloadInfoTable AddresOfData", LVCFMT_CENTER, 240);
-	}
-	else
-		m_listDelayImportEntry->DeleteAllItems();
-
 	const auto pDelayImport = m_pLibpe->GetDelayImport();
 	if (pDelayImport == nullptr || dwEntry >= pDelayImport->size())
 		return;
+
+	m_listDelayImportEntry->DeleteAllItems();
 
 	int listindex = 0;
 	auto dwThunkOffset = m_pLibpe->GetOffsetFromRVA(pDelayImport->at(dwEntry).stDelayImpDesc.ImportNameTableRVA);

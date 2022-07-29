@@ -26,6 +26,11 @@ private:
 	void OnDraw(CDC* pDC)override; // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	void CreateListExportFuncs();
+	void CreateListImportFuncs();
+	void CreateTreeResources();
+	void CreateListRelocsEntry();
+	void CreateListDelayImpFuncs();
 	void ShowDosHdrHexEntry(DWORD dwEntry);
 	void ShowRichHdrHexEntry(DWORD dwEntry);
 	void ShowNtHdrHexEntry(); //There is only one entry in this header, no dwEntry needed.
@@ -34,16 +39,14 @@ private:
 	void ShowDataDirsHexEntry(DWORD dwEntry);
 	void ShowSecHdrHexEntry(DWORD dwEntry);
 	void ShowLCDHexEntry(DWORD dwEntry);
-	void CreateListExportFuncs();
 	void ShowImportListEntry(DWORD dwEntry);
 	void ShowDelayImpListEntry(DWORD dwEntry);
 	void ShowRelocsListEntry(DWORD dwEntry);
 	void ShowDebugHexEntry(DWORD dwEntry);
-	void CreateTreeResources();
 	void ShowTLSHex();
 	void ShowSecurityHexEntry(unsigned nSertId);
-	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)override;
+	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
 	void OnDocEditMode();
 	DECLARE_MESSAGE_MAP()
 	DECLARE_DYNCREATE(CViewRightBL)
