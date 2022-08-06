@@ -171,7 +171,6 @@ BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 {
 	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(lParam);
-
 	if (pTree->hdr.idFrom == IDC_TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
 	{
 		const auto pstResRoot = m_pLibpe->GetResources();
@@ -181,32 +180,28 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 		const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
 		if (idlvl2 >= 0)
 		{
-			auto& rootvec = pstResRoot->vecResData;
-			auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
-			auto& lvl2vec = lvl2tup.vecResData;
-
+			const auto& rootvec = pstResRoot->vecResData;
+			const auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
+			const auto& lvl2vec = lvl2tup.vecResData;
 			if (!lvl2vec.empty())
 			{
 				if (idlvl3 >= 0)
 				{
-					auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
-					auto& lvl3vec = lvl3tup.vecResData;
+					const auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
+					const auto& lvl3vec = lvl3tup.vecResData;
 
 					if (!lvl3vec.empty())
 					{
-						auto data = &lvl3vec[idlvl3].vecRawResData;
+						const auto data = &lvl3vec[idlvl3].vecRawResData;
 						//Resource data and resource type to show in CViewRightBR.
-						SRESDATA stResHelper { };
-						stResHelper.IdResType = rootvec[idlvlRoot].stResDirEntry.Id;
-						stResHelper.IdResName = lvl2vec[idlvl2].stResDirEntry.Id;
-						stResHelper.pData = data;
-						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&stResHelper));
+						SRESDATA stResData { .IdResType = rootvec[idlvlRoot].stResDirEntry.Id,
+							.IdResName = lvl2vec[idlvl2].stResDirEntry.Id, .pData = data };
+						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&stResData));
 					}
 				}
 			}
 		}
-		else
-		{
+		else {
 			//Update by default, with no data — to clear the view.
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), nullptr);
 		}

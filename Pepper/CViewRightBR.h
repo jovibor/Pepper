@@ -20,14 +20,16 @@ class CWndSampleDlg final : public CWnd
 {
 public:
 	void Attach(CImageList* pImgList, CChildFrame* pChildFrame);
+	void CreatedForMenu(bool fMenu);  //Created for show RT_MENU, not RT_DIALOG.
 	void SetDlgVisible(bool fVisible);
-	DECLARE_MESSAGE_MAP()
 private:
 	afx_msg void OnPaint();
 	afx_msg void OnClose();
+	DECLARE_MESSAGE_MAP()
 private:
 	CImageList* m_pImgRes { };
 	CChildFrame* m_pChildFrame { };
+	bool m_fMenu { false }; //Dialog is created only for showing RT_MENU.
 };
 
 class CViewRightBR final : public CScrollView
@@ -48,6 +50,7 @@ private:
 	void CreateVersion(const SRESDATA& stResData);
 	void CreateManifest(const SRESDATA& stResData);
 	void CreateToolbar(const SRESDATA& stResData);
+	void CreateMenu(const SRESDATA& stResData);
 	void ResLoadError();
 	void ShowResource(const SRESDATA* pResData);
 	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
@@ -59,7 +62,8 @@ private:
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CImageList m_stImgRes;
-	CWndSampleDlg m_wndSampledlg;
+	CWndSampleDlg m_wndSampleDlg;
+	CMenu m_menuSample;
 	LISTEXCREATE m_stlcs;
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
 	LOGFONTW m_lf { }, m_hdrlf { };

@@ -335,7 +335,7 @@ struct SRESDATA
 {
 	WORD IdResType { };
 	WORD IdResName { };
-	std::vector<std::byte>* pData { };
+	const std::vector<std::byte>* pData { };
 };
 
 struct SWINDOWSTATUS

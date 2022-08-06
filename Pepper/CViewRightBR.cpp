@@ -24,6 +24,11 @@ void CWndSampleDlg::Attach(CImageList* pImgList, CChildFrame* pChildFrame)
 	m_pChildFrame = pChildFrame;
 }
 
+void CWndSampleDlg::CreatedForMenu(bool fMenu)
+{
+	m_fMenu = fMenu;
+}
+
 void CWndSampleDlg::SetDlgVisible(bool fVisible)
 {
 	if (m_pChildFrame == nullptr)
@@ -36,8 +41,18 @@ void CWndSampleDlg::SetDlgVisible(bool fVisible)
 void CWndSampleDlg::OnPaint()
 {
 	CPaintDC dc(this);
-	if (m_pImgRes)
+
+	CRect rc;
+	GetClientRect(rc);
+	dc.FillSolidRect(rc, RGB(255, 255, 255));
+
+	if (m_fMenu) {
+		dc.SetTextColor(RGB(255, 0, 0));
+		dc.TextOutW(5, 5, L"Sample dialog for showing menu resource");
+	}
+	else if (m_pImgRes != nullptr) {
 		m_pImgRes->Draw(&dc, 0, POINT { 0, 0 }, ILD_NORMAL);
+	}
 }
 
 void CWndSampleDlg::OnClose()
@@ -66,7 +81,7 @@ void CViewRightBR::OnInitialUpdate()
 	m_EditBRB.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);
 
-	m_wndSampledlg.Attach(&m_stImgRes, m_pChildFrame);
+	m_wndSampleDlg.Attach(&m_stImgRes, m_pChildFrame);
 
 	LOGFONTW lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
@@ -110,17 +125,17 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		return;
 
 	//If any but Resources Update we destroy m_DlgSampleWnd, if it's currently created.
-	if (LOWORD(lHint) != IDC_SHOW_RESOURCE_RBR)
-	{
-		if (m_wndSampledlg.m_hWnd)
-			m_wndSampledlg.DestroyWindow();
+	if (LOWORD(lHint) != IDC_SHOW_RESOURCE_RBR) {
+		if (m_wndSampleDlg.m_hWnd)
+			m_wndSampleDlg.DestroyWindow();
 	}
 
 	if (m_hwndActive)
 		::ShowWindow(m_hwndActive, SW_HIDE);
 
-	CRect rcParent, rcClient;
+	CRect rcParent;
 	GetParent()->GetWindowRect(&rcParent);
+	CRect rcClient;
 	GetClientRect(&rcClient);
 	m_fDrawRes = false;
 
@@ -244,7 +259,8 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 
 void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 {
-	const auto hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(stResData.pData->data()), static_cast<DWORD>(stResData.pData->size()),
+	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(stResData.pData->data())),
+		static_cast<DWORD>(stResData.pData->size()),
 		(stResData.IdResType == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 	if (!hIcon)
 		return ResLoadError();
@@ -273,18 +289,17 @@ void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 
 void CViewRightBR::CreateBitmap(const SRESDATA& stResData)
 {
-	auto* pBMPInfo = reinterpret_cast<PBITMAPINFO>(stResData.pData->data());
-	const auto* pBMPHdr = &pBMPInfo->bmiHeader;
+	const auto pBMPInfo = reinterpret_cast<const BITMAPINFO*>(stResData.pData->data());
+	const auto pBMPHdr = &pBMPInfo->bmiHeader;
 	const auto nNumColors = pBMPHdr->biClrUsed > 0 ? pBMPHdr->biClrUsed : 1 << pBMPHdr->biBitCount;
 
-	LPVOID pDIBBits;
-	if (pBMPHdr->biBitCount > 8)
-	{
-		pDIBBits = static_cast<LPVOID>(reinterpret_cast<PDWORD>(pBMPInfo->bmiColors + pBMPHdr->biClrUsed) +
+	LPCVOID pDIBBits;
+	if (pBMPHdr->biBitCount > 8) {
+		pDIBBits = static_cast<LPCVOID>(reinterpret_cast<const DWORD*>(pBMPInfo->bmiColors + pBMPHdr->biClrUsed) +
 			((pBMPHdr->biCompression == BI_BITFIELDS) ? 3 : 0));
 	}
 	else
-		pDIBBits = static_cast<LPVOID>(pBMPInfo->bmiColors + nNumColors);
+		pDIBBits = static_cast<LPCVOID>(pBMPInfo->bmiColors + nNumColors);
 
 	auto hDC = ::GetDC(m_hWnd);
 	auto hBitmap = CreateDIBitmap(hDC, pBMPHdr, CBM_INIT, pDIBBits, pBMPInfo, DIB_RGB_COLORS);
@@ -328,27 +343,25 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 	};
 #pragma pack(pop)
 
-	const auto optData = ParceDlgTemplate({ stResData.pData->data(), stResData.pData->size() });
+	const auto optData = ParceDlgTemplate({ const_cast<std::byte*>(stResData.pData->data()), stResData.pData->size() });
 	if (!optData)
 		return ResLoadError();
 
 	m_wstrEditBRB = std::move(*optData);
 
-	bool fDlgEx = *((reinterpret_cast<PWORD>(stResData.pData->data())) + 1) == 0xFFFF;
+	const bool fDlgEx = *((reinterpret_cast<const WORD*>(stResData.pData->data())) + 1) == 0xFFFF;
 
 	//Pointer to 'Style' dword.
-	PDWORD pStyle { fDlgEx ? &(reinterpret_cast<DLGTEMPLATEEX*>(stResData.pData->data()))->style :
-		&(reinterpret_cast<DLGTEMPLATE*>(stResData.pData->data()))->style };
+	PDWORD pStyle { fDlgEx ? &(const_cast<DLGTEMPLATEEX*>(reinterpret_cast<const DLGTEMPLATEEX*>(stResData.pData->data())))->style :
+		&(const_cast<DLGTEMPLATE*>(reinterpret_cast<const DLGTEMPLATE*>(stResData.pData->data())))->style };
 
 	bool fWS_VISIBLE { false };
-	if (*pStyle & WS_VISIBLE) //Remove WS_VISIBLE flag if exists, so that dialog not steal the focus on creation.
-	{
+	if (*pStyle & WS_VISIBLE) { //Remove WS_VISIBLE flag if exists, so that dialog not steal the focus on creation.
 		*pStyle &= ~WS_VISIBLE;
 		fWS_VISIBLE = true;
 	}
 
-	auto hwndResDlg = CreateDialogIndirectParamW(nullptr,
-		reinterpret_cast<LPCDLGTEMPLATEW>(stResData.pData->data()), m_hWnd, nullptr, 0);
+	auto hwndResDlg = CreateDialogIndirectParamW(nullptr, reinterpret_cast<LPCDLGTEMPLATEW>(stResData.pData->data()), m_hWnd, nullptr, 0);
 
 	if (!hwndResDlg)
 	{
@@ -360,19 +373,17 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 		//Instead, just showing empty dialog without controls.
 		PWORD pWordDlgItems;
 		WORD wOld;
-		if (fDlgEx) //DLGTEMPLATEEX
-		{
-			pWordDlgItems = &(reinterpret_cast<DLGTEMPLATEEX*>(stResData.pData->data()))->cDlgItems;
+		if (fDlgEx) { //DLGTEMPLATEEX
+			pWordDlgItems = &(const_cast<DLGTEMPLATEEX*>(reinterpret_cast<const DLGTEMPLATEEX*>(stResData.pData->data())))->cDlgItems;
 			wOld = *pWordDlgItems;
 		}
-		else //DLGTEMPLATE
-		{
-			pWordDlgItems = &(reinterpret_cast<DLGTEMPLATE*>(stResData.pData->data()))->cdit;
+		else { //DLGTEMPLATE
+
+			pWordDlgItems = &(const_cast<DLGTEMPLATE*>(reinterpret_cast<const DLGTEMPLATE*>(stResData.pData->data())))->cdit;
 			wOld = *pWordDlgItems;
 		}
 		*pWordDlgItems = 0;
-		hwndResDlg = CreateDialogIndirectParamW(nullptr,
-			reinterpret_cast<LPCDLGTEMPLATEW>(stResData.pData->data()), m_hWnd, nullptr, 0);
+		hwndResDlg = CreateDialogIndirectParamW(nullptr, reinterpret_cast<LPCDLGTEMPLATEW>(stResData.pData->data()), m_hWnd, nullptr, 0);
 		*pWordDlgItems = wOld;
 	}
 
@@ -381,39 +392,38 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 	if (!hwndResDlg)
 		return ResLoadError();
 
-	CRect rcDlg;
-	::GetWindowRect(hwndResDlg, &rcDlg);
+	CRect rcResDlg;
+	::GetWindowRect(hwndResDlg, &rcResDlg);
 	int iPosX = 0, iPosY = 0;
 	UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
-	DWORD dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
-	DWORD dwExStyles { WS_EX_APPWINDOW };
-	if (!m_wndSampledlg.m_hWnd)
+	constexpr DWORD dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
+	constexpr DWORD dwExStyles { WS_EX_APPWINDOW };
+	if (!m_wndSampleDlg.m_hWnd)
 	{
-		if (!m_wndSampledlg.CreateEx(dwExStyles, AfxRegisterWndClass(0),
-			L"Sample Dialog...", dwStyles, 0, 0, 0, 0, m_hWnd, nullptr))
-		{
+		if (!m_wndSampleDlg.CreateEx(dwExStyles, AfxRegisterWndClass(0),
+			L"Sample Dialog...", dwStyles, 0, 0, 0, 0, m_hWnd, nullptr)) {
 			MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
 			return;
 		}
-		iPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - rcDlg.Width() / 2;
-		iPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - rcDlg.Height() / 2;
+		iPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - rcResDlg.Width() / 2;
+		iPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - rcResDlg.Height() / 2;
 		uFlags &= ~SWP_NOMOVE;
 	}
 
-	HDC hDC = ::GetDC(m_wndSampledlg.m_hWnd);
-	HDC hDCMemory = CreateCompatibleDC(hDC);
-	HBITMAP hBitmap = CreateCompatibleBitmap(hDC, rcDlg.Width(), rcDlg.Height());
+	const auto hDC = ::GetDC(m_wndSampleDlg.m_hWnd);
+	const auto hDCMemory = CreateCompatibleDC(hDC);
+	const auto hBitmap = CreateCompatibleBitmap(hDC, rcResDlg.Width(), rcResDlg.Height());
 	::SelectObject(hDCMemory, hBitmap);
 
 	//To avoid window pop-up removing Windows animation temporarily, then restore back.
 	ANIMATIONINFO aninfo { .cbSize { sizeof(ANIMATIONINFO) } };
 	SystemParametersInfoW(SPI_GETANIMATION, aninfo.cbSize, &aninfo, 0);
-	int iMinAnimate = aninfo.iMinAnimate;
+	const auto iMinAnimate = aninfo.iMinAnimate;
 	if (iMinAnimate) {
 		aninfo.iMinAnimate = 0;
 		SystemParametersInfoW(SPI_SETANIMATION, aninfo.cbSize, &aninfo, SPIF_SENDCHANGE);
 	}
-	LONG_PTR lLong = GetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE);
+	const auto lLong = GetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE);
 	SetWindowLongPtrW(hwndResDlg, GWL_EXSTYLE, lLong | WS_EX_LAYERED);
 	::SetLayeredWindowAttributes(hwndResDlg, 0, 1, LWA_ALPHA);
 
@@ -427,20 +437,22 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 	}
 
 	DeleteDC(hDCMemory);
-	::ReleaseDC(m_wndSampledlg.m_hWnd, hDC);
+	::ReleaseDC(m_wndSampleDlg.m_hWnd, hDC);
 
 	CBitmap bmp;
 	if (!bmp.Attach(hBitmap))
 		return ResLoadError();
-	m_stImgRes.Create(rcDlg.Width(), rcDlg.Height(), ILC_COLORDDB, 0, 1);
+	m_stImgRes.Create(rcResDlg.Width(), rcResDlg.Height(), ILC_COLORDDB, 0, 1);
 	if (m_stImgRes.Add(&bmp, nullptr) == -1)
 		return ResLoadError();
 	bmp.DeleteObject();
 
-	AdjustWindowRectEx(rcDlg, dwStyles, FALSE, dwExStyles); //Get window size with desirable client rect.
-	m_wndSampledlg.SetWindowPos(this, iPosX, iPosY, rcDlg.Width(), rcDlg.Height(), uFlags);
-	m_wndSampledlg.SetDlgVisible(true);
-	m_wndSampledlg.RedrawWindow(); //Draw dialog bitmap.
+	AdjustWindowRectEx(rcResDlg, dwStyles, FALSE, dwExStyles); //Get window size with desirable client rect.
+	m_wndSampleDlg.CreatedForMenu(false);
+	m_wndSampleDlg.SetMenu(nullptr); //Removing any menu that could be set previously in RT_MENU handler.
+	m_wndSampleDlg.SetWindowPos(this, iPosX, iPosY, rcResDlg.Width(), rcResDlg.Height(), uFlags);
+	m_wndSampleDlg.SetDlgVisible(true);
+	m_wndSampleDlg.RedrawWindow();  //Draw dialog bitmap.
 
 	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data()); //Set Dialog resources info to Editbox.
 	CRect rcClient;
@@ -594,7 +606,7 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 								DeleteObject(iconInfo.hbmMask);
 
 								m_vecImgRes.emplace_back(std::make_unique<CImageList>());
-								auto& vecBack = m_vecImgRes.back();
+								const auto& vecBack = m_vecImgRes.back();
 								vecBack->Create(m_stBmp.bmWidth,
 									(iterRoot.stResDirEntry.Id == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
 								vecBack->SetBkColor(m_clrBkImgList);
@@ -720,6 +732,51 @@ void CViewRightBR::CreateToolbar(const SRESDATA& stResData)
 	}
 }
 
+void CViewRightBR::CreateMenu(const SRESDATA& stResData)
+{
+	if (stResData.pData == nullptr || stResData.pData->empty())
+		return;
+
+	m_menuSample.DestroyMenu();
+	if (m_menuSample.LoadMenuIndirectW(stResData.pData->data())) {
+		for (auto iter = 0; iter < m_menuSample.GetMenuItemCount(); ++iter) {
+			CString strName;
+			m_menuSample.GetMenuStringW(iter, strName, MF_BYPOSITION);
+			if (strName.GetLength() == 0) { //Setting name for all empty menus to "<Empty>", to be clickable.
+				strName = L"<Empty>";
+				MENUITEMINFOW mii { };
+				mii.cbSize = sizeof(MENUITEMINFOW);
+				mii.fMask = MIIM_STRING;
+				mii.dwTypeData = const_cast<LPWSTR>(strName.GetString());
+				m_menuSample.SetMenuItemInfoW(iter, &mii, TRUE);
+				m_menuSample.EnableMenuItem(iter, MF_ENABLED | MF_BYPOSITION);
+			}
+		}
+
+		int iPosX = 0, iPosY = 0;
+		constexpr auto iWidth = 700;
+		constexpr auto iHeight = 100;
+		UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
+		constexpr DWORD dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
+		if (!m_wndSampleDlg.m_hWnd)
+		{
+			if (!m_wndSampleDlg.CreateEx(WS_EX_APPWINDOW, AfxRegisterWndClass(0),
+				L"Sample Dialog...", dwStyles, 0, 0, 0, 0, m_hWnd, nullptr)) {
+				MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
+				return;
+			}
+			iPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - iWidth / 2;
+			iPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - iHeight / 2;
+			uFlags &= ~SWP_NOMOVE;
+		}
+		m_wndSampleDlg.CreatedForMenu(true);
+		m_wndSampleDlg.SetMenu(&m_menuSample);
+		m_wndSampleDlg.SetWindowPos(this, iPosX, iPosY, iWidth, iHeight, uFlags);
+		m_wndSampleDlg.SetDlgVisible(true);
+		m_wndSampleDlg.RedrawWindow();
+	}
+}
+
 void CViewRightBR::ShowResource(const SRESDATA* pResData)
 {
 	m_stImgRes.DeleteImageList();
@@ -731,10 +788,10 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 
 	if (pResData != nullptr)
 	{
-		//Destroy Dialog Sample window if it's any other resource type now.
-		if (pResData->IdResType != 5 && m_wndSampledlg.m_hWnd) {
-			m_wndSampledlg.SetDlgVisible(false);
-			m_wndSampledlg.DestroyWindow();
+		//Destroy Dialog Sample window if it's any other resource but RT_MENU or RT_DIALOG.
+		if (pResData->IdResType != 4 && pResData->IdResType != 5 && m_wndSampleDlg.m_hWnd) {
+			m_wndSampleDlg.SetDlgVisible(false);
+			m_wndSampleDlg.DestroyWindow();
 		}
 
 		if (pResData->pData->empty()) {
@@ -750,8 +807,9 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 		case 2: //RT_BITMAP
 			CreateBitmap(*pResData);
 			break;
-			//case 4: //RT_MENU
-			//break;
+		case 4: //RT_MENU
+			CreateMenu(*pResData);
+			break;
 		case 5: //RT_DIALOG
 			CreateDlg(*pResData);
 			break;
@@ -779,10 +837,9 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 	else
 	{
 		//Destroy Dialog Sample window if it's just Resource window Update.
-		if (m_wndSampledlg.m_hWnd)
-		{
-			m_wndSampledlg.SetDlgVisible(false);
-			m_wndSampledlg.DestroyWindow();
+		if (m_wndSampleDlg.m_hWnd) {
+			m_wndSampleDlg.SetDlgVisible(false);
+			m_wndSampleDlg.DestroyWindow();
 		}
 	}
 
