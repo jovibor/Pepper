@@ -296,10 +296,10 @@ void CViewRightBL::CreateTreeResources()
 	//that holds tuple of three IDs of resource — Type, Name, LangID.
 	for (const auto& iterRoot : pstResRoot->vecResData)
 	{
-		const auto* pResDirEntry = &iterRoot.stResDirEntry;
+		const auto pResDirEntry = &iterRoot.stResDirEntry;
 		std::wstring wstrResName;
 		if (pResDirEntry->NameIsString) {
-			wstrResName = std::format(L"«{}»", iterRoot.wstrResName);
+			wstrResName = std::format(L"{}", iterRoot.wstrResName);
 		}
 		else { //Setting Treectrl root node name depending on Resource typeID.
 			if (const auto iter = MapResID.find(pResDirEntry->Id); iter != MapResID.end()) {
@@ -318,18 +318,19 @@ void CViewRightBL::CreateTreeResources()
 
 		for (const auto& iterLvL2 : refResLvL2.vecResData)
 		{
+			const auto pResDirEntry2 = &iterLvL2.stResDirEntry;
 			m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
 			long ilvl3 = 0;
 			const auto& refResLvL3 = iterLvL2.stResLvL3;
 
 			for (const auto& iterLvL3 : refResLvL3.vecResData)
 			{
-				pResDirEntry = &iterLvL3.stResDirEntry;
-				if (pResDirEntry->NameIsString) {
-					wstrResName = std::format(L"«{}» - lang: {}", iterLvL2.wstrResName, pResDirEntry->Id);
+				const auto pResDirEntry3 = &iterLvL3.stResDirEntry;
+				if (pResDirEntry2->NameIsString) { //Checking level2 name, not 3.
+					wstrResName = std::format(L"Name: {} lang: {}", iterLvL2.wstrResName, pResDirEntry3->Id);
 				}
 				else {
-					wstrResName = std::format(L"{} - lang: {}", iterLvL2.stResDirEntry.Id, pResDirEntry->Id);
+					wstrResName = std::format(L"Id: {} lang: {}", iterLvL2.stResDirEntry.Id, pResDirEntry3->Id);
 				}
 				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
 				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(wstrResName.data(), treeRoot), m_vecResId.size() - 1);
