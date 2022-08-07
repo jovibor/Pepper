@@ -189,20 +189,22 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 				{
 					const auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
 					const auto& lvl3vec = lvl3tup.vecResData;
-
 					if (!lvl3vec.empty())
 					{
-						const auto data = &lvl3vec[idlvl3].vecRawResData;
-						//Resource data and resource type to show in CViewRightBR.
-						SRESDATA stResData { .IdResType = rootvec[idlvlRoot].stResDirEntry.Id,
-							.IdResName = lvl2vec[idlvl2].stResDirEntry.Id, .pData = data };
+						const auto pData = &lvl3vec[idlvl3].vecRawResData;
+						//Resource pData and resource type to show in CViewRightBR.
+						SRESDATA stResData { .wIdType = rootvec[idlvlRoot].stResDirEntry.Id,
+							.wIdName = lvl2vec[idlvl2].stResDirEntry.Id,
+							.wIdLang = lvl3vec[idlvl3].stResDirEntry.Id,
+							.pData = pData };
+
 						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&stResData));
 					}
 				}
 			}
 		}
 		else {
-			//Update by default, with no data — to clear the view.
+			//Update by default, with no pData — to clear the view.
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), nullptr);
 		}
 	}

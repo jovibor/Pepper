@@ -42,15 +42,16 @@ private:
 	void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)override;
 	void CreateIconCursor(const SRESDATA& stResData);
 	void CreateBitmap(const SRESDATA& stResData);
+	void CreateMenu(const SRESDATA& stResData);
 	void CreateDebugEntry(DWORD dwEntry);
 	void CreateDlg(const SRESDATA& stResData);
 	void CreateListTLSCallbacks();
 	void CreateStrings(const SRESDATA& stResData);
+	void CreateAccel(const SRESDATA& stResData);
 	void CreateGroupIconCursor(const SRESDATA& stResData);
 	void CreateVersion(const SRESDATA& stResData);
 	void CreateManifest(const SRESDATA& stResData);
 	void CreateToolbar(const SRESDATA& stResData);
-	void CreateMenu(const SRESDATA& stResData);
 	void ResLoadError();
 	void ShowResource(const SRESDATA* pResData);
 	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
@@ -73,7 +74,6 @@ private:
 	int m_iResTypeToDraw { };
 	int m_iImgResWidth { }, m_iImgResHeight { };              //Width and height of whole image to draw.
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { }; //Vector for RT_GROUP_ICON/CURSOR.
-	std::wstring m_wstrEditBRB; //WString for m_EditBRB.
 	CEdit m_EditBRB;            //Edit control for RT_STRING, RT_VERSION, RT_MANIFEST, Debug additional info
 	CFont m_fontEditRes;        //Font for m_EditBRB.
 	bool m_fDrawRes { false };

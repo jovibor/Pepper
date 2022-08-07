@@ -7,9 +7,9 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
+#include "CViewRightBR.h"
 #include "MainFrm.h"
 #include "Utility.h"
-#include "CViewRightBR.h"
 #include <format>
 #pragma comment(lib, "Mincore.lib") //VerQueryValueW
 
@@ -261,7 +261,7 @@ void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 {
 	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(stResData.pData->data())),
 		static_cast<DWORD>(stResData.pData->size()),
-		(stResData.IdResType == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+		(stResData.wIdType == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 	if (!hIcon)
 		return ResLoadError();
 
@@ -274,16 +274,16 @@ void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 	DeleteObject(iconInfo.hbmMask);
 
 	m_stImgRes.Create(m_stBmp.bmWidth,
-		(stResData.IdResType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
+		(stResData.wIdType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
 	m_stImgRes.SetBkColor(m_clrBkImgList);
 	if (m_stImgRes.Add(hIcon) == -1)
 		return ResLoadError();
 
 	DestroyIcon(hIcon);
 	SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth,
-		(stResData.IdResType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth));
+		(stResData.wIdType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth));
 
-	m_iResTypeToDraw = stResData.IdResType;
+	m_iResTypeToDraw = stResData.wIdType;
 	m_fDrawRes = true;
 }
 
@@ -301,8 +301,8 @@ void CViewRightBR::CreateBitmap(const SRESDATA& stResData)
 	else
 		pDIBBits = static_cast<LPCVOID>(pBMPInfo->bmiColors + nNumColors);
 
-	auto hDC = ::GetDC(m_hWnd);
-	auto hBitmap = CreateDIBitmap(hDC, pBMPHdr, CBM_INIT, pDIBBits, pBMPInfo, DIB_RGB_COLORS);
+	const auto hDC = ::GetDC(m_hWnd);
+	const auto hBitmap = CreateDIBitmap(hDC, pBMPHdr, CBM_INIT, pDIBBits, pBMPInfo, DIB_RGB_COLORS);
 	::ReleaseDC(m_hWnd, hDC);
 	if (!hBitmap)
 		return ResLoadError();
@@ -322,6 +322,51 @@ void CViewRightBR::CreateBitmap(const SRESDATA& stResData)
 	m_fDrawRes = true;
 	SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, m_stBmp.bmHeight));
 	bmp.DeleteObject();
+}
+
+void CViewRightBR::CreateMenu(const SRESDATA& stResData)
+{
+	if (stResData.pData == nullptr || stResData.pData->empty())
+		return;
+
+	m_menuSample.DestroyMenu();
+	if (m_menuSample.LoadMenuIndirectW(stResData.pData->data())) {
+		for (auto iter = 0; iter < m_menuSample.GetMenuItemCount(); ++iter) {
+			CString strName;
+			m_menuSample.GetMenuStringW(iter, strName, MF_BYPOSITION);
+			if (strName.GetLength() == 0) { //Setting name for all empty menus to "<Empty>", to be clickable.
+				strName = L"<Empty>";
+				MENUITEMINFOW mii { };
+				mii.cbSize = sizeof(MENUITEMINFOW);
+				mii.fMask = MIIM_STRING;
+				mii.dwTypeData = const_cast<LPWSTR>(strName.GetString());
+				m_menuSample.SetMenuItemInfoW(iter, &mii, TRUE);
+				m_menuSample.EnableMenuItem(iter, MF_ENABLED | MF_BYPOSITION);
+			}
+		}
+
+		int iPosX = 0, iPosY = 0;
+		constexpr auto iWidth = 700;
+		constexpr auto iHeight = 100;
+		UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
+		constexpr DWORD dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
+		if (!m_wndSampleDlg.m_hWnd)
+		{
+			if (!m_wndSampleDlg.CreateEx(WS_EX_APPWINDOW, AfxRegisterWndClass(0),
+				L"Sample Dialog...", dwStyles, 0, 0, 0, 0, m_hWnd, nullptr)) {
+				MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
+				return;
+			}
+			iPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - iWidth / 2;
+			iPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - iHeight / 2;
+			uFlags &= ~SWP_NOMOVE;
+		}
+		m_wndSampleDlg.CreatedForMenu(true);
+		m_wndSampleDlg.SetMenu(&m_menuSample);
+		m_wndSampleDlg.SetWindowPos(this, iPosX, iPosY, iWidth, iHeight, uFlags);
+		m_wndSampleDlg.SetDlgVisible(true);
+		m_wndSampleDlg.RedrawWindow();
+	}
 }
 
 void CViewRightBR::CreateDlg(const SRESDATA& stResData)
@@ -346,8 +391,6 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 	const auto optData = ParceDlgTemplate({ const_cast<std::byte*>(stResData.pData->data()), stResData.pData->size() });
 	if (!optData)
 		return ResLoadError();
-
-	m_wstrEditBRB = std::move(*optData);
 
 	const bool fDlgEx = *((reinterpret_cast<const WORD*>(stResData.pData->data())) + 1) == 0xFFFF;
 
@@ -442,9 +485,11 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 	CBitmap bmp;
 	if (!bmp.Attach(hBitmap))
 		return ResLoadError();
+
 	m_stImgRes.Create(rcResDlg.Width(), rcResDlg.Height(), ILC_COLORDDB, 0, 1);
 	if (m_stImgRes.Add(&bmp, nullptr) == -1)
 		return ResLoadError();
+
 	bmp.DeleteObject();
 
 	AdjustWindowRectEx(rcResDlg, dwStyles, FALSE, dwExStyles); //Get window size with desirable client rect.
@@ -454,11 +499,10 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 	m_wndSampleDlg.SetDlgVisible(true);
 	m_wndSampleDlg.RedrawWindow();  //Draw dialog bitmap.
 
-	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data()); //Set Dialog resources info to Editbox.
+	m_EditBRB.SetWindowTextW(optData->data()); //Set Dialog resources info to Editbox.
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
@@ -492,26 +536,25 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	if (pDebug->at(dwEntry).stDebugDir.Type != IMAGE_DEBUG_TYPE_CODEVIEW)
 		return;
 
-	m_wstrEditBRB.clear();
-	auto& refDebug = pDebug->at(dwEntry);
-
+	std::wstring wstrEdit;
+	const auto& refDebug = pDebug->at(dwEntry);
 	if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x53445352) { //"RSDS"
-		m_wstrEditBRB = L"Signature: RSDS\r\nGUID: ";
-		const auto guid = *(reinterpret_cast<GUID*>(&refDebug.stDebugHdrInfo.dwHdr[1]));
+		wstrEdit = L"Signature: RSDS\r\nGUID: ";
+		const auto guid = *(reinterpret_cast<const GUID*>(&refDebug.stDebugHdrInfo.dwHdr[1]));
 		LPWSTR lpwstr;
 		StringFromIID(guid, &lpwstr);
-		m_wstrEditBRB += lpwstr;
-		m_wstrEditBRB += std::format(L"\r\nCounter/Age: {}\r\n", refDebug.stDebugHdrInfo.dwHdr[5]);
+		wstrEdit += lpwstr;
+		wstrEdit += std::format(L"\r\nCounter/Age: {}\r\n", refDebug.stDebugHdrInfo.dwHdr[5]);
 	}
 	else if (refDebug.stDebugHdrInfo.dwHdr[0] == 0x3031424E) { //"NB10"
-		m_wstrEditBRB += std::format(L"Signature: NB10\r\nOffset: {}\r\nTime/Signature: {}\r\nCounter/Age: {}\r\n",
+		wstrEdit += std::format(L"Signature: NB10\r\nOffset: {}\r\nTime/Signature: {}\r\nCounter/Age: {}\r\n",
 			refDebug.stDebugHdrInfo.dwHdr[1], refDebug.stDebugHdrInfo.dwHdr[2], refDebug.stDebugHdrInfo.dwHdr[3]);
 	}
 
 	if (!refDebug.stDebugHdrInfo.strPDBName.empty()) {
-		m_wstrEditBRB += L"PDB File: " + StrToWstr(refDebug.stDebugHdrInfo.strPDBName);
+		wstrEdit += L"PDB File: " + StrToWstr(refDebug.stDebugHdrInfo.strPDBName);
 	}
-	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	m_EditBRB.SetWindowTextW(wstrEdit.data());
 
 	CRect rc;
 	GetClientRect(&rc);
@@ -522,16 +565,217 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 void CViewRightBR::CreateStrings(const SRESDATA& stResData)
 {
 	auto pwszResString = reinterpret_cast<LPCWSTR>(stResData.pData->data());
-	std::wstring wstrTmp;
-	for (int i = 0; i < 16; i++)
+	std::wstring wstrEdit;
+	for (int i = 0; i < 16; ++i)
 	{
-		m_wstrEditBRB += wstrTmp.assign(pwszResString + 1, static_cast<UINT>(*pwszResString));
+		std::wstring wstrTmp;
+		wstrEdit += wstrTmp.assign(pwszResString + 1, static_cast<UINT>(*pwszResString));
 		if (i != 15)
-			m_wstrEditBRB += L"\r\n";
+			wstrEdit += L"\r\n";
 		pwszResString += 1 + static_cast<UINT>(*pwszResString);
 	}
 
-	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	m_EditBRB.SetWindowTextW(wstrEdit.data());
+	CRect rcClient;
+	GetClientRect(&rcClient);
+	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_hwndActive = m_EditBRB.m_hWnd;
+}
+
+void CViewRightBR::CreateAccel(const SRESDATA& stResData)
+{
+	if (stResData.pData == nullptr || stResData.pData->empty())
+		return;
+
+#pragma pack(push, 1) //No padding.
+	struct ACCEL_MEM {
+		BYTE bVirt;
+		BYTE bReserved;
+		WORD wKey;
+		WORD wCmd;
+		WORD wReserved;
+	};
+#pragma pack(pop)
+
+	if (stResData.pData->size() % sizeof(ACCEL_MEM) != 0) { //Wrong data padding.
+		return ResLoadError();
+	}
+
+	static const std::unordered_map<DWORD, std::wstring_view> mapAccVirt {
+		{ FVIRTKEY, L"VIRTKEY" },
+		{ FNOINVERT, L"NOINVERT" },
+		{ FSHIFT, L"Shift" },
+		{ FCONTROL, L"Control" },
+		{ FALT, L"Alt" }
+	};
+	static const std::unordered_map<DWORD, std::wstring_view> mapAccKey {
+		{ VK_LBUTTON, L"VK_LBUTTON" },
+		{ VK_RBUTTON, L"VK_RBUTTON" },
+		{ VK_CANCEL, L"VK_CANCEL" },
+		{ VK_MBUTTON, L"VK_MBUTTON" },
+		{ VK_XBUTTON1, L"VK_XBUTTON1" },
+		{ VK_XBUTTON2, L"VK_XBUTTON2" },
+		{ VK_BACK, L"VK_BACK" },
+		{ VK_TAB, L"VK_TAB" },
+		{ VK_CLEAR, L"VK_CLEAR" },
+		{ VK_RETURN, L"VK_RETURN" },
+		{ VK_SHIFT, L"VK_SHIFT" },
+		{ VK_CONTROL, L"VK_CONTROL" },
+		{ VK_MENU, L"VK_MENU" },
+		{ VK_PAUSE, L"VK_PAUSE" },
+		{ VK_CAPITAL, L"VK_CAPITAL" },
+		{ VK_KANA, L"VK_KANA" },
+		{ VK_IME_ON, L"VK_IME_ON" },
+		{ VK_JUNJA, L"VK_JUNJA" },
+		{ VK_FINAL, L"VK_FINAL" },
+		{ VK_KANJI, L"VK_KANJI" },
+		{ VK_IME_OFF, L"VK_IME_OFF" },
+		{ VK_ESCAPE, L"VK_ESCAPE" },
+		{ VK_CONVERT, L"VK_CONVERT" },
+		{ VK_NONCONVERT, L"VK_NONCONVERT" },
+		{ VK_ACCEPT, L"VK_ACCEPT" },
+		{ VK_MODECHANGE, L"VK_MODECHANGE" },
+		{ VK_SPACE, L"VK_SPACE" },
+		{ VK_PRIOR, L"VK_PRIOR" },
+		{ VK_NEXT, L"VK_NEXT" },
+		{ VK_END, L"VK_END" },
+		{ VK_HOME, L"VK_HOME" },
+		{ VK_LEFT, L"VK_LEFT" },
+		{ VK_UP, L"VK_UP" },
+		{ VK_RIGHT, L"VK_RIGHT" },
+		{ VK_DOWN, L"VK_DOWN" },
+		{ VK_SELECT, L"VK_SELECT" },
+		{ VK_PRINT, L"VK_PRINT" },
+		{ VK_EXECUTE, L"VK_EXECUTE" },
+		{ VK_SNAPSHOT, L"VK_SNAPSHOT" },
+		{ VK_INSERT, L"VK_INSERT" },
+		{ VK_DELETE, L"VK_DELETE" },
+		{ VK_HELP, L"VK_HELP" },
+		{ VK_LWIN, L"VK_LWIN" },
+		{ VK_RWIN, L"VK_RWIN" },
+		{ VK_APPS, L"VK_APPS" },
+		{ VK_SLEEP, L"VK_SLEEP" },
+		{ VK_NUMPAD0, L"VK_NUMPAD0" },
+		{ VK_NUMPAD1, L"VK_NUMPAD1" },
+		{ VK_NUMPAD2, L"VK_NUMPAD2" },
+		{ VK_NUMPAD3, L"VK_NUMPAD3" },
+		{ VK_NUMPAD4, L"VK_NUMPAD4" },
+		{ VK_NUMPAD5, L"VK_NUMPAD5" },
+		{ VK_NUMPAD6, L"VK_NUMPAD6" },
+		{ VK_NUMPAD7, L"VK_NUMPAD7" },
+		{ VK_NUMPAD8, L"VK_NUMPAD8" },
+		{ VK_NUMPAD9, L"VK_NUMPAD9" },
+		{ VK_MULTIPLY, L"VK_MULTIPLY" },
+		{ VK_ADD, L"VK_ADD" },
+		{ VK_SEPARATOR, L"VK_SEPARATOR" },
+		{ VK_SUBTRACT, L"VK_SUBTRACT" },
+		{ VK_DECIMAL, L"VK_DECIMAL" },
+		{ VK_DIVIDE, L"VK_DIVIDE" },
+		{ VK_F1, L"VK_F1" },
+		{ VK_F2, L"VK_F2" },
+		{ VK_F3, L"VK_F3" },
+		{ VK_F4, L"VK_F4" },
+		{ VK_F5, L"VK_F5" },
+		{ VK_F6, L"VK_F6" },
+		{ VK_F7, L"VK_F7" },
+		{ VK_F8, L"VK_F8" },
+		{ VK_F9, L"VK_F9" },
+		{ VK_F10, L"VK_F10" },
+		{ VK_F11, L"VK_F11" },
+		{ VK_F12, L"VK_F12" },
+		{ VK_F13, L"VK_F13" },
+		{ VK_F14, L"VK_F14" },
+		{ VK_F15, L"VK_F15" },
+		{ VK_F16, L"VK_F16" },
+		{ VK_F17, L"VK_F17" },
+		{ VK_F18, L"VK_F18" },
+		{ VK_F19, L"VK_F19" },
+		{ VK_F20, L"VK_F20" },
+		{ VK_F21, L"VK_F21" },
+		{ VK_F22, L"VK_F22" },
+		{ VK_F23, L"VK_F23" },
+		{ VK_F24, L"VK_F24" },
+		{ VK_NUMLOCK, L"VK_NUMLOCK" },
+		{ VK_SCROLL, L"VK_SCROLL" },
+		{ VK_LSHIFT, L"VK_LSHIFT" },
+		{ VK_RSHIFT, L"VK_RSHIFT" },
+		{ VK_LCONTROL, L"VK_LCONTROL" },
+		{ VK_RCONTROL, L"VK_RCONTROL" },
+		{ VK_LMENU, L"VK_LMENU" },
+		{ VK_RMENU, L"VK_RMENU" },
+		{ VK_BROWSER_BACK, L"VK_BROWSER_BACK" },
+		{ VK_BROWSER_FORWARD, L"VK_BROWSER_FORWARD" },
+		{ VK_BROWSER_REFRESH, L"VK_BROWSER_REFRESH" },
+		{ VK_BROWSER_STOP, L"VK_BROWSER_STOP" },
+		{ VK_BROWSER_SEARCH, L"VK_BROWSER_SEARCH" },
+		{ VK_BROWSER_FAVORITES, L"VK_BROWSER_FAVORITES" },
+		{ VK_BROWSER_HOME, L"VK_BROWSER_HOME" },
+		{ VK_VOLUME_MUTE, L"VK_VOLUME_MUTE" },
+		{ VK_VOLUME_DOWN, L"VK_VOLUME_DOWN" },
+		{ VK_VOLUME_UP, L"VK_VOLUME_UP" },
+		{ VK_MEDIA_NEXT_TRACK, L"VK_MEDIA_NEXT_TRACK" },
+		{ VK_MEDIA_PREV_TRACK, L"VK_MEDIA_PREV_TRACK" },
+		{ VK_MEDIA_STOP, L"VK_MEDIA_STOP" },
+		{ VK_MEDIA_PLAY_PAUSE, L"VK_MEDIA_PLAY_PAUSE" },
+		{ VK_LAUNCH_MAIL, L"VK_LAUNCH_MAIL" },
+		{ VK_LAUNCH_MEDIA_SELECT, L"VK_LAUNCH_MEDIA_SELECT" },
+		{ VK_LAUNCH_APP1, L"VK_LAUNCH_APP1" },
+		{ VK_LAUNCH_APP2, L"VK_LAUNCH_APP2" },
+		{ VK_OEM_1, L"VK_OEM_1" },
+		{ VK_OEM_PLUS, L"VK_OEM_PLUS" },
+		{ VK_OEM_COMMA, L"VK_OEM_COMMA" },
+		{ VK_OEM_MINUS, L"VK_OEM_MINUS" },
+		{ VK_OEM_PERIOD, L"VK_OEM_PERIOD" },
+		{ VK_OEM_2, L"VK_OEM_2" },
+		{ VK_OEM_3, L"VK_OEM_3" },
+		{ VK_OEM_4, L"VK_OEM_4" },
+		{ VK_OEM_5, L"VK_OEM_5" },
+		{ VK_OEM_6, L"VK_OEM_6" },
+		{ VK_OEM_7, L"VK_OEM_7" },
+		{ VK_OEM_8, L"VK_OEM_8" },
+		{ VK_OEM_102, L"VK_OEM_102" },
+		{ VK_PROCESSKEY, L"VK_PROCESSKEY" },
+		{ VK_PACKET, L"VK_PACKET" },
+		{ VK_ATTN, L"VK_ATTN" },
+		{ VK_CRSEL, L"VK_CRSEL" },
+		{ VK_EXSEL, L"VK_EXSEL" },
+		{ VK_EREOF, L"VK_EREOF" },
+		{ VK_PLAY, L"VK_PLAY" },
+		{ VK_ZOOM, L"VK_ZOOM" },
+		{ VK_NONAME, L"VK_NONAME" },
+		{ VK_PA1, L"VK_PA1" },
+		{ VK_OEM_CLEAR, L"VK_OEM_CLEAR" }
+	};
+
+	std::wstring wstrEdit;
+	const auto iAccels = stResData.pData->size() / sizeof(ACCEL_MEM); //How many accel entrys.
+	for (auto iter { 0 }; iter < iAccels; ++iter) {
+		const auto& refAccel = reinterpret_cast<const ACCEL_MEM&>(stResData.pData->data()[iter * sizeof(ACCEL_MEM)]);
+
+		wstrEdit += L"Behavior: ";
+		bool fHit { false }; //First occurense in map.Find().
+		for (const auto& it : mapAccVirt) { //Accel bVirt.
+			if (refAccel.bVirt & it.first) {
+				if (fHit) {
+					wstrEdit += L"+";
+				}
+				wstrEdit += it.second;
+				fHit = true;
+			}
+		}
+
+		wstrEdit += L"; Key: ";
+		if (const auto it = mapAccKey.find(refAccel.wKey); it != mapAccKey.end()) { //Accel wKey.
+			wstrEdit += it->second;
+		}
+		else {
+			wstrEdit += std::format(L"{}", static_cast<char>(refAccel.wKey));
+		}
+
+		wstrEdit += std::format(L"; Identifier: {};\r\n", refAccel.wCmd); //Accel wCmd.
+	}
+
+	m_EditBRB.SetWindowTextW(wstrEdit.data());
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -566,32 +810,31 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 	using LPGRPICONDIR = const GRPICONDIR*;
 #pragma pack(pop)
 
-	auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(stResData.pData->data());
+	const auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(stResData.pData->data());
 
 	for (int i = 0; i < pGRPIDir->idCount; ++i)
 	{
-		auto& rootvec = pstResRoot->vecResData;
-		for (auto& iterRoot : rootvec)
+		const auto& rootvec = pstResRoot->vecResData;
+		for (const auto& iterRoot : rootvec)
 		{
 			if (iterRoot.stResDirEntry.Id == 3 || //RT_ICON
 				iterRoot.stResDirEntry.Id == 1)   //RT_CURSOR
 			{
-				auto& lvl2tup = iterRoot.stResLvL2;
-				auto& lvl2vec = lvl2tup.vecResData;
-
-				for (auto& iterlvl2 : lvl2vec)
+				const auto& lvl2tup = iterRoot.stResLvL2;
+				const auto& lvl2vec = lvl2tup.vecResData;
+				for (const auto& iterlvl2 : lvl2vec)
 				{
 					if (iterlvl2.stResDirEntry.Id == pGRPIDir->idEntries[i].nID)
 					{
-						auto& lvl3tup = iterlvl2.stResLvL3;
-						auto& lvl3vec = lvl3tup.vecResData;
-
+						const auto& lvl3tup = iterlvl2.stResLvL3;
+						const auto& lvl3vec = lvl3tup.vecResData;
 						if (!lvl3vec.empty())
 						{
-							auto& data = lvl3vec.at(0).vecRawResData;
+							const auto& data = lvl3vec.at(0).vecRawResData;
 							if (!data.empty())
 							{
-								const auto hIcon = CreateIconFromResourceEx(reinterpret_cast<PBYTE>(data.data()), static_cast<DWORD>(data.size()),
+								const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(data.data())),
+									static_cast<DWORD>(data.size()),
 									(iterRoot.stResDirEntry.Id == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
 								if (!hIcon)
 									return ResLoadError();
@@ -627,7 +870,7 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 	}
 	SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
 
-	m_iResTypeToDraw = stResData.IdResType;
+	m_iResTypeToDraw = stResData.wIdType;
 	m_fDrawRes = true;
 }
 
@@ -658,24 +901,25 @@ void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 	//Read the list of languages and code pages.
 	VerQueryValueW(stResData.pData->data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
 
+	std::wstring wstrEdit;
 	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
 	for (size_t iterCodePage = 0; iterCodePage < dwLangCount; ++iterCodePage) //Read the file description for each language and code page.
 	{
 		for (unsigned iterMap = 0; iterMap < mapVerInfoStrings.size(); ++iterMap) //sizeof pstrVerInfoStrings [];
 		{
-			m_wstrEditBRB += mapVerInfoStrings.at(iterMap);
-			m_wstrEditBRB += L" - ";
+			wstrEdit += mapVerInfoStrings.at(iterMap);
+			wstrEdit += L" - ";
 			if (wchar_t* pszBufferOut { }; VerQueryValueW(stResData.pData->data(), std::format(L"\\StringFileInfo\\{:04x}{:04x}\\{}",
 				pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(iterMap)).data(),
 				reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
 			{
 				if (dwBytesOut > 0)
-					m_wstrEditBRB += pszBufferOut;
+					wstrEdit += pszBufferOut;
 			}
-			m_wstrEditBRB += L"\r\n";
+			wstrEdit += L"\r\n";
 		}
 	}
-	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	m_EditBRB.SetWindowTextW(wstrEdit.data());
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -684,15 +928,10 @@ void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 
 void CViewRightBR::CreateManifest(const SRESDATA& stResData)
 {
-	m_wstrEditBRB.resize(stResData.pData->size());
-	MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<LPCCH>(stResData.pData->data()),
-		static_cast<int>(stResData.pData->size()), &m_wstrEditBRB[0], static_cast<int>(stResData.pData->size()));
-
-	m_EditBRB.SetWindowTextW(m_wstrEditBRB.data());
+	m_EditBRB.SetWindowTextW(StrToWstr({ reinterpret_cast<const char*>(stResData.pData->data()), stResData.pData->size() }).data());
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
@@ -702,78 +941,30 @@ void CViewRightBR::CreateToolbar(const SRESDATA& stResData)
 	if (pstResRoot == nullptr)
 		return;
 
-	auto& rootvec = pstResRoot->vecResData;
-	for (auto& iterRoot : rootvec)
+	const auto& rootvec = pstResRoot->vecResData;
+	for (const auto& iterRoot : rootvec)
 	{
 		if (iterRoot.stResDirEntry.Id == 2) //RT_BITMAP
 		{
-			auto& lvl2tup = iterRoot.stResLvL2;
-			auto& lvl2vec = lvl2tup.vecResData;
-
-			for (auto& iterlvl2 : lvl2vec)
+			const auto& lvl2tup = iterRoot.stResLvL2;
+			const auto& lvl2vec = lvl2tup.vecResData;
+			for (const auto& iterlvl2 : lvl2vec)
 			{
-				if (iterlvl2.stResDirEntry.Id == stResData.IdResName)
+				if (iterlvl2.stResDirEntry.Id == stResData.wIdName)
 				{
-					auto& lvl3tup = iterlvl2.stResLvL3;
-					auto& lvl3vec = lvl3tup.vecResData;
-
+					const auto& lvl3tup = iterlvl2.stResLvL3;
+					const auto& lvl3vec = lvl3tup.vecResData;
 					if (!lvl3vec.empty())
 					{
-						auto& data = lvl3vec.at(0).vecRawResData;
-						if (!data.empty())
-						{
-							SRESDATA rh { .IdResType { 2 }, .IdResName { stResData.IdResName }, .pData { &data } };
-							CreateBitmap(rh);
+						const auto pData = &lvl3vec.at(0).vecRawResData;
+						if (!pData->empty()) {
+							SRESDATA stData { .wIdType { 2 }, .wIdName { stResData.wIdName }, .pData { pData } };
+							CreateBitmap(stData);
 						}
 					}
 				}
 			}
 		}
-	}
-}
-
-void CViewRightBR::CreateMenu(const SRESDATA& stResData)
-{
-	if (stResData.pData == nullptr || stResData.pData->empty())
-		return;
-
-	m_menuSample.DestroyMenu();
-	if (m_menuSample.LoadMenuIndirectW(stResData.pData->data())) {
-		for (auto iter = 0; iter < m_menuSample.GetMenuItemCount(); ++iter) {
-			CString strName;
-			m_menuSample.GetMenuStringW(iter, strName, MF_BYPOSITION);
-			if (strName.GetLength() == 0) { //Setting name for all empty menus to "<Empty>", to be clickable.
-				strName = L"<Empty>";
-				MENUITEMINFOW mii { };
-				mii.cbSize = sizeof(MENUITEMINFOW);
-				mii.fMask = MIIM_STRING;
-				mii.dwTypeData = const_cast<LPWSTR>(strName.GetString());
-				m_menuSample.SetMenuItemInfoW(iter, &mii, TRUE);
-				m_menuSample.EnableMenuItem(iter, MF_ENABLED | MF_BYPOSITION);
-			}
-		}
-
-		int iPosX = 0, iPosY = 0;
-		constexpr auto iWidth = 700;
-		constexpr auto iHeight = 100;
-		UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
-		constexpr DWORD dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
-		if (!m_wndSampleDlg.m_hWnd)
-		{
-			if (!m_wndSampleDlg.CreateEx(WS_EX_APPWINDOW, AfxRegisterWndClass(0),
-				L"Sample Dialog...", dwStyles, 0, 0, 0, 0, m_hWnd, nullptr)) {
-				MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
-				return;
-			}
-			iPosX = (GetSystemMetrics(SM_CXSCREEN) / 2) - iWidth / 2;
-			iPosY = (GetSystemMetrics(SM_CYSCREEN) / 2) - iHeight / 2;
-			uFlags &= ~SWP_NOMOVE;
-		}
-		m_wndSampleDlg.CreatedForMenu(true);
-		m_wndSampleDlg.SetMenu(&m_menuSample);
-		m_wndSampleDlg.SetWindowPos(this, iPosX, iPosY, iWidth, iHeight, uFlags);
-		m_wndSampleDlg.SetDlgVisible(true);
-		m_wndSampleDlg.RedrawWindow();
 	}
 }
 
@@ -784,12 +975,11 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 	m_iImgResWidth = 0;
 	m_iImgResHeight = 0;
 	m_vecImgRes.clear();
-	m_wstrEditBRB.clear();
 
 	if (pResData != nullptr)
 	{
 		//Destroy Dialog Sample window if it's any other resource but RT_MENU or RT_DIALOG.
-		if (pResData->IdResType != 4 && pResData->IdResType != 5 && m_wndSampleDlg.m_hWnd) {
+		if (pResData->wIdType != 4 && pResData->wIdType != 5 && m_wndSampleDlg.m_hWnd) {
 			m_wndSampleDlg.SetDlgVisible(false);
 			m_wndSampleDlg.DestroyWindow();
 		}
@@ -798,7 +988,7 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 			return ResLoadError();
 		}
 
-		switch (pResData->IdResType)
+		switch (pResData->wIdType)
 		{
 		case 1: //RT_CURSOR
 		case 3: //RT_ICON
@@ -816,6 +1006,9 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 		case 6: //RT_STRING
 			CreateStrings(*pResData);
 			break;
+		case 9: //RT_ACCELERATOR
+			CreateAccel(*pResData);
+			break;
 		case 12: //RT_GROUP_CURSOR
 		case 14: //RT_GROUP_ICON
 			CreateGroupIconCursor(*pResData);
@@ -830,7 +1023,7 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 			CreateToolbar(*pResData);
 			break;
 		default:
-			m_iResTypeToDraw = pResData->IdResType;
+			m_iResTypeToDraw = pResData->wIdType;
 			m_fDrawRes = true;
 		}
 	}
@@ -855,7 +1048,7 @@ void CViewRightBR::ResLoadError()
 
 auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>
 {
-#pragma pack(push, 4) //When data comes from PE resources it is packed.
+#pragma pack(push, 4) //When pData comes from PE resources it is packed.
 
 	//Helper struct as described in https://docs.microsoft.com/en-us/windows/win32/dlgbox/dlgtemplateex
 	//It can not be completely defined because of its variadic nature.
@@ -1153,7 +1346,7 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 	wstrRet += std::format(L"DIALOG ITEMS: {}\r\n", wCountDlgItems);
 	//DLGTEMPLATE(EX) end. ///////////////////////////////////////////
 
-	//Now go DLGITEMTEMPLATE(EX) data structures.
+	//Now go DLGITEMTEMPLATE(EX) pData structures.
 	auto pDataItems = pDataDlgHdr; //Just to differentiate.
 
 	wstrRet += L"{\r\n";
