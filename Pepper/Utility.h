@@ -4,10 +4,10 @@
 
 #define PRODUCT_NAME			L"Pepper"
 #define PRODUCT_DESC			L"PE files viewer, github.com/jovibor/Pepper"
-#define COPYRIGHT_NAME  		L"(C) Jovibor 2019-2021"
+#define COPYRIGHT_NAME  		L"(C) Jovibor 2019-2022"
 #define MAJOR_VERSION			1
 #define MINOR_VERSION			4
-#define MAINTENANCE_VERSION		0
+#define MAINTENANCE_VERSION		1
 
 #define TO_WSTR_HELPER(x) L## #x
 #define TO_WSTR(x) TO_WSTR_HELPER(x)
