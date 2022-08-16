@@ -752,7 +752,7 @@ void CViewRightBR::CreateAccel(const SRESDATA& stResData)
 	for (auto iter { 0 }; iter < iAccels; ++iter) {
 		const auto& refAccel = reinterpret_cast<const ACCEL_MEM&>(stResData.pData->data()[iter * sizeof(ACCEL_MEM)]);
 
-		wstrEdit += L"Behavior: ";
+		wstrEdit += L"Type: ";
 		bool fHit { false }; //First occurense in map.Find().
 		for (const auto& it : mapAccVirt) { //Accel bVirt.
 			if (refAccel.bVirt & it.first) {
@@ -772,7 +772,7 @@ void CViewRightBR::CreateAccel(const SRESDATA& stResData)
 			wstrEdit += std::format(L"{}", static_cast<char>(refAccel.wKey));
 		}
 
-		wstrEdit += std::format(L"; Identifier: {};\r\n", refAccel.wCmd); //Accel wCmd.
+		wstrEdit += std::format(L"; ID: {};\r\n", refAccel.wCmd); //Accel wCmd.
 	}
 
 	m_EditBRB.SetWindowTextW(wstrEdit.data());
