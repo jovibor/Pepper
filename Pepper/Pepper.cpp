@@ -149,8 +149,8 @@ void CPepperApp::OnFileOpen()
 			const auto pDoc = CWinAppEx::OpenDocumentFile(pwstrPath);
 			fOpened = !fOpened ? pDoc != nullptr : true;
 		}
-		//In case no file has been opened (if multiple selection) we show the open file dialog again.
-		if (!fOpened)
+
+		if (!fOpened) //In case no file has been opened (if multiple selection) we show the open file dialog again.
 			OnFileOpen();
 	}
 }

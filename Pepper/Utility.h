@@ -1,4 +1,5 @@
 #pragma once
+#include <fstream>
 #include <unordered_map>
 #include "libpe.h"
 
@@ -28,6 +29,90 @@
 	std::wstring wstr(iSize, 0);
 	MultiByteToWideChar(uCodePage, 0, str.data(), static_cast<int>(str.size()), &wstr[0], iSize);
 	return wstr;
+}
+
+inline bool SaveIconCur(const wchar_t* pwszPath, std::span<const std::byte> spnData, bool fIcon = true)
+{
+#pragma pack(push, 2)
+	struct ICONDIRENTRY {
+		BYTE  bWidth { };
+		BYTE  bHeight { };
+		BYTE  bColorCount { };
+		BYTE  bReserved { };
+		WORD  wPlanes { };
+		WORD  wBitCount { };
+		DWORD dwBytesInRes { };
+		DWORD dwImageOffset { };
+	};
+
+	struct ICONDIR {
+		WORD         idReserved { };
+		WORD         idType { };
+		WORD         idCount { };
+		ICONDIRENTRY idEntries[1];
+	};
+#pragma pack(pop)
+
+	std::ofstream ofs(pwszPath, std::ios::binary);
+	if (!ofs)
+		return false;
+
+	const auto dwSize = static_cast<DWORD>(spnData.size());
+	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(spnData.data())),
+		dwSize, fIcon ? TRUE : FALSE, 0x00030000UL, 0, 0, LR_DEFAULTCOLOR);
+	if (!hIcon)
+		return false;
+
+	ICONINFOEX iconInfo { .cbSize = sizeof(ICONINFOEX), .fIcon = fIcon };
+	GetIconInfoExW(hIcon, &iconInfo);
+	const auto fBWIcon { iconInfo.hbmColor == nullptr };
+	BITMAP bmp;
+	GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &bmp);
+
+	constexpr auto dwCurDataOffset = 0x4UL; //Offset for cursor's actual data beginning.
+	const auto dwSizeToWrite = dwSize - (fIcon ? 0 : dwCurDataOffset);
+
+	ICONDIRENTRY iconDirEntry { };
+	iconDirEntry.bWidth = static_cast<BYTE>(bmp.bmWidth);
+	iconDirEntry.bHeight = static_cast<BYTE>(std::abs(bmp.bmHeight) / (fBWIcon ? 2 : 1));
+	iconDirEntry.bColorCount = (bmp.bmBitsPixel < 8) ? (1 << (bmp.bmBitsPixel * bmp.bmPlanes)) : 0;
+	iconDirEntry.wPlanes = fIcon ? bmp.bmPlanes : static_cast<WORD>(iconInfo.xHotspot);
+	iconDirEntry.wBitCount = fIcon ? bmp.bmBitsPixel : static_cast<WORD>(iconInfo.yHotspot);
+	iconDirEntry.dwBytesInRes = dwSizeToWrite;
+	iconDirEntry.dwImageOffset = sizeof(ICONDIR);
+
+	ICONDIR iconDir { .idCount = 1 };
+	iconDir.idType = fIcon ? 1 : 2;
+	iconDir.idEntries[0] = iconDirEntry;
+
+	const auto pData = reinterpret_cast<const char*>(fIcon ? spnData.data() : spnData.data() + dwCurDataOffset);
+
+	ofs.write(reinterpret_cast<const char*>(&iconDir), sizeof(ICONDIR));
+	ofs.write(pData, dwSizeToWrite);
+
+	DeleteObject(iconInfo.hbmColor);
+	DeleteObject(iconInfo.hbmMask);
+	DestroyIcon(hIcon);
+
+	return true;
+}
+
+inline bool SaveBitmap(const wchar_t* pwszPath, std::span<const std::byte> spnData)
+{
+	std::ofstream ofs(pwszPath, std::ios::binary);
+	if (!ofs)
+		return false;
+
+	const auto dwSizeFile = static_cast<DWORD>(sizeof(BITMAPFILEHEADER) + spnData.size());
+	const auto pBMPInfo = reinterpret_cast<const BITMAPINFO*>(spnData.data());
+	const auto pBMPInfoHdr = &pBMPInfo->bmiHeader;
+
+	BITMAPFILEHEADER bmpFHdr { .bfType = 0x4D42, //"BM"
+		.bfSize = dwSizeFile, .bfOffBits = dwSizeFile - pBMPInfoHdr->biSizeImage };
+	ofs.write(reinterpret_cast<const char*>(&bmpFHdr), sizeof(BITMAPFILEHEADER));
+	ofs.write(reinterpret_cast<const char*>(spnData.data()), spnData.size());
+
+	return true;
 }
 
 using namespace libpe;

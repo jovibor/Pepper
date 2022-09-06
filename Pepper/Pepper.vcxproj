@@ -72,6 +72,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>submodules\libpe\src\;submodules\HexCtrl\HexCtrl;submodules\HexCtrl\HexCtrl\dep;</AdditionalIncludeDirectories>
+      <ProgramDataBaseFileName>$(OutDir)$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

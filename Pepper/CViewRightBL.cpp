@@ -191,12 +191,11 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 					const auto& lvl3vec = lvl3tup.vecResData;
 					if (!lvl3vec.empty())
 					{
-						const auto pData = &lvl3vec[idlvl3].vecRawResData;
-						//Resource pData and resource type to show in CViewRightBR.
-						SRESDATA stResData { .wIdType = rootvec[idlvlRoot].stResDirEntry.Id,
-							.wIdName = lvl2vec[idlvl2].stResDirEntry.Id,
-							.wIdLang = lvl3vec[idlvl3].stResDirEntry.Id,
-							.pData = pData };
+						static SRESDATA stResData; //Resource pData and resource type to show in CViewRightBR.
+						stResData.wIdType = rootvec[idlvlRoot].stResDirEntry.Id;
+						stResData.wIdName = lvl2vec[idlvl2].stResDirEntry.Id;
+						stResData.wIdLang = lvl3vec[idlvl3].stResDirEntry.Id;
+						stResData.pData = &lvl3vec[idlvl3].vecRawResData;
 
 						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&stResData));
 					}

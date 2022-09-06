@@ -35,10 +35,12 @@ private:
 class CViewRightBR final : public CScrollView
 {
 private:
-	void OnDraw(CDC* pDC)override;
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	void OnInitialUpdate()override;     // first time after construct
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnRButtonUp(UINT nFlags, CPoint pt);
+	BOOL OnCommand(WPARAM wParam, LPARAM lParam)override;
+	void OnDraw(CDC* pDC)override;
+	void OnInitialUpdate()override;
 	void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)override;
 	void CreateIconCursor(const SRESDATA& stResData);
 	void CreateBitmap(const SRESDATA& stResData);
@@ -55,26 +57,28 @@ private:
 	void ResLoadError();
 	void ShowResource(const SRESDATA* pResData);
 	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
+	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBR)
-	DECLARE_MESSAGE_MAP()
 private:
 	HWND m_hwndActive { };
 	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
+	SRESDATA* m_pResData { }; //Current resource's data pointer.
 	CImageList m_stImgRes;
 	CWndSampleDlg m_wndSampleDlg;
 	CMenu m_menuSample;
 	LISTEXCREATE m_stlcs;
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
-	LOGFONTW m_lf { }, m_hdrlf { };
+	LOGFONTW m_lf { };
+	LOGFONTW m_hdrlf { };
+	BITMAP m_stBmp { };
 	COLORREF m_clrBkIcons { RGB(230, 230, 230) };
 	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
-	BITMAP m_stBmp { };
 	int m_iResTypeToDraw { };
 	int m_iImgResWidth { }, m_iImgResHeight { };              //Width and height of whole image to draw.
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { }; //Vector for RT_GROUP_ICON/CURSOR.
-	CEdit m_EditBRB;            //Edit control for RT_STRING, RT_VERSION, RT_MANIFEST, Debug additional info
-	CFont m_fontEditRes;        //Font for m_EditBRB.
+	CEdit m_EditBRB;     //Edit control for RT_STRING, RT_VERSION, RT_MANIFEST, Debug additional info
+	CFont m_fontEditRes; //Font for m_EditBRB.
 	bool m_fDrawRes { false };
 };

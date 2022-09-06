@@ -67,7 +67,10 @@ IMPLEMENT_DYNCREATE(CViewRightBR, CScrollView)
 BEGIN_MESSAGE_MAP(CViewRightBR, CScrollView)
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
+	ON_WM_RBUTTONUP()
 END_MESSAGE_MAP()
+
+constexpr auto IDC_MENU_EXTRACT = 0xF0U;
 
 void CViewRightBR::OnInitialUpdate()
 {
@@ -135,24 +138,27 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 
 	CRect rcParent;
 	GetParent()->GetWindowRect(&rcParent);
-	CRect rcClient;
-	GetClientRect(&rcClient);
 	m_fDrawRes = false;
 
 	switch (LOWORD(lHint))
 	{
 	case IDC_LIST_TLS:
+	{
+		CRect rcClient;
+		GetClientRect(&rcClient);
 		m_stListTLSCallbacks->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_hwndActive = m_stListTLSCallbacks->m_hWnd;
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 2, 0);
-		break;
+	}
+	break;
 	case IDC_TREE_RESOURCE:
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case IDC_SHOW_RESOURCE_RBR:
-		ShowResource(reinterpret_cast<SRESDATA*>(pHint));
+		m_pResData = reinterpret_cast<SRESDATA*>(pHint);
+		ShowResource(m_pResData);
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
@@ -166,6 +172,49 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	}
 
 	m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
+}
+
+BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	const auto wMenuID = LOWORD(wParam);
+	if (wMenuID == IDC_MENU_EXTRACT)
+	{
+		std::wstring_view wsvName;
+		bool fIcon { true };
+		switch (m_iResTypeToDraw) {
+		case 1:
+			wsvName = L"Cursor files (*.cur)|*.cur|All files (*.*)|*.*||";
+			fIcon = false;
+			break;
+		case 2:
+		case 241:
+			wsvName = L"Bitmap files (*.bmp)|*.bmp|All files (*.*)|*.*||";
+			break;
+		case 3:
+			wsvName = L"Icon files (*.ico)|*.ico|All files (*.*)|*.*||";
+			break;
+		}
+
+		CFileDialog fd(FALSE, nullptr, nullptr,
+			OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_PATHMUSTEXIST,
+			wsvName.data());
+		if (fd.DoModal() == IDOK) {
+			const auto wstrPath = fd.GetPathName();
+			bool fSaveOK;
+			if (m_iResTypeToDraw == 2) { //RT_BITMAP
+				fSaveOK = SaveBitmap(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() });
+			}
+			else { //RT_ICON, RT_CURSOR
+				fSaveOK = SaveIconCur(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() }, fIcon);
+			}
+
+			if (!fSaveOK) {
+				MessageBox(L"Error saving the file. Check if it's writable.", L"Error", MB_ICONERROR);
+			}
+		}
+	}
+
+	return CScrollView::OnCommand(wParam, lParam);
 }
 
 void CViewRightBR::OnDraw(CDC* pDC)
@@ -249,6 +298,36 @@ BOOL CViewRightBR::OnEraseBkgnd(CDC* /*pDC*/)
 	return TRUE;
 }
 
+void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt)
+{
+	if (m_iResTypeToDraw != 1       //RT_CURSOR
+		&& m_iResTypeToDraw != 2    //RT_BITMAP
+		&& m_iResTypeToDraw != 3    //RT_ICON
+		&& m_iResTypeToDraw != 241) //RT_TOOLBAR
+		return;
+
+	ClientToScreen(&pt);
+	CMenu menu;
+	menu.CreatePopupMenu();
+
+	std::wstring_view wsvMenu;
+	switch (m_iResTypeToDraw) {
+	case 1:
+		wsvMenu = L"Extract Cursor...";
+		break;
+	case 2:
+	case 241:
+		wsvMenu = L"Extract Bitmap...";
+		break;
+	case 3:
+		wsvMenu = L"Extract Icon...";
+		break;
+	}
+
+	menu.AppendMenuW(MF_STRING, IDC_MENU_EXTRACT, wsvMenu.data());
+	menu.TrackPopupMenuEx(TPM_LEFTALIGN, pt.x, pt.y, this, nullptr);
+}
+
 void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
@@ -261,27 +340,29 @@ void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 {
 	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(stResData.pData->data())),
 		static_cast<DWORD>(stResData.pData->size()),
-		(stResData.wIdType == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+		(stResData.wIdType == 3) ? TRUE : FALSE, 0x00030000UL, 0, 0, LR_DEFAULTCOLOR);
 	if (!hIcon)
 		return ResLoadError();
 
-	ICONINFO iconInfo;
-	if (!GetIconInfo(hIcon, &iconInfo))
+	ICONINFOEX iconInfo { .cbSize = sizeof(ICONINFOEX) };
+	if (!GetIconInfoExW(hIcon, &iconInfo))
 		return ResLoadError();
+
 	if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
 		return ResLoadError();
-	DeleteObject(iconInfo.hbmColor);
-	DeleteObject(iconInfo.hbmMask);
 
-	m_stImgRes.Create(m_stBmp.bmWidth,
-		(stResData.wIdType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
+	const auto fBWIcon { iconInfo.hbmColor == nullptr };
+	const auto lHeight = std::abs(m_stBmp.bmHeight) / (fBWIcon ? 2 : 1);
+	m_stImgRes.Create(m_stBmp.bmWidth, lHeight, ILC_COLORDDB, 0, 1);
 	m_stImgRes.SetBkColor(m_clrBkImgList);
 	if (m_stImgRes.Add(hIcon) == -1)
 		return ResLoadError();
 
+	DeleteObject(iconInfo.hbmColor);
+	DeleteObject(iconInfo.hbmMask);
 	DestroyIcon(hIcon);
-	SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth,
-		(stResData.wIdType == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth));
+
+	SetScrollSizes(MM_TEXT, CSize(m_stBmp.bmWidth, lHeight));
 
 	m_iResTypeToDraw = stResData.wIdType;
 	m_fDrawRes = true;
@@ -290,19 +371,18 @@ void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 void CViewRightBR::CreateBitmap(const SRESDATA& stResData)
 {
 	const auto pBMPInfo = reinterpret_cast<const BITMAPINFO*>(stResData.pData->data());
-	const auto pBMPHdr = &pBMPInfo->bmiHeader;
-	const auto nNumColors = pBMPHdr->biClrUsed > 0 ? pBMPHdr->biClrUsed : 1 << pBMPHdr->biBitCount;
-
+	const auto pBMPInfoHdr = &pBMPInfo->bmiHeader;
+	const auto dwNumColors = pBMPInfoHdr->biClrUsed > 0 ? pBMPInfoHdr->biClrUsed : 1 << pBMPInfoHdr->biBitCount;
 	LPCVOID pDIBBits;
-	if (pBMPHdr->biBitCount > 8) {
-		pDIBBits = static_cast<LPCVOID>(reinterpret_cast<const DWORD*>(pBMPInfo->bmiColors + pBMPHdr->biClrUsed) +
-			((pBMPHdr->biCompression == BI_BITFIELDS) ? 3 : 0));
+	if (pBMPInfoHdr->biBitCount > 8) {
+		pDIBBits = static_cast<LPCVOID>(reinterpret_cast<const DWORD*>(pBMPInfo->bmiColors + pBMPInfoHdr->biClrUsed) +
+			(pBMPInfoHdr->biCompression == BI_BITFIELDS ? 3 : 0));
 	}
 	else
-		pDIBBits = static_cast<LPCVOID>(pBMPInfo->bmiColors + nNumColors);
+		pDIBBits = static_cast<LPCVOID>(pBMPInfo->bmiColors + dwNumColors);
 
 	const auto hDC = ::GetDC(m_hWnd);
-	const auto hBitmap = CreateDIBitmap(hDC, pBMPHdr, CBM_INIT, pDIBBits, pBMPInfo, DIB_RGB_COLORS);
+	const auto hBitmap = CreateDIBitmap(hDC, pBMPInfoHdr, CBM_INIT, pDIBBits, pBMPInfo, DIB_RGB_COLORS);
 	::ReleaseDC(m_hWnd, hDC);
 	if (!hBitmap)
 		return ResLoadError();
@@ -835,26 +915,26 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 							{
 								const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(data.data())),
 									static_cast<DWORD>(data.size()),
-									(iterRoot.stResDirEntry.Id == 3) ? TRUE : FALSE, 0x00030000, 0, 0, LR_DEFAULTCOLOR);
+									(iterRoot.stResDirEntry.Id == 3) ? TRUE : FALSE, 0x00030000UL, 0, 0, LR_DEFAULTCOLOR);
 								if (!hIcon)
 									return ResLoadError();
 
-								ICONINFO iconInfo;
-								if (!GetIconInfo(hIcon, &iconInfo))
+								ICONINFOEX iconInfo { .cbSize = sizeof(ICONINFOEX) };
+								if (!GetIconInfoExW(hIcon, &iconInfo))
 									return ResLoadError();
+
 								if (!GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &m_stBmp))
 									return ResLoadError();
 
 								DeleteObject(iconInfo.hbmColor);
 								DeleteObject(iconInfo.hbmMask);
 
-								m_vecImgRes.emplace_back(std::make_unique<CImageList>());
-								const auto& vecBack = m_vecImgRes.back();
+								const auto& vecBack = m_vecImgRes.emplace_back(std::make_unique<CImageList>());
 								vecBack->Create(m_stBmp.bmWidth,
 									(iterRoot.stResDirEntry.Id == 3) ? m_stBmp.bmHeight : m_stBmp.bmWidth, ILC_COLORDDB, 0, 1);
 								vecBack->SetBkColor(m_clrBkImgList);
 								m_iImgResWidth += m_stBmp.bmWidth;
-								m_iImgResHeight = max(m_stBmp.bmHeight, m_iImgResHeight);
+								m_iImgResHeight = (std::max)(static_cast<int>(m_stBmp.bmHeight), m_iImgResHeight);
 
 								if (vecBack->Add(hIcon) == -1)
 									return ResLoadError();
@@ -958,7 +1038,10 @@ void CViewRightBR::CreateToolbar(const SRESDATA& stResData)
 					{
 						const auto pData = &lvl3vec.at(0).vecRawResData;
 						if (!pData->empty()) {
-							SRESDATA stData { .wIdType { 2 }, .wIdName { stResData.wIdName }, .pData { pData } };
+							static SRESDATA stData { .wIdType { 2 } };
+							stData.wIdName = stResData.wIdName;
+							stData.pData = pData;
+							m_pResData = &stData;
 							CreateBitmap(stData);
 						}
 					}
