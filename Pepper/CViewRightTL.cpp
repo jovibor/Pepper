@@ -31,7 +31,7 @@ void CViewRightTL::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->m_pLibpe.get();
+	m_pLibpe = m_pMainDoc->GetLibpe();
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	LOGFONTW lf { };
@@ -757,28 +757,29 @@ void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	if (pTree->itemNew.hItem == m_hTreeResDir)
 		return;
 
-	const auto pResRoot = m_pLibpe->GetResources();
-	if (pResRoot == nullptr)
+	const auto pstResRoot = m_pLibpe->GetResources();
+	if (pstResRoot == nullptr)
 		return;
 
 	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResTop.GetItemData(pTree->itemNew.hItem));
 	if (idlvl2 >= 0)
 	{
-		auto& lvl2st = pResRoot->vecResData.at(idlvlRoot).stResLvL2;
-		auto& lvl2vec = lvl2st.vecResData;
-
+		const auto& rootvec = pstResRoot->vecResData;
+		const auto& lvl2st = rootvec[idlvlRoot].stResLvL2;
+		const auto& lvl2vec = lvl2st.vecResData;
 		if (!lvl2vec.empty())
 		{
 			if (idlvl3 >= 0)
 			{
-				auto& lvl3st = lvl2vec.at(idlvl2).stResLvL3;
-				auto& lvl3vec = lvl3st.vecResData;
-
+				const auto& lvl3st = lvl2vec[idlvl2].stResLvL3;
+				const auto& lvl3vec = lvl3st.vecResData;
 				if (!lvl3vec.empty())
 				{
-					const auto data = &lvl3vec.at(idlvl3).stResDataEntry;
+					auto data = &lvl3vec.at(idlvl3).stResDataEntry;
+
 					//Send data pointer to CViewRightTR to display raw data.
-					m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0), reinterpret_cast<CObject*>(data));
+					m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_HEX_RIGHT_TR, 0),
+						reinterpret_cast<CObject*>(const_cast<IMAGE_RESOURCE_DATA_ENTRY*>(data)));
 				}
 			}
 		}

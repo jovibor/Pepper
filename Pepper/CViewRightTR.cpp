@@ -29,7 +29,7 @@ void CViewRightTR::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->m_pLibpe.get();
+	m_pLibpe = m_pMainDoc->GetLibpe();
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	//Hex control for Resources raw.
@@ -98,16 +98,19 @@ void CViewRightTR::OnDocEditMode()
 
 void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes)
 {
-	CRect rcParent;
-	GetParent()->GetWindowRect(&rcParent);
-	CRect rcClient;
-	GetClientRect(&rcClient);
-
 	if (m_hwndActive)
 		::ShowWindow(m_hwndActive, SW_HIDE);
 
-	const auto dwOffset = m_pLibpe->GetOffsetFromRVA(pRes->OffsetToData);
-	m_pFileLoader->ShowFilePiece(dwOffset, pRes->Size, m_stHexEdit.get());
+	//Resource offset must be higher than zero, otherwise it's somehow damaged.
+	if (const auto dwOffset = m_pLibpe->GetOffsetFromRVA(pRes->OffsetToData); dwOffset != 0) {
+		m_pFileLoader->ShowFilePiece(dwOffset, pRes->Size, m_stHexEdit.get());
+	}
+	else {
+		m_stHexEdit->ClearData(); //In case of empty resource just clear the data.
+	}
+
 	m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
+	CRect rcClient;
+	GetClientRect(&rcClient);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }

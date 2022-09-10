@@ -48,17 +48,16 @@ void CMainFrame::SetCurrFramePtrNull()
 
 void CMainFrame::OnAppEditmode()
 {
-	if (const auto pFrame = GetActiveFrame(); pFrame != nullptr)
+	if (const auto pFrame = GetActiveFrame(); pFrame != nullptr) {
 		if (const auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
 			pDoc->SetEditMode(!pDoc->IsEditMode());
+	}
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CMDIFrameWndEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
-
-	SetMenu(nullptr);
 
 	CMDITabInfo mdiTabParams;
 	mdiTabParams.m_style = CMFCTabCtrl::STYLE_3D_ONENOTE; // other styles available...
@@ -148,18 +147,19 @@ LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 
 	if (m_pCurrFrameData != nullptr)
 	{
-		for (const auto& iter : *m_pCurrFrameData)
+		for (const auto& iter : *m_pCurrFrameData) {
 			if (::IsWindow(iter.hWnd) && ::IsWindowVisible(iter.hWnd))
 				::ShowWindow(iter.hWnd, SW_HIDE);
+		}
 	}
 
-	if (auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive()); pFrame != nullptr)
+	if (const auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive()); pFrame != nullptr)
 	{
 		auto& refVec = pFrame->GetWndStatData();
-		for (const auto& iter : refVec)
+		for (const auto& iter : refVec) {
 			if (::IsWindow(iter.hWnd) && iter.fVisible)
 				::ShowWindow(iter.hWnd, SW_SHOW);
-
+		}
 		m_pCurrFrameData = &refVec;
 	}
 

@@ -7,8 +7,8 @@
 #define PRODUCT_DESC			L"PE files viewer, github.com/jovibor/Pepper"
 #define COPYRIGHT_NAME  		L"(C) Jovibor 2019-2022"
 #define MAJOR_VERSION			1
-#define MINOR_VERSION			4
-#define MAINTENANCE_VERSION		2
+#define MINOR_VERSION			5
+#define MAINTENANCE_VERSION		0
 
 #define TO_WSTR_HELPER(x) L## #x
 #define TO_WSTR(x) TO_WSTR_HELPER(x)
@@ -33,6 +33,9 @@
 
 inline bool SaveIconCur(const wchar_t* pwszPath, std::span<const std::byte> spnData, bool fIcon = true)
 {
+	if (spnData.empty())
+		return false;
+
 #pragma pack(push, 2)
 	struct ICONDIRENTRY {
 		BYTE  bWidth { };
@@ -64,10 +67,13 @@ inline bool SaveIconCur(const wchar_t* pwszPath, std::span<const std::byte> spnD
 		return false;
 
 	ICONINFOEX iconInfo { .cbSize = sizeof(ICONINFOEX), .fIcon = fIcon };
-	GetIconInfoExW(hIcon, &iconInfo);
+	if (GetIconInfoExW(hIcon, &iconInfo) == FALSE)
+		return false;
+
 	const auto fBWIcon { iconInfo.hbmColor == nullptr };
 	BITMAP bmp;
-	GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &bmp);
+	if (GetObjectW(iconInfo.hbmMask, sizeof(BITMAP), &bmp) == 0)
+		return false;
 
 	constexpr auto dwCurDataOffset = 0x4UL; //Offset for cursor's actual data beginning.
 	const auto dwSizeToWrite = dwSize - (fIcon ? 0 : dwCurDataOffset);
@@ -99,6 +105,9 @@ inline bool SaveIconCur(const wchar_t* pwszPath, std::span<const std::byte> spnD
 
 inline bool SaveBitmap(const wchar_t* pwszPath, std::span<const std::byte> spnData)
 {
+	if (spnData.empty())
+		return false;
+
 	std::ofstream ofs(pwszPath, std::ios::binary);
 	if (!ofs)
 		return false;

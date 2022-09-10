@@ -79,7 +79,7 @@ void CViewRightBR::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->m_pLibpe.get();
+	m_pLibpe = m_pMainDoc->GetLibpe();
 
 	m_EditBRB.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);
@@ -209,7 +209,7 @@ BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 			}
 
 			if (!fSaveOK) {
-				MessageBox(L"Error saving the file. Check if it's writable.", L"Error", MB_ICONERROR);
+				MessageBoxW(L"Error saving the file. Check if it's writable.", L"Error", MB_ICONERROR);
 			}
 		}
 	}

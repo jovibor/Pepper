@@ -7,11 +7,23 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #include "stdafx.h"
+#include "res/resource.h"
 #include "PepperDoc.h"
+#include "MainFrm.h"
 #include "Utility.h"
 #include <format>
 
 IMPLEMENT_DYNCREATE(CPepperDoc, CDocument)
+
+BEGIN_MESSAGE_MAP(CPepperDoc, CDocument)
+	ON_COMMAND(ID_FILE_CLOSE, &CPepperDoc::OnFileClose)
+	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTCUR, &CPepperDoc::OnUpdateResExtractCur)
+	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTICO, &CPepperDoc::OnUpdateResExtractIco)
+	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTBMP, &CPepperDoc::OnUpdateResExtractBmp)
+	ON_COMMAND(IDM_RES_EXTRACTCUR, &CPepperDoc::OnResExtractCur)
+	ON_COMMAND(IDM_RES_EXTRACTICO, &CPepperDoc::OnResExtractIco)
+	ON_COMMAND(IDM_RES_EXTRACTBMP, &CPepperDoc::OnResExtractBmp)
+END_MESSAGE_MAP()
 
 void CPepperDoc::SetEditMode(bool fEditMode)
 {
@@ -51,6 +63,18 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		return FALSE;
 	}
 
+	if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
+		const auto vecRes = GetLibpe()->FlatResources(*pRes);
+		for (const auto& ref : vecRes) {
+			if (ref.wTypeID == 1) //RT_CURSOR
+				m_fHasCur = true;
+			if (ref.wTypeID == 2) //RT_BITMAP
+				m_fHasBmp = true;
+			if (ref.wTypeID == 3) //RT_ICON
+				m_fHasIco = true;
+		}
+	}
+
 	m_stFileLoader.LoadFile(lpszPathName, this);
 	UpdateAllViews(nullptr);
 
@@ -63,4 +87,111 @@ void CPepperDoc::OnCloseDocument()
 	m_stFileLoader.UnloadFile();
 
 	CDocument::OnCloseDocument();
+}
+
+void CPepperDoc::OnFileClose()
+{
+	reinterpret_cast<CMainFrame*>(AfxGetMainWnd())->MDIGetActive()->SendMessageW(WM_CLOSE);
+}
+
+void CPepperDoc::OnUpdateResExtractCur(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_fHasCur);
+}
+
+void CPepperDoc::OnUpdateResExtractIco(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_fHasIco);
+}
+
+void CPepperDoc::OnUpdateResExtractBmp(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_fHasBmp);
+}
+
+void CPepperDoc::OnResExtractCur()
+{
+	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
+		std::wstring wstrDocName = GetPathName().GetString();
+		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+		const auto wstrPath = fd.GetPathName(); //Folder name.
+
+		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
+			const auto vecRes = GetLibpe()->FlatResources(*pRes);
+			auto iIndex { 0 };
+			bool fAllSaveOK { true };
+			for (const auto& ref : vecRes) {
+				if (ref.wTypeID == 1) { //RT_CURSOR
+					if (!SaveIconCur(std::format(L"{}\\{}_{:04}.cur", wstrPath.GetString(), wstrDocName, ++iIndex).data(), ref.spnData, false)) {
+						fAllSaveOK = false;
+					}
+				}
+			}
+			if (fAllSaveOK) {
+				MessageBoxW(nullptr, std::format(L"All {} cursors were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
+			}
+			else {
+				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} cursors were saved successfully.", iIndex).data(),
+					L"Error", MB_ICONERROR);
+			}
+		}
+	}
+}
+
+void CPepperDoc::OnResExtractIco()
+{
+	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
+		std::wstring wstrDocName = GetPathName().GetString();
+		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+		const auto wstrPath = fd.GetPathName(); //Folder name.
+
+		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
+			const auto vecRes = GetLibpe()->FlatResources(*pRes);
+			auto iIndex { 0 };
+			bool fAllSaveOK { true };
+			for (const auto& ref : vecRes) {
+				if (ref.wTypeID == 3) { //RT_ICON
+					if (!SaveIconCur(std::format(L"{}\\{}_{:04}.ico", wstrPath.GetString(), wstrDocName, ++iIndex).data(), ref.spnData)) {
+						fAllSaveOK = false;
+					}
+				}
+			}
+			if (fAllSaveOK) {
+				MessageBoxW(nullptr, std::format(L"All {} icons were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
+			}
+			else {
+				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} icons were saved successfully.", iIndex).data(),
+					L"Error", MB_ICONERROR);
+			}
+		}
+	}
+}
+
+void CPepperDoc::OnResExtractBmp()
+{
+	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
+		std::wstring wstrDocName = GetPathName().GetString();
+		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+		const auto wstrPath = fd.GetPathName(); //Folder name.
+
+		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
+			const auto vecRes = GetLibpe()->FlatResources(*pRes);
+			auto iIndex { 0 };
+			bool fAllSaveOK { true };
+			for (const auto& ref : vecRes) {
+				if (ref.wTypeID == 2) { //RT_BITMAP
+					if (!SaveBitmap(std::format(L"{}\\{}_{:04}.bmp", wstrPath.GetString(), wstrDocName, ++iIndex).data(), ref.spnData)) {
+						fAllSaveOK = false;
+					}
+				}
+			}
+			if (fAllSaveOK) {
+				MessageBoxW(nullptr, std::format(L"All {} bitmaps were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
+			}
+			else {
+				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} bitmaps were saved successfully.", iIndex).data(),
+					L"Error", MB_ICONERROR);
+			}
+		}
+	}
 }

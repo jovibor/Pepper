@@ -68,8 +68,7 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 {
 	CMDIChildWndEx::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
 
-	if (bActivate == FALSE)
-	{
+	if (bActivate == FALSE) {
 		//Every child window that must be closed on tab change goes here.
 	}
 }
@@ -89,7 +88,7 @@ BOOL CChildFrame::OnEraseBkgnd(CDC* pDC)
 	return CMDIChildWndEx::OnEraseBkgnd(pDC);
 }
 
-auto CChildFrame::GetWndStatData() -> std::vector<SWINDOWSTATUS>&
+auto CChildFrame::GetWndStatData()->std::vector<SWINDOWSTATUS>&
 {
 	return m_vecWndStatus;
 }

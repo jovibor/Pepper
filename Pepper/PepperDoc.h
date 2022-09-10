@@ -15,15 +15,26 @@ using namespace libpe;
 class CPepperDoc : public CDocument
 {
 public:
-	DECLARE_DYNCREATE(CPepperDoc)
-	IlibpePtr m_pLibpe {
-		Createlibpe()
-	};
 	CFileLoader m_stFileLoader;
 	void SetEditMode(bool fEditMode);
 	[[nodiscard]] bool IsEditMode() { return m_fEditMode; }
+	[[nodiscard]] Ilibpe* GetLibpe() { return &*m_pLibpe; }
 private:
 	BOOL OnOpenDocument(LPCTSTR lpszPathName)override;
+	afx_msg void OnFileClose();
 	void OnCloseDocument()override;
+	afx_msg void OnUpdateResExtractCur(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateResExtractIco(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateResExtractBmp(CCmdUI *pCmdUI);
+	afx_msg void OnResExtractCur();
+	afx_msg void OnResExtractIco();
+	afx_msg void OnResExtractBmp();
+	DECLARE_DYNCREATE(CPepperDoc);
+	DECLARE_MESSAGE_MAP();
+private:
+	IlibpePtr m_pLibpe { Createlibpe() };
 	bool m_fEditMode { false };
+	bool m_fHasCur { false };
+	bool m_fHasIco { false };
+	bool m_fHasBmp { false };
 };

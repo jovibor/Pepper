@@ -64,15 +64,11 @@ BOOL CPepperApp::InitInstance()
 	ttParams.m_bVislManagerTheme = TRUE;
 	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL, RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
 
-	CMultiDocTemplate* pDocTemplate = new CMultiDocTemplate(IDR_PepperTYPE,
-		RUNTIME_CLASS(CPepperDoc), RUNTIME_CLASS(CChildFrame), nullptr);
-
+	const auto pDocTemplate = new CMultiDocTemplate(IDR_PepperTYPE, RUNTIME_CLASS(CPepperDoc), RUNTIME_CLASS(CChildFrame), nullptr);
 	AddDocTemplate(pDocTemplate);
 
-	// create main MDI Frame window
-	auto* pMainFrame = new CMainFrame;
-	if (!pMainFrame->LoadFrame(IDR_MAINFRAME))
-	{
+	const auto pMainFrame = new CMainFrame;	// create main MDI Frame window
+	if (!pMainFrame->LoadFrame(IDR_MAINFRAME)) {
 		delete pMainFrame;
 		return FALSE;
 	}
@@ -100,6 +96,7 @@ BOOL CPepperApp::InitInstance()
 	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
 	if (!ProcessShellCommand(cmdInfo))
 		return FALSE;
+
 	// The main window has been initialized, so show and update it
 	pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();

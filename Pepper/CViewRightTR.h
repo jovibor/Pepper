@@ -23,8 +23,8 @@ private:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void OnDocEditMode();
 	void CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes);
-	DECLARE_MESSAGE_MAP()
-	DECLARE_DYNCREATE(CViewRightTR)
+	DECLARE_MESSAGE_MAP();
+	DECLARE_DYNCREATE(CViewRightTR);
 private:
 	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };

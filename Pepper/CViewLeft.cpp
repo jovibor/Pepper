@@ -23,7 +23,7 @@ void CViewLeft::OnInitialUpdate()
 	CView::OnInitialUpdate();
 
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->m_pLibpe.get();
+	m_pLibpe = m_pMainDoc->GetLibpe();
 	const auto stFileInfo = m_pLibpe->GetFileInfo();
 
 	//Scaling factor for HighDPI displays.

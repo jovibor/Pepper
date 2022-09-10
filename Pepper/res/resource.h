@@ -22,23 +22,17 @@
 #define IDC_LINK_PEPPER                 1006
 #define IDC_LINK_LIBPE                  1007
 #define IDC_LINK_HEXCTRL                1008
-#define ID_1_11                         32787
-#define ID_1_12                         32788
-#define ID_1_13                         32789
-#define ID_2_21                         32790
-#define ID_2_22                         32791
-#define ID_2_23                         32792
-#define ID_3_31                         32793
-#define ID_3_32                         32794
-#define ID_3_33                         32795
-#define ID_APP_EDITMODE                 32797
+#define ID_APP_EDITMODE                 32787
+#define IDM_RES_EXTRACTCUR              32788
+#define IDM_RES_EXTRACTICO              32789
+#define IDM_RES_EXTRACTBMP              32790
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        320
-#define _APS_NEXT_COMMAND_VALUE         32798
+#define _APS_NEXT_COMMAND_VALUE         32791
 #define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
