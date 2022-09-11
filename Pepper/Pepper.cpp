@@ -39,8 +39,9 @@ BOOL CAboutDlg::OnInitDialog()
 CPepperApp theApp;
 
 BEGIN_MESSAGE_MAP(CPepperApp, CWinAppEx)
-	ON_COMMAND(ID_APP_ABOUT, &CPepperApp::OnAppAbout)
+	ON_COMMAND(IDM_HELP_ABOUT, &CPepperApp::OnAppAbout)
 	ON_COMMAND(ID_FILE_OPEN, &CPepperApp::OnFileOpen)
+	ON_UPDATE_COMMAND_UI(IDM_HELP_ABOUT, &CPepperApp::OnUpdateHelpAbout)
 END_MESSAGE_MAP()
 
 CPepperApp::CPepperApp()
@@ -73,6 +74,9 @@ BOOL CPepperApp::InitInstance()
 		return FALSE;
 	}
 
+	//Load and set the same default menu, to stop MFC from adding unnecessary staff to it.
+	const auto menuMain = ::LoadMenuW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDR_MAINFRAME));
+	pMainFrame->SetMenu(CMenu::FromHandle(menuMain));
 	m_pMainWnd = pMainFrame;
 
 	//For Drag'n Drop working, even in elevated state.
@@ -150,4 +154,9 @@ void CPepperApp::OnFileOpen()
 		if (!fOpened) //In case no file has been opened (if multiple selection) we show the open file dialog again.
 			OnFileOpen();
 	}
+}
+
+void CPepperApp::OnUpdateHelpAbout(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(TRUE);
 }

@@ -11,7 +11,7 @@
 
 class CMainFrame : public CMDIFrameWndEx
 {
-	DECLARE_DYNAMIC(CMainFrame)
+public:
 	BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE,
 		CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr)override;
 	int& GetChildFramesCount();
@@ -29,7 +29,8 @@ private:
 	afx_msg void OnWindowManager();
 	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	DECLARE_MESSAGE_MAP()
+	DECLARE_DYNAMIC(CMainFrame);
+	DECLARE_MESSAGE_MAP();
 private:
 	static LRESULT MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR dwData);
 	static void MDIClientSize(HWND hWnd, WPARAM wParam, LPARAM lParam);

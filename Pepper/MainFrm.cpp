@@ -21,10 +21,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_WM_DROPFILES()
 	ON_WM_GETMINMAXINFO()
 	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
-	ON_COMMAND(ID_APP_EDITMODE, &CMainFrame::OnAppEditmode)
+	ON_COMMAND(IDM_EDIT_EDITMODE, &CMainFrame::OnAppEditmode)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
 	ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, &CMainFrame::OnTabActivate)
-	ON_UPDATE_COMMAND_UI(ID_APP_EDITMODE, &CMainFrame::OnUpdateAppEditmode)
+	ON_UPDATE_COMMAND_UI(IDM_EDIT_EDITMODE, &CMainFrame::OnUpdateAppEditmode)
 END_MESSAGE_MAP()
 
 BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext)
@@ -169,19 +169,18 @@ LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
 {
 	const auto pFrame = GetActiveFrame();
-
-	if (pFrame == nullptr)
-	{
+	if (pFrame == nullptr) {
 		pCmdUI->Enable(0);
 		return;
 	}
 
-	if (const auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr) {
-		if (pDoc->IsEditMode())
-			m_wndToolBar.SetButtonStyle(m_wndToolBar.CommandToIndex(ID_APP_EDITMODE), TBBS_PRESSED);
-	}
-	else
+	const auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument());
+	if (pDoc == nullptr) {
 		pCmdUI->Enable(0);
+		return;
+	}
+
+	pCmdUI->SetCheck(pDoc->IsEditMode());
 }
 
 void CMainFrame::OnWindowManager()
