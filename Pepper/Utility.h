@@ -427,10 +427,12 @@ inline const map_hdr g_mapComDir {
 //Helper struct for resources interchange between views.
 struct SRESDATA
 {
+	std::wstring_view wsvName { };
+	const std::vector<std::byte>* pData { };
 	WORD wIdType { };
 	WORD wIdName { };
 	WORD wIdLang { };
-	const std::vector<std::byte>* pData { };
+	bool fNameIsString { false };
 };
 
 struct SWINDOWSTATUS

@@ -193,6 +193,8 @@ BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 					{
 						static SRESDATA stResData; //Resource pData and resource type to show in CViewRightBR.
 						stResData.wIdType = rootvec[idlvlRoot].stResDirEntry.Id;
+						stResData.fNameIsString = rootvec[idlvlRoot].stResDirEntry.NameIsString > 0;
+						stResData.wsvName = rootvec[idlvlRoot].wstrResName;
 						stResData.wIdName = lvl2vec[idlvl2].stResDirEntry.Id;
 						stResData.wIdLang = lvl3vec[idlvl3].stResDirEntry.Id;
 						stResData.pData = &lvl3vec[idlvl3].vecRawResData;
