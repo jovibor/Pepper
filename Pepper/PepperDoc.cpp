@@ -8,8 +8,8 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "res/resource.h"
-#include "PepperDoc.h"
 #include "MainFrm.h"
+#include "PepperDoc.h"
 #include "Utility.h"
 #include <format>
 
@@ -20,9 +20,11 @@ BEGIN_MESSAGE_MAP(CPepperDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTCUR, &CPepperDoc::OnUpdateResExtractCur)
 	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTICO, &CPepperDoc::OnUpdateResExtractIco)
 	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTBMP, &CPepperDoc::OnUpdateResExtractBmp)
+	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTPNG, &CPepperDoc::OnUpdateResExtractPng)
 	ON_COMMAND(IDM_RES_EXTRACTCUR, &CPepperDoc::OnResExtractCur)
 	ON_COMMAND(IDM_RES_EXTRACTICO, &CPepperDoc::OnResExtractIco)
 	ON_COMMAND(IDM_RES_EXTRACTBMP, &CPepperDoc::OnResExtractBmp)
+	ON_COMMAND(IDM_RES_EXTRACTPNG, &CPepperDoc::OnResExtractPng)
 END_MESSAGE_MAP()
 
 void CPepperDoc::SetEditMode(bool fEditMode)
@@ -64,14 +66,24 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	}
 
 	if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-		const auto vecRes = GetLibpe()->FlatResources(*pRes);
+		const auto vecRes = Ilibpe::FlatResources(*pRes);
 		for (const auto& ref : vecRes) {
-			if (ref.wTypeID == 1) //RT_CURSOR
+			if (ref.wTypeID == 1) { //RT_CURSOR
 				m_fHasCur = true;
-			if (ref.wTypeID == 2) //RT_BITMAP
+				continue;
+			}
+			if (ref.wTypeID == 2) { //RT_BITMAP
 				m_fHasBmp = true;
-			if (ref.wTypeID == 3) //RT_ICON
+				continue;
+			}
+			if (ref.wTypeID == 3) { //RT_ICON
 				m_fHasIco = true;
+				continue;
+			}
+			if (ref.wsvTypeName == L"PNG") { //PNG
+				m_fHasPng = true;
+				continue;
+			}
 		}
 	}
 
@@ -109,6 +121,11 @@ void CPepperDoc::OnUpdateResExtractBmp(CCmdUI *pCmdUI)
 	pCmdUI->Enable(m_fHasBmp);
 }
 
+void CPepperDoc::OnUpdateResExtractPng(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_fHasPng);
+}
+
 void CPepperDoc::OnResExtractCur()
 {
 	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
@@ -117,7 +134,7 @@ void CPepperDoc::OnResExtractCur()
 		const auto wstrPath = fd.GetPathName(); //Folder name.
 
 		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-			const auto vecRes = GetLibpe()->FlatResources(*pRes);
+			const auto vecRes = Ilibpe::FlatResources(*pRes);
 			auto iIndex { 0 };
 			bool fAllSaveOK { true };
 			for (const auto& ref : vecRes) {
@@ -146,7 +163,7 @@ void CPepperDoc::OnResExtractIco()
 		const auto wstrPath = fd.GetPathName(); //Folder name.
 
 		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-			const auto vecRes = GetLibpe()->FlatResources(*pRes);
+			const auto vecRes = Ilibpe::FlatResources(*pRes);
 			auto iIndex { 0 };
 			bool fAllSaveOK { true };
 			for (const auto& ref : vecRes) {
@@ -175,7 +192,7 @@ void CPepperDoc::OnResExtractBmp()
 		const auto wstrPath = fd.GetPathName(); //Folder name.
 
 		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-			const auto vecRes = GetLibpe()->FlatResources(*pRes);
+			const auto vecRes = Ilibpe::FlatResources(*pRes);
 			auto iIndex { 0 };
 			bool fAllSaveOK { true };
 			for (const auto& ref : vecRes) {
@@ -190,6 +207,35 @@ void CPepperDoc::OnResExtractBmp()
 			}
 			else {
 				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} bitmaps were saved successfully.", iIndex).data(),
+					L"Error", MB_ICONERROR);
+			}
+		}
+	}
+}
+
+void CPepperDoc::OnResExtractPng()
+{
+	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
+		std::wstring wstrDocName = GetPathName().GetString();
+		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+		const auto wstrPath = fd.GetPathName(); //Folder name.
+
+		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
+			const auto vecRes = Ilibpe::FlatResources(*pRes);
+			auto iIndex { 0 };
+			bool fAllSaveOK { true };
+			for (const auto& ref : vecRes) {
+				if (ref.wsvTypeName == L"PNG") { //PNG
+					if (!SavePng(std::format(L"{}\\{}_{:04}.png", wstrPath.GetString(), wstrDocName, ++iIndex).data(), ref.spnData)) {
+						fAllSaveOK = false;
+					}
+				}
+			}
+			if (fAllSaveOK) {
+				MessageBoxW(nullptr, std::format(L"All {} .png files were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
+			}
+			else {
+				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} .png files were saved successfully.", iIndex).data(),
 					L"Error", MB_ICONERROR);
 			}
 		}

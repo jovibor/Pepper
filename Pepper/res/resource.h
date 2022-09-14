@@ -25,13 +25,14 @@
 #define IDM_RES_EXTRACTBMP              32790
 #define IDM_HELP_ABOUT                  32791
 #define IDM_EDIT_EDITMODE               32792
+#define IDM_RES_EXTRACTPNG              32793
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        320
-#define _APS_NEXT_COMMAND_VALUE         32793
+#define _APS_NEXT_COMMAND_VALUE         32794
 #define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

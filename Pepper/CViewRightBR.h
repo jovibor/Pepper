@@ -58,6 +58,7 @@ private:
 	void ResLoadError();
 	void ShowResource(const SRESDATA* pResData);
 	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
+	static void PremultiplyBitmapAlpha(HDC hDC, HBITMAP hBmp);
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBR);
 private:
@@ -82,6 +83,7 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	SRESDATA* m_pResData { }; //Current resource's data pointer.
 	CImageList m_stImgRes;
+	CImage m_imgPng; //Image for .PNG, with transparency.
 	CWndSampleDlg m_wndSampleDlg;
 	CMenu m_menuSample;
 	LISTEXCREATE m_stlcs;

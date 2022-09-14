@@ -26,9 +26,11 @@ private:
 	afx_msg void OnUpdateResExtractCur(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateResExtractIco(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateResExtractBmp(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateResExtractPng(CCmdUI *pCmdUI);
 	afx_msg void OnResExtractCur();
 	afx_msg void OnResExtractIco();
 	afx_msg void OnResExtractBmp();
+	afx_msg void OnResExtractPng();
 	DECLARE_DYNCREATE(CPepperDoc);
 	DECLARE_MESSAGE_MAP();
 private:
@@ -37,4 +39,5 @@ private:
 	bool m_fHasCur { false };
 	bool m_fHasIco { false };
 	bool m_fHasBmp { false };
+	bool m_fHasPng { false };
 };

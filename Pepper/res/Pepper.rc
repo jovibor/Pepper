@@ -125,6 +125,7 @@ BEGIN
         MENUITEM "Extract all Cursors...",      IDM_RES_EXTRACTCUR
         MENUITEM "Extract all Icons...",        IDM_RES_EXTRACTICO
         MENUITEM "Extract all Bitmaps...",      IDM_RES_EXTRACTBMP
+        MENUITEM "Extract all PNG...",          IDM_RES_EXTRACTPNG
     END
     POPUP "Help"
     BEGIN

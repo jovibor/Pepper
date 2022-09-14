@@ -181,11 +181,9 @@ BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 		using enum EResType;
 		std::wstring_view wsvName;
-		bool fIcon { true };
 		switch (m_eResTypeToDraw) {
 		case RTYPE_CURSOR:
 			wsvName = L"Cursor files (*.cur)|*.cur|All files (*.*)|*.*||";
-			fIcon = false;
 			break;
 		case RTYPE_BITMAP:
 		case RTYPE_TOOLBAR:
@@ -193,6 +191,9 @@ BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 			break;
 		case RTYPE_ICON:
 			wsvName = L"Icon files (*.ico)|*.ico|All files (*.*)|*.*||";
+			break;
+		case RTYPE_PNG:
+			wsvName = L"PNG files (*.png)|*.png|All files (*.*)|*.*||";
 			break;
 		}
 
@@ -205,8 +206,11 @@ BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (m_eResTypeToDraw == RTYPE_BITMAP) {
 				fSaveOK = SaveBitmap(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() });
 			}
+			else if (m_eResTypeToDraw == RTYPE_PNG) {
+				fSaveOK = SavePng(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() });
+			}
 			else { //RT_ICON, RT_CURSOR
-				fSaveOK = SaveIconCur(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() }, fIcon);
+				fSaveOK = SaveIconCur(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() }, m_eResTypeToDraw == RTYPE_ICON);
 			}
 
 			if (!fSaveOK) {
@@ -220,10 +224,21 @@ BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void CViewRightBR::OnDraw(CDC* pDC)
 {
-	CRect rcClient;
-	GetClientRect(rcClient);
+	CRect rcClipBox;
+	pDC->GetClipBox(rcClipBox);
 	const auto sizeScroll = GetTotalSize();
-	int x, y;
+
+	int x; //Drawing in the center, independently from scroll pos.
+	if (sizeScroll.cx > rcClipBox.Width())
+		x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
+	else
+		x = rcClipBox.Width() / 2 - (m_iImgResWidth / 2);
+
+	int y;
+	if (sizeScroll.cy > rcClipBox.Height())
+		y = sizeScroll.cy / 2 - (m_iImgResHeight / 2);
+	else
+		y = rcClipBox.Height() / 2 - (m_iImgResHeight / 2);
 
 	using enum EResType;
 	switch (m_eResTypeToDraw)
@@ -231,56 +246,40 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case RTYPE_CURSOR:
 	case RTYPE_BITMAP:
 	case RTYPE_ICON:
-	case RTYPE_PNG:
-		//Drawing in the center, independently from scroll pos.
-		pDC->FillSolidRect(rcClient, m_clrBkIcons);
-
-		if (sizeScroll.cx > rcClient.Width())
-			x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
-		else
-			x = rcClient.Width() / 2 - (m_iImgResWidth / 2);
-
-		if (sizeScroll.cy > rcClient.Height())
-			y = sizeScroll.cy / 2 - (m_iImgResHeight / 2);
-		else
-			y = rcClient.Height() / 2 - (m_iImgResHeight / 2);
-
-		//ptDrawAt.SetPoint(x, y);
+		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
 		m_stImgRes.Draw(pDC, 0, { x, y }, ILD_NORMAL);
 		break;
 	case RTYPE_GROUP_CURSOR:
 	case RTYPE_GROUP_ICON:
-		pDC->FillSolidRect(rcClient, m_clrBkIcons);
-
-		if (sizeScroll.cx > rcClient.Width())
-			x = sizeScroll.cx / 2 - (m_iImgResWidth / 2);
-		else
-			x = rcClient.Width() / 2 - (m_iImgResWidth / 2);
-
+		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
 		for (const auto& iter : m_vecImgRes) {
 			IMAGEINFO imgInfo;
 			iter->GetImageInfo(0, &imgInfo);
 			int iImgHeight = imgInfo.rcImage.bottom - imgInfo.rcImage.top;
-			if (sizeScroll.cy > rcClient.Height())
+			if (sizeScroll.cy > rcClipBox.Height())
 				y = sizeScroll.cy / 2 - (iImgHeight / 2);
 			else
-				y = rcClient.Height() / 2 - (iImgHeight / 2);
+				y = rcClipBox.Height() / 2 - (iImgHeight / 2);
 
 			iter->Draw(pDC, 0, { x, y }, ILD_NORMAL);
 			x += imgInfo.rcImage.right - imgInfo.rcImage.left;
 		}
 		break;
+	case RTYPE_PNG:
+		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
+		m_imgPng.AlphaBlend(pDC->m_hDC, x, y, m_iImgResWidth, m_iImgResHeight, 0, 0, m_iImgResWidth, m_iImgResHeight);
+		break;
 	case RES_LOAD_ERROR:
-		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
+		pDC->FillSolidRect(rcClipBox, RGB(255, 255, 255));
 		pDC->SetTextColor(RGB(255, 0, 0));
 		pDC->TextOutW(0, 0, L"Unable to load resource! It's either damaged, packed or zero-length.");
 		break;
 	case RTYPE_UNSUPPORTED:
-		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
+		pDC->FillSolidRect(rcClipBox, RGB(255, 255, 255));
 		pDC->TextOutW(0, 0, L"This Resource type is not supported.");
 		break;
 	case NO_RESOURCE:
-		pDC->FillSolidRect(rcClient, RGB(255, 255, 255));
+		pDC->FillSolidRect(rcClipBox, RGB(255, 255, 255));
 		break;
 	}
 }
@@ -294,7 +293,8 @@ void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt)
 {
 	using enum EResType;
 	if (m_eResTypeToDraw != RTYPE_CURSOR && m_eResTypeToDraw != RTYPE_BITMAP
-		&& m_eResTypeToDraw != RTYPE_ICON && m_eResTypeToDraw != EResType::RTYPE_TOOLBAR)
+		&& m_eResTypeToDraw != RTYPE_ICON && m_eResTypeToDraw != RTYPE_TOOLBAR
+		&& m_eResTypeToDraw != RTYPE_PNG)
 		return;
 
 	ClientToScreen(&pt);
@@ -312,6 +312,9 @@ void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt)
 		break;
 	case RTYPE_ICON:
 		wsvMenu = L"Extract Icon...";
+		break;
+	case RTYPE_PNG:
+		wsvMenu = L"Extract Png...";
 		break;
 	}
 
@@ -409,7 +412,7 @@ void CViewRightBR::CreatePNG(const SRESDATA& stResData)
 		return ResLoadError();
 	}
 
-	const auto hBuffer = ::GlobalAlloc(GMEM_MOVEABLE, stResData.pData->size());
+	const auto hBuffer = GlobalAlloc(GMEM_MOVEABLE, stResData.pData->size());
 	if (hBuffer == nullptr) {
 		return ResLoadError();
 	}
@@ -429,29 +432,21 @@ void CViewRightBR::CreatePNG(const SRESDATA& stResData)
 		return ResLoadError();
 	}
 
-	CImage img;
-	if (img.Load(pStream) != S_OK) {
+	m_imgPng.Destroy();
+	if (m_imgPng.Load(pStream) != S_OK) {
 		ResLoadError();
 	}
 
 	pStream->Release();
-	BITMAP stBmp;
-	if (!GetObjectW(img, sizeof(BITMAP), &stBmp)) {
-		GlobalUnlock(hBuffer);
-		GlobalFree(hBuffer);
-		return ResLoadError();
-	}
 
-	m_stImgRes.Create(img.GetWidth(), img.GetHeight(), ILC_COLORDDB, 0, 1);
-	m_stImgRes.SetBkColor(m_clrBkImgList);
-	if (m_stImgRes.Add(CBitmap::FromHandle(img), nullptr) == -1) {
-		GlobalUnlock(hBuffer);
-		GlobalFree(hBuffer);
-		return ResLoadError();
-	}
+	const auto pDC = GetDC();
+	PremultiplyBitmapAlpha(pDC->m_hDC, m_imgPng);
+	ReleaseDC(pDC);
 
+	m_iImgResWidth = m_imgPng.GetWidth();
+	m_iImgResHeight = m_imgPng.GetHeight();
 	m_eResTypeToDraw = EResType::RTYPE_PNG;
-	SetScrollSizes(MM_TEXT, CSize(stBmp.bmWidth, stBmp.bmHeight));
+	SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
 	GlobalUnlock(hBuffer);
 	GlobalFree(hBuffer);
 }
@@ -881,8 +876,8 @@ void CViewRightBR::CreateAccel(const SRESDATA& stResData)
 
 	std::wstring wstrEdit;
 	const auto iAccels = stResData.pData->size() / sizeof(ACCEL_MEM); //How many accel entrys.
-	for (auto iter { 0 }; iter < iAccels; ++iter) {
-		const auto& refAccel = reinterpret_cast<const ACCEL_MEM&>(stResData.pData->data()[iter * sizeof(ACCEL_MEM)]);
+	for (auto iterAccel { 0 }; iterAccel < iAccels; ++iterAccel) {
+		const auto& refAccel = reinterpret_cast<const ACCEL_MEM&>((*stResData.pData)[iterAccel * sizeof(ACCEL_MEM)]);
 
 		wstrEdit += L"Type: ";
 		bool fHit { false }; //First occurense in map.Find().
@@ -1591,4 +1586,39 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 	wstrRet += L"}";
 
 	return { std::move(wstrRet) };
+}
+
+void CViewRightBR::PremultiplyBitmapAlpha(HDC hDC, HBITMAP hBmp)
+{
+	constexpr auto dwSizeToAlloc = sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256);
+	const auto pBMI = reinterpret_cast<BITMAPINFO*>(_malloca(dwSizeToAlloc));
+	if (pBMI == nullptr)
+		return;
+
+	ZeroMemory(pBMI, dwSizeToAlloc);
+	pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+
+	BITMAP stBmp;
+	if (!GetObjectW(hBmp, sizeof(BITMAP), &stBmp))
+		return;
+
+	if (const auto fRes = GetDIBits(hDC, hBmp, 0, stBmp.bmHeight, nullptr, pBMI, DIB_RGB_COLORS);
+		!fRes || pBMI->bmiHeader.biBitCount != 32)
+		return;
+
+	const auto pBitData = reinterpret_cast<LPBYTE>(operator new(stBmp.bmWidth * stBmp.bmHeight * sizeof(DWORD)));
+	auto pData = pBitData;
+	GetDIBits(hDC, hBmp, 0, stBmp.bmHeight, pData, pBMI, DIB_RGB_COLORS);
+	for (int y = 0; y < stBmp.bmHeight; ++y) {
+		for (int x = 0; x < stBmp.bmWidth; ++x) {
+			pData[0] = static_cast<BYTE>(static_cast<DWORD>(pData[0]) * pData[3] / 255);
+			pData[1] = static_cast<BYTE>(static_cast<DWORD>(pData[1]) * pData[3] / 255);
+			pData[2] = static_cast<BYTE>(static_cast<DWORD>(pData[2]) * pData[3] / 255);
+			pData += 4;
+		}
+	}
+	SetDIBits(hDC, hBmp, 0, stBmp.bmHeight, pBitData, pBMI, DIB_RGB_COLORS);
+
+	operator delete(pBitData);
+	_freea(pBMI);
 }

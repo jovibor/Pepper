@@ -36,6 +36,10 @@ inline bool SaveIconCur(const wchar_t* pwszPath, std::span<const std::byte> spnD
 	if (spnData.empty())
 		return false;
 
+	std::ofstream ofs(pwszPath, std::ios::binary);
+	if (!ofs)
+		return false;
+
 #pragma pack(push, 2)
 	struct ICONDIRENTRY {
 		BYTE  bWidth { };
@@ -55,10 +59,6 @@ inline bool SaveIconCur(const wchar_t* pwszPath, std::span<const std::byte> spnD
 		ICONDIRENTRY idEntries[1];
 	};
 #pragma pack(pop)
-
-	std::ofstream ofs(pwszPath, std::ios::binary);
-	if (!ofs)
-		return false;
 
 	const auto dwSize = static_cast<DWORD>(spnData.size());
 	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(spnData.data())),
@@ -119,6 +119,20 @@ inline bool SaveBitmap(const wchar_t* pwszPath, std::span<const std::byte> spnDa
 	BITMAPFILEHEADER bmpFHdr { .bfType = 0x4D42, //"BM"
 		.bfSize = dwSizeFile, .bfOffBits = dwSizeFile - pBMPInfoHdr->biSizeImage };
 	ofs.write(reinterpret_cast<const char*>(&bmpFHdr), sizeof(BITMAPFILEHEADER));
+	ofs.write(reinterpret_cast<const char*>(spnData.data()), spnData.size());
+
+	return true;
+}
+
+inline bool SavePng(const wchar_t* pwszPath, std::span<const std::byte> spnData)
+{
+	if (spnData.empty())
+		return false;
+
+	std::ofstream ofs(pwszPath, std::ios::binary);
+	if (!ofs)
+		return false;
+
 	ofs.write(reinterpret_cast<const char*>(spnData.data()), spnData.size());
 
 	return true;
