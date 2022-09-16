@@ -7,8 +7,10 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #pragma once
-#include "Utility.h"
 #include "CSplitterEx.h"
+
+import Utility;
+using namespace util;
 
 class CChildFrame : public CMDIChildWndEx
 {

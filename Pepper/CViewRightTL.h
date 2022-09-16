@@ -12,8 +12,9 @@
 #include "ListEx/ListEx.h"
 #include "CTreeEx.h"
 #include "CFileLoader.h"
-#include "Utility.h"
 #include "HexCtrl.h"
+
+import Utility;
 
 using namespace LISTEX;
 using namespace HEXCTRL;
@@ -40,8 +41,8 @@ private:
 	void OnListCOMDescMenuSelect(WORD wMenuID);
 	afx_msg void OnTreeResTopSelChange(NMHDR *pNMHDR, LRESULT *pResult);
 	DECLARE_DYNCREATE(CViewRightTL)
-	DECLARE_MESSAGE_MAP()
-	void CreateListDOSHeader();
+		DECLARE_MESSAGE_MAP()
+		void CreateListDOSHeader();
 	void CreateListRichHeader();
 	void CreateListNTHeader();
 	void CreateListFileHeader();

@@ -7,7 +7,8 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #pragma once
-#include "Utility.h"
+import Utility;
+using namespace util;
 
 class CMainFrame : public CMDIFrameWndEx
 {

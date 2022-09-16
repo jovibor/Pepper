@@ -94,6 +94,9 @@
     <ClCompile Include="submodules\libpe\src\libpe.cpp">
       <Filter>libpe</Filter>
     </ClCompile>
+    <ClCompile Include="Utility.ixx">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="res\resource.h">
@@ -124,9 +127,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CTreeEx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CViewLeft.h">
@@ -206,6 +206,9 @@
     </ClInclude>
     <ClInclude Include="submodules\libpe\src\libpe.h">
       <Filter>libpe</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

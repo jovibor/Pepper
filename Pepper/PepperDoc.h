@@ -23,17 +23,18 @@ private:
 	BOOL OnOpenDocument(LPCTSTR lpszPathName)override;
 	afx_msg void OnFileClose();
 	void OnCloseDocument()override;
-	afx_msg void OnUpdateResExtractCur(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateResExtractIco(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateResExtractBmp(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateResExtractPng(CCmdUI *pCmdUI);
-	afx_msg void OnResExtractCur();
-	afx_msg void OnResExtractIco();
-	afx_msg void OnResExtractBmp();
-	afx_msg void OnResExtractPng();
+	afx_msg void OnUpdateResExtractAllCur(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateResExtractAllIco(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateResExtractAllBmp(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateResExtractAllPng(CCmdUI *pCmdUI);
+	afx_msg void OnResExtractAllCur();
+	afx_msg void OnResExtractAllIco();
+	afx_msg void OnResExtractAllBmp();
+	afx_msg void OnResExtractAllPng();
 	DECLARE_DYNCREATE(CPepperDoc);
 	DECLARE_MESSAGE_MAP();
 private:
+	std::wstring m_wstrDocName; //Opened document name.
 	IlibpePtr m_pLibpe { Createlibpe() };
 	bool m_fEditMode { false };
 	bool m_fHasCur { false };

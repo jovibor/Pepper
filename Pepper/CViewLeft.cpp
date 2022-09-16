@@ -8,8 +8,10 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "CViewLeft.h"
-#include "Utility.h"
 #include "res/resource.h"
+
+import Utility;
+using namespace util;
 
 IMPLEMENT_DYNCREATE(CViewLeft, CView)
 

@@ -272,16 +272,16 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		::GetClientRect(hWnd, rc);
 		CMemDC dcMem(dc, rc);
 		auto pDC = &dcMem.GetDC();
-		constexpr auto iLengthText = static_cast<int>(std::size(PRODUCT_NAME)) - 1;
+		constexpr auto iLengthText = static_cast<int>(std::size(WSTR_PEPPER_PRODUCT_NAME)) - 1;
 
 		pDC->FillSolidRect(rc, RGB(190, 190, 190));
 		pDC->SelectObject(m_fontMDIClient);
 		pDC->SetBkMode(TRANSPARENT);
 		pDC->SetTextColor(RGB(205, 205, 205)); //Shadow color.
-		pDC->DrawTextW(PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+		pDC->DrawTextW(WSTR_PEPPER_PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 		pDC->SetTextColor(RGB(193, 193, 193)); //Text color.
 		rc.OffsetRect(-3, 2);
-		pDC->DrawTextW(PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+		pDC->DrawTextW(WSTR_PEPPER_PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 	}
 	break;
 	case WM_SIZE:
@@ -297,7 +297,7 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam)
 {
-	constexpr auto iLengthText = static_cast<int>(std::size(PRODUCT_NAME)) - 1;
+	constexpr auto iLengthText = static_cast<int>(std::size(WSTR_PEPPER_PRODUCT_NAME)) - 1;
 	const auto pDC = CDC::FromHandle(::GetDC(hWnd));
 	const auto iWidthNew = LOWORD(lParam);
 	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
@@ -313,7 +313,7 @@ void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam)
 		lf.lfHeight = -MulDiv(++iFontSizeMin, iLOGPIXELSY, 72);
 		m_fontMDIClient.CreateFontIndirectW(&lf);
 		pDC->SelectObject(m_fontMDIClient);
-		stSizeText = pDC->GetTextExtent(PRODUCT_NAME, iLengthText);
+		stSizeText = pDC->GetTextExtent(WSTR_PEPPER_PRODUCT_NAME, iLengthText);
 	}
 	::ReleaseDC(hWnd, pDC->m_hDC);
 	::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);

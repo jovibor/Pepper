@@ -11,9 +11,9 @@
 #include "PepperDoc.h"
 #include "ChildFrm.h"
 #include "ListEx/ListEx.h"
-#include "Utility.h"
 #include <span>
-
+import Utility;
+using namespace util;
 using namespace LISTEX;
 
 class CWndSampleDlg final : public CWnd
@@ -62,21 +62,6 @@ private:
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBR);
 private:
-	enum class EResType : DWORD {
-		RTYPE_CURSOR = 1, RTYPE_BITMAP = 2,
-		RTYPE_ICON = 3, RTYPE_MENU = 4,
-		RTYPE_DIALOG = 5, RTYPE_STRING = 6,
-		RTYPE_FONTDIR = 7, RTYPE_FONT = 8,
-		RTYPE_ACCELERATOR = 9, RTYPE_RCDATA = 10,
-		RTYPE_MESSAGETABLE = 11, RTYPE_GROUP_CURSOR = 12,
-		RTYPE_GROUP_ICON = 14, RTYPE_VERSION = 16,
-		RTYPE_DLGINCLUDE = 17, RTYPE_PLUGPLAY = 19,
-		RTYPE_VXD = 20, RTYPE_ANICURSOR = 21,
-		RTYPE_ANIICON = 22, RTYPE_HTML = 23, RTYPE_RIBBON_XML = 28,
-		RTYPE_DLGINIT = 240, RTYPE_TOOLBAR = 241, RTYPE_PNG = 0x1000,
-		RTYPE_UNSUPPORTED = 0xFFFF, RES_LOAD_ERROR = 0xFFFF1,
-		NO_RESOURCE = 0xFFFFF
-	};
 	HWND m_hwndActive { };
 	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };

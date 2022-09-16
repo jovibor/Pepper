@@ -20,12 +20,13 @@
 #define IDC_LINK_PEPPER                 1006
 #define IDC_LINK_LIBPE                  1007
 #define IDC_LINK_HEXCTRL                1008
-#define IDM_RES_EXTRACTCUR              32788
-#define IDM_RES_EXTRACTICO              32789
-#define IDM_RES_EXTRACTBMP              32790
-#define IDM_HELP_ABOUT                  32791
-#define IDM_EDIT_EDITMODE               32792
-#define IDM_RES_EXTRACTPNG              32793
+#define IDM_RES_EXTRACTALLCUR           32788
+#define IDM_RES_EXTRACTALLICO           32789
+#define IDM_RES_EXTRACTALLBMP           32790
+#define IDM_RES_EXTRACTALLPNG           32791
+#define IDM_HELP_ABOUT                  32792
+#define IDM_EDIT_EDITMODE               32793
+
 
 // Next default values for new objects
 // 

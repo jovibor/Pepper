@@ -12,8 +12,9 @@
 #include "ListEx/ListEx.h"
 #include "CTreeEx.h"
 #include "CFileLoader.h"
-#include "Utility.h"
 #include "HexCtrl.h"
+
+import Utility;
 
 using namespace HEXCTRL;
 using namespace LISTEX;
@@ -49,7 +50,7 @@ private:
 	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
 	void OnDocEditMode();
 	DECLARE_MESSAGE_MAP()
-	DECLARE_DYNCREATE(CViewRightBL)
+		DECLARE_DYNCREATE(CViewRightBL)
 private:
 	Ilibpe* m_pLibpe { };
 	PEFILEINFO stFileInfo;

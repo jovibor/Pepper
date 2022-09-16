@@ -9,7 +9,6 @@
 #include "stdafx.h"
 #include "CViewRightBR.h"
 #include "MainFrm.h"
-#include "Utility.h"
 #include <format>
 #pragma comment(lib, "Mincore.lib") //VerQueryValueW
 
@@ -177,46 +176,8 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	const auto wMenuID = LOWORD(wParam);
-	if (wMenuID == IDC_MENU_EXTRACT)
-	{
-		using enum EResType;
-		std::wstring_view wsvName;
-		switch (m_eResTypeToDraw) {
-		case RTYPE_CURSOR:
-			wsvName = L"Cursor files (*.cur)|*.cur|All files (*.*)|*.*||";
-			break;
-		case RTYPE_BITMAP:
-		case RTYPE_TOOLBAR:
-			wsvName = L"Bitmap files (*.bmp)|*.bmp|All files (*.*)|*.*||";
-			break;
-		case RTYPE_ICON:
-			wsvName = L"Icon files (*.ico)|*.ico|All files (*.*)|*.*||";
-			break;
-		case RTYPE_PNG:
-			wsvName = L"PNG files (*.png)|*.png|All files (*.*)|*.*||";
-			break;
-		}
-
-		CFileDialog fd(FALSE, nullptr, nullptr,
-			OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_PATHMUSTEXIST,
-			wsvName.data());
-		if (fd.DoModal() == IDOK) {
-			const auto wstrPath = fd.GetPathName();
-			bool fSaveOK;
-			if (m_eResTypeToDraw == RTYPE_BITMAP) {
-				fSaveOK = SaveBitmap(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() });
-			}
-			else if (m_eResTypeToDraw == RTYPE_PNG) {
-				fSaveOK = SavePng(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() });
-			}
-			else { //RT_ICON, RT_CURSOR
-				fSaveOK = SaveIconCur(wstrPath.GetString(), { m_pResData->pData->data(), m_pResData->pData->size() }, m_eResTypeToDraw == RTYPE_ICON);
-			}
-
-			if (!fSaveOK) {
-				MessageBoxW(L"Error saving the file. Check if it's writable.", L"Error", MB_ICONERROR);
-			}
-		}
+	if (wMenuID == IDC_MENU_EXTRACT) {
+		ExtractResToFile(m_eResTypeToDraw, { m_pResData->pData->data(), m_pResData->pData->size() });
 	}
 
 	return CScrollView::OnCommand(wParam, lParam);

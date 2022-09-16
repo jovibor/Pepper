@@ -8,9 +8,10 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "CViewRightBL.h"
-#include "Utility.h"
 #include "res/resource.h"
 #include <format>
+
+import Utility;
 
 IMPLEMENT_DYNCREATE(CViewRightBL, CView)
 

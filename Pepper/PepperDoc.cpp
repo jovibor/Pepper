@@ -10,57 +10,36 @@
 #include "res/resource.h"
 #include "MainFrm.h"
 #include "PepperDoc.h"
-#include "Utility.h"
 #include <format>
+
+import Utility;
+using namespace util;
 
 IMPLEMENT_DYNCREATE(CPepperDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CPepperDoc, CDocument)
 	ON_COMMAND(ID_FILE_CLOSE, &CPepperDoc::OnFileClose)
-	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTCUR, &CPepperDoc::OnUpdateResExtractCur)
-	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTICO, &CPepperDoc::OnUpdateResExtractIco)
-	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTBMP, &CPepperDoc::OnUpdateResExtractBmp)
-	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTPNG, &CPepperDoc::OnUpdateResExtractPng)
-	ON_COMMAND(IDM_RES_EXTRACTCUR, &CPepperDoc::OnResExtractCur)
-	ON_COMMAND(IDM_RES_EXTRACTICO, &CPepperDoc::OnResExtractIco)
-	ON_COMMAND(IDM_RES_EXTRACTBMP, &CPepperDoc::OnResExtractBmp)
-	ON_COMMAND(IDM_RES_EXTRACTPNG, &CPepperDoc::OnResExtractPng)
+	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTALLCUR, &CPepperDoc::OnUpdateResExtractAllCur)
+	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTALLICO, &CPepperDoc::OnUpdateResExtractAllIco)
+	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTALLBMP, &CPepperDoc::OnUpdateResExtractAllBmp)
+	ON_UPDATE_COMMAND_UI(IDM_RES_EXTRACTALLPNG, &CPepperDoc::OnUpdateResExtractAllPng)
+	ON_COMMAND(IDM_RES_EXTRACTALLCUR, &CPepperDoc::OnResExtractAllCur)
+	ON_COMMAND(IDM_RES_EXTRACTALLICO, &CPepperDoc::OnResExtractAllIco)
+	ON_COMMAND(IDM_RES_EXTRACTALLBMP, &CPepperDoc::OnResExtractAllBmp)
+	ON_COMMAND(IDM_RES_EXTRACTALLPNG, &CPepperDoc::OnResExtractAllPng)
 END_MESSAGE_MAP()
-
-void CPepperDoc::SetEditMode(bool fEditMode)
-{
-	if (!m_stFileLoader.IsWritable())
-	{
-		MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"File cannot be opened for writing.\r\n"
-			"Most likely it's already opened by another process.", L"Error open for writing", MB_ICONERROR);
-		return;
-	}
-
-	if (!IsEditMode())
-	{
-		if (IDYES != MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"Warning!\r\nYou are about to enter the Edit Mode. "
-			"In this mode all changes you make will be immediately reflected to the file.\r\n"
-			"Are you sure you want it?", L"Edit mode", MB_ICONINFORMATION | MB_YESNO))
-		{
-			return;
-		}
-	}
-	m_fEditMode = fEditMode;
-	UpdateAllViews(nullptr, MAKELPARAM(ID_DOC_EDITMODE, fEditMode));
-}
 
 BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-	if (const auto err = m_pLibpe->LoadPe(lpszPathName); err != PEOK)
-	{
-		std::wstring wstrFileName = lpszPathName;
-		if (const auto sSlash = wstrFileName.find_last_of(L'\\'); sSlash > 0)
-			wstrFileName = wstrFileName.substr(sSlash + 1);
-		wstrFileName += L" File Load Failed.";
+	m_wstrDocName = lpszPathName;
+	m_wstrDocName = m_wstrDocName.substr(m_wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+
+	if (const auto err = m_pLibpe->LoadPe(lpszPathName); err != PEOK) {
+		m_wstrDocName += L" File Load Failed.";
 		const auto it = g_mapLibpeErrors.find(err);
 		MessageBoxW(nullptr, std::vformat(L"File load failed with libpe error code: 0x{:04X}\n{}",
 			std::make_wformat_args(err, it != g_mapLibpeErrors.end() ? it->second : L"N/A")).data(),
-			wstrFileName.data(), MB_ICONERROR);
+			m_wstrDocName.data(), MB_ICONERROR);
 
 		return FALSE;
 	}
@@ -106,138 +85,62 @@ void CPepperDoc::OnFileClose()
 	reinterpret_cast<CMainFrame*>(AfxGetMainWnd())->MDIGetActive()->SendMessageW(WM_CLOSE);
 }
 
-void CPepperDoc::OnUpdateResExtractCur(CCmdUI *pCmdUI)
+void CPepperDoc::OnUpdateResExtractAllCur(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_fHasCur);
 }
 
-void CPepperDoc::OnUpdateResExtractIco(CCmdUI *pCmdUI)
+void CPepperDoc::OnUpdateResExtractAllIco(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_fHasIco);
 }
 
-void CPepperDoc::OnUpdateResExtractBmp(CCmdUI *pCmdUI)
+void CPepperDoc::OnUpdateResExtractAllBmp(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_fHasBmp);
 }
 
-void CPepperDoc::OnUpdateResExtractPng(CCmdUI *pCmdUI)
+void CPepperDoc::OnUpdateResExtractAllPng(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_fHasPng);
 }
 
-void CPepperDoc::OnResExtractCur()
+void CPepperDoc::OnResExtractAllCur()
 {
-	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
-		std::wstring wstrDocName = GetPathName().GetString();
-		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
-		const auto wstrPath = fd.GetPathName(); //Folder name.
-
-		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-			const auto vecRes = Ilibpe::FlatResources(*pRes);
-			auto iIndex { 0 };
-			bool fAllSaveOK { true };
-			for (const auto& ref : vecRes) {
-				if (ref.wTypeID == 1) { //RT_CURSOR
-					if (!SaveIconCur(std::format(L"{}\\{}_{:04}.cur", wstrPath.GetString(), wstrDocName, ++iIndex).data(), ref.spnData, false)) {
-						fAllSaveOK = false;
-					}
-				}
-			}
-			if (fAllSaveOK) {
-				MessageBoxW(nullptr, std::format(L"All {} cursors were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
-			}
-			else {
-				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} cursors were saved successfully.", iIndex).data(),
-					L"Error", MB_ICONERROR);
-			}
-		}
-	}
+	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_CURSOR, m_wstrDocName + L"_{:04}.cur");
 }
 
-void CPepperDoc::OnResExtractIco()
+void CPepperDoc::OnResExtractAllIco()
 {
-	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
-		std::wstring wstrDocName = GetPathName().GetString();
-		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
-		const auto wstrPath = fd.GetPathName(); //Folder name.
-
-		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-			const auto vecRes = Ilibpe::FlatResources(*pRes);
-			auto iIndex { 0 };
-			bool fAllSaveOK { true };
-			for (const auto& ref : vecRes) {
-				if (ref.wTypeID == 3) { //RT_ICON
-					if (!SaveIconCur(std::format(L"{}\\{}_{:04}.ico", wstrPath.GetString(), wstrDocName, ++iIndex).data(), ref.spnData)) {
-						fAllSaveOK = false;
-					}
-				}
-			}
-			if (fAllSaveOK) {
-				MessageBoxW(nullptr, std::format(L"All {} icons were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
-			}
-			else {
-				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} icons were saved successfully.", iIndex).data(),
-					L"Error", MB_ICONERROR);
-			}
-		}
-	}
+	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_ICON, m_wstrDocName + L"_{:04}.ico");
 }
 
-void CPepperDoc::OnResExtractBmp()
+void CPepperDoc::OnResExtractAllBmp()
 {
-	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
-		std::wstring wstrDocName = GetPathName().GetString();
-		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
-		const auto wstrPath = fd.GetPathName(); //Folder name.
-
-		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-			const auto vecRes = Ilibpe::FlatResources(*pRes);
-			auto iIndex { 0 };
-			bool fAllSaveOK { true };
-			for (const auto& ref : vecRes) {
-				if (ref.wTypeID == 2) { //RT_BITMAP
-					if (!SaveBitmap(std::format(L"{}\\{}_{:04}.bmp", wstrPath.GetString(), wstrDocName, ++iIndex).data(), ref.spnData)) {
-						fAllSaveOK = false;
-					}
-				}
-			}
-			if (fAllSaveOK) {
-				MessageBoxW(nullptr, std::format(L"All {} bitmaps were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
-			}
-			else {
-				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} bitmaps were saved successfully.", iIndex).data(),
-					L"Error", MB_ICONERROR);
-			}
-		}
-	}
+	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_BITMAP, m_wstrDocName + L"_{:04}.bmp");
 }
 
-void CPepperDoc::OnResExtractPng()
+void CPepperDoc::OnResExtractAllPng()
 {
-	if (CFolderPickerDialog fd; fd.DoModal() == IDOK) {
-		std::wstring wstrDocName = GetPathName().GetString();
-		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
-		const auto wstrPath = fd.GetPathName(); //Folder name.
+	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_PNG, m_wstrDocName + L"_{:04}.png");
+}
 
-		if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-			const auto vecRes = Ilibpe::FlatResources(*pRes);
-			auto iIndex { 0 };
-			bool fAllSaveOK { true };
-			for (const auto& ref : vecRes) {
-				if (ref.wsvTypeName == L"PNG") { //PNG
-					if (!SavePng(std::format(L"{}\\{}_{:04}.png", wstrPath.GetString(), wstrDocName, ++iIndex).data(), ref.spnData)) {
-						fAllSaveOK = false;
-					}
-				}
-			}
-			if (fAllSaveOK) {
-				MessageBoxW(nullptr, std::format(L"All {} .png files were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
-			}
-			else {
-				MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} .png files were saved successfully.", iIndex).data(),
-					L"Error", MB_ICONERROR);
-			}
+void CPepperDoc::SetEditMode(bool fEditMode)
+{
+	if (!m_stFileLoader.IsWritable()) {
+		MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"File cannot be opened for writing.\r\n"
+			"Most likely it's already opened by another process.", L"Error open for writing", MB_ICONERROR);
+		return;
+	}
+
+	if (!IsEditMode()) {
+		if (IDYES != MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"Warning!\r\nYou are about to enter the Edit Mode. "
+			"In this mode all changes you make will be immediately reflected to the file.\r\n"
+			"Are you sure you want it?", L"Edit mode", MB_ICONINFORMATION | MB_YESNO)) {
+			return;
 		}
 	}
+
+	m_fEditMode = fEditMode;
+	UpdateAllViews(nullptr, MAKELPARAM(ID_DOC_EDITMODE, fEditMode));
 }

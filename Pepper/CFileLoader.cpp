@@ -10,8 +10,9 @@
 #include "res/resource.h"
 #include "CFileLoader.h"
 #include "PepperDoc.h"
-#include "Utility.h"
 #include <algorithm>
+
+import Utility;
 
 void CFileLoader::CreateHexCtrlWnd()
 {

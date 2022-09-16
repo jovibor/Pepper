@@ -8,7 +8,8 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "CViewRightTR.h"
-#include "Utility.h"
+
+import Utility;
 
 IMPLEMENT_DYNCREATE(CViewRightTR, CView)
 

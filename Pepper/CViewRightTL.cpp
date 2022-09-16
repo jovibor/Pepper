@@ -60,7 +60,7 @@ void CViewRightTL::OnInitialUpdate()
 	else
 		m_wstrFileType = L"File type: unknown";
 
-	m_wstrPepperVersion = PEPPER_VERSION_WSTR;
+	m_wstrPepperVersion = WSTR_PEPPER_VERSION;
 
 	//There can be the absence of some structures in PE.
 	//So it's ok to return not S_OK here.

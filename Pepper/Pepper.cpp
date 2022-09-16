@@ -11,8 +11,9 @@
 #include "MainFrm.h"
 #include "Pepper.h"
 #include "PepperDoc.h"
-#include "Utility.h"
 #include "res/resource.h"
+
+import Utility;
 
 class CAboutDlg : public CDialogEx
 {
@@ -25,7 +26,7 @@ protected:
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(PEPPER_VERSION_WSTR);
+	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(WSTR_PEPPER_VERSION);
 	std::wstring wstrlibpeVer = L"libpe - PE/PE+ binaries library v";
 	wstrlibpeVer += GetLibInfo().pwszVersion;
 	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrlibpeVer.data());
