@@ -133,9 +133,10 @@ export namespace util
 			const auto dwSizeFile = static_cast<DWORD>(sizeof(BITMAPFILEHEADER) + spnData.size());
 			const auto pBMPInfo = reinterpret_cast<const BITMAPINFO*>(spnData.data());
 			const auto pBMPInfoHdr = &pBMPInfo->bmiHeader;
+			const BITMAPFILEHEADER bmpFHdr { .bfType = 0x4D42/*"BM"*/, .bfSize = dwSizeFile,
+				.bfOffBits = pBMPInfoHdr->biSizeImage == 0 ? sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) :
+				dwSizeFile - pBMPInfoHdr->biSizeImage };
 
-			BITMAPFILEHEADER bmpFHdr { .bfType = 0x4D42, //"BM"
-				.bfSize = dwSizeFile, .bfOffBits = dwSizeFile - pBMPInfoHdr->biSizeImage };
 			ofs.write(reinterpret_cast<const char*>(&bmpFHdr), sizeof(BITMAPFILEHEADER));
 			ofs.write(reinterpret_cast<const char*>(spnData.data()), spnData.size());
 			return true;
@@ -256,8 +257,7 @@ export namespace util
 
 	//Helper struct for PE structs' fields offsets and sizes.
 	//Reflection kind of.
-	struct SPEREFLECTION
-	{
+	struct SPEREFLECTION {
 		DWORD dwSize;			//Struct's field size.
 		DWORD dwOffset;			//Field offset.
 		std::wstring wstrName;	//Field name.
@@ -544,9 +544,8 @@ export namespace util
 	////////////////////////////////////////////////////////////
 
 	//Helper struct for resources interchange between views.
-	struct SRESDATA
-	{
-		std::wstring_view wsvName { };
+	struct SRESDATA {
+		std::wstring_view wsvTypeName { }; //Resource type name.
 		const std::vector<std::byte>* pData { };
 		WORD wIdType { };
 		WORD wIdName { };
@@ -554,8 +553,7 @@ export namespace util
 		bool fNameIsString { false };
 	};
 
-	struct SWINDOWSTATUS
-	{
+	struct SWINDOWSTATUS {
 		HWND hWnd { };
 		bool fVisible { };
 	};
@@ -621,6 +619,8 @@ export namespace util
 
 	constexpr auto IDM_LIST_GOTODESCOFFSET = 0x8001;
 	constexpr auto IDM_LIST_GOTODATAOFFSET = 0x8002;
+
+	constexpr auto IDM_EXTRACT_RES = 0xF0U;
 	/********************************************************
 	* End of IDC.											*
 	********************************************************/

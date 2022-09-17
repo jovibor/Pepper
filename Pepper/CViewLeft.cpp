@@ -96,8 +96,7 @@ void CViewLeft::OnInitialUpdate()
 
 	if (const auto vecDataDirs = m_pLibpe->GetDataDirs(); vecDataDirs != nullptr)
 	{
-		if (hTreeOptHeader)
-		{
+		if (hTreeOptHeader) {
 			const auto hTreeDataDirs = m_stTreeMain.InsertItem(L"Data Directories [IMAGE_DATA_DIRECTORY]", iconHdr, iconHdr, hTreeOptHeader);
 			m_stTreeMain.SetItemData(hTreeDataDirs, IDC_LIST_DATADIRECTORIES);
 			m_stTreeMain.Expand(hTreeOptHeader, TVE_EXPAND);

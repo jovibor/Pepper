@@ -69,8 +69,6 @@ BEGIN_MESSAGE_MAP(CViewRightBR, CScrollView)
 	ON_WM_RBUTTONUP()
 END_MESSAGE_MAP()
 
-constexpr auto IDC_MENU_EXTRACT = 0xF0U;
-
 void CViewRightBR::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
@@ -176,7 +174,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	const auto wMenuID = LOWORD(wParam);
-	if (wMenuID == IDC_MENU_EXTRACT) {
+	if (wMenuID == IDM_EXTRACT_RES) {
 		ExtractResToFile(m_eResTypeToDraw, { m_pResData->pData->data(), m_pResData->pData->size() });
 	}
 
@@ -279,7 +277,7 @@ void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt)
 		break;
 	}
 
-	menu.AppendMenuW(MF_STRING, IDC_MENU_EXTRACT, wsvMenu.data());
+	menu.AppendMenuW(MF_STRING, IDM_EXTRACT_RES, wsvMenu.data());
 	menu.TrackPopupMenuEx(TPM_LEFTALIGN, pt.x, pt.y, this, nullptr);
 }
 
@@ -1123,7 +1121,7 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 			}
 		}
 		else {
-			if (pResData->wsvName == L"PNG") {
+			if (pResData->wsvTypeName == L"PNG") {
 				CreatePNG(*pResData);
 			}
 			else {

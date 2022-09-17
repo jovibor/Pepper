@@ -19,6 +19,8 @@ BEGIN_MESSAGE_MAP(CViewRightBL, CView)
 	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
+	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_RESOURCE_BOTTOM, &CViewRightBL::OnTreeSelChanged)
+	ON_NOTIFY(NM_RCLICK, IDC_TREE_RESOURCE_BOTTOM, &CViewRightBL::OnTreeRClick)
 END_MESSAGE_MAP()
 
 BOOL CViewRightBL::PreCreateWindow(CREATESTRUCT& cs)
@@ -169,48 +171,119 @@ BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 	return CView::OnEraseBkgnd(pDC);
 }
 
-BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
+void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(lParam);
-	if (pTree->hdr.idFrom == IDC_TREE_RESOURCE_BOTTOM && pTree->hdr.code == TVN_SELCHANGED)
+	const auto pstResRoot = m_pLibpe->GetResources();
+	if (pstResRoot == nullptr)
+		return;
+
+	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
+	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
+	if (idlvl2 >= 0 && idlvl3 >= 0)
 	{
-		const auto pstResRoot = m_pLibpe->GetResources();
-		if (pstResRoot == nullptr)
-			return FALSE;
+		const auto& rootvec = pstResRoot->vecResData;
+		const auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
+		const auto& lvl2vec = lvl2tup.vecResData;
+		if (lvl2vec.empty())
+			return;
 
-		const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
-		if (idlvl2 >= 0)
-		{
-			const auto& rootvec = pstResRoot->vecResData;
-			const auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
-			const auto& lvl2vec = lvl2tup.vecResData;
-			if (!lvl2vec.empty())
-			{
-				if (idlvl3 >= 0)
-				{
-					const auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
-					const auto& lvl3vec = lvl3tup.vecResData;
-					if (!lvl3vec.empty())
-					{
-						static SRESDATA stResData; //Resource pData and resource type to show in CViewRightBR.
-						stResData.wIdType = rootvec[idlvlRoot].stResDirEntry.Id;
-						stResData.fNameIsString = rootvec[idlvlRoot].stResDirEntry.NameIsString > 0;
-						stResData.wsvName = rootvec[idlvlRoot].wstrResName;
-						stResData.wIdName = lvl2vec[idlvl2].stResDirEntry.Id;
-						stResData.wIdLang = lvl3vec[idlvl3].stResDirEntry.Id;
-						stResData.pData = &lvl3vec[idlvl3].vecRawResData;
+		const auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
+		const auto& lvl3vec = lvl3tup.vecResData;
+		if (lvl3vec.empty())
+			return;
 
-						m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&stResData));
-					}
-				}
-			}
-		}
-		else {
-			//Update by default, with no pData — to clear the view.
-			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), nullptr);
+		//Resource pData and resource type to show in CViewRightBR.
+		m_stResData.wIdType = rootvec[idlvlRoot].stResDirEntry.Id;
+		m_stResData.fNameIsString = rootvec[idlvlRoot].stResDirEntry.NameIsString > 0;
+		m_stResData.wsvTypeName = rootvec[idlvlRoot].wstrResName;
+		m_stResData.wIdName = lvl2vec[idlvl2].stResDirEntry.Id;
+		m_stResData.wIdLang = lvl3vec[idlvl3].stResDirEntry.Id;
+		m_stResData.pData = &lvl3vec[idlvl3].vecRawResData;
+
+		m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&m_stResData));
+	}
+	else {	//Update by default, with no pData — to clear the view.
+		m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), nullptr);
+	}
+}
+
+void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
+{
+	const auto pstResRoot = m_pLibpe->GetResources();
+	if (pstResRoot == nullptr)
+		return;
+
+	const auto dwMsgPos = GetMessagePos();
+	CPoint ptScreen(GET_X_LPARAM(dwMsgPos), GET_Y_LPARAM(dwMsgPos));
+	CPoint ptClient = ptScreen;
+	m_treeResBottom.ScreenToClient(&ptClient);
+	const auto hTreeItem = m_treeResBottom.HitTest(ptClient);
+	if (!hTreeItem)
+		return;
+
+	m_treeResBottom.SelectItem(hTreeItem);
+	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(hTreeItem));
+	if (idlvl2 < 0 || idlvl3 < 0)
+		return;
+
+	const auto& rootvec = pstResRoot->vecResData;
+	const auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
+	const auto& lvl2vec = lvl2tup.vecResData;
+	if (lvl2vec.empty())
+		return;
+
+	const auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
+	const auto& lvl3vec = lvl3tup.vecResData;
+	if (lvl3vec.empty())
+		return;
+
+	CMenu menu;
+	menu.CreatePopupMenu();
+	std::wstring_view wsvMenu;
+	using enum EResType;
+	if (rootvec[idlvlRoot].stResDirEntry.NameIsString > 0) {
+		if (rootvec[idlvlRoot].wstrResName == L"PNG") {
+			wsvMenu = L"Extract Png...";
+			m_eResType = RTYPE_PNG;
 		}
 	}
+	else {
+		switch (rootvec[idlvlRoot].stResDirEntry.Id)
+		{
+		case 1:   //RT_CURSOR
+			wsvMenu = L"Extract Cursor...";
+			m_eResType = RTYPE_CURSOR;
+			break;
+		case 2:   //RT_BITMAP
+		case 241: //RT_TOOLBAR
+			wsvMenu = L"Extract Bitmap...";
+			m_eResType = RTYPE_BITMAP;
+			break;
+		case 3:   //RT_ICON
+			wsvMenu = L"Extract Icon...";
+			m_eResType = RTYPE_ICON;
+			break;
+		}
+	}
+	if (wsvMenu.empty()) //Clicked on the resource that is unextractable.
+		return;
 
+	menu.AppendMenuW(MF_STRING, IDM_EXTRACT_RES, wsvMenu.data());
+	menu.TrackPopupMenuEx(TPM_LEFTALIGN, ptScreen.x, ptScreen.y, this, nullptr);
+}
+
+BOOL CViewRightBL::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	const auto wMenuID = LOWORD(wParam);
+	if (wMenuID == IDM_EXTRACT_RES) {
+		ExtractResToFile(m_eResType, { m_stResData.pData->data(), m_stResData.pData->size() });
+	}
+
+	return CView::OnCommand(wParam, lParam);
+}
+
+BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
+{
 	return CView::OnNotify(wParam, lParam, pResult);
 }
 

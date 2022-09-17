@@ -27,6 +27,8 @@ private:
 	void OnDraw(CDC* pDC)override; // overridden to draw this view
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnTreeRClick(NMHDR* pNMHDR, LRESULT* pResult);
 	void CreateListExportFuncs();
 	void CreateListImportFuncs();
 	void CreateTreeResources();
@@ -47,10 +49,11 @@ private:
 	void ShowTLSHex();
 	void ShowSecurityHexEntry(unsigned nSertId);
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)override;
+	BOOL OnCommand(WPARAM wParam, LPARAM lParam)override;
 	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
 	void OnDocEditMode();
-	DECLARE_MESSAGE_MAP()
-		DECLARE_DYNCREATE(CViewRightBL)
+	DECLARE_MESSAGE_MAP();
+	DECLARE_DYNCREATE(CViewRightBL);
 private:
 	Ilibpe* m_pLibpe { };
 	PEFILEINFO stFileInfo;
@@ -68,5 +71,8 @@ private:
 	CTreeEx m_treeResBottom;
 	CImageList m_imglTreeRes;
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
-	LOGFONTW m_lf { }, m_hdrlf { };
+	LOGFONTW m_lf { };
+	LOGFONTW m_hdrlf { };
+	SRESDATA m_stResData;
+	EResType m_eResType;
 };
