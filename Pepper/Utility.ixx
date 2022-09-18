@@ -186,7 +186,7 @@ export namespace util
 		return true;
 	}
 
-	inline void ExtractAllResToFile(libpe::Ilibpe& libpe, EResType eResType, std::wstring_view wsvFmtFileName)
+	inline void ExtractAllResToFile(libpe::Ilibpe& libpe, EResType eResType, std::wstring_view wsvPrefix)
 	{
 		const auto pRes = libpe.GetResources();
 		if (pRes == nullptr)
@@ -197,51 +197,72 @@ export namespace util
 			return;
 
 		const auto cstrFolderPath = fd.GetPathName(); //Folder name.
-
-		//Format string for full path\\file name to save the resource to.
-		const auto wstrFmtPathFile = std::format(L"{}\\{}", cstrFolderPath.GetString(), wsvFmtFileName);
-		auto iIndex { 0 };
+		std::wstring wstrPathWithPrefix = cstrFolderPath.GetString() + std::wstring { L"\\" };
+		if (!wsvPrefix.empty())
+			wstrPathWithPrefix += std::wstring { wsvPrefix } + L"_";
+		auto dwSavedFiles { 0UL };
 		bool fAllSaveOK { true };
 		for (const auto vecRes = libpe::Ilibpe::FlatResources(*pRes); const auto & ref : vecRes) {
 			using enum EResType;
+			std::wstring_view wsvExt;
 			switch (eResType)
 			{
 			case RTYPE_CURSOR:
 				if (ref.wTypeID == 1) { //RT_CURSOR
-					if (!SaveResToFile(RTYPE_CURSOR, std::vformat(wstrFmtPathFile, std::make_wformat_args(++iIndex)).data(), ref.spnData)) {
-						fAllSaveOK = false;
-					}
+					wsvExt = L".cur";
 				}
 				break;
 			case RTYPE_BITMAP:
 				if (ref.wTypeID == 2) { //RT_BITMAP
-					if (!SaveResToFile(RTYPE_BITMAP, std::vformat(wstrFmtPathFile, std::make_wformat_args(++iIndex)).data(), ref.spnData)) {
-						fAllSaveOK = false;
-					}
+					wsvExt = L".bmp";
 				}
 				break;
 			case RTYPE_ICON:
 				if (ref.wTypeID == 3) { //RT_ICON
-					if (!SaveResToFile(RTYPE_ICON, std::vformat(wstrFmtPathFile, std::make_wformat_args(++iIndex)).data(), ref.spnData)) {
-						fAllSaveOK = false;
-					}
+					wsvExt = L".ico";
 				}
 				break;
 			case RTYPE_PNG:
 				if (ref.wsvTypeName == L"PNG") { //PNG
-					if (!SaveResToFile(RTYPE_PNG, std::vformat(wstrFmtPathFile, std::make_wformat_args(++iIndex)).data(), ref.spnData)) {
-						fAllSaveOK = false;
-					}
+					wsvExt = L".png";
 				}
 				break;
+			default:
+				break;
+			}
+
+			if (!wsvExt.empty()) {
+				std::wstring wstrPathFile = wstrPathWithPrefix;
+				if (!ref.wsvResName.empty()) {
+					wstrPathFile += ref.wsvResName;
+					wstrPathFile += L"_";
+				}
+				else {
+					wstrPathFile += std::format(L"ResID_{}_", ref.wResID);
+				}
+
+				if (!ref.wsvLangName.empty()) {
+					wstrPathFile += ref.wsvLangName;
+				}
+				else {
+					wstrPathFile += std::format(L"LangID_{}", ref.wLangID);
+				}
+				wstrPathFile += wsvExt;
+
+				if (SaveResToFile(eResType, wstrPathFile.data(), ref.spnData)) {
+					++dwSavedFiles;
+				}
+				else {
+					fAllSaveOK = false;
+				}
 			}
 		}
 
 		if (fAllSaveOK) {
-			MessageBoxW(nullptr, std::format(L"All {} files were saved successfully!", iIndex).data(), L"Success", MB_ICONINFORMATION);
+			MessageBoxW(nullptr, std::format(L"All {} files were saved successfully!", dwSavedFiles).data(), L"Success", MB_ICONINFORMATION);
 		}
 		else {
-			MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} files were saved successfully.", iIndex).data(),
+			MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} files were saved successfully.", dwSavedFiles).data(),
 				L"Error", MB_ICONERROR);
 		}
 	}

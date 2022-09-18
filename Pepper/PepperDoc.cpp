@@ -107,22 +107,22 @@ void CPepperDoc::OnUpdateResExtractAllPng(CCmdUI *pCmdUI)
 
 void CPepperDoc::OnResExtractAllCur()
 {
-	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_CURSOR, m_wstrDocName + L"_{:04}.cur");
+	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_CURSOR, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllIco()
 {
-	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_ICON, m_wstrDocName + L"_{:04}.ico");
+	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_ICON, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllBmp()
 {
-	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_BITMAP, m_wstrDocName + L"_{:04}.bmp");
+	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_BITMAP, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllPng()
 {
-	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_PNG, m_wstrDocName + L"_{:04}.png");
+	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_PNG, m_wstrDocName);
 }
 
 void CPepperDoc::SetEditMode(bool fEditMode)

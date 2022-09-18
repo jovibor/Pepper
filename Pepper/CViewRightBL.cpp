@@ -301,22 +301,6 @@ BOOL CViewRightBL::OnCommand(WPARAM wParam, LPARAM lParam)
 	else if (wMenuID == IDM_EXTRACT_ALLRES) {
 		std::wstring wstrDocName = m_pDocument->GetPathName().GetString();
 		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
-		using enum EResType;
-		switch (m_eResType)
-		{
-		case RTYPE_CURSOR:
-			wstrDocName += L"_{:04}.cur";
-			break;
-		case RTYPE_BITMAP:
-			wstrDocName += L"_{:04}.bmp";
-			break;
-		case RTYPE_ICON:
-			wstrDocName += L"_{:04}.ico";
-			break;
-		case RTYPE_PNG:
-			wstrDocName += L"_{:04}.png";
-			break;
-		}
 		ExtractAllResToFile(**&m_pLibpe, m_eResType, wstrDocName);
 	}
 
