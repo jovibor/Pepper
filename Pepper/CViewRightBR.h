@@ -42,21 +42,21 @@ private:
 	void OnDraw(CDC* pDC)override;
 	void OnInitialUpdate()override;
 	void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)override;
-	void CreateIconCursor(const SRESDATA& stResData);
-	void CreateBitmap(const SRESDATA& stResData);
-	void CreatePNG(const SRESDATA& stResData);
-	void CreateMenu(const SRESDATA& stResData);
+	void CreateIconCursor(const PERESFLAT& stResData);
+	void CreateBitmap(const PERESFLAT& stResData);
+	void CreatePNG(const PERESFLAT& stResData);
+	void CreateMenu(const PERESFLAT& stResData);
 	void CreateDebugEntry(DWORD dwEntry);
-	void CreateDlg(const SRESDATA& stResData);
+	void CreateDlg(const PERESFLAT& stResData);
 	void CreateListTLSCallbacks();
-	void CreateStrings(const SRESDATA& stResData);
-	void CreateAccel(const SRESDATA& stResData);
-	void CreateGroupIconCursor(const SRESDATA& stResData);
-	void CreateVersion(const SRESDATA& stResData);
-	void CreateManifest(const SRESDATA& stResData);
-	void CreateToolbar(const SRESDATA& stResData);
+	void CreateStrings(const PERESFLAT& stResData);
+	void CreateAccel(const PERESFLAT& stResData);
+	void CreateGroupIconCursor(const PERESFLAT& stResData);
+	void CreateVersion(const PERESFLAT& stResData);
+	void CreateManifest(const PERESFLAT& stResData);
+	void CreateToolbar(const PERESFLAT& stResData);
 	void ResLoadError();
-	void ShowResource(const SRESDATA* pResData);
+	void ShowResource(const PERESFLAT* pResData);
 	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
 	static void PremultiplyBitmapAlpha(HDC hDC, HBITMAP hBmp);
 	DECLARE_MESSAGE_MAP();
@@ -66,7 +66,7 @@ private:
 	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
-	SRESDATA* m_pResData { }; //Current resource's data pointer.
+	PERESFLAT* m_pResData { }; //Current resource's data pointer.
 	CImageList m_stImgRes;
 	CImage m_imgPng; //Image for .PNG, with transparency.
 	CWndSampleDlg m_wndSampleDlg;

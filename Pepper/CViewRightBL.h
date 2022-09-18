@@ -73,6 +73,6 @@ private:
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	LOGFONTW m_lf { };
 	LOGFONTW m_hdrlf { };
-	SRESDATA m_stResData;
+	PERESFLAT m_stResData;
 	EResType m_eResType;
 };

@@ -193,12 +193,11 @@ void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 			return;
 
 		//Resource pData and resource type to show in CViewRightBR.
-		m_stResData.wIdType = rootvec[idlvlRoot].stResDirEntry.Id;
-		m_stResData.fNameIsString = rootvec[idlvlRoot].stResDirEntry.NameIsString > 0;
+		m_stResData.wTypeID = rootvec[idlvlRoot].stResDirEntry.Id;
 		m_stResData.wsvTypeName = rootvec[idlvlRoot].wstrResName;
-		m_stResData.wIdName = lvl2vec[idlvl2].stResDirEntry.Id;
-		m_stResData.wIdLang = lvl3vec[idlvl3].stResDirEntry.Id;
-		m_stResData.pData = &lvl3vec[idlvl3].vecRawResData;
+		m_stResData.wResID = lvl2vec[idlvl2].stResDirEntry.Id;
+		m_stResData.wLangID = lvl3vec[idlvl3].stResDirEntry.Id;
+		m_stResData.spnData = lvl3vec[idlvl3].vecRawResData;
 
 		m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&m_stResData));
 	}
@@ -214,61 +213,82 @@ void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 		return;
 
 	const auto dwMsgPos = GetMessagePos();
-	CPoint ptScreen(GET_X_LPARAM(dwMsgPos), GET_Y_LPARAM(dwMsgPos));
-	CPoint ptClient = ptScreen;
+	const CPoint ptScreen(GET_X_LPARAM(dwMsgPos), GET_Y_LPARAM(dwMsgPos));
+	auto ptClient = ptScreen;
 	m_treeResBottom.ScreenToClient(&ptClient);
 	const auto hTreeItem = m_treeResBottom.HitTest(ptClient);
 	if (!hTreeItem)
 		return;
 
 	m_treeResBottom.SelectItem(hTreeItem);
-	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(hTreeItem));
-	if (idlvl2 < 0 || idlvl3 < 0)
-		return;
-
-	const auto& rootvec = pstResRoot->vecResData;
-	const auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
-	const auto& lvl2vec = lvl2tup.vecResData;
-	if (lvl2vec.empty())
-		return;
-
-	const auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
-	const auto& lvl3vec = lvl3tup.vecResData;
-	if (lvl3vec.empty())
-		return;
-
 	CMenu menu;
 	menu.CreatePopupMenu();
 	std::wstring_view wsvMenu;
+	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(hTreeItem));
+	UINT_PTR uMenuID;
 	using enum EResType;
-	if (rootvec[idlvlRoot].stResDirEntry.NameIsString > 0) {
-		if (rootvec[idlvlRoot].wstrResName == L"PNG") {
-			wsvMenu = L"Extract Png...";
+	if (idlvl2 < 0 || idlvl3 < 0) { //Header item (RT_ICON, etc...)
+		const std::wstring wstrName = m_treeResBottom.GetItemText(hTreeItem).GetString();
+		uMenuID = IDM_EXTRACT_ALLRES;
+		if (wstrName.starts_with(L"RT_CURSOR")) {
+			wsvMenu = L"Extract all Cursors...";
+			m_eResType = RTYPE_CURSOR;
+		}
+		else if (wstrName.starts_with(L"RT_BITMAP") || wstrName.starts_with(L"RT_TOOLBAR")) {
+			wsvMenu = L"Extract all Bitmaps...";
+			m_eResType = RTYPE_BITMAP;
+		}
+		else if (wstrName.starts_with(L"RT_ICON")) {
+			wsvMenu = L"Extract all Icons...";
+			m_eResType = RTYPE_ICON;
+		}
+		else if (wstrName.starts_with(L"«PNG»")) {
+			wsvMenu = L"Extract all PNG...";
 			m_eResType = RTYPE_PNG;
 		}
 	}
 	else {
-		switch (rootvec[idlvlRoot].stResDirEntry.Id)
-		{
-		case 1:   //RT_CURSOR
-			wsvMenu = L"Extract Cursor...";
-			m_eResType = RTYPE_CURSOR;
-			break;
-		case 2:   //RT_BITMAP
-		case 241: //RT_TOOLBAR
-			wsvMenu = L"Extract Bitmap...";
-			m_eResType = RTYPE_BITMAP;
-			break;
-		case 3:   //RT_ICON
-			wsvMenu = L"Extract Icon...";
-			m_eResType = RTYPE_ICON;
-			break;
+		const auto& rootvec = pstResRoot->vecResData;
+		const auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
+		const auto& lvl2vec = lvl2tup.vecResData;
+		if (lvl2vec.empty())
+			return;
+
+		const auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
+		const auto& lvl3vec = lvl3tup.vecResData;
+		if (lvl3vec.empty())
+			return;
+
+		uMenuID = IDM_EXTRACT_RES;
+		if (rootvec[idlvlRoot].stResDirEntry.NameIsString > 0) {
+			if (rootvec[idlvlRoot].wstrResName == L"PNG") {
+				wsvMenu = L"Extract Png...";
+				m_eResType = RTYPE_PNG;
+			}
+		}
+		else {
+			switch (rootvec[idlvlRoot].stResDirEntry.Id)
+			{
+			case 1:   //RT_CURSOR
+				wsvMenu = L"Extract Cursor...";
+				m_eResType = RTYPE_CURSOR;
+				break;
+			case 2:   //RT_BITMAP
+			case 241: //RT_TOOLBAR
+				wsvMenu = L"Extract Bitmap...";
+				m_eResType = RTYPE_BITMAP;
+				break;
+			case 3:   //RT_ICON
+				wsvMenu = L"Extract Icon...";
+				m_eResType = RTYPE_ICON;
+				break;
+			}
 		}
 	}
 	if (wsvMenu.empty()) //Clicked on the resource that is unextractable.
 		return;
 
-	menu.AppendMenuW(MF_STRING, IDM_EXTRACT_RES, wsvMenu.data());
+	menu.AppendMenuW(MF_STRING, uMenuID, wsvMenu.data());
 	menu.TrackPopupMenuEx(TPM_LEFTALIGN, ptScreen.x, ptScreen.y, this, nullptr);
 }
 
@@ -276,7 +296,28 @@ BOOL CViewRightBL::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	const auto wMenuID = LOWORD(wParam);
 	if (wMenuID == IDM_EXTRACT_RES) {
-		ExtractResToFile(m_eResType, { m_stResData.pData->data(), m_stResData.pData->size() });
+		ExtractResToFile(m_eResType, m_stResData.spnData);
+	}
+	else if (wMenuID == IDM_EXTRACT_ALLRES) {
+		std::wstring wstrDocName = m_pDocument->GetPathName().GetString();
+		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+		using enum EResType;
+		switch (m_eResType)
+		{
+		case RTYPE_CURSOR:
+			wstrDocName += L"_{:04}.cur";
+			break;
+		case RTYPE_BITMAP:
+			wstrDocName += L"_{:04}.bmp";
+			break;
+		case RTYPE_ICON:
+			wstrDocName += L"_{:04}.ico";
+			break;
+		case RTYPE_PNG:
+			wstrDocName += L"_{:04}.png";
+			break;
+		}
+		ExtractAllResToFile(**&m_pLibpe, m_eResType, wstrDocName);
 	}
 
 	return CView::OnCommand(wParam, lParam);
@@ -351,7 +392,7 @@ void CViewRightBL::CreateTreeResources()
 	if (pstResRoot == nullptr)
 		return;
 
-	m_treeResBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
+	m_treeResBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_BOTTOM);
 	m_treeResBottom.ShowWindow(SW_HIDE);
 
@@ -374,7 +415,7 @@ void CViewRightBL::CreateTreeResources()
 		const auto pResDirEntry = &iterRoot.stResDirEntry;
 		std::wstring wstrResName;
 		if (pResDirEntry->NameIsString) {
-			wstrResName = std::format(L"{}", iterRoot.wstrResName);
+			wstrResName = std::format(L"«{}»", iterRoot.wstrResName);
 		}
 		else { //Setting Treectrl root node name depending on Resource typeID.
 			if (const auto iter = MapResID.find(pResDirEntry->Id); iter != MapResID.end()) {
@@ -384,7 +425,7 @@ void CViewRightBL::CreateTreeResources()
 				wstrResName = std::format(L"{}", pResDirEntry->Id);
 			}
 		}
-		const auto treeRoot = m_treeResBottom.InsertItem(wstrResName.data(), iconDirs, iconDirs);
+		const auto treeRoot = m_treeResBottom.InsertItem(wstrResName.data(), iconDirs, iconDirs, nullptr);
 
 		m_vecResId.emplace_back(ilvlRoot, -1, -1);
 		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);

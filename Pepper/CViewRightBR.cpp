@@ -154,7 +154,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case IDC_SHOW_RESOURCE_RBR:
-		m_pResData = reinterpret_cast<SRESDATA*>(pHint);
+		m_pResData = reinterpret_cast<PERESFLAT*>(pHint);
 		ShowResource(m_pResData);
 		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
 		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
@@ -175,7 +175,7 @@ BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	const auto wMenuID = LOWORD(wParam);
 	if (wMenuID == IDM_EXTRACT_RES) {
-		ExtractResToFile(m_eResTypeToDraw, { m_pResData->pData->data(), m_pResData->pData->size() });
+		ExtractResToFile(m_eResTypeToDraw, m_pResData->spnData);
 	}
 
 	return CScrollView::OnCommand(wParam, lParam);
@@ -289,11 +289,11 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
+void CViewRightBR::CreateIconCursor(const PERESFLAT& stResData)
 {
-	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(stResData.pData->data())),
-		static_cast<DWORD>(stResData.pData->size()),
-		(stResData.wIdType == 3) ? TRUE : FALSE, 0x00030000UL, 0, 0, LR_DEFAULTCOLOR);
+	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(stResData.spnData.data())),
+		static_cast<DWORD>(stResData.spnData.size()),
+		(stResData.wTypeID == 3) ? TRUE : FALSE, 0x00030000UL, 0, 0, LR_DEFAULTCOLOR);
 	if (!hIcon)
 		return ResLoadError();
 
@@ -319,15 +319,15 @@ void CViewRightBR::CreateIconCursor(const SRESDATA& stResData)
 	DeleteObject(iconInfo.hbmMask);
 	DestroyIcon(hIcon);
 	SetScrollSizes(MM_TEXT, CSize(stBmp.bmWidth, lHeight));
-	m_eResTypeToDraw = static_cast<EResType>(stResData.wIdType);
+	m_eResTypeToDraw = static_cast<EResType>(stResData.wTypeID);
 }
 
-void CViewRightBR::CreateBitmap(const SRESDATA& stResData)
+void CViewRightBR::CreateBitmap(const PERESFLAT& stResData)
 {
-	if (stResData.pData->empty() || stResData.pData->size() < sizeof(BITMAPINFO))
+	if (stResData.spnData.empty() || stResData.spnData.size() < sizeof(BITMAPINFO))
 		return ResLoadError();
 
-	const auto pBMPInfo = reinterpret_cast<const BITMAPINFO*>(stResData.pData->data());
+	const auto pBMPInfo = reinterpret_cast<const BITMAPINFO*>(stResData.spnData.data());
 	const auto pBMPInfoHdr = &pBMPInfo->bmiHeader;
 	const auto dwNumColors = pBMPInfoHdr->biClrUsed > 0 ? pBMPInfoHdr->biClrUsed : 1 << pBMPInfoHdr->biBitCount;
 	LPCVOID pDIBBits;
@@ -365,13 +365,13 @@ void CViewRightBR::CreateBitmap(const SRESDATA& stResData)
 	bmp.DeleteObject();
 }
 
-void CViewRightBR::CreatePNG(const SRESDATA& stResData)
+void CViewRightBR::CreatePNG(const PERESFLAT& stResData)
 {
-	if (stResData.pData->empty()) {
+	if (stResData.spnData.empty()) {
 		return ResLoadError();
 	}
 
-	const auto hBuffer = GlobalAlloc(GMEM_MOVEABLE, stResData.pData->size());
+	const auto hBuffer = GlobalAlloc(GMEM_MOVEABLE, stResData.spnData.size());
 	if (hBuffer == nullptr) {
 		return ResLoadError();
 	}
@@ -382,7 +382,7 @@ void CViewRightBR::CreatePNG(const SRESDATA& stResData)
 		return ResLoadError();
 	}
 
-	std::memcpy(pBuffer, stResData.pData->data(), stResData.pData->size());
+	std::memcpy(pBuffer, stResData.spnData.data(), stResData.spnData.size());
 
 	IStream* pStream { };
 	if (CreateStreamOnHGlobal(hBuffer, FALSE, &pStream) != S_OK) {
@@ -410,13 +410,13 @@ void CViewRightBR::CreatePNG(const SRESDATA& stResData)
 	GlobalFree(hBuffer);
 }
 
-void CViewRightBR::CreateMenu(const SRESDATA& stResData)
+void CViewRightBR::CreateMenu(const PERESFLAT& stResData)
 {
-	if (stResData.pData == nullptr || stResData.pData->empty())
+	if (stResData.spnData.empty())
 		return;
 
 	m_menuSample.DestroyMenu();
-	if (m_menuSample.LoadMenuIndirectW(stResData.pData->data())) {
+	if (m_menuSample.LoadMenuIndirectW(stResData.spnData.data())) {
 		for (auto iter = 0; iter < m_menuSample.GetMenuItemCount(); ++iter) {
 			CString strName;
 			m_menuSample.GetMenuStringW(iter, strName, MF_BYPOSITION);
@@ -455,7 +455,7 @@ void CViewRightBR::CreateMenu(const SRESDATA& stResData)
 	}
 }
 
-void CViewRightBR::CreateDlg(const SRESDATA& stResData)
+void CViewRightBR::CreateDlg(const PERESFLAT& stResData)
 {
 #pragma pack(push, 4)
 	struct DLGTEMPLATEEX //Helper struct. Not completed.
@@ -474,15 +474,15 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 	};
 #pragma pack(pop)
 
-	const auto optData = ParceDlgTemplate({ const_cast<std::byte*>(stResData.pData->data()), stResData.pData->size() });
+	const auto optData = ParceDlgTemplate({ const_cast<std::byte*>(stResData.spnData.data()), stResData.spnData.size() });
 	if (!optData)
 		return ResLoadError();
 
-	const bool fDlgEx = *((reinterpret_cast<const WORD*>(stResData.pData->data())) + 1) == 0xFFFF;
+	const bool fDlgEx = *((reinterpret_cast<const WORD*>(stResData.spnData.data())) + 1) == 0xFFFF;
 
 	//Pointer to 'Style' dword.
-	PDWORD pStyle { fDlgEx ? &(const_cast<DLGTEMPLATEEX*>(reinterpret_cast<const DLGTEMPLATEEX*>(stResData.pData->data())))->style :
-		&(const_cast<DLGTEMPLATE*>(reinterpret_cast<const DLGTEMPLATE*>(stResData.pData->data())))->style };
+	PDWORD pStyle { fDlgEx ? &(const_cast<DLGTEMPLATEEX*>(reinterpret_cast<const DLGTEMPLATEEX*>(stResData.spnData.data())))->style :
+		&(const_cast<DLGTEMPLATE*>(reinterpret_cast<const DLGTEMPLATE*>(stResData.spnData.data())))->style };
 
 	bool fWS_VISIBLE { false };
 	if (*pStyle & WS_VISIBLE) { //Remove WS_VISIBLE flag if exists, so that dialog not steal the focus on creation.
@@ -490,7 +490,7 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 		fWS_VISIBLE = true;
 	}
 
-	auto hwndResDlg = CreateDialogIndirectParamW(nullptr, reinterpret_cast<LPCDLGTEMPLATEW>(stResData.pData->data()), m_hWnd, nullptr, 0);
+	auto hwndResDlg = CreateDialogIndirectParamW(nullptr, reinterpret_cast<LPCDLGTEMPLATEW>(stResData.spnData.data()), m_hWnd, nullptr, 0);
 
 	if (!hwndResDlg)
 	{
@@ -503,16 +503,16 @@ void CViewRightBR::CreateDlg(const SRESDATA& stResData)
 		PWORD pWordDlgItems;
 		WORD wOld;
 		if (fDlgEx) { //DLGTEMPLATEEX
-			pWordDlgItems = &(const_cast<DLGTEMPLATEEX*>(reinterpret_cast<const DLGTEMPLATEEX*>(stResData.pData->data())))->cDlgItems;
+			pWordDlgItems = &(const_cast<DLGTEMPLATEEX*>(reinterpret_cast<const DLGTEMPLATEEX*>(stResData.spnData.data())))->cDlgItems;
 			wOld = *pWordDlgItems;
 		}
 		else { //DLGTEMPLATE
 
-			pWordDlgItems = &(const_cast<DLGTEMPLATE*>(reinterpret_cast<const DLGTEMPLATE*>(stResData.pData->data())))->cdit;
+			pWordDlgItems = &(const_cast<DLGTEMPLATE*>(reinterpret_cast<const DLGTEMPLATE*>(stResData.spnData.data())))->cdit;
 			wOld = *pWordDlgItems;
 		}
 		*pWordDlgItems = 0;
-		hwndResDlg = CreateDialogIndirectParamW(nullptr, reinterpret_cast<LPCDLGTEMPLATEW>(stResData.pData->data()), m_hWnd, nullptr, 0);
+		hwndResDlg = CreateDialogIndirectParamW(nullptr, reinterpret_cast<LPCDLGTEMPLATEW>(stResData.spnData.data()), m_hWnd, nullptr, 0);
 		*pWordDlgItems = wOld;
 	}
 
@@ -648,9 +648,9 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateStrings(const SRESDATA& stResData)
+void CViewRightBR::CreateStrings(const PERESFLAT& stResData)
 {
-	auto pwszResString = reinterpret_cast<LPCWSTR>(stResData.pData->data());
+	auto pwszResString = reinterpret_cast<LPCWSTR>(stResData.spnData.data());
 	std::wstring wstrEdit;
 	for (int i = 0; i < 16; ++i)
 	{
@@ -668,9 +668,9 @@ void CViewRightBR::CreateStrings(const SRESDATA& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateAccel(const SRESDATA& stResData)
+void CViewRightBR::CreateAccel(const PERESFLAT& stResData)
 {
-	if (stResData.pData == nullptr || stResData.pData->empty())
+	if (stResData.spnData.empty())
 		return;
 
 #pragma pack(push, 1) //No padding.
@@ -683,7 +683,7 @@ void CViewRightBR::CreateAccel(const SRESDATA& stResData)
 	};
 #pragma pack(pop)
 
-	if (stResData.pData->size() % sizeof(ACCEL_MEM) != 0) { //Wrong data padding.
+	if (stResData.spnData.size() % sizeof(ACCEL_MEM) != 0) { //Wrong data padding.
 		return ResLoadError();
 	}
 
@@ -834,9 +834,9 @@ void CViewRightBR::CreateAccel(const SRESDATA& stResData)
 	};
 
 	std::wstring wstrEdit;
-	const auto iAccels = stResData.pData->size() / sizeof(ACCEL_MEM); //How many accel entrys.
+	const auto iAccels = stResData.spnData.size() / sizeof(ACCEL_MEM); //How many accel entrys.
 	for (auto iterAccel { 0 }; iterAccel < iAccels; ++iterAccel) {
-		const auto& refAccel = reinterpret_cast<const ACCEL_MEM&>((*stResData.pData)[iterAccel * sizeof(ACCEL_MEM)]);
+		const auto& refAccel = reinterpret_cast<const ACCEL_MEM&>(stResData.spnData[iterAccel * sizeof(ACCEL_MEM)]);
 
 		wstrEdit += L"Type: ";
 		bool fHit { false }; //First occurense in map.Find().
@@ -868,7 +868,7 @@ void CViewRightBR::CreateAccel(const SRESDATA& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
+void CViewRightBR::CreateGroupIconCursor(const PERESFLAT& stResData)
 {
 	const auto pstResRoot = m_pLibpe->GetResources();
 	if (pstResRoot == nullptr)
@@ -898,7 +898,7 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 
 	m_iImgResWidth = 0;
 	m_iImgResHeight = 0;
-	const auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(stResData.pData->data());
+	const auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(stResData.spnData.data());
 
 	for (int iterCount = 0; iterCount < pGRPIDir->idCount; ++iterCount)
 	{
@@ -963,10 +963,10 @@ void CViewRightBR::CreateGroupIconCursor(const SRESDATA& stResData)
 	}
 
 	SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
-	m_eResTypeToDraw = static_cast<EResType>(stResData.wIdType);
+	m_eResTypeToDraw = static_cast<EResType>(stResData.wTypeID);
 }
 
-void CViewRightBR::CreateVersion(const SRESDATA& stResData)
+void CViewRightBR::CreateVersion(const PERESFLAT& stResData)
 {
 #pragma pack(push, 4)
 	struct LANGANDCODEPAGE
@@ -991,7 +991,7 @@ void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 	UINT dwBytesOut;
 
 	//Read the list of languages and code pages.
-	VerQueryValueW(stResData.pData->data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
+	VerQueryValueW(stResData.spnData.data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
 
 	std::wstring wstrEdit;
 	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
@@ -1001,7 +1001,7 @@ void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 		{
 			wstrEdit += mapVerInfoStrings.at(iterMap);
 			wstrEdit += L" - ";
-			if (wchar_t* pszBufferOut { }; VerQueryValueW(stResData.pData->data(), std::format(L"\\StringFileInfo\\{:04x}{:04x}\\{}",
+			if (wchar_t* pszBufferOut { }; VerQueryValueW(stResData.spnData.data(), std::format(L"\\StringFileInfo\\{:04x}{:04x}\\{}",
 				pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(iterMap)).data(),
 				reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
 			{
@@ -1018,16 +1018,16 @@ void CViewRightBR::CreateVersion(const SRESDATA& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateManifest(const SRESDATA& stResData)
+void CViewRightBR::CreateManifest(const PERESFLAT& stResData)
 {
-	m_EditBRB.SetWindowTextW(StrToWstr({ reinterpret_cast<const char*>(stResData.pData->data()), stResData.pData->size() }).data());
+	m_EditBRB.SetWindowTextW(StrToWstr({ reinterpret_cast<const char*>(stResData.spnData.data()), stResData.spnData.size() }).data());
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateToolbar(const SRESDATA& stResData)
+void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 {
 	const auto pstResRoot = m_pLibpe->GetResources();
 	if (pstResRoot == nullptr)
@@ -1042,19 +1042,22 @@ void CViewRightBR::CreateToolbar(const SRESDATA& stResData)
 			const auto& lvl2vec = lvl2tup.vecResData;
 			for (const auto& iterlvl2 : lvl2vec)
 			{
-				if (iterlvl2.stResDirEntry.Id == stResData.wIdName)
+				if (iterlvl2.stResDirEntry.Id == stResData.wResID)
 				{
 					const auto& lvl3tup = iterlvl2.stResLvL3;
 					const auto& lvl3vec = lvl3tup.vecResData;
-					if (!lvl3vec.empty())
+					for (const auto& iterlvl3 : lvl3vec)
 					{
-						const auto pData = &lvl3vec.at(0).vecRawResData;
-						if (!pData->empty()) {
-							static SRESDATA stData { .wIdType { 2 } };
-							stData.wIdName = stResData.wIdName;
-							stData.pData = pData;
-							m_pResData = &stData;
-							CreateBitmap(stData);
+						if (iterlvl3.stResDirEntry.Id == stResData.wLangID)
+						{
+							const auto& refData = iterlvl3.vecRawResData;
+							if (!refData.empty()) {
+								static PERESFLAT stData { .wTypeID { 2 } };
+								stData.wResID = stResData.wResID;
+								stData.spnData = refData;
+								m_pResData = &stData;
+								CreateBitmap(stData);
+							}
 						}
 					}
 				}
@@ -1063,7 +1066,7 @@ void CViewRightBR::CreateToolbar(const SRESDATA& stResData)
 	}
 }
 
-void CViewRightBR::ShowResource(const SRESDATA* pResData)
+void CViewRightBR::ShowResource(const PERESFLAT* pResData)
 {
 	m_stImgRes.DeleteImageList();
 	m_vecImgRes.clear();
@@ -1071,17 +1074,17 @@ void CViewRightBR::ShowResource(const SRESDATA* pResData)
 	if (pResData != nullptr)
 	{
 		//Destroy Dialog Sample window if it's any other resource but RT_MENU or RT_DIALOG.
-		if (pResData->wIdType != 4 && pResData->wIdType != 5 && m_wndSampleDlg.m_hWnd) {
+		if (pResData->wTypeID != 4 && pResData->wTypeID != 5 && m_wndSampleDlg.m_hWnd) {
 			m_wndSampleDlg.SetDlgVisible(false);
 			m_wndSampleDlg.DestroyWindow();
 		}
 
-		if (pResData->pData->empty()) {
+		if (pResData->spnData.empty()) {
 			return ResLoadError();
 		}
 
-		if (!pResData->fNameIsString) {
-			switch (pResData->wIdType)
+		if (pResData->wsvTypeName.empty()) {
+			switch (pResData->wTypeID)
 			{
 			case 1: //RT_CURSOR
 			case 3: //RT_ICON
@@ -1149,7 +1152,7 @@ void CViewRightBR::ResLoadError()
 
 auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>
 {
-#pragma pack(push, 4) //When pData comes from PE resources it is packed.
+#pragma pack(push, 4) //When refData comes from PE resources it is packed.
 
 	//Helper struct as described in https://docs.microsoft.com/en-us/windows/win32/dlgbox/dlgtemplateex
 	//It can not be completely defined because of its variadic nature.
@@ -1447,7 +1450,7 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 	wstrRet += std::format(L"DIALOG ITEMS: {}\r\n", wCountDlgItems);
 	//DLGTEMPLATE(EX) end. ///////////////////////////////////////////
 
-	//Now go DLGITEMTEMPLATE(EX) pData structures.
+	//Now go DLGITEMTEMPLATE(EX) refData structures.
 	auto pDataItems = pDataDlgHdr; //Just to differentiate.
 
 	wstrRet += L"{\r\n";

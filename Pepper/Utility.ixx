@@ -543,16 +543,6 @@ export namespace util
 	};
 	////////////////////////////////////////////////////////////
 
-	//Helper struct for resources interchange between views.
-	struct SRESDATA {
-		std::wstring_view wsvTypeName { }; //Resource type name.
-		const std::vector<std::byte>* pData { };
-		WORD wIdType { };
-		WORD wIdName { };
-		WORD wIdLang { };
-		bool fNameIsString { false };
-	};
-
 	struct SWINDOWSTATUS {
 		HWND hWnd { };
 		bool fVisible { };
@@ -621,6 +611,7 @@ export namespace util
 	constexpr auto IDM_LIST_GOTODATAOFFSET = 0x8002;
 
 	constexpr auto IDM_EXTRACT_RES = 0xF0U;
+	constexpr auto IDM_EXTRACT_ALLRES = 0xF1U;
 	/********************************************************
 	* End of IDC.											*
 	********************************************************/
