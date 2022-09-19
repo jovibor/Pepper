@@ -178,7 +178,7 @@ void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 		return;
 
 	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
-	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
+	const auto [idlvlRoot, idlvl2, idlvl3, eResType] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
 	if (idlvl2 >= 0 && idlvl3 >= 0)
 	{
 		const auto& rootvec = pstResRoot->vecResData;
@@ -220,70 +220,53 @@ void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 	if (!hTreeItem)
 		return;
 
-	m_treeResBottom.SelectItem(hTreeItem);
+	m_treeResBottom.SelectItem(hTreeItem); //This also sets m_stResData in OnTreeSelChanged.
 	CMenu menu;
 	menu.CreatePopupMenu();
 	std::wstring_view wsvMenu;
-	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResBottom.GetItemData(hTreeItem));
+	const auto [iLvLRootID, iLvL2ID, iLvL3ID, eResType] = m_vecResId.at(m_treeResBottom.GetItemData(hTreeItem));
+	m_eResType = eResType;
 	UINT_PTR uMenuID;
 	using enum EResType;
-	if (idlvl2 < 0 || idlvl3 < 0) { //Header item (RT_ICON, etc...)
-		const std::wstring wstrName = m_treeResBottom.GetItemText(hTreeItem).GetString();
-		uMenuID = IDM_EXTRACT_ALLRES;
-		if (wstrName.starts_with(L"RT_CURSOR")) {
+	if (iLvL2ID < 0 || iLvL3ID < 0) { //Header item clicked (RT_ICON, RT_BITMAP, etc...)
+		switch (eResType)
+		{
+		case RTYPE_CURSOR:
 			wsvMenu = L"Extract all Cursors...";
-			m_eResType = RTYPE_CURSOR;
-		}
-		else if (wstrName.starts_with(L"RT_BITMAP") || wstrName.starts_with(L"RT_TOOLBAR")) {
+			break;
+		case RTYPE_BITMAP:
 			wsvMenu = L"Extract all Bitmaps...";
-			m_eResType = RTYPE_BITMAP;
-		}
-		else if (wstrName.starts_with(L"RT_ICON")) {
+			break;
+		case RTYPE_ICON:
 			wsvMenu = L"Extract all Icons...";
-			m_eResType = RTYPE_ICON;
-		}
-		else if (wstrName.starts_with(L"«PNG»")) {
+			break;
+		case RTYPE_PNG:
 			wsvMenu = L"Extract all PNG...";
-			m_eResType = RTYPE_PNG;
+			break;
+		default:
+			break;
 		}
+		uMenuID = IDM_EXTRACT_ALLRES;
 	}
-	else {
-		const auto& rootvec = pstResRoot->vecResData;
-		const auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
-		const auto& lvl2vec = lvl2tup.vecResData;
-		if (lvl2vec.empty())
-			return;
-
-		const auto& lvl3tup = lvl2vec[idlvl2].stResLvL3;
-		const auto& lvl3vec = lvl3tup.vecResData;
-		if (lvl3vec.empty())
-			return;
-
+	else { //Child node clicked.
+		switch (eResType)
+		{
+		case RTYPE_CURSOR:
+			wsvMenu = L"Extract Cursor...";
+			break;
+		case RTYPE_BITMAP:
+			wsvMenu = L"Extract Bitmap...";
+			break;
+		case RTYPE_ICON:
+			wsvMenu = L"Extract Icon...";
+			break;
+		case RTYPE_PNG:
+			wsvMenu = L"Extract PNG...";
+			break;
+		default:
+			break;
+		}
 		uMenuID = IDM_EXTRACT_RES;
-		if (rootvec[idlvlRoot].stResDirEntry.NameIsString > 0) {
-			if (rootvec[idlvlRoot].wstrResName == L"PNG") {
-				wsvMenu = L"Extract Png...";
-				m_eResType = RTYPE_PNG;
-			}
-		}
-		else {
-			switch (rootvec[idlvlRoot].stResDirEntry.Id)
-			{
-			case 1:   //RT_CURSOR
-				wsvMenu = L"Extract Cursor...";
-				m_eResType = RTYPE_CURSOR;
-				break;
-			case 2:   //RT_BITMAP
-			case 241: //RT_TOOLBAR
-				wsvMenu = L"Extract Bitmap...";
-				m_eResType = RTYPE_BITMAP;
-				break;
-			case 3:   //RT_ICON
-				wsvMenu = L"Extract Icon...";
-				m_eResType = RTYPE_ICON;
-				break;
-			}
-		}
 	}
 	if (wsvMenu.empty()) //Clicked on the resource that is unextractable.
 		return;
@@ -396,14 +379,19 @@ void CViewRightBL::CreateTreeResources()
 	//that holds tuple of three IDs of resource — Type, Name, LangID.
 	for (const auto& iterRoot : pstResRoot->vecResData)
 	{
+		EResType eResType { EResType::RTYPE_UNSUPPORTED }; //By default set resource to unsupported.
 		const auto pResDirEntry = &iterRoot.stResDirEntry;
 		std::wstring wstrResName;
 		if (pResDirEntry->NameIsString) {
 			wstrResName = std::format(L"«{}»", iterRoot.wstrResName);
+			if (iterRoot.wstrResName == L"PNG") {
+				eResType = EResType::RTYPE_PNG;
+			}
 		}
-		else { //Setting Treectrl root node name depending on Resource typeID.
+		else { //Setting TreeCtrl root node name depending on Resource TypeID.
 			if (const auto iter = MapResID.find(pResDirEntry->Id); iter != MapResID.end()) {
 				wstrResName = std::format(L"{} [Id: {}]", iter->second, pResDirEntry->Id);
+				eResType = static_cast<EResType>(pResDirEntry->Id);
 			}
 			else {
 				wstrResName = std::format(L"{}", pResDirEntry->Id);
@@ -411,7 +399,7 @@ void CViewRightBL::CreateTreeResources()
 		}
 		const auto treeRoot = m_treeResBottom.InsertItem(wstrResName.data(), iconDirs, iconDirs, nullptr);
 
-		m_vecResId.emplace_back(ilvlRoot, -1, -1);
+		m_vecResId.emplace_back(ilvlRoot, -1, -1, eResType);
 		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
 		long ilvl2 = 0;
 		const auto& refResLvL2 = iterRoot.stResLvL2; //Resource level 2.
@@ -419,7 +407,7 @@ void CViewRightBL::CreateTreeResources()
 		for (const auto& iterLvL2 : refResLvL2.vecResData)
 		{
 			const auto pResDirEntry2 = &iterLvL2.stResDirEntry;
-			m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
+			m_vecResId.emplace_back(ilvlRoot, ilvl2, -1, eResType);
 			long ilvl3 = 0;
 			const auto& refResLvL3 = iterLvL2.stResLvL3;
 
@@ -432,7 +420,7 @@ void CViewRightBL::CreateTreeResources()
 				else {
 					wstrResName = std::format(L"Id: {} lang: {}", iterLvL2.stResDirEntry.Id, pResDirEntry3->Id);
 				}
-				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
+				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3, eResType);
 				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(wstrResName.data(), treeRoot), m_vecResId.size() - 1);
 				++ilvl3;
 			}

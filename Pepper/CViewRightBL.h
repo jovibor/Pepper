@@ -70,7 +70,7 @@ private:
 	IListExPtr m_listRelocsEntry { CreateListEx() };
 	CTreeEx m_treeResBottom;
 	CImageList m_imglTreeRes;
-	std::vector<std::tuple<long, long, long>> m_vecResId { };
+	std::vector<std::tuple<long, long, long, EResType>> m_vecResId { }; //Lvl: ROOT, 2, 3 and res type for tree node.
 	LOGFONTW m_lf { };
 	LOGFONTW m_hdrlf { };
 	PERESFLAT m_stResData;
