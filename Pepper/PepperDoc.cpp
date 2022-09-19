@@ -59,7 +59,7 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 				m_fHasIco = true;
 				continue;
 			}
-			if (ref.wsvTypeName == L"PNG") { //PNG
+			if (ref.wsvTypeStr == L"PNG") { //PNG
 				m_fHasPng = true;
 				continue;
 			}

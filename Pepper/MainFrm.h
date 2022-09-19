@@ -7,6 +7,8 @@
 * https://github.com/jovibor/libpe																	*
 ****************************************************************************************************/
 #pragma once
+#include <vector>
+
 import Utility;
 using namespace util;
 

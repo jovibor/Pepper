@@ -194,8 +194,8 @@ void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 		//Resource pData and resource type to show in CViewRightBR.
 		m_stResData.wTypeID = rootvec[idlvlRoot].stResDirEntry.Id;
-		m_stResData.wsvTypeName = rootvec[idlvlRoot].wstrResName;
-		m_stResData.wResID = lvl2vec[idlvl2].stResDirEntry.Id;
+		m_stResData.wsvTypeStr = rootvec[idlvlRoot].wstrResName;
+		m_stResData.wNameID = lvl2vec[idlvl2].stResDirEntry.Id;
 		m_stResData.wLangID = lvl3vec[idlvl3].stResDirEntry.Id;
 		m_stResData.spnData = lvl3vec[idlvl3].vecRawResData;
 

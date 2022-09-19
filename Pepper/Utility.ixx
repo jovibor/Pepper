@@ -2,6 +2,8 @@ module;
 #include <afxdlgs.h>
 #include <fstream>
 #include <format>
+#include <span>
+#include <string>
 #include <unordered_map>
 #include "libpe.h"
 
@@ -223,7 +225,7 @@ export namespace util
 				}
 				break;
 			case RTYPE_PNG:
-				if (ref.wsvTypeName == L"PNG") { //PNG
+				if (ref.wsvTypeStr == L"PNG") { //PNG
 					wsvExt = L".png";
 				}
 				break;
@@ -233,16 +235,16 @@ export namespace util
 
 			if (!wsvExt.empty()) {
 				std::wstring wstrPathFile = wstrPathWithPrefix;
-				if (!ref.wsvResName.empty()) {
-					wstrPathFile += ref.wsvResName;
+				if (!ref.wsvNameStr.empty()) {
+					wstrPathFile += ref.wsvNameStr;
 					wstrPathFile += L"_";
 				}
 				else {
-					wstrPathFile += std::format(L"ResID_{}_", ref.wResID);
+					wstrPathFile += std::format(L"ResID_{}_", ref.wNameID);
 				}
 
-				if (!ref.wsvLangName.empty()) {
-					wstrPathFile += ref.wsvLangName;
+				if (!ref.wsvLangStr.empty()) {
+					wstrPathFile += ref.wsvLangStr;
 				}
 				else {
 					wstrPathFile += std::format(L"LangID_{}", ref.wLangID);

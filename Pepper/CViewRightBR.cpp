@@ -10,6 +10,7 @@
 #include "CViewRightBR.h"
 #include "MainFrm.h"
 #include <format>
+#include <unordered_map>
 #pragma comment(lib, "Mincore.lib") //VerQueryValueW
 
 BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)
@@ -1042,7 +1043,7 @@ void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 			const auto& lvl2vec = lvl2tup.vecResData;
 			for (const auto& iterlvl2 : lvl2vec)
 			{
-				if (iterlvl2.stResDirEntry.Id == stResData.wResID)
+				if (iterlvl2.stResDirEntry.Id == stResData.wNameID)
 				{
 					const auto& lvl3tup = iterlvl2.stResLvL3;
 					const auto& lvl3vec = lvl3tup.vecResData;
@@ -1053,7 +1054,7 @@ void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 							const auto& refData = iterlvl3.vecRawResData;
 							if (!refData.empty()) {
 								static PERESFLAT stData { .wTypeID { 2 } };
-								stData.wResID = stResData.wResID;
+								stData.wNameID = stResData.wNameID;
 								stData.spnData = refData;
 								m_pResData = &stData;
 								CreateBitmap(stData);
@@ -1083,7 +1084,7 @@ void CViewRightBR::ShowResource(const PERESFLAT* pResData)
 			return ResLoadError();
 		}
 
-		if (pResData->wsvTypeName.empty()) {
+		if (pResData->wsvTypeStr.empty()) {
 			switch (pResData->wTypeID)
 			{
 			case 1: //RT_CURSOR
@@ -1124,7 +1125,7 @@ void CViewRightBR::ShowResource(const PERESFLAT* pResData)
 			}
 		}
 		else {
-			if (pResData->wsvTypeName == L"PNG") {
+			if (pResData->wsvTypeStr == L"PNG") {
 				CreatePNG(*pResData);
 			}
 			else {
