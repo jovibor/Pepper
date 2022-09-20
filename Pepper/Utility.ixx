@@ -16,7 +16,7 @@ module;
 
 #define TO_WSTR_HELPER(x) L## #x
 #define TO_WSTR(x) TO_WSTR_HELPER(x)
-#define VERSION_WSTR PEPPER_PRODUCT_NAME L" - PE/PE+ binaries viewer v" TO_WSTR(PEPPER_MAJOR_VERSION) L"."\
+#define PEPPER_VERSION_WSTR PEPPER_PRODUCT_NAME L" - PE32/PE32+ binaries viewer v" TO_WSTR(PEPPER_MAJOR_VERSION) L"."\
 		TO_WSTR(PEPPER_MINOR_VERSION) L"." TO_WSTR(PEPPER_MAINTENANCE_VERSION)
 #define TO_WSTR_MAP(x) {x, L## #x}
 
@@ -26,9 +26,9 @@ export namespace util
 {
 	constexpr const wchar_t WSTR_PEPPER_PRODUCT_NAME[] = PEPPER_PRODUCT_NAME;
 #ifdef _WIN64
-	constexpr const auto WSTR_PEPPER_VERSION = VERSION_WSTR L" (x64)";
+	constexpr const auto WSTR_PEPPER_VERSION = PEPPER_VERSION_WSTR L" (x64)";
 #else
-	constexpr const auto WSTR_PEPPER_VERSION = VERSION_WSTR L" (x86)";
+	constexpr const auto WSTR_PEPPER_VERSION = PEPPER_VERSION_WSTR L" (x86)";
 #endif
 
 	[[nodiscard]] inline auto StrToWstr(std::string_view str, UINT uCodePage = CP_UTF8)->std::wstring

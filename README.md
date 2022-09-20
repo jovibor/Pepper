@@ -4,9 +4,9 @@
 
 ## Features
 
-#### [PE/PE+](https://docs.microsoft.com/en-us/windows/win32/debug/pe-format) binaries viewer, built on top of [libpe](https://github.com/jovibor/libpe).
-* Supports PE(x86) and PE+(x64) binaries of any size
-* All inner PE/PE+ data structures, headers and layouts
+#### [PE32/PE32+](https://docs.microsoft.com/en-us/windows/win32/debug/pe-format) binaries viewer, built on top of [libpe](https://github.com/jovibor/libpe).
+* Supports PE32(x86) and PE32+(x64) binaries of any size
+* All inner PE32/PE32+ data structures, headers and layouts
     * MSDOS Header
     * «Rich» Header
     * NT/File/Optional Headers
@@ -25,6 +25,7 @@
     * Delay Import Table
     * COM Table
 * Resources viewer
+    * Extracting many known resource types (cursors, icons, bitmaps...)
 * Multiple binaries can be browsed simultaneously
 * Ability to edit inner structures through hex editor
 

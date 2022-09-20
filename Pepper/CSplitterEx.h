@@ -1,10 +1,8 @@
 /****************************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
-* This software is available under the "MIT License".                                               *
-* https://github.com/jovibor/Pepper/blob/master/LICENSE												*
-* Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
-* libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
-* https://github.com/jovibor/libpe																	*
+* Copyright © 2018-2022 Jovibor https://github.com/jovibor/                                         *
+* This software is available under the Apache-2.0 License.                                          *
+* Official git repository: https://github.com/jovibor/Pepper/                                       *
+* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 /**************************************************************************************
 * Extended CSplitterWndEx class with the ability to Hide/Show individual              *
@@ -32,7 +30,7 @@
 class CSplitterEx : public CSplitterWndEx
 {
 public:
-	DECLARE_DYNAMIC(CSplitterEx)
+	DECLARE_DYNAMIC(CSplitterEx);
 	BOOL CreateStatic(CWnd* m_pParent, int nRows, int nCols, DWORD dwStyle = WS_CHILD | WS_VISIBLE, UINT nID = AFX_IDW_PANE_FIRST)override;
 	BOOL CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE sizeInit, CCreateContext* pContext);
 	bool AddNested(int row, int col, CWnd* pNested);

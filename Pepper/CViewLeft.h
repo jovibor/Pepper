@@ -1,10 +1,8 @@
 /****************************************************************************************************
-* Copyright © 2018-2021 Jovibor https://github.com/jovibor/   										*
-* This software is available under the "MIT License".                                               *
-* https://github.com/jovibor/Pepper/blob/master/LICENSE												*
-* Pepper - PE (x86) and PE+ (x64) files viewer, based on libpe: https://github.com/jovibor/Pepper	*
-* libpe - Windows library for reading PE (x86) and PE+ (x64) files inner structure information.		*
-* https://github.com/jovibor/libpe																	*
+* Copyright © 2018-2022 Jovibor https://github.com/jovibor/                                         *
+* This software is available under the Apache-2.0 License.                                          *
+* Official git repository: https://github.com/jovibor/Pepper/                                       *
+* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 #pragma once
 #include "CTreeEx.h"
@@ -18,8 +16,8 @@ private:
 	void OnDraw(CDC*)override;
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	DECLARE_MESSAGE_MAP()
-	DECLARE_DYNCREATE(CViewLeft)
+	DECLARE_MESSAGE_MAP();
+	DECLARE_DYNCREATE(CViewLeft);
 private:
 	Ilibpe* m_pLibpe { };
 	CPepperDoc* m_pMainDoc { };
