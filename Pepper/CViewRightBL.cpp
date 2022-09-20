@@ -311,8 +311,9 @@ void CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs->SetHdrColumnColor(0, g_clrOffset);
 	m_listExportFuncs->InsertColumn(1, L"Function RVA", LVCFMT_CENTER, 100);
 	m_listExportFuncs->InsertColumn(2, L"Ordinal", LVCFMT_CENTER, 100);
-	m_listExportFuncs->InsertColumn(3, L"Name", LVCFMT_CENTER, 250);
-	m_listExportFuncs->InsertColumn(4, L"Forwarder Name", LVCFMT_CENTER, 400);
+	m_listExportFuncs->InsertColumn(3, L"Name RVA", LVCFMT_CENTER, 100);
+	m_listExportFuncs->InsertColumn(4, L"Name", LVCFMT_CENTER, 250);
+	m_listExportFuncs->InsertColumn(5, L"Forwarder Name", LVCFMT_CENTER, 400);
 
 	const auto pExport = m_pLibpe->GetExport();
 	if (pExport == nullptr)
@@ -324,10 +325,11 @@ void CViewRightBL::CreateListExportFuncs()
 	for (const auto& iterFuncs : pExport->vecFuncs)
 	{
 		m_listExportFuncs->InsertItem(listindex, std::format(L"{:08X}", static_cast<DWORD>(dwOffset + sizeof(DWORD) * iterFuncs.dwOrdinal)).data());
-		m_listExportFuncs->SetItemText(listindex, 1, std::format(L"{:08X}", iterFuncs.dwRVA).data());
+		m_listExportFuncs->SetItemText(listindex, 1, std::format(L"{:08X}", iterFuncs.dwFuncRVA).data());
 		m_listExportFuncs->SetItemText(listindex, 2, std::format(L"{}", iterFuncs.dwOrdinal).data());
-		m_listExportFuncs->SetItemText(listindex, 3, StrToWstr(iterFuncs.strFuncName).data());
-		m_listExportFuncs->SetItemText(listindex, 4, StrToWstr(iterFuncs.strForwarderName).data());
+		m_listExportFuncs->SetItemText(listindex, 3, std::format(L"{:08X}", iterFuncs.dwNameRVA).data());
+		m_listExportFuncs->SetItemText(listindex, 4, StrToWstr(iterFuncs.strFuncName).data());
+		m_listExportFuncs->SetItemText(listindex, 5, StrToWstr(iterFuncs.strForwarderName).data());
 		++listindex;
 	}
 	m_listExportFuncs->SetRedraw(TRUE);
