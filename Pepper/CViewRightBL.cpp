@@ -383,10 +383,10 @@ void CViewRightBL::CreateTreeResources()
 		const auto pResDirEntry = &iterRoot.stResDirEntry;
 		std::wstring wstrResName;
 		if (pResDirEntry->NameIsString) {
-			wstrResName = std::format(L"«{}»", iterRoot.wstrResName);
 			if (iterRoot.wstrResName == L"PNG") {
 				eResType = EResType::RTYPE_PNG;
 			}
+			wstrResName = std::format(L"«{}»", iterRoot.wstrResName);
 		}
 		else { //Setting TreeCtrl root node name depending on Resource TypeID.
 			if (const auto iter = MapResID.find(pResDirEntry->Id); iter != MapResID.end()) {

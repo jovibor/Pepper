@@ -136,7 +136,7 @@ export namespace util
 			const auto pBMPInfo = reinterpret_cast<const BITMAPINFO*>(spnData.data());
 			const auto pBMPInfoHdr = &pBMPInfo->bmiHeader;
 			const BITMAPFILEHEADER bmpFHdr { .bfType = 0x4D42/*"BM"*/, .bfSize = dwSizeFile,
-				.bfOffBits = pBMPInfoHdr->biSizeImage == 0 ? sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) :
+				.bfOffBits = pBMPInfoHdr->biSizeImage == 0 ? static_cast<DWORD>(sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)) :
 				dwSizeFile - pBMPInfoHdr->biSizeImage };
 
 			ofs.write(reinterpret_cast<const char*>(&bmpFHdr), sizeof(BITMAPFILEHEADER));

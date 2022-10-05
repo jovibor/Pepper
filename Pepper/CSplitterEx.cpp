@@ -33,7 +33,7 @@ BOOL CSplitterEx::CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE s
 
 	const auto ret = CSplitterWnd::CreateView(row, col, pViewClass, sizeInit, pContext);
 	auto* const pPane = GetPane(row, col);
-	m_vecPanes.emplace_back(SPANES { row, col, pPane });
+	m_vecPanes.emplace_back(row, col, pPane);
 
 	return ret;
 }
@@ -43,15 +43,14 @@ bool CSplitterEx::AddNested(int row, int col, CWnd* pNested)
 	if (row >= static_cast<int>(m_vecRows.size()) || col >= static_cast<int>(m_vecCols.size()))
 		return false;
 
-	for (auto& iter : m_vecPanes)
-	{
-		if (iter.iRow == row && iter.iCol == col)
-		{
+	for (auto& iter : m_vecPanes) {
+		if (iter.iRow == row && iter.iCol == col) {
 			iter = { row, col, pNested };
 			return true;
 		}
 	}
-	m_vecPanes.emplace_back(SPANES { row, col, pNested });
+
+	m_vecPanes.emplace_back(row, col, pNested);
 
 	return true;
 }
