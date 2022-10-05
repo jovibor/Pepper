@@ -149,13 +149,13 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="CChildFrm.cpp" />
     <ClCompile Include="CFileLoader.cpp" />
     <ClCompile Include="CSplitterEx.cpp" />
     <ClCompile Include="CViewLeft.cpp" />
-    <ClCompile Include="MainFrm.cpp" />
-    <ClCompile Include="Pepper.cpp" />
-    <ClCompile Include="PepperDoc.cpp" />
+    <ClCompile Include="CMainFrm.cpp" />
+    <ClCompile Include="CPepper.cpp" />
+    <ClCompile Include="CPepperDoc.cpp" />
     <ClCompile Include="CViewRightBL.cpp" />
     <ClCompile Include="CViewRightTR.cpp" />
     <ClCompile Include="CViewRightBR.cpp" />
@@ -199,13 +199,11 @@
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="CChildFrm.h" />
     <ClInclude Include="CFileLoader.h" />
-    <ClInclude Include="HexCtrl.h" />
-    <ClInclude Include="HexCtrlDefs.h" />
-    <ClInclude Include="MainFrm.h" />
-    <ClInclude Include="Pepper.h" />
-    <ClInclude Include="PepperDoc.h" />
+    <ClInclude Include="CMainFrm.h" />
+    <ClInclude Include="CPepper.h" />
+    <ClInclude Include="CPepperDoc.h" />
     <ClInclude Include="res\resource.h" />
     <ClInclude Include="CSplitterEx.h" />
     <ClInclude Include="CTreeEx.h" />

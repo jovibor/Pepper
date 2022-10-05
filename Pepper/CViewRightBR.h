@@ -6,8 +6,8 @@
 ****************************************************************************************************/
 #pragma once
 #include <memory>
-#include "PepperDoc.h"
-#include "ChildFrm.h"
+#include "CPepperDoc.h"
+#include "CChildFrm.h"
 #include "ListEx/ListEx.h"
 #include <span>
 

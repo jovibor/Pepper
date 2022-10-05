@@ -6,7 +6,7 @@
 ****************************************************************************************************/
 #pragma once
 #include "CTreeEx.h"
-#include "PepperDoc.h"
+#include "CPepperDoc.h"
 
 class CViewLeft : public CView
 {

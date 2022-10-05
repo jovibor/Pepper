@@ -5,8 +5,8 @@
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 #pragma once
-#include "PepperDoc.h"
-#include "ChildFrm.h"
+#include "CPepperDoc.h"
+#include "CChildFrm.h"
 #include "ListEx/ListEx.h"
 #include "CTreeEx.h"
 #include "CFileLoader.h"

@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="ChildFrm.cpp">
+    <ClCompile Include="CChildFrm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MainFrm.cpp">
+    <ClCompile Include="CMainFrm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Pepper.cpp">
+    <ClCompile Include="CPepper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PepperDoc.cpp">
+    <ClCompile Include="CPepperDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CSplitterEx.cpp">
@@ -102,25 +102,19 @@
     <ClInclude Include="res\resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="ChildFrm.h">
+    <ClInclude Include="CChildFrm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CFileLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HexCtrl.h">
+    <ClInclude Include="CMainFrm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HexCtrlDefs.h">
+    <ClInclude Include="CPepper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MainFrm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Pepper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PepperDoc.h">
+    <ClInclude Include="CPepperDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CSplitterEx.h">

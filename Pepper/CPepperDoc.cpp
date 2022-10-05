@@ -6,8 +6,8 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "res/resource.h"
-#include "MainFrm.h"
-#include "PepperDoc.h"
+#include "CMainFrm.h"
+#include "CPepperDoc.h"
 #include <format>
 
 import Utility;

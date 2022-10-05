@@ -6,7 +6,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "CFileLoader.h"
-#include "PepperDoc.h"
+#include "CPepperDoc.h"
 #include "res/resource.h"
 #include <algorithm>
 
