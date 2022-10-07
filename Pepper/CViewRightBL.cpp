@@ -359,8 +359,8 @@ void CViewRightBL::CreateTreeResources()
 	if (pstResRoot == nullptr)
 		return;
 
-	m_treeResBottom.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
-		TVS_LINESATROOT, CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_BOTTOM);
+	m_treeResBottom.Create(TVS_LINESATROOT | TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+		CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_BOTTOM);
 	m_treeResBottom.ShowWindow(SW_HIDE);
 
 	//Scaling factor for HighDPI displays.
@@ -370,7 +370,7 @@ void CViewRightBL::CreateTreeResources()
 	const auto iImgSize = static_cast<int>(16 * fScale);
 
 	m_imglTreeRes.Create(iImgSize, iImgSize, ILC_COLOR32, 0, 4);
-	const auto iconDirs = m_imglTreeRes.Add(AfxGetApp()->LoadIconW(IDI_TREE_PERESOURCE));
+	const auto iIconDirsID = m_imglTreeRes.Add(AfxGetApp()->LoadIconW(IDI_TREE_PERESOURCE));
 	m_treeResBottom.SetImageList(&m_imglTreeRes, TVSIL_NORMAL);
 	long ilvlRoot = 0;
 
@@ -397,10 +397,10 @@ void CViewRightBL::CreateTreeResources()
 				wstrResName = std::format(L"{}", pResDirEntry->Id);
 			}
 		}
-		const auto treeRoot = m_treeResBottom.InsertItem(wstrResName.data(), iconDirs, iconDirs, nullptr);
+		const auto hTreeTop = m_treeResBottom.InsertItem(wstrResName.data(), iIconDirsID, iIconDirsID);
 
 		m_vecResId.emplace_back(ilvlRoot, -1, -1, eResType);
-		m_treeResBottom.SetItemData(treeRoot, m_vecResId.size() - 1);
+		m_treeResBottom.SetItemData(hTreeTop, m_vecResId.size() - 1);
 		long ilvl2 = 0;
 		const auto& refResLvL2 = iterRoot.stResLvL2; //Resource level 2.
 
@@ -421,7 +421,7 @@ void CViewRightBL::CreateTreeResources()
 					wstrResName = std::format(L"Id: {} lang: {}", iterLvL2.stResDirEntry.Id, pResDirEntry3->Id);
 				}
 				m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3, eResType);
-				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(wstrResName.data(), treeRoot), m_vecResId.size() - 1);
+				m_treeResBottom.SetItemData(m_treeResBottom.InsertItem(wstrResName.data(), hTreeTop), m_vecResId.size() - 1);
 				++ilvl3;
 			}
 			++ilvl2;

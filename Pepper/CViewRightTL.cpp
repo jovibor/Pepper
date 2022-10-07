@@ -752,7 +752,7 @@ void CViewRightTL::OnListCOMDescMenuSelect(WORD wMenuID)
 void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
 	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
-	if (pTree->itemNew.hItem == m_hTreeResDir)
+	if (pTree->itemNew.hItem == m_hTreeResRoot)
 		return;
 
 	const auto pstResRoot = m_pLibpe->GetResources();
@@ -1150,14 +1150,13 @@ void CViewRightTL::CreateTreeResources()
 	if (pResRoot == nullptr)
 		return;
 
-	m_treeResTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+	m_treeResTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		CRect(0, 0, 0, 0), this, IDC_TREE_RESOURCE_TOP);
 	m_treeResTop.ShowWindow(SW_HIDE);
-	m_hTreeResDir = m_treeResTop.InsertItem(L"Resources tree");
+	m_hTreeResRoot = m_treeResTop.InsertItem(L""); //Actual name is set at the bottom of this method.
 
-	HTREEITEM htreeRoot { };
-	HTREEITEM htreeLvL2 { };
 	auto ilvlRoot { 0 };
+	int iResTotal { };
 	for (const auto& iterRoot : pResRoot->vecResData) //Main loop to extract Resources.
 	{
 		const auto pResDirEntryRoot = &iterRoot.stResDirEntry; //Level Root IMAGE_RESOURCE_DIRECTORY_ENTRY
@@ -1172,11 +1171,12 @@ void CViewRightTL::CreateTreeResources()
 				wstr = std::format(L"Entry: {} [Id: {}]", ilvlRoot, pResDirEntryRoot->Id);
 		}
 
+		HTREEITEM hTreeTop;
 		if (pResDirEntryRoot->DataIsDirectory)
 		{
-			htreeRoot = m_treeResTop.InsertItem(wstr.data(), m_hTreeResDir);
+			hTreeTop = m_treeResTop.InsertItem(wstr.data(), m_hTreeResRoot);
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
-			m_treeResTop.SetItemData(htreeRoot, m_vecResId.size() - 1);
+			m_treeResTop.SetItemData(hTreeTop, m_vecResId.size() - 1);
 
 			auto ilvl2 { 0 };
 			const auto pstResLvL2 = &iterRoot.stResLvL2;
@@ -1188,11 +1188,12 @@ void CViewRightTL::CreateTreeResources()
 				else
 					wstr = std::format(L"Entry: {} Id: {}", ilvl2, pResDirEntry2->Id);
 
+				HTREEITEM hTreeLvL2;
 				if (pResDirEntry2->DataIsDirectory)
 				{
-					htreeLvL2 = m_treeResTop.InsertItem(wstr.data(), htreeRoot);
+					hTreeLvL2 = m_treeResTop.InsertItem(wstr.data(), hTreeTop);
 					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
-					m_treeResTop.SetItemData(htreeLvL2, m_vecResId.size() - 1);
+					m_treeResTop.SetItemData(hTreeLvL2, m_vecResId.size() - 1);
 
 					auto ilvl3 { 0 };
 					const auto pstResLvL3 = &iterLvL2.stResLvL3;
@@ -1204,28 +1205,32 @@ void CViewRightTL::CreateTreeResources()
 						else
 							wstr = std::format(L"Entry: {} Id: {}", ilvl3, pResDirEntry3->Id);
 
-						const auto htreeLvL3 = m_treeResTop.InsertItem(wstr.data(), htreeLvL2);
+						const auto htreeLvL3 = m_treeResTop.InsertItem(wstr.data(), hTreeLvL2);
 						m_vecResId.emplace_back(ilvlRoot, ilvl2, ilvl3);
 						m_treeResTop.SetItemData(htreeLvL3, m_vecResId.size() - 1);
+						++iResTotal;
 						++ilvl3;
 					}
 				}
 				else { //DATA lvl2
-					htreeLvL2 = m_treeResTop.InsertItem(wstr.data(), htreeRoot);
+					hTreeLvL2 = m_treeResTop.InsertItem(wstr.data(), hTreeTop);
 					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
-					m_treeResTop.SetItemData(htreeLvL2, m_vecResId.size() - 1);
+					m_treeResTop.SetItemData(hTreeLvL2, m_vecResId.size() - 1);
+					++iResTotal;
 				}
 				++ilvl2;
 			}
 		}
 		else { //DATA lvlroot
-			htreeRoot = m_treeResTop.InsertItem(wstr.data(), m_hTreeResDir);
+			hTreeTop = m_treeResTop.InsertItem(wstr.data(), m_hTreeResRoot);
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
-			m_treeResTop.SetItemData(htreeRoot, m_vecResId.size() - 1);
+			m_treeResTop.SetItemData(hTreeTop, m_vecResId.size() - 1);
+			++iResTotal;
 		}
 		++ilvlRoot;
 	}
-	m_treeResTop.Expand(m_hTreeResDir, TVE_EXPAND);
+	m_treeResTop.SetItemText(m_hTreeResRoot, std::format(L"Resources total: {}", iResTotal).data());
+	m_treeResTop.Expand(m_hTreeResRoot, TVE_EXPAND);
 }
 
 void CViewRightTL::CreateListExceptions()

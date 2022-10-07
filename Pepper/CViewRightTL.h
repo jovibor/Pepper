@@ -95,7 +95,7 @@ private:
 	//Used in treeCtrl.SetItemData(...), so that we associate tree item with the corresponding 
 	//resource's index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
-	HTREEITEM m_hTreeResDir { };
+	HTREEITEM m_hTreeResRoot { };
 	PESECHDR_VEC* m_pSecHeaders { };
 	PEIMPORT_VEC* m_pImport { };
 	PEEXCEPTION_VEC* m_pExceptionDir { };
