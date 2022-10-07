@@ -243,9 +243,10 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) //Click on TabCtrl.
 			{
 				pTabCtrl->ScreenToClient(&pt);
-				if (int iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1)
-					if (auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr && pTab == pWndMBtnCurrDown)
+				if (const auto iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1) {
+					if (const auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr && pTab == pWndMBtnCurrDown)
 						pTab->SendMessageW(WM_CLOSE);
+				}
 			}
 		}
 	}

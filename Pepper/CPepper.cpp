@@ -25,12 +25,13 @@ BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(WSTR_PEPPER_VERSION);
-	std::wstring wstrlibpeVer = L"libpe - PE32/PE32+ binaries library v";
-	wstrlibpeVer += GetLibInfo().pwszVersion;
-	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrlibpeVer.data());
-	wstrlibpeVer = L"HexCtrl - ";
-	wstrlibpeVer += GetHexCtrlInfo()->pwszVersion;
-	GetDlgItem(IDC_LINK_HEXCTRL)->SetWindowTextW(wstrlibpeVer.data());
+	std::wstring wstrVer = L"libpe - PE32/PE32+ binaries library v";
+	wstrVer += GetLibInfo().pwszVersion;
+	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrVer.data());
+	wstrVer = L"HexCtrl - ";
+	wstrVer += GetHexCtrlInfo()->pwszVersion;
+	GetDlgItem(IDC_LINK_HEXCTRL)->SetWindowTextW(wstrVer.data());
+	GetDlgItem(IDC_STATIC_TIME)->SetWindowTextW(L"Built on: " __DATE__ L" "  __TIME__);
 
 	return TRUE;
 }
@@ -158,4 +159,5 @@ void CPepperApp::OnFileOpen()
 void CPepperApp::OnUpdateHelpAbout(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(TRUE);
+	pCmdUI->SetCheck(0);
 }
