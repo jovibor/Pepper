@@ -132,8 +132,7 @@ void CPepperApp::OnFileOpen()
 	CFileDialog fd(TRUE, nullptr, nullptr, OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
 		OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, L"All files (*.*)|*.*||");
 
-	if (fd.DoModal() == IDOK)
-	{
+	if (fd.DoModal() == IDOK) {
 		CComPtr<IFileOpenDialog> pIFOD = fd.GetIFileOpenDialog();
 		CComPtr<IShellItemArray> pResults;
 		pIFOD->GetResults(&pResults);
@@ -141,8 +140,7 @@ void CPepperApp::OnFileOpen()
 		bool fOpened { false };
 		DWORD dwCount { };
 		pResults->GetCount(&dwCount);
-		for (auto i = 0U; i < dwCount; ++i)
-		{
+		for (auto i = 0U; i < dwCount; ++i) {
 			CComPtr<IShellItem> pItem;
 			pResults->GetItemAt(i, &pItem);
 			CComHeapPtr<wchar_t> pwstrPath;

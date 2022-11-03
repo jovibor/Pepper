@@ -38,8 +38,7 @@ void CViewRightTL::OnInitialUpdate()
 	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
 	ReleaseDC(pDC);
 	lf.lfHeight = -MulDiv(14, iLOGPIXELSY, 72);
-	if (!m_fontSummary.CreateFontIndirectW(&lf))
-	{
+	if (!m_fontSummary.CreateFontIndirectW(&lf)) {
 		StringCchCopyW(lf.lfFaceName, 18, L"Times New Roman");
 		m_fontSummary.CreateFontIndirectW(&lf);
 	}
@@ -121,8 +120,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 
 	m_fFileSummaryShow = false;
 	bool fShowRow { true };
-	switch (LOWORD(lHint))
-	{
+	switch (LOWORD(lHint)) {
 	case IDC_SHOW_FILE_SUMMARY:
 		m_fFileSummaryShow = true;
 		m_pwndActive = nullptr;
@@ -246,8 +244,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	if (pNMI->hdr.code == NM_RCLICK && (pNMI->hdr.idFrom == IDC_LIST_EXPORT || pNMI->hdr.idFrom == IDC_LIST_IMPORT
 		|| pNMI->hdr.idFrom == IDC_LIST_IAT || pNMI->hdr.idFrom == IDC_LIST_TLS
 		|| pNMI->hdr.idFrom == IDC_LIST_BOUNDIMPORT || pNMI->hdr.idFrom == IDC_LIST_COMDESCRIPTOR)
-		)
-	{
+		) {
 		m_iListID = pNMI->hdr.idFrom;
 		m_iListItem = pNMI->iItem;
 		m_iListSubItem = pNMI->iSubItem;
@@ -258,8 +255,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		return TRUE;
 	}
 
-	switch (pNMI->hdr.idFrom)
-	{
+	switch (pNMI->hdr.idFrom) {
 	case IDC_LIST_DOSHEADER:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_DOSHEADER_ENTRY, pNMI->iItem));
@@ -329,8 +325,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 BOOL CViewRightTL::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	const auto wMenuID = LOWORD(wParam);
-	switch (m_iListID)
-	{
+	switch (m_iListID) {
 	case IDC_LIST_EXPORT:
 		OnListExportMenuSelect(wMenuID);
 		break;
@@ -372,12 +367,10 @@ void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	auto* pItem = &pDispInfo->item;
 
-	if (pItem->mask & LVIF_TEXT)
-	{
+	if (pItem->mask & LVIF_TEXT) {
 		const auto& refAt = m_pSecHeaders->at(pItem->iItem);
 		const auto& refDescr = refAt.stSecHdr;
-		switch (pItem->iSubItem)
-		{
+		switch (pItem->iSubItem) {
 		case 0:
 			*std::format_to(pItem->pszText, L"{:08X}", refAt.dwOffset) = '\0';
 			break;
@@ -444,12 +437,10 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
 
-	if (pItem->mask & LVIF_TEXT)
-	{
+	if (pItem->mask & LVIF_TEXT) {
 		const auto& refAt = m_pImport->at(pItem->iItem);
 		const auto& refDescr = refAt.stImportDesc;
-		switch (pItem->iSubItem)
-		{
+		switch (pItem->iSubItem) {
 		case 0:
 			*std::format_to(pItem->pszText, L"{:08X}", refAt.dwOffset) = '\0';
 			break;
@@ -480,11 +471,9 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
 
-	if (pItem->mask & LVIF_TEXT)
-	{
+	if (pItem->mask & LVIF_TEXT) {
 		const auto& refDescr = m_pRelocTable->at(pItem->iItem).stBaseReloc;
-		switch (pItem->iSubItem)
-		{
+		switch (pItem->iSubItem) {
 		case 0:
 			*std::format_to(pItem->pszText, L"{:08X}", m_pRelocTable->at(pItem->iItem).dwOffset) = '\0';
 			break;
@@ -506,12 +495,10 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
 
-	if (pItem->mask & LVIF_TEXT)
-	{
+	if (pItem->mask & LVIF_TEXT) {
 		const auto& ref = m_pExceptionDir->at(pItem->iItem);
 		DWORD dwFmtData { };
-		switch (pItem->iSubItem)
-		{
+		switch (pItem->iSubItem) {
 		case 0:
 			dwFmtData = ref.dwOffset;
 			break;
@@ -537,8 +524,7 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 	if (pExport == nullptr)
 		return;
 
-	switch (wMenuID)
-	{
+	switch (wMenuID) {
 	case IDM_LIST_GOTODESCOFFSET:
 	{
 		dwOffset = pExport->dwOffset;
@@ -547,8 +533,7 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 	break;
 	case IDM_LIST_GOTODATAOFFSET:
 	{
-		switch (m_iListItem)
-		{
+		switch (m_iListItem) {
 		case 4: //Name
 			dwOffset = m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.Name);
 			dwSize = static_cast<DWORD>(pExport->strModuleName.size());
@@ -571,7 +556,7 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 	}
 
 	if (dwSize)
-		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
 void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
@@ -581,15 +566,13 @@ void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
 
-	switch (wMenuID)
-	{
+	switch (wMenuID) {
 	case IDM_LIST_GOTODESCOFFSET:
 		dwOffset = m_pImport->at(m_iListItem).dwOffset;
 		dwSize = sizeof(IMAGE_IMPORT_DESCRIPTOR);
 		break;
 	case IDM_LIST_GOTODATAOFFSET:
-		switch (m_iListSubItem)
-		{
+		switch (m_iListSubItem) {
 		case 1: //Str dll name
 		case 5: //Name
 			dwOffset = m_pLibpe->GetOffsetFromRVA(m_pImport->at(m_iListItem).stImportDesc.Name);
@@ -619,7 +602,7 @@ void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 	}
 
 	if (dwSize)
-		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
 void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
@@ -633,8 +616,7 @@ void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 	if (pTLSDir == nullptr)
 		return;
 
-	switch (wMenuID)
-	{
+	switch (wMenuID) {
 	case IDM_LIST_GOTODESCOFFSET:
 		dwOffset = pTLSDir->dwOffset;
 		if (fx32)
@@ -645,12 +627,10 @@ void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 	case IDM_LIST_GOTODATAOFFSET:
 	{
 		dwSize = 1; //Just highlight a starting address of one of a TLS field.
-		if (fx32)
-		{
+		if (fx32) {
 			const auto pTLSDir32 = &pTLSDir->unTLS.stTLSDir32;
 
-			switch (m_iListItem)
-			{
+			switch (m_iListItem) {
 			case 0: //StartAddressOfRawData
 				dwOffset = m_pLibpe->GetOffsetFromVA(pTLSDir32->StartAddressOfRawData);
 				break;
@@ -664,12 +644,10 @@ void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 				dwSize = 0; //To not process other fields.
 			}
 		}
-		else if (fx64)
-		{
+		else if (fx64) {
 			const auto pTLSDir64 = &pTLSDir->unTLS.stTLSDir64;
 
-			switch (m_iListItem)
-			{
+			switch (m_iListItem) {
 			case 0: //StartAddressOfRawData
 				dwOffset = m_pLibpe->GetOffsetFromRVA(pTLSDir64->StartAddressOfRawData);
 				break;
@@ -688,7 +666,7 @@ void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 	}
 
 	if (dwSize > 0)
-		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
 void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID)
@@ -699,8 +677,7 @@ void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID)
 	if (pBoundImp == nullptr)
 		return;
 
-	switch (wMenuID)
-	{
+	switch (wMenuID) {
 	case IDM_LIST_GOTODESCOFFSET:
 	{
 		dwOffset = pBoundImp->at(m_iListItem).dwOffset;
@@ -709,8 +686,7 @@ void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID)
 	break;
 	case IDM_LIST_GOTODATAOFFSET:
 	{
-		switch (m_iListSubItem)
-		{
+		switch (m_iListSubItem) {
 		case 3: //OffsetModuleName
 			dwOffset = m_pLibpe->GetOffsetFromRVA(pBoundImp->at(m_iListItem).stBoundImpDesc.OffsetModuleName);
 			dwSize = static_cast<DWORD>(pBoundImp->at(m_iListItem).strBoundName.size());
@@ -721,7 +697,7 @@ void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID)
 	}
 
 	if (dwSize)
-		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
 void CViewRightTL::OnListCOMDescMenuSelect(WORD wMenuID)
@@ -732,8 +708,7 @@ void CViewRightTL::OnListCOMDescMenuSelect(WORD wMenuID)
 	if (pCOMDesc == nullptr)
 		return;
 
-	switch (wMenuID)
-	{
+	switch (wMenuID) {
 	case IDM_LIST_GOTODESCOFFSET:
 	{
 		dwOffset = pCOMDesc->dwOffset;
@@ -746,7 +721,7 @@ void CViewRightTL::OnListCOMDescMenuSelect(WORD wMenuID)
 	}
 
 	if (dwSize)
-		m_pFileLoader->ShowOffset(dwOffset, dwSize);
+		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
 void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
@@ -760,19 +735,15 @@ void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 		return;
 
 	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResTop.GetItemData(pTree->itemNew.hItem));
-	if (idlvl2 >= 0)
-	{
+	if (idlvl2 >= 0) {
 		const auto& rootvec = pstResRoot->vecResData;
 		const auto& lvl2st = rootvec[idlvlRoot].stResLvL2;
 		const auto& lvl2vec = lvl2st.vecResData;
-		if (!lvl2vec.empty())
-		{
-			if (idlvl3 >= 0)
-			{
+		if (!lvl2vec.empty()) {
+			if (idlvl3 >= 0) {
 				const auto& lvl3st = lvl2vec[idlvl2].stResLvL3;
 				const auto& lvl3vec = lvl3st.vecResData;
-				if (!lvl3vec.empty())
-				{
+				if (!lvl3vec.empty()) {
 					auto data = &lvl3vec.at(idlvl3).stResDataEntry;
 
 					//Send data pointer to CViewRightTR to display raw data.
@@ -795,15 +766,14 @@ void CViewRightTL::CreateListDOSHeader()
 	m_listDOSHeader->Create(m_stlcs);
 	m_listDOSHeader->ShowWindow(SW_HIDE);
 	m_listDOSHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listDOSHeader->SetColumn(0, &stCol);
 	m_listDOSHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listDOSHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
 	m_listDOSHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listDOSHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 100);
 
-	for (auto iter { 0U }; iter < g_mapDOSHeader.size(); ++iter)
-	{
+	for (auto iter { 0U }; iter < g_mapDOSHeader.size(); ++iter) {
 		const auto& ref = g_mapDOSHeader.at(iter);
 		const auto dwOffset = ref.dwOffset;
 		const auto dwSize = ref.dwSize;
@@ -832,7 +802,7 @@ void CViewRightTL::CreateListRichHeader()
 	m_listRichHdr->Create(m_stlcs);
 	m_listRichHdr->ShowWindow(SW_HIDE);
 	m_listRichHdr->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listRichHdr->SetColumn(0, &stCol);
 	m_listRichHdr->SetHdrColumnColor(0, g_clrOffset);
 	m_listRichHdr->InsertColumn(1, L"\u2116", LVCFMT_CENTER, 35);
@@ -843,8 +813,7 @@ void CViewRightTL::CreateListRichHeader()
 	m_listRichHdr->SetColumnSortMode(4, true, EListExSortMode::SORT_NUMERIC);
 
 	auto listindex { 0 };
-	for (const auto& iter : *pRichHeader)
-	{
+	for (const auto& iter : *pRichHeader) {
 		m_listRichHdr->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 		m_listRichHdr->SetItemText(listindex, 1, std::format(L"{}", listindex + 1).data());
 		m_listRichHdr->SetItemText(listindex, 2, std::format(L"{:04X}", iter.wId).data());
@@ -865,7 +834,7 @@ void CViewRightTL::CreateListNTHeader()
 	m_listNTHeader->Create(m_stlcs);
 	m_listNTHeader->ShowWindow(SW_HIDE);
 	m_listNTHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listNTHeader->SetColumn(0, &stCol);
 	m_listNTHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listNTHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 100);
@@ -896,15 +865,14 @@ void CViewRightTL::CreateListFileHeader()
 	m_listFileHeader->Create(m_stlcs);
 	m_listFileHeader->ShowWindow(SW_HIDE);
 	m_listFileHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listFileHeader->SetColumn(0, &stCol);
 	m_listFileHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listFileHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
 	m_listFileHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listFileHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
-	for (unsigned iter { 0 }; iter < g_mapFileHeader.size(); ++iter)
-	{
+	for (unsigned iter { 0 }; iter < g_mapFileHeader.size(); ++iter) {
 		const auto pDescr = &pNTHdr->unHdr.stNTHdr32.FileHeader;
 		const auto& ref = g_mapFileHeader.at(iter);
 		const auto dwOffset = ref.dwOffset;
@@ -955,7 +923,7 @@ void CViewRightTL::CreateListOptHeader()
 	m_listOptHeader->Create(m_stlcs);
 	m_listOptHeader->ShowWindow(SW_HIDE);
 	m_listOptHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listOptHeader->SetColumn(0, &stCol);
 	m_listOptHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listOptHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 215);
@@ -966,10 +934,8 @@ void CViewRightTL::CreateListOptHeader()
 		pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader);
 	const auto dwSubsystemPos = stFileInfo.fIsx86 ? 22U : 21U;  //Position in struct is different in x86 and x64.
 	const auto dwDllCharactPos = stFileInfo.fIsx86 ? 23U : 22U; //Position in struct is different in x86 and x64.
-	const auto lmbOptHdr = [&](const auto& stOptHdr, const auto& mapOptHdr)
-	{
-		for (auto iter { 0U }; iter < mapOptHdr.size(); ++iter)
-		{
+	const auto lmbOptHdr = [&](const auto& stOptHdr, const auto& mapOptHdr) {
+		for (auto iter { 0U }; iter < mapOptHdr.size(); ++iter) {
 			const auto& ref = mapOptHdr.at(iter);
 			const auto dwOffset = ref.dwOffset;
 			const auto dwSize = ref.dwSize;
@@ -1024,7 +990,7 @@ void CViewRightTL::CreateListDataDirs()
 	m_listDataDirs->Create(m_stlcs);
 	m_listDataDirs->ShowWindow(SW_HIDE);
 	m_listDataDirs->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listDataDirs->SetColumn(0, &stCol);
 	m_listDataDirs->SetHdrColumnColor(0, g_clrOffset);
 	m_listDataDirs->InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
@@ -1034,8 +1000,7 @@ void CViewRightTL::CreateListDataDirs()
 
 	const auto dwDataDirsOffset = stFileInfo.fIsx86 ? offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory) :
 		offsetof(IMAGE_NT_HEADERS64, OptionalHeader.DataDirectory);
-	for (auto iter { 0U }; iter < pvecDataDirs->size(); ++iter)
-	{
+	for (auto iter { 0U }; iter < pvecDataDirs->size(); ++iter) {
 		const auto& ref = pvecDataDirs->at(static_cast<size_t>(iter));
 		const auto pDescr = &ref.stDataDir;
 
@@ -1062,7 +1027,7 @@ void CViewRightTL::CreateListSecHeaders()
 	m_listSecHeaders->Create(m_stlcs);
 	m_listSecHeaders->ShowWindow(SW_HIDE);
 	m_listSecHeaders->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listSecHeaders->SetColumn(0, &stCol);
 	m_listSecHeaders->SetHdrColumnColor(0, g_clrOffset);
 	m_listSecHeaders->InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
@@ -1089,7 +1054,7 @@ void CViewRightTL::CreateListExport()
 	m_listExportDir->Create(m_stlcs);
 	m_listExportDir->ShowWindow(SW_HIDE);
 	m_listExportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listExportDir->SetColumn(0, &stCol);
 	m_listExportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listExportDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
@@ -1097,8 +1062,7 @@ void CViewRightTL::CreateListExport()
 	m_listExportDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
 	const auto pDescr = &pExport->stExportDesc;
-	for (auto iter { 0U }; iter < g_mapExport.size(); ++iter)
-	{
+	for (auto iter { 0U }; iter < g_mapExport.size(); ++iter) {
 		const auto& ref = g_mapExport.at(iter);
 		const auto dwOffset = ref.dwOffset;
 		const auto dwSize = ref.dwSize;
@@ -1132,7 +1096,7 @@ void CViewRightTL::CreateListImport()
 	m_listImport->Create(m_stlcs);
 	m_listImport->ShowWindow(SW_HIDE);
 	m_listImport->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listImport->SetColumn(0, &stCol);
 	m_listImport->SetHdrColumnColor(0, g_clrOffset);
 	m_listImport->InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 300);
@@ -1163,8 +1127,7 @@ void CViewRightTL::CreateTreeResources()
 		std::wstring wstr;
 		if (pResDirEntryRoot->NameIsString)
 			wstr = std::format(L"Entry: {} [Name: {}]", ilvlRoot, iterRoot.wstrResName);
-		else
-		{
+		else {
 			if (const auto iter = MapResID.find(pResDirEntryRoot->Id); iter != MapResID.end())
 				wstr = std::format(L"Entry: {} [Id: {}, {}]", ilvlRoot, pResDirEntryRoot->Id, iter->second);
 			else
@@ -1172,16 +1135,14 @@ void CViewRightTL::CreateTreeResources()
 		}
 
 		HTREEITEM hTreeTop;
-		if (pResDirEntryRoot->DataIsDirectory)
-		{
+		if (pResDirEntryRoot->DataIsDirectory) {
 			hTreeTop = m_treeResTop.InsertItem(wstr.data(), m_hTreeResRoot);
 			m_vecResId.emplace_back(ilvlRoot, -1, -1);
 			m_treeResTop.SetItemData(hTreeTop, m_vecResId.size() - 1);
 
 			auto ilvl2 { 0 };
 			const auto pstResLvL2 = &iterRoot.stResLvL2;
-			for (const auto& iterLvL2 : pstResLvL2->vecResData)
-			{
+			for (const auto& iterLvL2 : pstResLvL2->vecResData) {
 				const auto pResDirEntry2 = &iterLvL2.stResDirEntry; //Level 2 IMAGE_RESOURCE_DIRECTORY_ENTRY
 				if (pResDirEntry2->NameIsString)
 					wstr = std::format(L"Entry: {} Name: {}", ilvl2, iterLvL2.wstrResName);
@@ -1189,16 +1150,14 @@ void CViewRightTL::CreateTreeResources()
 					wstr = std::format(L"Entry: {} Id: {}", ilvl2, pResDirEntry2->Id);
 
 				HTREEITEM hTreeLvL2;
-				if (pResDirEntry2->DataIsDirectory)
-				{
+				if (pResDirEntry2->DataIsDirectory) {
 					hTreeLvL2 = m_treeResTop.InsertItem(wstr.data(), hTreeTop);
 					m_vecResId.emplace_back(ilvlRoot, ilvl2, -1);
 					m_treeResTop.SetItemData(hTreeLvL2, m_vecResId.size() - 1);
 
 					auto ilvl3 { 0 };
 					const auto pstResLvL3 = &iterLvL2.stResLvL3;
-					for (const auto& iterLvL3 : pstResLvL3->vecResData)
-					{
+					for (const auto& iterLvL3 : pstResLvL3->vecResData) {
 						const auto pResDirEntry3 = &iterLvL3.stResDirEntry; //Level 3 IMAGE_RESOURCE_DIRECTORY_ENTRY
 						if (pResDirEntry3->NameIsString)
 							wstr = std::format(L"Entry: {} Name: {}", ilvl3, iterLvL3.wstrResName);
@@ -1243,7 +1202,7 @@ void CViewRightTL::CreateListExceptions()
 	m_listExceptionDir->Create(m_stlcs);
 	m_listExceptionDir->ShowWindow(SW_HIDE);
 	m_listExceptionDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listExceptionDir->SetColumn(0, &stCol);
 	m_listExceptionDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listExceptionDir->InsertColumn(1, L"BeginAddress", LVCFMT_CENTER, 100);
@@ -1263,7 +1222,7 @@ void CViewRightTL::CreateListSecurity()
 	m_listSecurityDir->Create(m_stlcs);
 	m_listSecurityDir->ShowWindow(SW_HIDE);
 	m_listSecurityDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listSecurityDir->SetColumn(0, &stCol);
 	m_listSecurityDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listSecurityDir->InsertColumn(1, L"dwLength", LVCFMT_CENTER, 100);
@@ -1271,8 +1230,7 @@ void CViewRightTL::CreateListSecurity()
 	m_listSecurityDir->InsertColumn(3, L"wCertificateType", LVCFMT_CENTER, 180);
 
 	int listindex { };
-	for (const auto& iter : *pSecurityDir)
-	{
+	for (const auto& iter : *pSecurityDir) {
 		m_listSecurityDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 		const auto pDescr = &iter.stWinSert;
 		m_listSecurityDir->SetItemText(listindex, 1, std::format(L"{:08X}", pDescr->dwLength).data());
@@ -1297,7 +1255,7 @@ void CViewRightTL::CreateListRelocations()
 	m_listRelocDir->Create(m_stlcs);
 	m_listRelocDir->ShowWindow(SW_HIDE);
 	m_listRelocDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listRelocDir->SetColumn(0, &stCol);
 	m_listRelocDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listRelocDir->InsertColumn(1, L"Virtual Address", LVCFMT_CENTER, 115);
@@ -1317,7 +1275,7 @@ void CViewRightTL::CreateListDebug()
 	m_listDebugDir->Create(m_stlcs);
 	m_listDebugDir->ShowWindow(SW_HIDE);
 	m_listDebugDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listDebugDir->SetColumn(0, &stCol);
 	m_listDebugDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listDebugDir->InsertColumn(1, L"Characteristics", LVCFMT_CENTER, 115);
@@ -1330,8 +1288,7 @@ void CViewRightTL::CreateListDebug()
 	m_listDebugDir->InsertColumn(8, L"PointerToRawData", LVCFMT_CENTER, 140);
 
 	int listindex { 0 };
-	for (const auto& iter : *pDebugDir)
-	{
+	for (const auto& iter : *pDebugDir) {
 		const auto pDescr = &iter.stDebugDir;
 
 		m_listDebugDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
@@ -1365,17 +1322,15 @@ void CViewRightTL::CreateListTLS()
 	m_listTLSDir->Create(m_stlcs);
 	m_listTLSDir->ShowWindow(SW_HIDE);
 	m_listTLSDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listTLSDir->SetColumn(0, &stCol);
 	m_listTLSDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listTLSDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listTLSDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
 	m_listTLSDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 150);
 
-	const auto lmbTLS = [&](const auto& stPETLS, const auto& mapTLS)
-	{
-		for (auto iterMap { 0U }; iterMap < mapTLS.size(); ++iterMap)
-		{
+	const auto lmbTLS = [&](const auto& stPETLS, const auto& mapTLS) {
+		for (auto iterMap { 0U }; iterMap < mapTLS.size(); ++iterMap) {
 			const auto& ref = mapTLS.at(iterMap);
 			const auto dwOffset = ref.dwOffset;
 			const auto dwSize = ref.dwSize;
@@ -1407,17 +1362,15 @@ void CViewRightTL::CreateListLCD()
 	m_listLCD->Create(m_stlcs);
 	m_listLCD->ShowWindow(SW_HIDE);
 	m_listLCD->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listLCD->SetColumn(0, &stCol);
 	m_listLCD->SetHdrColumnColor(0, g_clrOffset);
 	m_listLCD->InsertColumn(1, L"Name", LVCFMT_CENTER, 330);
 	m_listLCD->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
 	m_listLCD->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
-	const auto lmbLCD = [&](const auto& stPELCD, const auto& mapLCD)
-	{
-		for (auto iterMap { 0U }; iterMap < mapLCD.size(); ++iterMap)
-		{
+	const auto lmbLCD = [&](const auto& stPELCD, const auto& mapLCD) {
+		for (auto iterMap { 0U }; iterMap < mapLCD.size(); ++iterMap) {
 			const auto& ref = mapLCD.at(iterMap);
 			if (ref.dwOffset >= stPELCD.Size) //No-more than the size of the struct, that is the first struct's member.
 				break;
@@ -1467,7 +1420,7 @@ void CViewRightTL::CreateListBoundImport()
 	m_listBoundImportDir->Create(m_stlcs);
 	m_listBoundImportDir->ShowWindow(SW_HIDE);
 	m_listBoundImportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listBoundImportDir->SetColumn(0, &stCol);
 	m_listBoundImportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listBoundImportDir->InsertColumn(1, L"Module Name", LVCFMT_CENTER, 290);
@@ -1476,8 +1429,7 @@ void CViewRightTL::CreateListBoundImport()
 	m_listBoundImportDir->InsertColumn(4, L"NumberOfModuleForwarderRefs", LVCFMT_CENTER, 220);
 
 	int listindex { };
-	for (const auto& iter : *pBoundImp)
-	{
+	for (const auto& iter : *pBoundImp) {
 		m_listBoundImportDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 
 		const auto pDescr = &iter.stBoundImpDesc;
@@ -1505,7 +1457,7 @@ void CViewRightTL::CreateListDelayImport()
 	m_listDelayImportDir->Create(m_stlcs);
 	m_listDelayImportDir->ShowWindow(SW_HIDE);
 	m_listDelayImportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listDelayImportDir->SetColumn(0, &stCol);
 	m_listDelayImportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listDelayImportDir->InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
@@ -1519,8 +1471,7 @@ void CViewRightTL::CreateListDelayImport()
 	m_listDelayImportDir->InsertColumn(9, L"TimeDateStamp", LVCFMT_CENTER, 115);
 
 	int listindex { };
-	for (const auto& iter : *pDelayImp)
-	{
+	for (const auto& iter : *pDelayImp) {
 		m_listDelayImportDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 
 		const auto pDescr = &iter.stDelayImpDesc;
@@ -1553,15 +1504,14 @@ void CViewRightTL::CreateListCOM()
 	m_listCOMDir->Create(m_stlcs);
 	m_listCOMDir->ShowWindow(SW_HIDE);
 	m_listCOMDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listCOMDir->SetColumn(0, &stCol);
 	m_listCOMDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listCOMDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 300);
 	m_listCOMDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listCOMDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
-	for (auto iter = 0U; iter < g_mapComDir.size(); ++iter)
-	{
+	for (auto iter = 0U; iter < g_mapComDir.size(); ++iter) {
 		const auto& ref = g_mapComDir.at(iter);
 		const auto dwOffset = ref.dwOffset;
 		const auto dwSize = ref.dwSize;
@@ -1590,11 +1540,9 @@ void CViewRightTL::CreateListCOM()
 void CViewRightTL::SortImportData()
 {
 	std::sort(m_pImport->begin(), m_pImport->end(),
-		[&](const auto& ref1, const auto& ref2)
-		{
+		[&](const auto& ref1, const auto& ref2) {
 			int iCompare { };
-			switch (m_listImport->GetSortColumn())
-			{
+			switch (m_listImport->GetSortColumn()) {
 			case 0:
 				iCompare = ref1.dwOffset < ref2.dwOffset ? -1 : 1;
 				break;

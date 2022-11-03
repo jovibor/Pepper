@@ -48,8 +48,7 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	CRect rcClient;
 	GetClientRect(&rcClient);
 
-	switch (LOWORD(lHint))
-	{
+	switch (LOWORD(lHint)) {
 	case IDC_TREE_RESOURCE:
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);

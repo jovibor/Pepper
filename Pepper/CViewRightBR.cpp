@@ -5,8 +5,8 @@
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 #include "stdafx.h"
-#include "CViewRightBR.h"
 #include "CMainFrm.h"
+#include "CViewRightBR.h"
 #include <format>
 #include <unordered_map>
 #pragma comment(lib, "Mincore.lib") //VerQueryValueW
@@ -85,8 +85,7 @@ void CViewRightBR::OnInitialUpdate()
 	LOGFONTW lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
 	lf.lfHeight = 18;
-	if (!m_fontEditRes.CreateFontIndirectW(&lf))
-	{
+	if (!m_fontEditRes.CreateFontIndirectW(&lf)) {
 		NONCLIENTMETRICSW ncm { };
 		ncm.cbSize = sizeof(NONCLIENTMETRICS);
 		SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
@@ -136,8 +135,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	GetParent()->GetWindowRect(&rcParent);
 	m_eResTypeToDraw = EResType::NO_RESOURCE;
 
-	switch (LOWORD(lHint))
-	{
+	switch (LOWORD(lHint)) {
 	case IDC_LIST_TLS:
 	{
 		CRect rcClient;
@@ -199,8 +197,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 		y = rcClipBox.Height() / 2 - (m_iImgResHeight / 2);
 
 	using enum EResType;
-	switch (m_eResTypeToDraw)
-	{
+	switch (m_eResTypeToDraw) {
 	case RTYPE_CURSOR:
 	case RTYPE_BITMAP:
 	case RTYPE_ICON:
@@ -435,8 +432,7 @@ void CViewRightBR::CreateMenu(const PERESFLAT& stResData)
 		constexpr auto iHeight = 100;
 		UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
 		constexpr DWORD dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
-		if (!m_wndSampleDlg.m_hWnd)
-		{
+		if (!m_wndSampleDlg.m_hWnd) {
 			if (!m_wndSampleDlg.CreateEx(WS_EX_APPWINDOW, AfxRegisterWndClass(0),
 				L"Sample Dialog...", dwStyles, 0, 0, 0, 0, m_hWnd, nullptr)) {
 				MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
@@ -491,8 +487,7 @@ void CViewRightBR::CreateDlg(const PERESFLAT& stResData)
 
 	auto hwndResDlg = CreateDialogIndirectParamW(nullptr, reinterpret_cast<LPCDLGTEMPLATEW>(stResData.spnData.data()), m_hWnd, nullptr, 0);
 
-	if (!hwndResDlg)
-	{
+	if (!hwndResDlg) {
 		//Trying to set dialog's Items count to 0, to avoid failing on CreateWindowEx 
 		//within CreateDialogIndirectParamW, for Dialog items (controls) with CustomClassName.
 		//It can be overcome though, by creating a WindowClass with that custom name, 
@@ -526,8 +521,7 @@ void CViewRightBR::CreateDlg(const PERESFLAT& stResData)
 	UINT uFlags = SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER;
 	constexpr DWORD dwStyles { WS_POPUP | WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX };
 	constexpr DWORD dwExStyles { WS_EX_APPWINDOW };
-	if (!m_wndSampleDlg.m_hWnd)
-	{
+	if (!m_wndSampleDlg.m_hWnd) {
 		if (!m_wndSampleDlg.CreateEx(dwExStyles, AfxRegisterWndClass(0),
 			L"Sample Dialog...", dwStyles, 0, 0, 0, 0, m_hWnd, nullptr)) {
 			MessageBoxW(L"Sample Dialog window CreateEx failed.", L"Error");
@@ -601,7 +595,7 @@ void CViewRightBR::CreateListTLSCallbacks()
 	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
 	m_stListTLSCallbacks->Create(m_stlcs);
 	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_stListTLSCallbacks->SetColumn(0, &stCol);
 
 	int listindex { };
@@ -651,8 +645,7 @@ void CViewRightBR::CreateStrings(const PERESFLAT& stResData)
 {
 	auto pwszResString = reinterpret_cast<LPCWSTR>(stResData.spnData.data());
 	std::wstring wstrEdit;
-	for (int i = 0; i < 16; ++i)
-	{
+	for (int i = 0; i < 16; ++i) {
 		std::wstring wstrTmp;
 		wstrEdit += wstrTmp.assign(pwszResString + 1, static_cast<UINT>(*pwszResString));
 		if (i != 15)
@@ -899,17 +892,14 @@ void CViewRightBR::CreateGroupIconCursor(const PERESFLAT& stResData)
 	m_iImgResHeight = 0;
 	const auto pGRPIDir = reinterpret_cast<LPGRPICONDIR>(stResData.spnData.data());
 
-	for (int iterCount = 0; iterCount < pGRPIDir->idCount; ++iterCount)
-	{
+	for (int iterCount = 0; iterCount < pGRPIDir->idCount; ++iterCount) {
 		const auto& rootvec = pstResRoot->vecResData;
-		for (const auto& iterRoot : rootvec)
-		{
+		for (const auto& iterRoot : rootvec) {
 			if (iterRoot.stResDirEntry.Id == 3 || iterRoot.stResDirEntry.Id == 1) //RT_ICON or RT_CURSOR
 			{
 				const auto& lvl2tup = iterRoot.stResLvL2;
 				const auto& lvl2vec = lvl2tup.vecResData;
-				for (const auto& iterlvl2 : lvl2vec)
-				{
+				for (const auto& iterlvl2 : lvl2vec) {
 					if (iterlvl2.stResDirEntry.Id != pGRPIDir->idEntries[iterCount].nID)
 						continue;
 
@@ -993,17 +983,14 @@ void CViewRightBR::CreateVersion(const PERESFLAT& stResData)
 	VerQueryValueW(stResData.spnData.data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID*>(&pLangAndCP), &dwBytesOut);
 
 	std::wstring wstrEdit;
-	DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
-	for (size_t iterCodePage = 0; iterCodePage < dwLangCount; ++iterCodePage) //Read the file description for each language and code page.
-	{
-		for (unsigned iterMap = 0; iterMap < mapVerInfoStrings.size(); ++iterMap) //sizeof pstrVerInfoStrings [];
-		{
+	const DWORD dwLangCount = dwBytesOut / sizeof(LANGANDCODEPAGE);
+	for (size_t iterCodePage = 0; iterCodePage < dwLangCount; ++iterCodePage) { //Read the file description for each language and code page.
+		for (unsigned iterMap = 0; iterMap < mapVerInfoStrings.size(); ++iterMap) { //sizeof pstrVerInfoStrings [];
 			wstrEdit += mapVerInfoStrings.at(iterMap);
 			wstrEdit += L" - ";
 			if (wchar_t* pszBufferOut { }; VerQueryValueW(stResData.spnData.data(), std::format(L"\\StringFileInfo\\{:04x}{:04x}\\{}",
 				pLangAndCP[iterCodePage].wLanguage, pLangAndCP[iterCodePage].wCodePage, mapVerInfoStrings.at(iterMap)).data(),
-				reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut))
-			{
+				reinterpret_cast<LPVOID*>(&pszBufferOut), &dwBytesOut)) {
 				if (dwBytesOut > 0)
 					wstrEdit += pszBufferOut;
 			}
@@ -1033,22 +1020,17 @@ void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 		return;
 
 	const auto& rootvec = pstResRoot->vecResData;
-	for (const auto& iterRoot : rootvec)
-	{
+	for (const auto& iterRoot : rootvec) {
 		if (iterRoot.stResDirEntry.Id == 2) //RT_BITMAP
 		{
 			const auto& lvl2tup = iterRoot.stResLvL2;
 			const auto& lvl2vec = lvl2tup.vecResData;
-			for (const auto& iterlvl2 : lvl2vec)
-			{
-				if (iterlvl2.stResDirEntry.Id == stResData.wNameID)
-				{
+			for (const auto& iterlvl2 : lvl2vec) {
+				if (iterlvl2.stResDirEntry.Id == stResData.wNameID) {
 					const auto& lvl3tup = iterlvl2.stResLvL3;
 					const auto& lvl3vec = lvl3tup.vecResData;
-					for (const auto& iterlvl3 : lvl3vec)
-					{
-						if (iterlvl3.stResDirEntry.Id == stResData.wLangID)
-						{
+					for (const auto& iterlvl3 : lvl3vec) {
+						if (iterlvl3.stResDirEntry.Id == stResData.wLangID) {
 							const auto& refData = iterlvl3.vecRawResData;
 							if (!refData.empty()) {
 								static PERESFLAT stData { .wTypeID { 2 } };
@@ -1070,8 +1052,7 @@ void CViewRightBR::ShowResource(const PERESFLAT* pResData)
 	m_stImgRes.DeleteImageList();
 	m_vecImgRes.clear();
 
-	if (pResData != nullptr)
-	{
+	if (pResData != nullptr) {
 		//Destroy Dialog Sample window if it's any other resource but RT_MENU or RT_DIALOG.
 		if (pResData->wTypeID != 4 && pResData->wTypeID != 5 && m_wndSampleDlg.m_hWnd) {
 			m_wndSampleDlg.SetDlgVisible(false);
@@ -1083,8 +1064,7 @@ void CViewRightBR::ShowResource(const PERESFLAT* pResData)
 		}
 
 		if (pResData->wsvTypeStr.empty()) {
-			switch (pResData->wTypeID)
-			{
+			switch (pResData->wTypeID) {
 			case 1: //RT_CURSOR
 			case 3: //RT_ICON
 				CreateIconCursor(*pResData);
@@ -1131,8 +1111,7 @@ void CViewRightBR::ShowResource(const PERESFLAT* pResData)
 			}
 		}
 	}
-	else
-	{
+	else {
 		//Destroy Dialog Sample window if it's just Resource window Update.
 		if (m_wndSampleDlg.m_hWnd) {
 			m_wndSampleDlg.SetDlgVisible(false);
@@ -1288,10 +1267,8 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 		{ WS_VSCROLL, L"WS_VSCROLL" }
 	};
 
-	for (const auto& iter : mapDlgStyles)
-	{
-		if (iter.first & dwDlgStyles)
-		{
+	for (const auto& iter : mapDlgStyles) {
+		if (iter.first & dwDlgStyles) {
 			if (!wstrStyles.empty())
 				wstrStyles += L" | " + iter.second;
 			else
@@ -1327,10 +1304,8 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 			{ WS_EX_WINDOWEDGE, L"WS_EX_WINDOWEDGE" }
 		};
 
-		for (const auto& iter : mapDlgExStyles)
-		{
-			if (iter.first & dwDlgStylesEx)
-			{
+		for (const auto& iter : mapDlgExStyles) {
+			if (iter.first & dwDlgStylesEx) {
 				if (!wstrStyles.empty())
 					wstrStyles += L" | " + iter.second;
 				else
@@ -1395,8 +1370,7 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 	wstrRet += L"DIALOG FONT: ";
 
 	//DLGTEMPLATEEX font related, only if DS_SETFONT or DS_SHELLFONT styles present.
-	if (fDlgEx && ((dwDlgStyles & DS_SETFONT) || (dwDlgStyles & DS_SHELLFONT)))
-	{
+	if (fDlgEx && ((dwDlgStyles & DS_SETFONT) || (dwDlgStyles & DS_SHELLFONT))) {
 		const auto wFontPointSize = *reinterpret_cast<PWORD>(pDataDlgHdr);
 		pDataDlgHdr += sizeof(wFontPointSize);
 		const auto wFontWeight = *reinterpret_cast<PWORD>(pDataDlgHdr);
@@ -1429,8 +1403,7 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 		const auto wFontPointSize = *reinterpret_cast<PWORD>(pDataDlgHdr);
 		pDataDlgHdr += sizeof(wFontPointSize);
 
-		if (*reinterpret_cast<PWORD>(pDataDlgHdr) != 0x0000)
-		{
+		if (*reinterpret_cast<PWORD>(pDataDlgHdr) != 0x0000) {
 			pDataDlgHdr += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataDlgHdr) -
 				reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
 		}
@@ -1453,8 +1426,7 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 	auto pDataItems = pDataDlgHdr; //Just to differentiate.
 
 	wstrRet += L"{\r\n";
-	for (WORD items = 0; items < wCountDlgItems; ++items)
-	{
+	for (WORD items = 0; items < wCountDlgItems; ++items) {
 		pDataItems += (sizeof(DWORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
 			reinterpret_cast<DWORD_PTR>(pDataDlg)) & 3)) & 3; //DWORD Aligning.
 		//Out of bounds checking.
@@ -1534,8 +1506,7 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 		//Extra count Item.
 		const auto wExtraCountItem = *reinterpret_cast<PWORD>(pDataItems);
 		pDataItems += sizeof(WORD);
-		if (wExtraCountItem)
-		{
+		if (wExtraCountItem) {
 			pDataItems += (sizeof(WORD) - ((reinterpret_cast<DWORD_PTR>(pDataItems) -
 				reinterpret_cast<DWORD_PTR>(pDataDlg)) & 1)) & 1; //WORD Aligning.
 			pDataItems += wExtraCountItem;

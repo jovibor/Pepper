@@ -79,8 +79,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 
 	CRect rc;
 	GetClientRect(&rc);
-	switch (LOWORD(lHint))
-	{
+	switch (LOWORD(lHint)) {
 	case IDC_LIST_DOSHEADER_ENTRY:
 		ShowDosHdrHexEntry(HIWORD(lHint));
 		break;
@@ -103,8 +102,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		ShowSecHdrHexEntry(HIWORD(lHint));
 		break;
 	case IDC_LIST_EXPORT:
-		if (m_hwndActive != m_listExportFuncs->m_hWnd)
-		{
+		if (m_hwndActive != m_listExportFuncs->m_hWnd) {
 			if (m_hwndActive)
 				::ShowWindow(m_hwndActive, SW_HIDE);
 
@@ -116,8 +114,7 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		ShowImportListEntry(HIWORD(lHint));
 		break;
 	case IDC_TREE_RESOURCE:
-		if (m_hwndActive != m_treeResBottom.m_hWnd)
-		{
+		if (m_hwndActive != m_treeResBottom.m_hWnd) {
 			if (m_hwndActive)
 				::ShowWindow(m_hwndActive, SW_HIDE);
 
@@ -177,8 +174,7 @@ void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
 	const auto [idlvlRoot, idlvl2, idlvl3, eResType] = m_vecResId.at(m_treeResBottom.GetItemData(pTree->itemNew.hItem));
-	if (idlvl2 >= 0 && idlvl3 >= 0)
-	{
+	if (idlvl2 >= 0 && idlvl3 >= 0) {
 		const auto& rootvec = pstResRoot->vecResData;
 		const auto& lvl2tup = rootvec[idlvlRoot].stResLvL2;
 		const auto& lvl2vec = lvl2tup.vecResData;
@@ -227,8 +223,7 @@ void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 	UINT_PTR uMenuID;
 	using enum EResType;
 	if (iLvL2ID < 0 || iLvL3ID < 0) { //Header item clicked (RT_ICON, RT_BITMAP, etc...)
-		switch (eResType)
-		{
+		switch (eResType) {
 		case RTYPE_CURSOR:
 			wsvMenu = L"Extract all Cursors...";
 			break;
@@ -247,8 +242,7 @@ void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 		uMenuID = IDM_EXTRACT_ALLRES;
 	}
 	else { //Child node clicked.
-		switch (eResType)
-		{
+		switch (eResType) {
 		case RTYPE_CURSOR:
 			wsvMenu = L"Extract Cursor...";
 			break;
@@ -306,7 +300,7 @@ void CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs->Create(m_stlcs);
 	m_listExportFuncs->ShowWindow(SW_HIDE);
 	m_listExportFuncs->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listExportFuncs->SetColumn(0, &stCol);
 	m_listExportFuncs->SetHdrColumnColor(0, g_clrOffset);
 	m_listExportFuncs->InsertColumn(1, L"Function RVA", LVCFMT_CENTER, 100);
@@ -322,8 +316,7 @@ void CViewRightBL::CreateListExportFuncs()
 	int listindex = 0;
 	const auto dwOffset = m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions);
 	m_listExportFuncs->SetRedraw(FALSE); //to increase the speed of List populating
-	for (const auto& iterFuncs : pExport->vecFuncs)
-	{
+	for (const auto& iterFuncs : pExport->vecFuncs) {
 		m_listExportFuncs->InsertItem(listindex, std::format(L"{:08X}", static_cast<DWORD>(dwOffset + sizeof(DWORD) * iterFuncs.dwOrdinal)).data());
 		m_listExportFuncs->SetItemText(listindex, 1, std::format(L"{:08X}", iterFuncs.dwFuncRVA).data());
 		m_listExportFuncs->SetItemText(listindex, 2, std::format(L"{}", iterFuncs.dwOrdinal).data());
@@ -344,7 +337,7 @@ void CViewRightBL::CreateListImportFuncs()
 	m_stlcs.uID = IDC_LIST_IMPORT_ENTRY;
 	m_listImportEntry->Create(m_stlcs);
 	m_listImportEntry->InsertColumn(0, L"Offset", 0, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listImportEntry->SetColumn(0, &stCol);
 	m_listImportEntry->SetHdrColumnColor(0, g_clrOffset);
 	m_listImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 175);
@@ -365,7 +358,7 @@ void CViewRightBL::CreateTreeResources()
 
 	//Scaling factor for HighDPI displays.
 	const auto pDC = GetDC();
-	const auto fScale = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY) / 96.0f;
+	const auto fScale = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY) / 96.0F;
 	ReleaseDC(pDC);
 	const auto iImgSize = static_cast<int>(16 * fScale);
 
@@ -377,8 +370,7 @@ void CViewRightBL::CreateTreeResources()
 	//Creating a treeCtrl and setting, with SetItemData(),
 	//a unique id for each node, that is an index in vector (m_vecResId),
 	//that holds tuple of three IDs of resource — Type, Name, LangID.
-	for (const auto& iterRoot : pstResRoot->vecResData)
-	{
+	for (const auto& iterRoot : pstResRoot->vecResData) {
 		EResType eResType { EResType::RTYPE_UNSUPPORTED }; //By default set resource to unsupported.
 		const auto pResDirEntry = &iterRoot.stResDirEntry;
 		std::wstring wstrResName;
@@ -404,15 +396,13 @@ void CViewRightBL::CreateTreeResources()
 		long ilvl2 = 0;
 		const auto& refResLvL2 = iterRoot.stResLvL2; //Resource level 2.
 
-		for (const auto& iterLvL2 : refResLvL2.vecResData)
-		{
+		for (const auto& iterLvL2 : refResLvL2.vecResData) {
 			const auto pResDirEntry2 = &iterLvL2.stResDirEntry;
 			m_vecResId.emplace_back(ilvlRoot, ilvl2, -1, eResType);
 			long ilvl3 = 0;
 			const auto& refResLvL3 = iterLvL2.stResLvL3;
 
-			for (const auto& iterLvL3 : refResLvL3.vecResData)
-			{
+			for (const auto& iterLvL3 : refResLvL3.vecResData) {
 				const auto pResDirEntry3 = &iterLvL3.stResDirEntry;
 				if (pResDirEntry2->NameIsString) { //Checking level2 name, not 3.
 					wstrResName = std::format(L"Name: {} lang: {}", iterLvL2.wstrResName, pResDirEntry3->Id);
@@ -440,7 +430,7 @@ void CViewRightBL::CreateListRelocsEntry()
 	m_listRelocsEntry->Create(m_stlcs);
 	m_listRelocsEntry->ShowWindow(SW_HIDE);
 	m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listRelocsEntry->SetColumn(0, &stCol);
 	m_listRelocsEntry->SetHdrColumnColor(0, g_clrOffset);
 	m_listRelocsEntry->InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
@@ -456,7 +446,7 @@ void CViewRightBL::CreateListDelayImpFuncs()
 	m_stlcs.uID = IDC_LIST_DELAYIMPORT_ENTRY;
 	m_listDelayImportEntry->Create(m_stlcs);
 	m_listDelayImportEntry->InsertColumn(0, L"Offset", 0, 90);
-	LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
+	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
 	m_listDelayImportEntry->SetColumn(0, &stCol);
 	m_listDelayImportEntry->SetHdrColumnColor(0, g_clrOffset);
 	m_listDelayImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 300);
@@ -472,8 +462,7 @@ void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry)
 	if (dwEntry >= g_mapDOSHeader.size())
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -483,7 +472,7 @@ void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry)
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	const auto& ref = g_mapDOSHeader.at(dwEntry);
-	m_pFileLoader->ShowOffset(ref.dwOffset, ref.dwSize, m_stHexEdit.get());
+	m_pFileLoader->ShowOffsetInWholeFile(ref.dwOffset, ref.dwSize, m_stHexEdit.get());
 }
 
 void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry)
@@ -492,8 +481,7 @@ void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry)
 	if (pRichHeader == nullptr || dwEntry >= pRichHeader->size())
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -502,7 +490,7 @@ void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry)
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	//Each «Rich» takes 8 bytes (two DWORDs).
-	m_pFileLoader->ShowOffset(pRichHeader->at(dwEntry).dwOffset, 8, m_stHexEdit.get());
+	m_pFileLoader->ShowOffsetInWholeFile(pRichHeader->at(dwEntry).dwOffset, 8, m_stHexEdit.get());
 }
 
 void CViewRightBL::ShowNtHdrHexEntry()
@@ -511,8 +499,7 @@ void CViewRightBL::ShowNtHdrHexEntry()
 	if (pNTHdr == nullptr)
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -520,7 +507,7 @@ void CViewRightBL::ShowNtHdrHexEntry()
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pFileLoader->ShowOffset(pNTHdr->dwOffset, sizeof(DWORD), m_stHexEdit.get()); //Shows NTHDR signature.
+	m_pFileLoader->ShowOffsetInWholeFile(pNTHdr->dwOffset, sizeof(DWORD), m_stHexEdit.get()); //Shows NTHDR signature.
 }
 
 void CViewRightBL::ShowFileHdrHexEntry(DWORD dwEntry)
@@ -529,8 +516,7 @@ void CViewRightBL::ShowFileHdrHexEntry(DWORD dwEntry)
 	if (pNTHdr == nullptr || dwEntry >= g_mapFileHeader.size())
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -539,7 +525,7 @@ void CViewRightBL::ShowFileHdrHexEntry(DWORD dwEntry)
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	const auto dwOffset = pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, FileHeader) + g_mapFileHeader.at(dwEntry).dwOffset;
-	m_pFileLoader->ShowOffset(dwOffset, g_mapFileHeader.at(dwEntry).dwSize, m_stHexEdit.get());
+	m_pFileLoader->ShowOffsetInWholeFile(dwOffset, g_mapFileHeader.at(dwEntry).dwSize, m_stHexEdit.get());
 }
 
 void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
@@ -548,8 +534,7 @@ void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
 	if (pNTHdr == nullptr)
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -568,7 +553,7 @@ void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_pFileLoader->ShowOffset(dwOffset, dwSize, m_stHexEdit.get());
+	m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize, m_stHexEdit.get());
 }
 
 void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
@@ -577,8 +562,7 @@ void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
 	if (pNTHdr == nullptr)
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -591,7 +575,7 @@ void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
 		+ offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry
 		: pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader)
 		+ offsetof(IMAGE_OPTIONAL_HEADER64, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry;
-	m_pFileLoader->ShowOffset(dwOffset, sizeof(IMAGE_DATA_DIRECTORY), m_stHexEdit.get());
+	m_pFileLoader->ShowOffsetInWholeFile(dwOffset, sizeof(IMAGE_DATA_DIRECTORY), m_stHexEdit.get());
 }
 
 void CViewRightBL::ShowSecHdrHexEntry(DWORD dwEntry)
@@ -600,8 +584,7 @@ void CViewRightBL::ShowSecHdrHexEntry(DWORD dwEntry)
 	if (pSecHeaders == nullptr || dwEntry >= pSecHeaders->size())
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -619,8 +602,7 @@ void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
 	if (pLCD == nullptr || dwEntry >= g_mapLCD32.size())
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -639,7 +621,7 @@ void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
 		dwOffset += g_mapLCD64.at(dwEntry).dwOffset;
 		dwSize = g_mapLCD64.at(dwEntry).dwSize;
 	}
-	m_pFileLoader->ShowOffset(dwOffset, dwSize, m_stHexEdit.get());
+	m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize, m_stHexEdit.get());
 }
 
 void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
@@ -660,8 +642,7 @@ void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 	auto dwThunkRVA = rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk;
 
 	m_listImportEntry->SetRedraw(FALSE);
-	for (const auto& iterFuncs : pImport->at(dwEntry).vecImportFunc)
-	{
+	for (const auto& iterFuncs : pImport->at(dwEntry).vecImportFunc) {
 		m_listImportEntry->InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
 		dwThunkOffset += stFileInfo.fIsx86 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		m_listImportEntry->SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
@@ -721,8 +702,7 @@ void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry)
 	m_listRelocsEntry->DeleteAllItems();
 	int listindex = 0;
 	m_listRelocsEntry->SetRedraw(FALSE);
-	for (const auto& iterRelocs : pReloc->at(dwEntry).vecRelocData)
-	{
+	for (const auto& iterRelocs : pReloc->at(dwEntry).vecRelocData) {
 		m_listRelocsEntry->InsertItem(listindex, std::format(L"{:08X}", iterRelocs.dwOffset).data());
 
 		if (const auto type = MapRelocType.find(iterRelocs.wRelocType); type != MapRelocType.end()) {
@@ -755,8 +735,7 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 	auto dwThunkOffset = m_pLibpe->GetOffsetFromRVA(pDelayImport->at(dwEntry).stDelayImpDesc.ImportNameTableRVA);
 
 	m_listDelayImportEntry->SetRedraw(FALSE);
-	for (const auto& iterFuncs : pDelayImport->at(dwEntry).vecDelayImpFunc)
-	{
+	for (const auto& iterFuncs : pDelayImport->at(dwEntry).vecDelayImpFunc) {
 		m_listDelayImportEntry->InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
 		dwThunkOffset += stFileInfo.fIsx86 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		m_listDelayImportEntry->SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
@@ -819,8 +798,7 @@ void CViewRightBL::ShowDebugHexEntry(DWORD dwEntry)
 	const auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
 	m_pFileLoader->ShowFilePiece(rDebugDir.PointerToRawData, rDebugDir.SizeOfData, m_stHexEdit.get());
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
@@ -836,8 +814,7 @@ void CViewRightBL::ShowTLSHex()
 	if (pTLS == nullptr)
 		return;
 
-	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN))
-	{
+	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);

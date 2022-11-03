@@ -89,7 +89,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexCtrl* pHexCtrl)
+HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexCtrl* pHexCtrl)
 {
 	if (!pHexCtrl) {
 		if (!m_pHex->IsCreated())
@@ -97,9 +97,21 @@ HRESULT CFileLoader::ShowOffset(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexC
 		pHexCtrl = m_pHex.get();
 	}
 
-	m_hds.fMutable = m_pMainDoc->IsEditMode();
-	m_hds.spnData = { static_cast<std::byte*>(m_lpBase), static_cast<std::size_t>(m_stFileSize.QuadPart) };
-	pHexCtrl->SetData(m_hds);
+	//To not resetting the data every time, when all we need is just to set a new selection.
+	//If given IHexCtrl already set with a whole file data, we won't call pHexCtrl->SetData() again.
+	if (const auto iter = std::find_if(m_vecCheck.begin(), m_vecCheck.end(), [pHexCtrl](const HEXTODATACHECK& ref) {
+		return ref.pHexCtrl == pHexCtrl; }); iter == m_vecCheck.end() || !iter->fWhole) {
+		m_hds.fMutable = m_pMainDoc->IsEditMode();
+		m_hds.spnData = { static_cast<std::byte*>(m_lpBase), static_cast<std::size_t>(m_stFileSize.QuadPart) };
+		pHexCtrl->SetData(m_hds);
+
+		if (iter == m_vecCheck.end()) {
+			m_vecCheck.emplace_back(pHexCtrl, true);
+		}
+		else {
+			iter->fWhole = true;
+		}
+	}
 
 	if (ullSelSize > 0) {
 		std::vector<HEXSPAN> vecSel { { ullOffset, ullSelSize } };
@@ -133,6 +145,14 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	}
 	if (ullOffset + ullSize > static_cast<ULONGLONG>(m_stFileSize.QuadPart)) //Overflow check.
 		ullSize = static_cast<ULONGLONG>(m_stFileSize.QuadPart) - ullOffset;
+
+	if (const auto iter = std::find_if(m_vecCheck.begin(), m_vecCheck.end(), [pHexCtrl](const HEXTODATACHECK& ref) {
+		return ref.pHexCtrl == pHexCtrl; }); iter == m_vecCheck.end()) {
+		m_vecCheck.emplace_back(pHexCtrl, false);
+	}
+	else if (iter->fWhole) {
+		iter->fWhole = false;
+	}
 
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
 	m_hds.spnData = { reinterpret_cast<std::byte*>(reinterpret_cast<DWORD_PTR>(m_lpBase) + ullOffset), static_cast<std::size_t>(ullSize) };

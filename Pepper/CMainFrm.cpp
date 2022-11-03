@@ -92,8 +92,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	//We acquire class info, unregister it, set the CS_DBLCLKS flag and then register again.
 	//Now we will recieve WM_LBUTTONDBLCLK messages for m_hWndMDIClient window.
 	WNDCLASSEXW wndClass { };
-	if (!::GetClassInfoExW(AfxGetInstanceHandle(), L"MdiClient", &wndClass))
-	{
+	if (!::GetClassInfoExW(AfxGetInstanceHandle(), L"MdiClient", &wndClass)) {
 		MessageBoxW(L"GetClassInfo(MdiClient) failed");
 		return FALSE;
 	}
@@ -143,16 +142,14 @@ LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 	if (m_fClosing || GetChildFramesCount() == 0)
 		return S_OK;
 
-	if (m_pCurrFrameData != nullptr)
-	{
+	if (m_pCurrFrameData != nullptr) {
 		for (const auto& iter : *m_pCurrFrameData) {
 			if (::IsWindow(iter.hWnd) && ::IsWindowVisible(iter.hWnd))
 				::ShowWindow(iter.hWnd, SW_HIDE);
 		}
 	}
 
-	if (const auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive()); pFrame != nullptr)
-	{
+	if (const auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive()); pFrame != nullptr) {
 		auto& refVec = pFrame->GetWndStatData();
 		for (const auto& iter : refVec) {
 			if (::IsWindow(iter.hWnd) && iter.fVisible)
@@ -196,8 +193,7 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
-	switch (pMsg->message)
-	{
+	switch (pMsg->message) {
 	case WM_MBUTTONDOWN: //Closing tabs with middle mouse button.
 	{
 		pWndMBtnCurrDown = nullptr;
@@ -211,13 +207,11 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 			break;
 
 		auto pos = tabGroups.GetHeadPosition();
-		while (pos != nullptr)
-		{
+		while (pos != nullptr) {
 			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) //Click on TabCtrl.
 			{
 				pTabCtrl->ScreenToClient(&pt);
-				if (int iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1)
-				{
+				if (int iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1) {
 					if (auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr)
 						pWndMBtnCurrDown = pTab;
 					break;
@@ -238,8 +232,7 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 			break;
 
 		auto pos = tabGroups.GetHeadPosition();
-		while (pos != nullptr)
-		{
+		while (pos != nullptr) {
 			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) //Click on TabCtrl.
 			{
 				pTabCtrl->ScreenToClient(&pt);
@@ -262,8 +255,7 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	if (pMainFrame->GetChildFramesCount() != 0)
 		return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
-	switch (uMsg)
-	{
+	switch (uMsg) {
 	case WM_PAINT:
 	{
 		CPaintDC dc(FromHandle(hWnd));
