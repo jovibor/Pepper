@@ -43,9 +43,6 @@
     <ClCompile Include="submodules\HexCtrl\HexCtrl\dep\ListEx\CListEx.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexBookmarks.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
@@ -97,6 +94,9 @@
     <ClCompile Include="Utility.ixx">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="res\resource.h">
@@ -142,9 +142,6 @@
       <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="submodules\HexCtrl\HexCtrl\res\HexCtrlRes.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexBookmarks.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.h">
@@ -203,6 +200,9 @@
     </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.h">
+      <Filter>HexCtrl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

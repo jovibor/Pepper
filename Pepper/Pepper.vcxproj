@@ -149,6 +149,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.cpp" />
     <ClCompile Include="CChildFrm.cpp" />
     <ClCompile Include="CFileLoader.cpp" />
     <ClCompile Include="CSplitterEx.cpp" />
@@ -166,7 +167,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="submodules\HexCtrl\HexCtrl\dep\ListEx\CListEx.cpp" />
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexBookmarks.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexSelection.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.cpp" />
@@ -199,6 +199,7 @@
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.h" />
     <ClInclude Include="CChildFrm.h" />
     <ClInclude Include="CFileLoader.h" />
     <ClInclude Include="CMainFrm.h" />
@@ -212,7 +213,6 @@
     <ClInclude Include="submodules\HexCtrl\HexCtrl\HexCtrl.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\HexCtrlDefs.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\res\HexCtrlRes.h" />
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexBookmarks.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexSelection.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.h" />
