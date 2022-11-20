@@ -124,7 +124,6 @@
       <ManifestFile />
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ProgramDatabaseFile />
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <DelayLoadDLLs>
@@ -133,6 +132,7 @@
       </AdditionalLibraryDirectories>
       <AdditionalDependencies>Mincore.lib;</AdditionalDependencies>
       <ProfileGuidedDatabase />
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -180,7 +180,6 @@
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.cpp" />
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexPropGridCtrl.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\HexUtility.cpp" />
     <ClCompile Include="submodules\libpe\src\libpe.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -226,7 +225,6 @@
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.h" />
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexPropGridCtrl.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\HexUtility.h" />
     <ClInclude Include="submodules\libpe\src\libpe.h" />
     <ClCompile Include="Utility.ixx">

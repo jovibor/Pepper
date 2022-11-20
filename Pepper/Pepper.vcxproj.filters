@@ -82,9 +82,6 @@
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexPropGridCtrl.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\HexUtility.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
@@ -181,9 +178,6 @@
       <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexPropGridCtrl.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\HexUtility.h">
