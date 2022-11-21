@@ -28,6 +28,7 @@ private:
 	DECLARE_DYNCREATE(CChildFrame);
 private:
 	bool m_fSplitterCreated { false };
+	bool m_fClosing { false }; //Indicates that tab is closing now.
 	UINT m_cx { };
 	UINT m_cy { };
 };

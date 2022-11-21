@@ -66,13 +66,18 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 {
 	CMDIChildWndEx::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
 
-	GetActiveDocument()->UpdateAllViews(nullptr, bActivate == FALSE ? MSG_MDITAB_DISACTIVATE : MSG_MDITAB_ACTIVATE);
+	//If tab is closing we don't need to UpdateAllViews.
+	//At this moment document can be already dead in memory, so GetActiveDocument can point to a garbage.
+	if (!m_fClosing) {
+		GetActiveDocument()->UpdateAllViews(nullptr, bActivate == FALSE ? MSG_MDITAB_DISACTIVATE : MSG_MDITAB_ACTIVATE);
+	}
 }
 
 void CChildFrame::OnClose()
 {
 	const auto pMainFrm = reinterpret_cast<CMainFrame*>(AfxGetMainWnd());
 	--pMainFrm->GetChildFramesCount();
+	m_fClosing = true;
 
 	CMDIChildWndEx::OnClose();
 }

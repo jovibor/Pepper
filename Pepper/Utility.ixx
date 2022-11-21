@@ -32,11 +32,11 @@ export namespace util
 	constexpr const auto WSTR_PEPPER_VERSION = PEPPER_VERSION_WSTR L" (x86)";
 #endif
 
-	[[nodiscard]] inline auto StrToWstr(std::string_view str, UINT uCodePage = CP_UTF8) -> std::wstring
+	[[nodiscard]] inline auto StrToWstr(std::string_view sv, UINT uCodePage = CP_UTF8) -> std::wstring
 	{
-		const auto iSize = MultiByteToWideChar(uCodePage, 0, str.data(), static_cast<int>(str.size()), nullptr, 0);
+		const auto iSize = MultiByteToWideChar(uCodePage, 0, sv.data(), static_cast<int>(sv.size()), nullptr, 0);
 		std::wstring wstr(iSize, 0);
-		MultiByteToWideChar(uCodePage, 0, str.data(), static_cast<int>(str.size()), &wstr[0], iSize);
+		MultiByteToWideChar(uCodePage, 0, sv.data(), static_cast<int>(sv.size()), wstr.data(), iSize);
 		return wstr;
 	}
 
