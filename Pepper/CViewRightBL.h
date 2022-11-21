@@ -5,12 +5,12 @@
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 #pragma once
-#include "CPepperDoc.h"
 #include "CChildFrm.h"
-#include "ListEx/ListEx.h"
-#include "CTreeEx.h"
 #include "CFileLoader.h"
+#include "CPepperDoc.h"
+#include "CTreeEx.h"
 #include "HexCtrl.h"
+#include "ListEx/ListEx.h"
 
 import Utility;
 
@@ -21,10 +21,12 @@ class CViewRightBL : public CView
 {
 private:
 	void OnInitialUpdate()override;
-	void OnUpdate(CView*, LPARAM, CObject*)override;
+	BOOL OnCommand(WPARAM wParam, LPARAM lParam)override;
 	void OnDraw(CDC* pDC)override; // overridden to draw this view
-	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	void OnUpdate(CView*, LPARAM, CObject*)override;
+	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)override;
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnTreeRClick(NMHDR* pNMHDR, LRESULT* pResult);
 	void CreateListExportFuncs();
@@ -46,10 +48,9 @@ private:
 	void ShowDebugHexEntry(DWORD dwEntry);
 	void ShowTLSHex();
 	void ShowSecurityHexEntry(unsigned nSertId);
-	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)override;
-	BOOL OnCommand(WPARAM wParam, LPARAM lParam)override;
 	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
 	void OnDocEditMode();
+	void OnMDITabActivate(bool fActivate);
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBL);
 private:
@@ -73,4 +74,5 @@ private:
 	LOGFONTW m_hdrlf { };
 	PERESFLAT m_stResData;
 	EResType m_eResType;
+	std::vector<HWND> m_vecHWNDVisible;
 };

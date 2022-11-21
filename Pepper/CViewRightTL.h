@@ -38,9 +38,9 @@ private:
 	void OnListBoundImpMenuSelect(WORD wMenuID);
 	void OnListCOMDescMenuSelect(WORD wMenuID);
 	afx_msg void OnTreeResTopSelChange(NMHDR *pNMHDR, LRESULT *pResult);
-	DECLARE_DYNCREATE(CViewRightTL)
-		DECLARE_MESSAGE_MAP()
-		void CreateListDOSHeader();
+	DECLARE_DYNCREATE(CViewRightTL);
+	DECLARE_MESSAGE_MAP();
+	void CreateListDOSHeader();
 	void CreateListRichHeader();
 	void CreateListNTHeader();
 	void CreateListFileHeader();
@@ -101,7 +101,8 @@ private:
 	PEEXCEPTION_VEC* m_pExceptionDir { };
 	PERELOC_VEC* m_pRelocTable { };
 	CWnd* m_pwndActive { };
-	LOGFONTW m_lf { }, m_hdrlf { };
+	LOGFONTW m_lf { };
+	LOGFONTW m_hdrlf { };
 	CMenu m_menuList;
 	CFileLoader* m_pFileLoader { };
 	UINT_PTR m_iListID { };      //List ID munu clicked at.

@@ -110,6 +110,11 @@ void CViewRightTL::OnInitialUpdate()
 
 void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
 {
+	const auto iMsg = LOWORD(lHint);
+	if (iMsg == MSG_MDITAB_ACTIVATE || iMsg == MSG_MDITAB_DISACTIVATE) {
+		return; //No further handling if it's tab Activate/Disactivate messages.
+	}
+
 	//Check m_pChildFrame to prevent some UB.
 	//OnUpdate can be invoked before OnInitialUpdate, weird MFC.
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR || LOWORD(lHint) == ID_DOC_EDITMODE)
@@ -1542,41 +1547,41 @@ void CViewRightTL::SortImportData()
 	std::sort(m_pImport->begin(), m_pImport->end(),
 		[&](const auto& ref1, const auto& ref2) {
 			int iCompare { };
-			switch (m_listImport->GetSortColumn()) {
-			case 0:
-				iCompare = ref1.dwOffset < ref2.dwOffset ? -1 : 1;
-				break;
-			case 1:
-				iCompare = ref1.strModuleName.compare(ref2.strModuleName);
-				break;
-			case 2:
-				iCompare = ref1.stImportDesc.OriginalFirstThunk < ref2.stImportDesc.OriginalFirstThunk ? -1 : 1;
-				break;
-			case 3:
-				iCompare = ref1.stImportDesc.TimeDateStamp < ref2.stImportDesc.TimeDateStamp ? -1 : 1;
-				break;
-			case 4:
-				iCompare = ref1.stImportDesc.ForwarderChain < ref2.stImportDesc.ForwarderChain ? -1 : 1;
-				break;
-			case 5:
-				iCompare = ref1.stImportDesc.Name < ref2.stImportDesc.Name ? -1 : 1;
-				break;
-			case 6:
-				iCompare = ref1.stImportDesc.FirstThunk < ref2.stImportDesc.FirstThunk ? -1 : 1;
-				break;
-			}
+	switch (m_listImport->GetSortColumn()) {
+	case 0:
+		iCompare = ref1.dwOffset < ref2.dwOffset ? -1 : 1;
+		break;
+	case 1:
+		iCompare = ref1.strModuleName.compare(ref2.strModuleName);
+		break;
+	case 2:
+		iCompare = ref1.stImportDesc.OriginalFirstThunk < ref2.stImportDesc.OriginalFirstThunk ? -1 : 1;
+		break;
+	case 3:
+		iCompare = ref1.stImportDesc.TimeDateStamp < ref2.stImportDesc.TimeDateStamp ? -1 : 1;
+		break;
+	case 4:
+		iCompare = ref1.stImportDesc.ForwarderChain < ref2.stImportDesc.ForwarderChain ? -1 : 1;
+		break;
+	case 5:
+		iCompare = ref1.stImportDesc.Name < ref2.stImportDesc.Name ? -1 : 1;
+		break;
+	case 6:
+		iCompare = ref1.stImportDesc.FirstThunk < ref2.stImportDesc.FirstThunk ? -1 : 1;
+		break;
+	}
 
-			bool result { false };
-			if (m_listImport->GetSortAscending()) {
-				if (iCompare < 0)
-					result = true;
-			}
-			else {
-				if (iCompare > 0)
-					result = true;
-			}
+	bool result { false };
+	if (m_listImport->GetSortAscending()) {
+		if (iCompare < 0)
+			result = true;
+	}
+	else {
+		if (iCompare > 0)
+			result = true;
+	}
 
-			return result;
+	return result;
 		});
 
 	m_listImport->RedrawWindow();

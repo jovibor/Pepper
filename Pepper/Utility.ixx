@@ -5,6 +5,7 @@ module;
 #include <span>
 #include <string>
 #include <unordered_map>
+#include "HexCtrlDefs.h"
 #include "libpe.h"
 
 #define PEPPER_PRODUCT_NAME			L"Pepper"
@@ -31,7 +32,7 @@ export namespace util
 	constexpr const auto WSTR_PEPPER_VERSION = PEPPER_VERSION_WSTR L" (x86)";
 #endif
 
-	[[nodiscard]] inline auto StrToWstr(std::string_view str, UINT uCodePage = CP_UTF8)->std::wstring
+	[[nodiscard]] inline auto StrToWstr(std::string_view str, UINT uCodePage = CP_UTF8) -> std::wstring
 	{
 		const auto iSize = MultiByteToWideChar(uCodePage, 0, str.data(), static_cast<int>(str.size()), nullptr, 0);
 		std::wstring wstr(iSize, 0);
@@ -65,8 +66,7 @@ export namespace util
 			return false;
 
 		using enum EResType;
-		switch (eResType)
-		{
+		switch (eResType) {
 		case RTYPE_CURSOR:
 		case RTYPE_ICON: {
 		#pragma pack(push, 2)
@@ -156,8 +156,7 @@ export namespace util
 	{
 		using enum EResType;
 		std::wstring_view wsvName;
-		switch (eResType)
-		{
+		switch (eResType) {
 		case RTYPE_CURSOR:
 			wsvName = L"Cursor files (*.cur)|*.cur|All files (*.*)|*.*||";
 			break;
@@ -207,8 +206,7 @@ export namespace util
 		for (const auto vecRes = libpe::Ilibpe::FlatResources(*pRes); const auto & ref : vecRes) {
 			using enum EResType;
 			std::wstring_view wsvExt;
-			switch (eResType)
-			{
+			switch (eResType) {
 			case RTYPE_CURSOR:
 				if (ref.wTypeID == 1) { //RT_CURSOR
 					wsvExt = L".cur";
@@ -564,12 +562,13 @@ export namespace util
 		{ 17, { sizeof(DWORD), 64, L"ManagedNativeHeader.VirtualAddress" } },
 		{ 18, { sizeof(DWORD), 68, L"ManagedNativeHeader.Size" } }
 	};
-	////////////////////////////////////////////////////////////
 
-	struct SWINDOWSTATUS {
-		HWND hWnd { };
-		bool fVisible { };
-	};
+	//All HexCtrl dialogs' IDs for hiding/showing in Views, when tab is disactivated/activated.
+	inline const std::vector<HEXCTRL::EHexWnd> g_vecHexDlgs {
+		HEXCTRL::EHexWnd::DLG_BKMMANAGER, HEXCTRL::EHexWnd::DLG_DATAINTERP, HEXCTRL::EHexWnd::DLG_FILLDATA,
+		HEXCTRL::EHexWnd::DLG_OPERS, HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_ENCODING,
+		HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
+
 
 	/*****************************************************************
 	* These are identificators of all the controls: list, hex, tree. *
@@ -629,6 +628,9 @@ export namespace util
 	constexpr auto IDC_SHOW_RESOURCE_RBR = 0x0301;
 
 	constexpr auto ID_DOC_EDITMODE = 0x0401;
+
+	constexpr auto MSG_MDITAB_ACTIVATE = 0x0501;
+	constexpr auto MSG_MDITAB_DISACTIVATE = 0x0502;
 
 	constexpr auto IDM_LIST_GOTODESCOFFSET = 0x8001;
 	constexpr auto IDM_LIST_GOTODATAOFFSET = 0x8002;

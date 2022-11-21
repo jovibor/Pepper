@@ -20,6 +20,7 @@ private:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void OnDocEditMode();
+	void OnMDITabActivate(bool fActivate);
 	void CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes);
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightTR);
@@ -31,4 +32,5 @@ private:
 	HWND m_hwndActive { };
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
 	HEXCREATE m_hcs { };
+	std::vector<HWND> m_vecHWNDVisible;
 };

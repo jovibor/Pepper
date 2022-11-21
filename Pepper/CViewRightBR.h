@@ -18,16 +18,14 @@ using namespace LISTEX;
 class CWndSampleDlg final : public CWnd
 {
 public:
-	void Attach(CImageList* pImgList, CChildFrame* pChildFrame);
+	void Attach(CImageList* pImgList);
 	void CreatedForMenu(bool fMenu);  //Created for show RT_MENU, not RT_DIALOG.
-	void SetDlgVisible(bool fVisible);
 private:
 	afx_msg void OnPaint();
 	afx_msg void OnClose();
 	DECLARE_MESSAGE_MAP()
 private:
 	CImageList* m_pImgRes { };
-	CChildFrame* m_pChildFrame { };
 	bool m_fMenu { false }; //Dialog is created only for showing RT_MENU.
 };
 
@@ -56,7 +54,8 @@ private:
 	void CreateToolbar(const PERESFLAT& stResData);
 	void ResLoadError();
 	void ShowResource(const PERESFLAT* pResData);
-	static auto ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>;
+	void OnMDITabActivate(bool fActivate);
+	static auto ParceDlgTemplate(std::span<std::byte> spnData) -> std::optional<std::wstring>;
 	static void PremultiplyBitmapAlpha(HDC hDC, HBITMAP hBmp);
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBR);
@@ -82,4 +81,5 @@ private:
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { }; //Vector for RT_GROUP_ICON/CURSOR.
 	CEdit m_EditBRB;     //Edit control for RT_STRING, RT_VERSION, RT_MANIFEST, Debug additional info
 	CFont m_fontEditRes; //Font for m_EditBRB.
+	std::vector<HWND> m_vecHWNDVisible;
 };

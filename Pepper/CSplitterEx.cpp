@@ -110,15 +110,13 @@ void CSplitterEx::RecalcPanes()
 	std::vector<int> vecColsOrdered;
 	vecColsOrdered.reserve(m_vecCols.size());
 	int iIndex { 0 };
-	for (const auto iter : m_vecCols)
-	{
+	for (const auto iter : m_vecCols) {
 		if (iter)
 			vecColsOrdered.emplace_back(iIndex);
 		++iIndex;
 	}
 	iIndex = 0;
-	for (const auto iter : m_vecCols)
-	{
+	for (const auto iter : m_vecCols) {
 		if (!iter)
 			vecColsOrdered.emplace_back(iIndex);
 		++iIndex;
@@ -127,30 +125,24 @@ void CSplitterEx::RecalcPanes()
 	std::vector<int> vecRowsOrdered;
 	vecRowsOrdered.reserve(m_vecRows.size());
 	iIndex = 0;
-	for (const auto iter : m_vecRows)
-	{
+	for (const auto iter : m_vecRows) {
 		if (iter)
 			vecRowsOrdered.emplace_back(iIndex);
 		++iIndex;
 	}
 	iIndex = 0;
-	for (const auto iter : m_vecRows)
-	{
+	for (const auto iter : m_vecRows) {
 		if (!iter)
 			vecRowsOrdered.emplace_back(iIndex);
 		++iIndex;
 	}
 
 	//Recalculating DlgCtrlId based on visible/hidden status.
-	for (auto iterRow = 0U; iterRow < m_vecRows.size(); ++iterRow)
-	{
-		for (auto iterCol = 0U; iterCol < m_vecCols.size(); ++iterCol)
-		{
+	for (auto iterRow = 0U; iterRow < m_vecRows.size(); ++iterRow) {
+		for (auto iterCol = 0U; iterCol < m_vecCols.size(); ++iterCol) {
 			//Finding an exact pane.
-			if (const auto iterPane = std::find_if(m_vecPanes.begin(), m_vecPanes.end(), [=](const SPANES& refData)
-				{ return refData.iRow == vecRowsOrdered[iterRow] && refData.iCol == vecColsOrdered[iterCol]; });
-				iterPane != m_vecPanes.end())
-			{
+			if (const auto iterPane = std::find_if(m_vecPanes.begin(), m_vecPanes.end(), [=](const SPANES& refData) { return refData.iRow == vecRowsOrdered[iterRow] && refData.iCol == vecColsOrdered[iterCol]; });
+				iterPane != m_vecPanes.end()) {
 				const auto pPane = iterPane->pPane;
 				pPane->SetDlgCtrlID(AFX_IDW_PANE_FIRST + iterRow * 16 + iterCol);
 				pPane->ShowWindow((!m_vecRows[iterPane->iRow] || !m_vecCols[iterPane->iCol]) ? SW_HIDE : SW_SHOW);
@@ -168,8 +160,7 @@ void CSplitterEx::OnMouseMove(UINT nFlags, CPoint pt)
 {
 	CSplitterWndEx::OnMouseMove(nFlags, pt);
 
-	if (IsTracking())
-	{
+	if (IsTracking()) {
 		OnLButtonUp(0, pt);
 		OnLButtonDown(0, pt);
 	}

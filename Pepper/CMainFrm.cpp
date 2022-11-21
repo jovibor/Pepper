@@ -39,11 +39,6 @@ int& CMainFrame::GetChildFramesCount()
 	return m_iChildFrames;
 }
 
-void CMainFrame::SetCurrFramePtrNull()
-{
-	m_pCurrFrameData = nullptr;
-}
-
 void CMainFrame::OnAppEditmode()
 {
 	if (const auto pFrame = GetActiveFrame(); pFrame != nullptr) {
@@ -111,8 +106,6 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 
 void CMainFrame::OnClose()
 {
-	m_fClosing = true;
-
 	CMDIFrameWndEx::OnClose();
 }
 
@@ -139,25 +132,6 @@ void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 
 LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
-	if (m_fClosing || GetChildFramesCount() == 0)
-		return S_OK;
-
-	if (m_pCurrFrameData != nullptr) {
-		for (const auto& iter : *m_pCurrFrameData) {
-			if (::IsWindow(iter.hWnd) && ::IsWindowVisible(iter.hWnd))
-				::ShowWindow(iter.hWnd, SW_HIDE);
-		}
-	}
-
-	if (const auto pFrame = reinterpret_cast<CChildFrame*>(MDIGetActive()); pFrame != nullptr) {
-		auto& refVec = pFrame->GetWndStatData();
-		for (const auto& iter : refVec) {
-			if (::IsWindow(iter.hWnd) && iter.fVisible)
-				::ShowWindow(iter.hWnd, SW_SHOW);
-		}
-		m_pCurrFrameData = &refVec;
-	}
-
 	return S_OK;
 }
 
@@ -211,7 +185,7 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) //Click on TabCtrl.
 			{
 				pTabCtrl->ScreenToClient(&pt);
-				if (int iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1) {
+				if (const auto iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1) {
 					if (auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr)
 						pWndMBtnCurrDown = pTab;
 					break;
@@ -298,8 +272,7 @@ void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam)
 	m_fontMDIClient.DeleteObject();
 	m_fontMDIClient.CreateFontIndirectW(&lf);
 	CSize stSizeText { };
-	while (stSizeText.cx < (iWidthNew - 20)) //Until the text size not big enough to fill the window's width.
-	{
+	while (stSizeText.cx < (iWidthNew - 20)) { //Until the text size not big enough to fill the window's width.
 		m_fontMDIClient.DeleteObject();
 		lf.lfHeight = -MulDiv(++iFontSizeMin, iLOGPIXELSY, 72);
 		m_fontMDIClient.CreateFontIndirectW(&lf);

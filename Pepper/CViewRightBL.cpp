@@ -74,12 +74,19 @@ void CViewRightBL::OnInitialUpdate()
 
 void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
 {
-	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR)
+	const auto iMsg = LOWORD(lHint);
+	if (iMsg == MSG_MDITAB_ACTIVATE || iMsg == MSG_MDITAB_DISACTIVATE) {
+		OnMDITabActivate(iMsg == MSG_MDITAB_ACTIVATE);
+		return; //No further handling if it's tab Activate/Disactivate messages.
+	}
+
+	if (!m_pChildFrame || iMsg == IDC_HEX_RIGHT_TR)
 		return;
 
 	CRect rc;
 	GetClientRect(&rc);
-	switch (LOWORD(lHint)) {
+
+	switch (iMsg) {
 	case IDC_LIST_DOSHEADER_ENTRY:
 		ShowDosHdrHexEntry(HIWORD(lHint));
 		break;
@@ -144,8 +151,10 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		OnDocEditMode();
 		break;
 	default:
-		if (m_hwndActive)
+		if (m_hwndActive) {
 			::ShowWindow(m_hwndActive, SW_HIDE);
+		}
+		break;
 	}
 }
 
@@ -291,6 +300,27 @@ void CViewRightBL::OnDocEditMode()
 {
 	if (m_stHexEdit->IsDataSet())
 		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
+}
+
+void CViewRightBL::OnMDITabActivate(bool fActivate)
+{
+	if (fActivate) { //Show all windows from the vector, when tab is activated.
+		for (const auto hWnd : m_vecHWNDVisible) {
+			if (::IsWindow(hWnd)) {
+				::ShowWindow(hWnd, SW_SHOW);
+			}
+		}
+		m_vecHWNDVisible.clear();
+	}
+	else { //Hide all opened HexCtrl dialog windows and add them to the vector, when tab is deactivated.
+		for (const auto eWnd : g_vecHexDlgs) {
+			const auto hWnd = m_stHexEdit->GetWindowHandle(eWnd);
+			if (::IsWindow(hWnd) && ::IsWindowVisible(hWnd)) {
+				m_vecHWNDVisible.emplace_back(hWnd);
+				::ShowWindow(hWnd, SW_HIDE);
+			}
+		}
+	}
 }
 
 void CViewRightBL::CreateListExportFuncs()

@@ -5,7 +5,6 @@
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 #pragma once
-#include <vector>
 
 import Utility;
 using namespace util;
@@ -16,7 +15,6 @@ public:
 	BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE,
 		CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr)override;
 	int& GetChildFramesCount();
-	void SetCurrFramePtrNull();
 private:
 	afx_msg void OnAppEditmode();
 	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)override;
@@ -38,7 +36,6 @@ private:
 	inline static CFont m_fontMDIClient;
 	CMFCToolBar m_wndToolBar;
 	CWnd* pWndMBtnCurrDown { };
-	std::vector<SWINDOWSTATUS>* m_pCurrFrameData { };
 	int m_iChildFrames { };    //Amount of active child frames.
 	bool m_fClosing { false }; //Indicates that the app is closing now, to avoid dialogs' flickering on exit.
 };

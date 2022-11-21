@@ -47,13 +47,11 @@ void CViewLeft::OnInitialUpdate()
 	m_stTreeMain.SetItemState(hTreeRoot, TVIS_BOLD, TVIS_BOLD);
 	m_stTreeMain.SetItemData(hTreeRoot, IDC_SHOW_FILE_SUMMARY);
 
-	if (stFileInfo.fHasDosHdr)
-	{
+	if (stFileInfo.fHasDosHdr) {
 		const auto hTreeDosHeader = m_stTreeMain.InsertItem(L"MS-DOS Header [IMAGE_DOS_HEADER]", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeDosHeader, IDC_LIST_DOSHEADER);
 	}
-	if (stFileInfo.fHasRichHdr)
-	{
+	if (stFileInfo.fHasRichHdr) {
 		const auto hTreeDosRich = m_stTreeMain.InsertItem(L"«Rich» Header", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeDosRich, IDC_LIST_RICHHEADER);
 	}
@@ -66,12 +64,10 @@ void CViewLeft::OnInitialUpdate()
 	else if (stFileInfo.fIsx64 && stFileInfo.fHasNTHdr)
 		hTreeNTHeaders = m_stTreeMain.InsertItem(L"NT Header [IMAGE_NT_HEADERS64]", iconHdr, iconHdr, hTreeRoot);
 
-	if (hTreeNTHeaders)
-	{
+	if (hTreeNTHeaders) {
 		m_stTreeMain.SetItemData(hTreeNTHeaders, IDC_LIST_NTHEADER);
 
-		if (stFileInfo.fHasNTHdr)
-		{
+		if (stFileInfo.fHasNTHdr) {
 			const auto hTreeFileHeader = m_stTreeMain.InsertItem(L"File Header [IMAGE_FILE_HEADER]", iconHdr, iconHdr,
 				hTreeNTHeaders);
 			m_stTreeMain.SetItemData(hTreeFileHeader, IDC_LIST_FILEHEADER);
@@ -86,14 +82,12 @@ void CViewLeft::OnInitialUpdate()
 		m_stTreeMain.Expand(hTreeNTHeaders, TVE_EXPAND);
 	}
 
-	if (stFileInfo.fHasSections)
-	{
+	if (stFileInfo.fHasSections) {
 		const auto hTreeSecHeaders = m_stTreeMain.InsertItem(L"Sections Headers [IMAGE_SECTION_HEADER]", iconHdr, iconHdr, hTreeRoot);
 		m_stTreeMain.SetItemData(hTreeSecHeaders, IDC_LIST_SECHEADERS);
 	}
 
-	if (const auto vecDataDirs = m_pLibpe->GetDataDirs(); vecDataDirs != nullptr)
-	{
+	if (const auto vecDataDirs = m_pLibpe->GetDataDirs(); vecDataDirs != nullptr) {
 		if (hTreeOptHeader) {
 			const auto hTreeDataDirs = m_stTreeMain.InsertItem(L"Data Directories [IMAGE_DATA_DIRECTORY]", iconHdr, iconHdr, hTreeOptHeader);
 			m_stTreeMain.SetItemData(hTreeDataDirs, IDC_LIST_DATADIRECTORIES);

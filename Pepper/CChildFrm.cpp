@@ -57,7 +57,7 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pConte
 	m_fSplitterCreated = true;
 
 	auto pMainFrm = reinterpret_cast<CMainFrame*>(AfxGetMainWnd());
-	pMainFrm->GetChildFramesCount()++;
+	++pMainFrm->GetChildFramesCount();
 
 	return TRUE;
 }
@@ -66,17 +66,13 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 {
 	CMDIChildWndEx::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
 
-	if (bActivate == FALSE) {
-		//Every child window that must be closed on tab change goes here.
-	}
+	GetActiveDocument()->UpdateAllViews(nullptr, bActivate == FALSE ? MSG_MDITAB_DISACTIVATE : MSG_MDITAB_ACTIVATE);
 }
 
 void CChildFrame::OnClose()
 {
-	auto pMainFrm = reinterpret_cast<CMainFrame*>(AfxGetMainWnd());
+	const auto pMainFrm = reinterpret_cast<CMainFrame*>(AfxGetMainWnd());
 	--pMainFrm->GetChildFramesCount();
-	pMainFrm->SetCurrFramePtrNull();
-	m_vecWndStatus.clear();
 
 	CMDIChildWndEx::OnClose();
 }
@@ -86,26 +82,10 @@ BOOL CChildFrame::OnEraseBkgnd(CDC* pDC)
 	return CMDIChildWndEx::OnEraseBkgnd(pDC);
 }
 
-auto CChildFrame::GetWndStatData()->std::vector<SWINDOWSTATUS>&
-{
-	return m_vecWndStatus;
-}
-
-void CChildFrame::SetWindowStatus(HWND hWnd, bool fVisible)
-{
-	if (const auto iter = std::find_if(m_vecWndStatus.begin(), m_vecWndStatus.end(),
-		[hWnd](const SWINDOWSTATUS& ref) {return ref.hWnd == hWnd; }); iter != m_vecWndStatus.end())
-		iter->fVisible = fVisible;
-	else
-		m_vecWndStatus.emplace_back(hWnd, fVisible);
-}
-
 void CChildFrame::OnSize(UINT nType, int cx, int cy)
 {
-	if (m_fSplitterCreated && nType != SIZE_MINIMIZED && cx > 0 && cy > 0)
-	{
-		if (m_cx > 0 && m_cy > 0)
-		{
+	if (m_fSplitterCreated && nType != SIZE_MINIMIZED && cx > 0 && cy > 0) {
+		if (m_cx > 0 && m_cy > 0) {
 			//When resizing main window we keep ratio between splitters.
 			double ratio;
 			int cxCurr, cyCurr, min;
@@ -135,8 +115,7 @@ void CChildFrame::OnSize(UINT nType, int cx, int cy)
 			ratio = static_cast<double>(m_cx) / cxCurr;
 			m_stSplitterRightBottom.SetColumnInfo(1, std::lround(cx / ratio), min);
 		}
-		else
-		{
+		else {
 			CRect rect;
 			GetClientRect(&rect);
 

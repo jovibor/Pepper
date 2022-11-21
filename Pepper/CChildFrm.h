@@ -13,20 +13,21 @@ using namespace util;
 class CChildFrame : public CMDIChildWndEx
 {
 public:
-	auto GetWndStatData()->std::vector<SWINDOWSTATUS>&;
-	void SetWindowStatus(HWND hWnd, bool fVisible);
-	CSplitterEx m_stSplitterMain, m_stSplitterRight, m_stSplitterRightTop, m_stSplitterRightBottom;
-	DECLARE_DYNCREATE(CChildFrame)
+	CSplitterEx m_stSplitterMain;
+	CSplitterEx m_stSplitterRight;
+	CSplitterEx m_stSplitterRightTop;
+	CSplitterEx m_stSplitterRightBottom;
 private:
-	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnClose();
-	BOOL PreCreateWindow(CREATESTRUCT& cs) override;
-	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
 	afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
-	DECLARE_MESSAGE_MAP()
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
+	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)override;
+	DECLARE_MESSAGE_MAP();
+	DECLARE_DYNCREATE(CChildFrame);
 private:
 	bool m_fSplitterCreated { false };
-	UINT m_cx { }, m_cy { };
-	std::vector<SWINDOWSTATUS> m_vecWndStatus { };
+	UINT m_cx { };
+	UINT m_cy { };
 };

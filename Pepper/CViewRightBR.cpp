@@ -16,24 +16,14 @@ BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)
 	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
-void CWndSampleDlg::Attach(CImageList* pImgList, CChildFrame* pChildFrame)
+void CWndSampleDlg::Attach(CImageList* pImgList)
 {
 	m_pImgRes = pImgList;
-	m_pChildFrame = pChildFrame;
 }
 
 void CWndSampleDlg::CreatedForMenu(bool fMenu)
 {
 	m_fMenu = fMenu;
-}
-
-void CWndSampleDlg::SetDlgVisible(bool fVisible)
-{
-	if (m_pChildFrame == nullptr)
-		return;
-
-	ShowWindow(fVisible ? SW_SHOW : SW_HIDE);
-	m_pChildFrame->SetWindowStatus(m_hWnd, fVisible);
 }
 
 void CWndSampleDlg::OnPaint()
@@ -55,7 +45,6 @@ void CWndSampleDlg::OnPaint()
 
 void CWndSampleDlg::OnClose()
 {
-	SetDlgVisible(false);
 	CWnd::OnClose();
 }
 
@@ -80,7 +69,7 @@ void CViewRightBR::OnInitialUpdate()
 	m_EditBRB.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);
 
-	m_wndSampleDlg.Attach(&m_stImgRes, m_pChildFrame);
+	m_wndSampleDlg.Attach(&m_stImgRes);
 
 	LOGFONTW lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
@@ -118,6 +107,12 @@ void CViewRightBR::OnInitialUpdate()
 
 void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 {
+	const auto iMsg = LOWORD(lHint);
+	if (iMsg == MSG_MDITAB_ACTIVATE || iMsg == MSG_MDITAB_DISACTIVATE) {
+		OnMDITabActivate(iMsg == MSG_MDITAB_ACTIVATE);
+		return; //No further handling if it's tab Activate/Disactivate messages.
+	}
+
 	//If it's UpdateAllViews call for top right Hex (IDC_HEX_RIGHT_TR), (from top left Resource Tree) we do nothing.
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR || LOWORD(lHint) == ID_DOC_EDITMODE)
 		return;
@@ -445,7 +440,7 @@ void CViewRightBR::CreateMenu(const PERESFLAT& stResData)
 		m_wndSampleDlg.CreatedForMenu(true);
 		m_wndSampleDlg.SetMenu(&m_menuSample);
 		m_wndSampleDlg.SetWindowPos(this, iPosX, iPosY, iWidth, iHeight, uFlags);
-		m_wndSampleDlg.SetDlgVisible(true);
+		m_wndSampleDlg.ShowWindow(SW_SHOW);
 		m_wndSampleDlg.RedrawWindow();
 	}
 }
@@ -575,7 +570,7 @@ void CViewRightBR::CreateDlg(const PERESFLAT& stResData)
 	m_wndSampleDlg.CreatedForMenu(false);
 	m_wndSampleDlg.SetMenu(nullptr); //Removing any menu that could be set previously in RT_MENU handler.
 	m_wndSampleDlg.SetWindowPos(this, iPosX, iPosY, rcResDlg.Width(), rcResDlg.Height(), uFlags);
-	m_wndSampleDlg.SetDlgVisible(true);
+	m_wndSampleDlg.ShowWindow(SW_SHOW);
 	m_wndSampleDlg.RedrawWindow();  //Draw dialog bitmap.
 
 	m_EditBRB.SetWindowTextW(optData->data()); //Set Dialog resources info to Editbox.
@@ -1055,7 +1050,7 @@ void CViewRightBR::ShowResource(const PERESFLAT* pResData)
 	if (pResData != nullptr) {
 		//Destroy Dialog Sample window if it's any other resource but RT_MENU or RT_DIALOG.
 		if (pResData->wTypeID != 4 && pResData->wTypeID != 5 && m_wndSampleDlg.m_hWnd) {
-			m_wndSampleDlg.SetDlgVisible(false);
+			m_wndSampleDlg.ShowWindow(SW_HIDE);
 			m_wndSampleDlg.DestroyWindow();
 		}
 
@@ -1114,12 +1109,30 @@ void CViewRightBR::ShowResource(const PERESFLAT* pResData)
 	else {
 		//Destroy Dialog Sample window if it's just Resource window Update.
 		if (m_wndSampleDlg.m_hWnd) {
-			m_wndSampleDlg.SetDlgVisible(false);
+			m_wndSampleDlg.ShowWindow(SW_HIDE);
 			m_wndSampleDlg.DestroyWindow();
 		}
 	}
 
 	RedrawWindow();
+}
+
+void CViewRightBR::OnMDITabActivate(bool fActivate)
+{
+	if (fActivate) { //Show all windows from vector when tab is activated.
+		for (const auto hWnd : m_vecHWNDVisible) {
+			if (::IsWindow(hWnd)) {
+				::ShowWindow(hWnd, SW_SHOW);
+			}
+		}
+		m_vecHWNDVisible.clear();
+	}
+	else { //Hide m_wndSampleDlg window and add it to vector when tab is deactivated.
+		if (::IsWindow(m_wndSampleDlg.m_hWnd) && ::IsWindowVisible(m_wndSampleDlg.m_hWnd)) {
+			m_vecHWNDVisible.emplace_back(m_wndSampleDlg.m_hWnd);
+			::ShowWindow(m_wndSampleDlg.m_hWnd, SW_HIDE);
+		}
+	}
 }
 
 void CViewRightBR::ResLoadError()
