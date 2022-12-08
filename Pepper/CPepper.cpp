@@ -29,7 +29,7 @@ BOOL CAboutDlg::OnInitDialog()
 	wstrVer += GetLibInfo().pwszVersion;
 	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrVer.data());
 	wstrVer = L"HexCtrl - ";
-	wstrVer += GetHexCtrlInfo()->pwszVersion;
+	wstrVer += GetHexCtrlInfo().pwszVersion;
 	GetDlgItem(IDC_LINK_HEXCTRL)->SetWindowTextW(wstrVer.data());
 	GetDlgItem(IDC_STATIC_TIME)->SetWindowTextW(L"Built on: " __DATE__ L" "  __TIME__);
 

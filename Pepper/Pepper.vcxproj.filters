@@ -52,9 +52,6 @@
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgAbout.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
@@ -148,9 +145,6 @@
       <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgAbout.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.h">

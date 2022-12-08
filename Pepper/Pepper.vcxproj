@@ -170,7 +170,6 @@
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexSelection.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.cpp" />
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgAbout.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.cpp" />
     <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.cpp" />
@@ -215,7 +214,6 @@
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexSelection.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.h" />
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgAbout.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.h" />
     <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.h" />
