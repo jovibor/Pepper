@@ -120,7 +120,7 @@ BEGIN
     BEGIN
         MENUITEM "Edit Mode",                   IDM_EDIT_EDITMODE
     END
-    POPUP "Resources"
+    POPUP "Tools"
     BEGIN
         MENUITEM "Extract all Cursors...",      IDM_RES_EXTRACTALLCUR
         MENUITEM "Extract all Icons...",        IDM_RES_EXTRACTALLICO
