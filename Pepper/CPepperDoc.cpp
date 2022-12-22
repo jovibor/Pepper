@@ -132,9 +132,9 @@ void CPepperDoc::SetEditMode(bool fEditMode)
 	}
 
 	if (!IsEditMode()) {
-		if (IDYES != MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"Warning!\r\nYou are about to enter the Edit Mode. "
-			"In this mode all changes you make will be immediately reflected to the file.\r\n"
-			"Are you sure you want it?", L"Edit mode", MB_ICONINFORMATION | MB_YESNO)) {
+		if (IDYES != MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"Warning!\r\nYou are about to enter the Edit Mode.\r\n"
+			"In this mode all the changes you make will be immediately reflected into the file!\r\n\r\n"
+			"Are you sure you want to proceed?", L"Edit Mode", MB_ICONWARNING | MB_YESNO)) {
 			return;
 		}
 	}

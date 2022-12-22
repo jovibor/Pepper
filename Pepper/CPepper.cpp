@@ -129,29 +129,32 @@ void CPepperApp::OnAppAbout()
 
 void CPepperApp::OnFileOpen()
 {
-	CFileDialog fd(TRUE, nullptr, nullptr, OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
-		OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, L"All files (*.*)|*.*||");
+	const auto lmbFOD = [this]()->bool {
+		CFileDialog fd(TRUE, nullptr, nullptr, OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
+			OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, L"All files (*.*)|*.*||");
 
-	if (fd.DoModal() == IDOK) {
-		CComPtr<IFileOpenDialog> pIFOD = fd.GetIFileOpenDialog();
-		CComPtr<IShellItemArray> pResults;
-		pIFOD->GetResults(&pResults);
+		if (fd.DoModal() == IDOK) {
+			CComPtr<IFileOpenDialog> pIFOD = fd.GetIFileOpenDialog();
+			CComPtr<IShellItemArray> pResults;
+			pIFOD->GetResults(&pResults);
 
-		bool fOpened { false };
-		DWORD dwCount { };
-		pResults->GetCount(&dwCount);
-		for (auto i = 0U; i < dwCount; ++i) {
-			CComPtr<IShellItem> pItem;
-			pResults->GetItemAt(i, &pItem);
-			CComHeapPtr<wchar_t> pwstrPath;
-			pItem->GetDisplayName(SIGDN_FILESYSPATH, &pwstrPath);
-			const auto pDoc = CWinAppEx::OpenDocumentFile(pwstrPath);
-			fOpened = !fOpened ? pDoc != nullptr : true;
+			bool fOpened { false };
+			DWORD dwCount { };
+			pResults->GetCount(&dwCount);
+			for (auto i = 0U; i < dwCount; ++i) {
+				CComPtr<IShellItem> pItem;
+				pResults->GetItemAt(i, &pItem);
+				CComHeapPtr<wchar_t> pwstrPath;
+				pItem->GetDisplayName(SIGDN_FILESYSPATH, &pwstrPath);
+				const auto pDoc = CWinAppEx::OpenDocumentFile(pwstrPath);
+				fOpened = !fOpened ? pDoc != nullptr : true;
+			}
+			return fOpened;
 		}
+		return true;
+	};
 
-		if (!fOpened) //In case no file has been opened (if multiple selection) we show the open file dialog again.
-			OnFileOpen();
-	}
+	while (!lmbFOD()) { }; //If no file has been opened (if multiple selection) we show the Open File Dialog again.
 }
 
 void CPepperApp::OnUpdateHelpAbout(CCmdUI *pCmdUI)

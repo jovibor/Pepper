@@ -10,10 +10,10 @@ module;
 
 #define PEPPER_PRODUCT_NAME			L"Pepper"
 #define PEPPER_PRODUCT_DESC			L"PE files viewer, github.com/jovibor/Pepper"
-#define PEPPER_COPYRIGHT_NAME  		L"(C) Jovibor 2019-2022"
+#define PEPPER_COPYRIGHT_NAME  		L"(C) Jovibor 2019-2023"
 #define PEPPER_MAJOR_VERSION		1
 #define PEPPER_MINOR_VERSION		5
-#define PEPPER_MAINTENANCE_VERSION	1
+#define PEPPER_MAINTENANCE_VERSION	2
 
 #define TO_WSTR_HELPER(x) L## #x
 #define TO_WSTR(x) TO_WSTR_HELPER(x)

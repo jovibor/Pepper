@@ -1,6 +1,6 @@
 [submodule "Pepper/submodules/HexCtrl"]
-	path = Pepper/submodules/HexCtrl
+	path = Pepper/dep/HexCtrl
 	url = https://github.com/jovibor/HexCtrl.git
 [submodule "Pepper/submodules/libpe"]
-	path = Pepper/submodules/libpe
+	path = Pepper/dep/libpe
 	url = https://github.com/jovibor/libpe.git

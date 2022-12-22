@@ -40,55 +40,55 @@
     <ClCompile Include="CFileLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\dep\ListEx\CListEx.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CHexSelection.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgEncoding.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgFillData.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\HexCtrl\HexCtrl\src\HexUtility.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="submodules\libpe\src\libpe.cpp">
-      <Filter>libpe</Filter>
-    </ClCompile>
     <ClCompile Include="Utility.ixx">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.cpp">
+    <ClCompile Include="dep\libpe\src\libpe.cpp">
+      <Filter>libpe</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\dep\ListEx\CListEx.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexCtrl.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexSelection.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CScrollEx.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgEncoding.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgFillData.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\HexUtility.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
   </ItemGroup>
@@ -132,64 +132,67 @@
     <ClInclude Include="CViewRightTR.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\dep\ListEx\ListEx.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\res\HexCtrlRes.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexCtrl.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CHexSelection.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\CScrollEx.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgEncoding.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgFillData.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\src\HexUtility.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\HexCtrl.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\HexCtrl\HexCtrl\HexCtrlDefs.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="submodules\libpe\src\libpe.h">
-      <Filter>libpe</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.h">
+    <ClInclude Include="dep\libpe\src\libpe.h">
+      <Filter>libpe</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\dep\ListEx\ListEx.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\dep\StrToNum\StrToNum.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\res\HexCtrlRes.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\CHexCtrl.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\CHexSelection.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\CScrollEx.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgEncoding.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgFillData.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\HexUtility.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrlDefs.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
   </ItemGroup>
@@ -197,7 +200,7 @@
     <ResourceCompile Include="res\Pepper.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-    <ResourceCompile Include="submodules\HexCtrl\HexCtrl\res\HexCtrl.rc">
+    <ResourceCompile Include="dep\HexCtrl\HexCtrl\res\HexCtrl.rc">
       <Filter>HexCtrl</Filter>
     </ResourceCompile>
   </ItemGroup>

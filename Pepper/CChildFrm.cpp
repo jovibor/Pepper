@@ -22,6 +22,7 @@ BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWndEx)
 	ON_WM_ERASEBKGND()
 	ON_WM_CLOSE()
 	ON_WM_MDIACTIVATE()
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
@@ -46,18 +47,14 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pConte
 	m_stSplitterRightTop.CreateView(0, 1, RUNTIME_CLASS(CViewRightTR), CSize((rc.Width() - rc.Width() / 5) / 2, rc.Height()), pContext);
 	m_stSplitterRightTop.HideCol(1);
 	m_stSplitterRight.AddNested(0, 0, &m_stSplitterRightTop);
-
 	m_stSplitterRightBottom.CreateStatic(&m_stSplitterRight, 1, 2, WS_CHILD | WS_VISIBLE, m_stSplitterRight.IdFromRowCol(1, 0));
 	m_stSplitterRightBottom.CreateView(0, 0, RUNTIME_CLASS(CViewRightBL), CSize(rc.Width(), rc.Height()), pContext);
 	m_stSplitterRightBottom.CreateView(0, 1, RUNTIME_CLASS(CViewRightBR), CSize(0, rc.Height() / 2), pContext);
-
 	m_stSplitterRightBottom.HideCol(1);
 	m_stSplitterRight.AddNested(1, 0, &m_stSplitterRightBottom);
-
 	m_fSplitterCreated = true;
 
-	auto pMainFrm = reinterpret_cast<CMainFrame*>(AfxGetMainWnd());
-	++pMainFrm->GetChildFramesCount();
+	++reinterpret_cast<CMainFrame*>(AfxGetMainWnd())->GetChildFramesCount();
 
 	return TRUE;
 }
@@ -67,7 +64,7 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 	CMDIChildWndEx::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
 
 	//If tab is closing we don't need to UpdateAllViews.
-	//At this moment document can be already dead in memory, so GetActiveDocument can point to a garbage.
+	//At this moment the Document can already be destroyed in memory, so GetActiveDocument can point to a bad data.
 	if (!m_fClosing) {
 		GetActiveDocument()->UpdateAllViews(nullptr, bActivate == FALSE ? MSG_MDITAB_DISACTIVATE : MSG_MDITAB_ACTIVATE);
 	}
@@ -75,11 +72,16 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 
 void CChildFrame::OnClose()
 {
-	const auto pMainFrm = reinterpret_cast<CMainFrame*>(AfxGetMainWnd());
-	--pMainFrm->GetChildFramesCount();
 	m_fClosing = true;
 
 	CMDIChildWndEx::OnClose();
+}
+
+void CChildFrame::OnDestroy()
+{
+	CMDIChildWndEx::OnDestroy();
+
+	--reinterpret_cast<CMainFrame*>(AfxGetMainWnd())->GetChildFramesCount();
 }
 
 BOOL CChildFrame::OnEraseBkgnd(CDC* pDC)
