@@ -99,6 +99,10 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	if (CMDIFrameWndEx::OnCreateClient(lpcs, pContext) == FALSE)
 		return FALSE;
 
+	const auto hDC = ::GetDC(m_hWndMDIClient);
+	m_iLOGPIXELSY = GetDeviceCaps(hDC, LOGPIXELSY);
+	::ReleaseDC(m_hWndMDIClient, hDC);
+
 	SetWindowSubclass(m_hWndMDIClient, MDIClientProc, 1, reinterpret_cast<DWORD_PTR>(this));
 
 	return TRUE;
@@ -265,16 +269,16 @@ void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam)
 	constexpr auto iLengthText = static_cast<int>(std::size(WSTR_PEPPER_PRODUCT_NAME)) - 1;
 	const auto pDC = CDC::FromHandle(::GetDC(hWnd));
 	const auto iWidthNew = LOWORD(lParam);
-	const auto iLOGPIXELSY = GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
 	auto iFontSizeMin = 10;
-	LOGFONTW lf { .lfHeight { -MulDiv(iFontSizeMin, iLOGPIXELSY, 72) }, .lfPitchAndFamily { FIXED_PITCH }, .lfFaceName { L"Consolas" } };
+	LOGFONTW lf { .lfHeight { -MulDiv(iFontSizeMin, m_iLOGPIXELSY, 72) }, .lfPitchAndFamily { FIXED_PITCH }, .lfFaceName { L"Consolas" } };
 
 	m_fontMDIClient.DeleteObject();
 	m_fontMDIClient.CreateFontIndirectW(&lf);
 	CSize stSizeText { };
-	while (stSizeText.cx < (iWidthNew - 20)) { //Until the text size not big enough to fill the window's width.
+	while (stSizeText.cx < (iWidthNew - 20)) { //Until the text size is not big enough to fill the window's width.
 		m_fontMDIClient.DeleteObject();
-		lf.lfHeight = -MulDiv(++iFontSizeMin, iLOGPIXELSY, 72);
+		iFontSizeMin += 4;
+		lf.lfHeight = -MulDiv(iFontSizeMin, m_iLOGPIXELSY, 72);
 		m_fontMDIClient.CreateFontIndirectW(&lf);
 		pDC->SelectObject(m_fontMDIClient);
 		stSizeText = pDC->GetTextExtent(WSTR_PEPPER_PRODUCT_NAME, iLengthText);

@@ -34,6 +34,7 @@ private:
 	static LRESULT MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR dwData);
 	static void MDIClientSize(HWND hWnd, WPARAM wParam, LPARAM lParam);
 	inline static CFont m_fontMDIClient;
+	inline static int m_iLOGPIXELSY { };
 	CMFCToolBar m_wndToolBar;
 	CWnd* pWndMBtnCurrDown { };
 	int m_iChildFrames { };    //Amount of active child frames.
