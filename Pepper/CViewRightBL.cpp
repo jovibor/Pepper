@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2022 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -570,12 +570,13 @@ void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
 	}
 
-	DWORD dwOffset { }, dwSize { };
-	if (stFileInfo.fIsx86) {
+	DWORD dwOffset { };
+	DWORD dwSize { };
+	if (stFileInfo.fIsPE32) {
 		dwOffset = pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + g_mapOptHeader32.at(dwEntry).dwOffset;
 		dwSize = g_mapOptHeader32.at(dwEntry).dwSize;
 	}
-	else if (stFileInfo.fIsx64) {
+	else if (stFileInfo.fIsPE64) {
 		dwOffset = pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + g_mapOptHeader64.at(dwEntry).dwOffset;
 		dwSize = g_mapOptHeader64.at(dwEntry).dwSize;
 	}
@@ -601,7 +602,7 @@ void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	const auto dwOffset = stFileInfo.fIsx86 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader)
+	const auto dwOffset = stFileInfo.fIsPE32 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader)
 		+ offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry
 		: pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader)
 		+ offsetof(IMAGE_OPTIONAL_HEADER64, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry;
@@ -643,7 +644,7 @@ void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
 
 	DWORD dwOffset = pLCD->dwOffset;
 	DWORD dwSize;
-	if (stFileInfo.fIsx86) {
+	if (stFileInfo.fIsPE32) {
 		dwOffset += g_mapLCD32.at(dwEntry).dwOffset;
 		dwSize = g_mapLCD32.at(dwEntry).dwSize;
 	}
@@ -674,25 +675,25 @@ void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 	m_listImportEntry->SetRedraw(FALSE);
 	for (const auto& iterFuncs : pImport->at(dwEntry).vecImportFunc) {
 		m_listImportEntry->InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
-		dwThunkOffset += stFileInfo.fIsx86 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
+		dwThunkOffset += stFileInfo.fIsPE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		m_listImportEntry->SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
 		m_listImportEntry->SetItemText(listindex, 2, std::format(L"{:04X}",
-			stFileInfo.fIsx86 ?
+			stFileInfo.fIsPE32 ?
 			((iterFuncs.unThunk.stThunk32.u1.Ordinal & IMAGE_ORDINAL_FLAG32) ?
 				IMAGE_ORDINAL32(iterFuncs.unThunk.stThunk32.u1.Ordinal) : iterFuncs.stImpByName.Hint)
 			: ((iterFuncs.unThunk.stThunk64.u1.Ordinal & IMAGE_ORDINAL_FLAG64) ?
 				IMAGE_ORDINAL64(iterFuncs.unThunk.stThunk64.u1.Ordinal) : iterFuncs.stImpByName.Hint)).data());
 
 		std::wstring wstrAddr;
-		if (stFileInfo.fIsx86) {
+		if (stFileInfo.fIsPE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.stThunk32.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsx64) {
+		else if (stFileInfo.fIsPE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.stThunk64.u1.AddressOfData);
 		}
 		m_listImportEntry->SetItemText(listindex, 3, wstrAddr.data());
 		m_listImportEntry->SetItemText(listindex, 4, std::format(L"{:08X}", dwThunkRVA).data());
-		dwThunkRVA += stFileInfo.fIsx86 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
+		dwThunkRVA += stFileInfo.fIsPE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		++listindex;
 	}
 	m_listImportEntry->SetRedraw(TRUE);
@@ -767,44 +768,44 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 	m_listDelayImportEntry->SetRedraw(FALSE);
 	for (const auto& iterFuncs : pDelayImport->at(dwEntry).vecDelayImpFunc) {
 		m_listDelayImportEntry->InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
-		dwThunkOffset += stFileInfo.fIsx86 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
+		dwThunkOffset += stFileInfo.fIsPE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		m_listDelayImportEntry->SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
 		m_listDelayImportEntry->SetItemText(listindex, 2, std::format(L"{:04X}",
-			stFileInfo.fIsx86 ?
+			stFileInfo.fIsPE32 ?
 			((iterFuncs.unThunk.st32.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG32) ?
 				IMAGE_ORDINAL32(iterFuncs.unThunk.st32.stImportNameTable.u1.Ordinal) : iterFuncs.stImpByName.Hint)
 			: ((iterFuncs.unThunk.st64.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG64) ?
 				IMAGE_ORDINAL64(iterFuncs.unThunk.st64.stImportNameTable.u1.Ordinal) : iterFuncs.stImpByName.Hint)).data());
 
 		std::wstring wstrAddr;
-		if (stFileInfo.fIsx86) {
+		if (stFileInfo.fIsPE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stImportNameTable.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsx64) {
+		else if (stFileInfo.fIsPE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stImportNameTable.u1.AddressOfData);
 		}
 		m_listDelayImportEntry->SetItemText(listindex, 3, wstrAddr.data());
 
-		if (stFileInfo.fIsx86) {
+		if (stFileInfo.fIsPE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stImportAddressTable.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsx64) {
+		else if (stFileInfo.fIsPE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stImportAddressTable.u1.AddressOfData);
 		}
 		m_listDelayImportEntry->SetItemText(listindex, 4, wstrAddr.data());
 
-		if (stFileInfo.fIsx86) {
+		if (stFileInfo.fIsPE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stBoundImportAddressTable.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsx64) {
+		else if (stFileInfo.fIsPE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stBoundImportAddressTable.u1.AddressOfData);
 		}
 		m_listDelayImportEntry->SetItemText(listindex, 5, wstrAddr.data());
 
-		if (stFileInfo.fIsx86) {
+		if (stFileInfo.fIsPE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stUnloadInformationTable.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsx64) {
+		else if (stFileInfo.fIsPE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stUnloadInformationTable.u1.AddressOfData);
 		}
 		m_listDelayImportEntry->SetItemText(listindex, 6, wstrAddr.data());
@@ -854,11 +855,11 @@ void CViewRightBL::ShowTLSHex()
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
 	ULONGLONG ullStartAdr { }, ullEndAdr { };
-	if (stFileInfo.fIsx86) {
+	if (stFileInfo.fIsPE32) {
 		ullStartAdr = pTLS->unTLS.stTLSDir32.StartAddressOfRawData;
 		ullEndAdr = pTLS->unTLS.stTLSDir32.EndAddressOfRawData;
 	}
-	else if (stFileInfo.fIsx64) {
+	else if (stFileInfo.fIsPE64) {
 		ullStartAdr = pTLS->unTLS.stTLSDir64.StartAddressOfRawData;
 		ullEndAdr = pTLS->unTLS.stTLSDir64.EndAddressOfRawData;
 	}

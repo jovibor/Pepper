@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2022 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -59,9 +59,9 @@ void CViewLeft::OnInitialUpdate()
 	HTREEITEM hTreeNTHeaders { };
 	HTREEITEM hTreeOptHeader { };
 
-	if (stFileInfo.fIsx86 && stFileInfo.fHasNTHdr)
+	if (stFileInfo.fIsPE32 && stFileInfo.fHasNTHdr)
 		hTreeNTHeaders = m_stTreeMain.InsertItem(L"NT Header [IMAGE_NT_HEADERS32]", iconHdr, iconHdr, hTreeRoot);
-	else if (stFileInfo.fIsx64 && stFileInfo.fHasNTHdr)
+	else if (stFileInfo.fIsPE64 && stFileInfo.fHasNTHdr)
 		hTreeNTHeaders = m_stTreeMain.InsertItem(L"NT Header [IMAGE_NT_HEADERS64]", iconHdr, iconHdr, hTreeRoot);
 
 	if (hTreeNTHeaders) {
@@ -73,9 +73,9 @@ void CViewLeft::OnInitialUpdate()
 			m_stTreeMain.SetItemData(hTreeFileHeader, IDC_LIST_FILEHEADER);
 		}
 
-		if (stFileInfo.fIsx86 && stFileInfo.fHasNTHdr)
+		if (stFileInfo.fIsPE32 && stFileInfo.fHasNTHdr)
 			hTreeOptHeader = m_stTreeMain.InsertItem(L"Optional Header [IMAGE_OPTIONAL_HEADER32]", iconHdr, iconHdr, hTreeNTHeaders);
-		else if (stFileInfo.fIsx64 && stFileInfo.fHasNTHdr)
+		else if (stFileInfo.fIsPE64 && stFileInfo.fHasNTHdr)
 			hTreeOptHeader = m_stTreeMain.InsertItem(L"Optional Header [IMAGE_OPTIONAL_HEADER64]", iconHdr, iconHdr, hTreeNTHeaders);
 
 		m_stTreeMain.SetItemData(hTreeOptHeader, IDC_LIST_OPTIONALHEADER);

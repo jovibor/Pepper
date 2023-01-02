@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2022 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -50,9 +50,9 @@ void CViewRightTL::OnInitialUpdate()
 	m_wstrFileName.erase(0, m_wstrFileName.find_last_of('\\') + 1);
 	m_wstrFileName.insert(0, L"File name: ");
 
-	if (stFileInfo.fIsx86)
+	if (stFileInfo.fIsPE32)
 		m_wstrFileType = L"File type: PE32 (x86)";
-	else if (stFileInfo.fIsx64)
+	else if (stFileInfo.fIsPE64)
 		m_wstrFileType = L"File type: PE32+ (x64)";
 	else
 		m_wstrFileType = L"File type: unknown";
@@ -566,8 +566,8 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 
 void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 {
-	const auto fx32 = stFileInfo.fIsx86;
-	const auto fx64 = stFileInfo.fIsx64;
+	const auto fx32 = stFileInfo.fIsPE32;
+	const auto fx64 = stFileInfo.fIsPE64;
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
 
@@ -612,8 +612,8 @@ void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 
 void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 {
-	const auto fx32 = stFileInfo.fIsx86;
-	const auto fx64 = stFileInfo.fIsx64;
+	const auto fx32 = stFileInfo.fIsPE32;
+	const auto fx64 = stFileInfo.fIsPE64;
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
 
@@ -935,10 +935,10 @@ void CViewRightTL::CreateListOptHeader()
 	m_listOptHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listOptHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 140);
 
-	const auto dwOffsetBase = stFileInfo.fIsx86 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) :
+	const auto dwOffsetBase = stFileInfo.fIsPE32 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) :
 		pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader);
-	const auto dwSubsystemPos = stFileInfo.fIsx86 ? 22U : 21U;  //Position in struct is different in x86 and x64.
-	const auto dwDllCharactPos = stFileInfo.fIsx86 ? 23U : 22U; //Position in struct is different in x86 and x64.
+	const auto dwSubsystemPos = stFileInfo.fIsPE32 ? 22U : 21U;  //Position in struct is different in x86 and x64.
+	const auto dwDllCharactPos = stFileInfo.fIsPE32 ? 23U : 22U; //Position in struct is different in x86 and x64.
 	const auto lmbOptHdr = [&](const auto& stOptHdr, const auto& mapOptHdr) {
 		for (auto iter { 0U }; iter < mapOptHdr.size(); ++iter) {
 			const auto& ref = mapOptHdr.at(iter);
@@ -976,7 +976,7 @@ void CViewRightTL::CreateListOptHeader()
 			}
 		}
 	};
-	stFileInfo.fIsx86 ? lmbOptHdr(pNTHdr->unHdr.stNTHdr32.OptionalHeader, g_mapOptHeader32)
+	stFileInfo.fIsPE32 ? lmbOptHdr(pNTHdr->unHdr.stNTHdr32.OptionalHeader, g_mapOptHeader32)
 		: lmbOptHdr(pNTHdr->unHdr.stNTHdr64.OptionalHeader, g_mapOptHeader64);
 }
 
@@ -1003,7 +1003,7 @@ void CViewRightTL::CreateListDataDirs()
 	m_listDataDirs->InsertColumn(3, L"Directory Size", LVCFMT_CENTER, 100);
 	m_listDataDirs->InsertColumn(4, L"Resides in Section", LVCFMT_CENTER, 125);
 
-	const auto dwDataDirsOffset = stFileInfo.fIsx86 ? offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory) :
+	const auto dwDataDirsOffset = stFileInfo.fIsPE32 ? offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory) :
 		offsetof(IMAGE_NT_HEADERS64, OptionalHeader.DataDirectory);
 	for (auto iter { 0U }; iter < pvecDataDirs->size(); ++iter) {
 		const auto& ref = pvecDataDirs->at(static_cast<size_t>(iter));
@@ -1353,7 +1353,7 @@ void CViewRightTL::CreateListTLS()
 			}
 		}
 	};
-	stFileInfo.fIsx86 ? lmbTLS(pTLSDir->unTLS.stTLSDir32, g_mapTLS32) : lmbTLS(pTLSDir->unTLS.stTLSDir64, g_mapTLS64);
+	stFileInfo.fIsPE32 ? lmbTLS(pTLSDir->unTLS.stTLSDir32, g_mapTLS32) : lmbTLS(pTLSDir->unTLS.stTLSDir64, g_mapTLS64);
 }
 
 void CViewRightTL::CreateListLCD()
@@ -1411,7 +1411,7 @@ void CViewRightTL::CreateListLCD()
 			}
 		}
 	};
-	stFileInfo.fIsx86 ? lmbLCD(pLCD->unLCD.stLCD32, g_mapLCD32) : lmbLCD(pLCD->unLCD.stLCD64, g_mapLCD64);
+	stFileInfo.fIsPE32 ? lmbLCD(pLCD->unLCD.stLCD32, g_mapLCD32) : lmbLCD(pLCD->unLCD.stLCD64, g_mapLCD64);
 }
 
 void CViewRightTL::CreateListBoundImport()
