@@ -59,13 +59,14 @@ BOOL CPepperApp::InitInstance()
 	CWinAppEx::InitInstance();
 
 	SetRegistryKey(L"Pepper");
+	LoadStdProfileSettings(5);
 
 	//Modern looking tooltips.
 	CMFCToolTipInfo ttParams;
 	ttParams.m_bVislManagerTheme = TRUE;
 	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL, RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
 
-	const auto pDocTemplate = new CMultiDocTemplate(IDR_PepperTYPE, RUNTIME_CLASS(CPepperDoc), RUNTIME_CLASS(CChildFrame), nullptr);
+	const auto pDocTemplate = new CMultiDocTemplate(IDR_MAINFRAME, RUNTIME_CLASS(CPepperDoc), RUNTIME_CLASS(CChildFrame), nullptr);
 	AddDocTemplate(pDocTemplate);
 
 	const auto pMainFrame = new CMainFrame;	// create main MDI Frame window

@@ -3,16 +3,8 @@
 // Used by Pepper.rc
 //
 #define IDD_ABOUTBOX                    100
-#define ID_STATUSBAR_PANE1              120
-#define ID_STATUSBAR_PANE2              121
-#define IDS_STATUS_PANE1                122
-#define IDS_STATUS_PANE2                123
-#define IDS_TOOLBAR_STANDARD            124
-#define IDS_TOOLBAR_CUSTOMIZE           125
 #define IDR_MAINFRAME                   128
 #define IDR_MAINFRAME_256               129
-#define IDR_PepperTYPE                  130
-#define ID_WINDOW_MANAGER               131
 #define IDI_TREE_PEHEADER               314
 #define IDI_TREE_PEDIRS                 315
 #define IDI_TREE_PERESOURCE             318

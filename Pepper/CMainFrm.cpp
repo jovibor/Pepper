@@ -18,7 +18,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_WM_CREATE()
 	ON_WM_DROPFILES()
 	ON_WM_GETMINMAXINFO()
-	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
 	ON_COMMAND(IDM_EDIT_EDITMODE, &CMainFrame::OnAppEditmode)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
 	ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, &CMainFrame::OnTabActivate)
@@ -55,7 +54,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CMDITabInfo mdiTabParams;
 	mdiTabParams.m_style = CMFCTabCtrl::STYLE_3D_ONENOTE; // other styles available...
 	mdiTabParams.m_bActiveTabCloseButton = TRUE;      // set to FALSE to place close button at right of tab area
-	mdiTabParams.m_bTabIcons = TRUE;    // set to TRUE to enable document icons on MDI taba
+	mdiTabParams.m_bTabIcons = FALSE;      // set to TRUE to enable document icons on MDI taba
 	mdiTabParams.m_bAutoColor = FALSE;    // set to FALSE to disable auto-coloring of MDI tabs
 	mdiTabParams.m_bDocumentMenu = FALSE; // enable the document menu at the right edge of the tab area
 	mdiTabParams.m_bFlatFrame = TRUE;
@@ -66,11 +65,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		| CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
 	m_wndToolBar.LoadToolBar(IDR_MAINFRAME_256);
 
-	//CString strToolBarName;
-	//strToolBarName.LoadStringW(IDS_TOOLBAR_STANDARD);
-	//m_wndToolBar.SetWindowTextW(strToolBarName);
-
-	//	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
+	//m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndToolBar);      //CAUSES SLOW SIZING!!!
 
@@ -156,11 +151,6 @@ void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
 	pCmdUI->SetCheck(pDoc->IsEditMode());
 }
 
-void CMainFrame::OnWindowManager()
-{
-	ShowWindowsDialog();
-}
-
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
 	if (!CMDIFrameWndEx::PreCreateWindow(cs))
@@ -176,7 +166,7 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 	{
 		pWndMBtnCurrDown = nullptr;
 		CPoint pt = pMsg->pt;
-		auto pWnd = WindowFromPoint(pt);
+		const auto pWnd = WindowFromPoint(pt);
 		if (pWnd == nullptr)
 			break;
 
@@ -186,12 +176,12 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 
 		auto pos = tabGroups.GetHeadPosition();
 		while (pos != nullptr) {
-			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) //Click on TabCtrl.
-			{
+			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) { //Click on TabCtrl.
 				pTabCtrl->ScreenToClient(&pt);
 				if (const auto iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1) {
-					if (auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr)
-						pWndMBtnCurrDown = pTab;
+					if (auto pWndTab = pTabCtrl->GetTabWnd(iTab); pWndTab != nullptr) {
+						pWndMBtnCurrDown = pWndTab;
+					}
 					break;
 				}
 			}
