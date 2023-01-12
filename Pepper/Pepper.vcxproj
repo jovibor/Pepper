@@ -203,7 +203,6 @@
     <ClInclude Include="CPepper.h" />
     <ClInclude Include="CPepperDoc.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\dep\ListEx\ListEx.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\dep\StrToNum\StrToNum.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrlDefs.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\res\HexCtrlRes.h" />

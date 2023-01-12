@@ -771,8 +771,6 @@ void CViewRightTL::CreateListDOSHeader()
 	m_listDOSHeader->Create(m_stlcs);
 	m_listDOSHeader->ShowWindow(SW_HIDE);
 	m_listDOSHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listDOSHeader->SetColumn(0, &stCol);
 	m_listDOSHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listDOSHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
 	m_listDOSHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
@@ -807,8 +805,6 @@ void CViewRightTL::CreateListRichHeader()
 	m_listRichHdr->Create(m_stlcs);
 	m_listRichHdr->ShowWindow(SW_HIDE);
 	m_listRichHdr->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listRichHdr->SetColumn(0, &stCol);
 	m_listRichHdr->SetHdrColumnColor(0, g_clrOffset);
 	m_listRichHdr->InsertColumn(1, L"\u2116", LVCFMT_CENTER, 35);
 	m_listRichHdr->InsertColumn(2, L"ID [Hex]", LVCFMT_CENTER, 100);
@@ -839,8 +835,6 @@ void CViewRightTL::CreateListNTHeader()
 	m_listNTHeader->Create(m_stlcs);
 	m_listNTHeader->ShowWindow(SW_HIDE);
 	m_listNTHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listNTHeader->SetColumn(0, &stCol);
 	m_listNTHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listNTHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 100);
 	m_listNTHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
@@ -870,8 +864,6 @@ void CViewRightTL::CreateListFileHeader()
 	m_listFileHeader->Create(m_stlcs);
 	m_listFileHeader->ShowWindow(SW_HIDE);
 	m_listFileHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listFileHeader->SetColumn(0, &stCol);
 	m_listFileHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listFileHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
 	m_listFileHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
@@ -928,8 +920,6 @@ void CViewRightTL::CreateListOptHeader()
 	m_listOptHeader->Create(m_stlcs);
 	m_listOptHeader->ShowWindow(SW_HIDE);
 	m_listOptHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listOptHeader->SetColumn(0, &stCol);
 	m_listOptHeader->SetHdrColumnColor(0, g_clrOffset);
 	m_listOptHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 215);
 	m_listOptHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
@@ -995,8 +985,6 @@ void CViewRightTL::CreateListDataDirs()
 	m_listDataDirs->Create(m_stlcs);
 	m_listDataDirs->ShowWindow(SW_HIDE);
 	m_listDataDirs->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listDataDirs->SetColumn(0, &stCol);
 	m_listDataDirs->SetHdrColumnColor(0, g_clrOffset);
 	m_listDataDirs->InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
 	m_listDataDirs->InsertColumn(2, L"Directory RVA", LVCFMT_CENTER, 100);
@@ -1032,8 +1020,6 @@ void CViewRightTL::CreateListSecHeaders()
 	m_listSecHeaders->Create(m_stlcs);
 	m_listSecHeaders->ShowWindow(SW_HIDE);
 	m_listSecHeaders->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listSecHeaders->SetColumn(0, &stCol);
 	m_listSecHeaders->SetHdrColumnColor(0, g_clrOffset);
 	m_listSecHeaders->InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
 	m_listSecHeaders->InsertColumn(2, L"Virtual Size", LVCFMT_CENTER, 100);
@@ -1059,8 +1045,6 @@ void CViewRightTL::CreateListExport()
 	m_listExportDir->Create(m_stlcs);
 	m_listExportDir->ShowWindow(SW_HIDE);
 	m_listExportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listExportDir->SetColumn(0, &stCol);
 	m_listExportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listExportDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listExportDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
@@ -1101,8 +1085,6 @@ void CViewRightTL::CreateListImport()
 	m_listImport->Create(m_stlcs);
 	m_listImport->ShowWindow(SW_HIDE);
 	m_listImport->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listImport->SetColumn(0, &stCol);
 	m_listImport->SetHdrColumnColor(0, g_clrOffset);
 	m_listImport->InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 300);
 	m_listImport->InsertColumn(2, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_CENTER, 170);
@@ -1207,8 +1189,6 @@ void CViewRightTL::CreateListExceptions()
 	m_listExceptionDir->Create(m_stlcs);
 	m_listExceptionDir->ShowWindow(SW_HIDE);
 	m_listExceptionDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listExceptionDir->SetColumn(0, &stCol);
 	m_listExceptionDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listExceptionDir->InsertColumn(1, L"BeginAddress", LVCFMT_CENTER, 100);
 	m_listExceptionDir->InsertColumn(2, L"EndAddress", LVCFMT_CENTER, 100);
@@ -1227,8 +1207,6 @@ void CViewRightTL::CreateListSecurity()
 	m_listSecurityDir->Create(m_stlcs);
 	m_listSecurityDir->ShowWindow(SW_HIDE);
 	m_listSecurityDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listSecurityDir->SetColumn(0, &stCol);
 	m_listSecurityDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listSecurityDir->InsertColumn(1, L"dwLength", LVCFMT_CENTER, 100);
 	m_listSecurityDir->InsertColumn(2, L"wRevision", LVCFMT_CENTER, 100);
@@ -1260,8 +1238,6 @@ void CViewRightTL::CreateListRelocations()
 	m_listRelocDir->Create(m_stlcs);
 	m_listRelocDir->ShowWindow(SW_HIDE);
 	m_listRelocDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listRelocDir->SetColumn(0, &stCol);
 	m_listRelocDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listRelocDir->InsertColumn(1, L"Virtual Address", LVCFMT_CENTER, 115);
 	m_listRelocDir->InsertColumn(2, L"Block Size", LVCFMT_CENTER, 100);
@@ -1280,8 +1256,6 @@ void CViewRightTL::CreateListDebug()
 	m_listDebugDir->Create(m_stlcs);
 	m_listDebugDir->ShowWindow(SW_HIDE);
 	m_listDebugDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listDebugDir->SetColumn(0, &stCol);
 	m_listDebugDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listDebugDir->InsertColumn(1, L"Characteristics", LVCFMT_CENTER, 115);
 	m_listDebugDir->InsertColumn(2, L"TimeDateStamp", LVCFMT_CENTER, 150);
@@ -1327,8 +1301,6 @@ void CViewRightTL::CreateListTLS()
 	m_listTLSDir->Create(m_stlcs);
 	m_listTLSDir->ShowWindow(SW_HIDE);
 	m_listTLSDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listTLSDir->SetColumn(0, &stCol);
 	m_listTLSDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listTLSDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listTLSDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
@@ -1367,8 +1339,6 @@ void CViewRightTL::CreateListLCD()
 	m_listLCD->Create(m_stlcs);
 	m_listLCD->ShowWindow(SW_HIDE);
 	m_listLCD->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listLCD->SetColumn(0, &stCol);
 	m_listLCD->SetHdrColumnColor(0, g_clrOffset);
 	m_listLCD->InsertColumn(1, L"Name", LVCFMT_CENTER, 330);
 	m_listLCD->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
@@ -1425,8 +1395,6 @@ void CViewRightTL::CreateListBoundImport()
 	m_listBoundImportDir->Create(m_stlcs);
 	m_listBoundImportDir->ShowWindow(SW_HIDE);
 	m_listBoundImportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listBoundImportDir->SetColumn(0, &stCol);
 	m_listBoundImportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listBoundImportDir->InsertColumn(1, L"Module Name", LVCFMT_CENTER, 290);
 	m_listBoundImportDir->InsertColumn(2, L"TimeDateStamp", LVCFMT_CENTER, 130);
@@ -1462,8 +1430,6 @@ void CViewRightTL::CreateListDelayImport()
 	m_listDelayImportDir->Create(m_stlcs);
 	m_listDelayImportDir->ShowWindow(SW_HIDE);
 	m_listDelayImportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listDelayImportDir->SetColumn(0, &stCol);
 	m_listDelayImportDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listDelayImportDir->InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
 	m_listDelayImportDir->InsertColumn(2, L"Attributes", LVCFMT_CENTER, 100);
@@ -1509,8 +1475,6 @@ void CViewRightTL::CreateListCOM()
 	m_listCOMDir->Create(m_stlcs);
 	m_listCOMDir->ShowWindow(SW_HIDE);
 	m_listCOMDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listCOMDir->SetColumn(0, &stCol);
 	m_listCOMDir->SetHdrColumnColor(0, g_clrOffset);
 	m_listCOMDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 300);
 	m_listCOMDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);

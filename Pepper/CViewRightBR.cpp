@@ -589,9 +589,7 @@ void CViewRightBR::CreateListTLSCallbacks()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
 	m_stListTLSCallbacks->Create(m_stlcs);
-	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER | LVCFMT_FIXED_WIDTH, 300);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_stListTLSCallbacks->SetColumn(0, &stCol);
+	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER, 300);
 
 	int listindex { };
 	for (const auto& iterCallbacks : pTLS->vecTLSCallbacks) {

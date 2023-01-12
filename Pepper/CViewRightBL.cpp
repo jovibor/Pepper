@@ -330,8 +330,6 @@ void CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs->Create(m_stlcs);
 	m_listExportFuncs->ShowWindow(SW_HIDE);
 	m_listExportFuncs->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listExportFuncs->SetColumn(0, &stCol);
 	m_listExportFuncs->SetHdrColumnColor(0, g_clrOffset);
 	m_listExportFuncs->InsertColumn(1, L"Function RVA", LVCFMT_CENTER, 100);
 	m_listExportFuncs->InsertColumn(2, L"Ordinal", LVCFMT_CENTER, 100);
@@ -366,9 +364,7 @@ void CViewRightBL::CreateListImportFuncs()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_IMPORT_ENTRY;
 	m_listImportEntry->Create(m_stlcs);
-	m_listImportEntry->InsertColumn(0, L"Offset", 0, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listImportEntry->SetColumn(0, &stCol);
+	m_listImportEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
 	m_listImportEntry->SetHdrColumnColor(0, g_clrOffset);
 	m_listImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 175);
 	m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
@@ -460,8 +456,6 @@ void CViewRightBL::CreateListRelocsEntry()
 	m_listRelocsEntry->Create(m_stlcs);
 	m_listRelocsEntry->ShowWindow(SW_HIDE);
 	m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listRelocsEntry->SetColumn(0, &stCol);
 	m_listRelocsEntry->SetHdrColumnColor(0, g_clrOffset);
 	m_listRelocsEntry->InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
 	m_listRelocsEntry->InsertColumn(2, L"Offset to apply", LVCFMT_CENTER, 120);
@@ -475,9 +469,7 @@ void CViewRightBL::CreateListDelayImpFuncs()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_DELAYIMPORT_ENTRY;
 	m_listDelayImportEntry->Create(m_stlcs);
-	m_listDelayImportEntry->InsertColumn(0, L"Offset", 0, 90);
-	const LVCOLUMNW stCol { LVCF_FMT, LVCFMT_CENTER };
-	m_listDelayImportEntry->SetColumn(0, &stCol);
+	m_listDelayImportEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
 	m_listDelayImportEntry->SetHdrColumnColor(0, g_clrOffset);
 	m_listDelayImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 300);
 	m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);

@@ -141,9 +141,6 @@
     <ClInclude Include="dep\HexCtrl\HexCtrl\dep\ListEx\ListEx.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
-    <ClInclude Include="dep\HexCtrl\HexCtrl\dep\StrToNum\StrToNum.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
     <ClInclude Include="dep\HexCtrl\HexCtrl\res\HexCtrlRes.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
