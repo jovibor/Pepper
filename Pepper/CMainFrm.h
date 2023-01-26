@@ -5,6 +5,7 @@
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 #pragma once
+#include <afxcontrolbars.h>
 
 import Utility;
 using namespace util;
@@ -25,7 +26,6 @@ private:
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
 	LRESULT OnTabActivate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnUpdateAppEditmode(CCmdUI* pCmdUI);
-	afx_msg void OnWindowManager();
 	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	DECLARE_DYNAMIC(CMainFrame);

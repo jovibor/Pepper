@@ -11,7 +11,7 @@ module;
 #include <span>
 #include <string>
 #include <unordered_map>
-#include "HexCtrlDefs.h"
+#include "HexCtrl.h"
 #include "libpe.h"
 
 #define PEPPER_PRODUCT_NAME			L"Pepper"

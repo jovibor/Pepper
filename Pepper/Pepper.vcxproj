@@ -166,7 +166,6 @@
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexSelection.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\CScrollEx.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.cpp" />
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgEncoding.cpp" />
@@ -204,13 +203,11 @@
     <ClInclude Include="CPepperDoc.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\dep\ListEx\ListEx.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrlDefs.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\res\HexCtrlRes.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\CHexCtrl.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\CHexSelection.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\CScrollEx.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgEncoding.h" />

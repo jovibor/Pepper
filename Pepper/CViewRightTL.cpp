@@ -6,6 +6,7 @@
 ****************************************************************************************************/
 #include "stdafx.h"
 #include "CViewRightTL.h"
+#include "strsafe.h"
 #include <algorithm>
 #include <format>
 

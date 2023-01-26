@@ -61,9 +61,6 @@
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.cpp">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
@@ -156,9 +153,6 @@
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
-    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmProps.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
@@ -187,9 +181,6 @@
       <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h">
-      <Filter>HexCtrl</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrlDefs.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
   </ItemGroup>

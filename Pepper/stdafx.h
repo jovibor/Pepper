@@ -6,5 +6,3 @@
 #define _AFX_ALL_WARNINGS
 
 #include <afxcontrolbars.h> // MFC support for ribbons and control bars
-#include "strsafe.h"
-#include "libpe.h"

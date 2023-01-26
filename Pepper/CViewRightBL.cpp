@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include "CViewRightBL.h"
 #include "res/resource.h"
+#include "strsafe.h"
 #include <format>
 
 import Utility;

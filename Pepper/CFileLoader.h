@@ -5,6 +5,7 @@
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 #pragma once
+#include <afxcontrolbars.h>
 #include "HexCtrl.h"
 
 using namespace HEXCTRL;

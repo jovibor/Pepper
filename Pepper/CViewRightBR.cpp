@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include "CMainFrm.h"
 #include "CViewRightBR.h"
+#include "strsafe.h"
 #include <format>
 #include <unordered_map>
 #pragma comment(lib, "Mincore.lib") //VerQueryValueW

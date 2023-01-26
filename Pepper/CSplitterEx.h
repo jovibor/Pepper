@@ -25,6 +25,7 @@
 *	horzSplit.AddNested(1, 0, &botSplit); //Adding botpSplit as nested to horz(1, 0). *
 **************************************************************************************/
 #pragma once
+#include <afxcontrolbars.h>
 #include <vector>
 
 class CSplitterEx : public CSplitterWndEx
