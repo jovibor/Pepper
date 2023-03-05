@@ -21,6 +21,9 @@ protected:
 	BOOL OnInitDialog()override;
 };
 
+#define STR2WIDE(x) L##x
+#define STRWIDER(x) STR2WIDE(x)
+
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
@@ -31,7 +34,7 @@ BOOL CAboutDlg::OnInitDialog()
 	wstrVer = L"HexCtrl - ";
 	wstrVer += GetHexCtrlInfo().pwszVersion;
 	GetDlgItem(IDC_LINK_HEXCTRL)->SetWindowTextW(wstrVer.data());
-	GetDlgItem(IDC_STATIC_TIME)->SetWindowTextW(L"Built on: " __DATE__ L" "  __TIME__);
+	GetDlgItem(IDC_STATIC_TIME)->SetWindowTextW(L"Built on: " STRWIDER(__DATE__) L" "  STRWIDER(__TIME__));
 
 	return TRUE;
 }

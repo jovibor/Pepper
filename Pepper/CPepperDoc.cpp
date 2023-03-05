@@ -32,7 +32,7 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	m_wstrDocName = lpszPathName;
 	m_wstrDocName = m_wstrDocName.substr(m_wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
 
-	if (const auto err = m_pLibpe->LoadPe(lpszPathName); err != PEOK) {
+	if (const auto err = m_pLibpe->ParsePE(lpszPathName); err != PEOK) {
 		m_wstrDocName += L" File Load Failed.";
 		const auto it = g_mapLibpeErrors.find(err);
 		MessageBoxW(nullptr, std::vformat(L"File load failed with libpe error code: 0x{:04X}\n{}",
