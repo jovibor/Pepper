@@ -10,6 +10,7 @@
 #include "CPepper.h"
 #include "CPepperDoc.h"
 #include "res/resource.h"
+#include <format>
 
 import Utility;
 
@@ -28,12 +29,12 @@ BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(WSTR_PEPPER_VERSION);
-	std::wstring wstrVer = L"libpe - PE32/PE32+ binaries library v";
-	wstrVer += GetLibInfo().pwszVersion;
-	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrVer.data());
-	wstrVer = L"HexCtrl - ";
-	wstrVer += GetHexCtrlInfo().pwszVersion;
-	GetDlgItem(IDC_LINK_HEXCTRL)->SetWindowTextW(wstrVer.data());
+	const auto wstrVerLibpe = std::format(L"libpe: PE32/PE32+ Binaries Parsing Library v{}.{}.{}",
+		libpe::LIBPE_VERSION_MAJOR, libpe::LIBPE_VERSION_MINOR, libpe::LIBPE_VERSION_PATCH);
+	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrVerLibpe.data());
+	const auto wstrVerHexCtrl = std::format(L"HexCtrl: Hex Control for MFC/Win32 v{}.{}.{}",
+		HEXCTRL::HEXCTRL_VERSION_MAJOR, HEXCTRL::HEXCTRL_VERSION_MINOR, HEXCTRL::HEXCTRL_VERSION_PATCH);
+	GetDlgItem(IDC_LINK_HEXCTRL)->SetWindowTextW(wstrVerHexCtrl.data());
 	GetDlgItem(IDC_STATIC_TIME)->SetWindowTextW(L"Built on: " STRWIDER(__DATE__) L" "  STRWIDER(__TIME__));
 
 	return TRUE;

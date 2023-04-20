@@ -61,7 +61,6 @@ private:
 	DECLARE_DYNCREATE(CViewRightBR);
 private:
 	HWND m_hwndActive { };
-	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	PERESFLAT* m_pResData { }; //Current resource's data pointer.
@@ -78,8 +77,8 @@ private:
 	EResType m_eResTypeToDraw { };
 	int m_iImgResWidth { };  //Width of the whole image to draw.
 	int m_iImgResHeight { }; //Height of the whole image to draw.
-	std::vector<std::unique_ptr<CImageList>> m_vecImgRes { }; //Vector for RT_GROUP_ICON/CURSOR.
+	std::vector<std::unique_ptr<CImageList>> m_vecImgRes; //Vector for RT_GROUP_ICON/CURSOR.
+	std::vector<HWND> m_vecHWNDVisible;
 	CEdit m_EditBRB;     //Edit control for RT_STRING, RT_VERSION, RT_MANIFEST, Debug additional info
 	CFont m_fontEditRes; //Font for m_EditBRB.
-	std::vector<HWND> m_vecHWNDVisible;
 };

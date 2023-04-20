@@ -12,7 +12,6 @@ module;
 #include <string>
 #include <unordered_map>
 #include "HexCtrl.h"
-#include "libpe.h"
 
 #define PEPPER_PRODUCT_NAME			L"Pepper"
 #define PEPPER_PRODUCT_DESC			L"PE files viewer, github.com/jovibor/Pepper"
@@ -26,8 +25,9 @@ module;
 #define PEPPER_VERSION_WSTR PEPPER_PRODUCT_NAME L" - PE32/PE32+ binaries viewer v" TO_WSTR(PEPPER_MAJOR_VERSION) L"."\
 		TO_WSTR(PEPPER_MINOR_VERSION) L"." TO_WSTR(PEPPER_MAINTENANCE_VERSION)
 #define TO_WSTR_MAP(x) {x, L## #x}
-
 export module Utility;
+
+import libpe;
 
 export namespace util
 {
@@ -193,10 +193,9 @@ export namespace util
 		return true;
 	}
 
-	inline void ExtractAllResToFile(libpe::Ilibpe& libpe, EResType eResType, std::wstring_view wsvPrefix)
+	inline void ExtractAllResToFile(std::optional<libpe::PERESROOT>& pRes, EResType eResType, std::wstring_view wsvPrefix)
 	{
-		const auto pRes = libpe.GetResources();
-		if (pRes == nullptr)
+		if (!pRes)
 			return;
 
 		CFolderPickerDialog fd;
@@ -205,11 +204,13 @@ export namespace util
 
 		const auto cstrFolderPath = fd.GetPathName(); //Folder name.
 		std::wstring wstrPathWithPrefix = cstrFolderPath.GetString() + std::wstring { L"\\" };
-		if (!wsvPrefix.empty())
+		if (!wsvPrefix.empty()) {
 			wstrPathWithPrefix += std::wstring { wsvPrefix } + L"_";
+		}
+
 		auto dwSavedFiles { 0UL };
 		bool fAllSaveOK { true };
-		for (const auto vecRes = libpe::Ilibpe::FlatResources(*pRes); const auto & ref : vecRes) {
+		for (const auto vecRes = libpe::FlatResources(*pRes); const auto & ref : vecRes) {
 			using enum EResType;
 			std::wstring_view wsvExt;
 			switch (eResType) {
@@ -282,12 +283,33 @@ export namespace util
 		TO_WSTR_MAP(libpe::ERR_FILE_NODOSHDR)
 	};
 
+	struct PEFILEINFO {
+		libpe::EFileType eFileType { };
+		bool fHasDosHdr : 1 {};
+		bool fHasRichHdr : 1 {};
+		bool fHasNTHdr : 1 {};
+		bool fHasDataDirs : 1 {};
+		bool fHasSections : 1 {};
+		bool fHasExport : 1 {};
+		bool fHasImport : 1 {};
+		bool fHasResource : 1 {};
+		bool fHasException : 1 {};
+		bool fHasSecurity : 1 {};
+		bool fHasReloc : 1 {};
+		bool fHasDebug : 1 {};
+		bool fHasTLS : 1 {};
+		bool fHasLoadCFG : 1 {};
+		bool fHasBoundImp : 1 {};
+		bool fHasIAT : 1 {};
+		bool fHasDelayImp : 1 {};
+		bool fHasCOMDescr : 1 {};
+	};
+
 	//Helper struct for PE structs' fields offsets and sizes.
-	//Reflection kind of.
 	struct SPEREFLECTION {
-		DWORD dwSize;			//Struct's field size.
-		DWORD dwOffset;			//Field offset.
-		std::wstring wstrName;	//Field name.
+		DWORD dwSize;          //Struct's field size.
+		DWORD dwOffset;        //Field offset.
+		std::wstring wstrName; //Field name.
 	};
 	using map_hdr = std::unordered_map<DWORD, SPEREFLECTION>;
 

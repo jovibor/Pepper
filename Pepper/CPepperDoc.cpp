@@ -31,8 +31,9 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
 	m_wstrDocName = lpszPathName;
 	m_wstrDocName = m_wstrDocName.substr(m_wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+	libpe::Clibpe libPE;
 
-	if (const auto err = m_pLibpe->ParsePE(lpszPathName); err != PEOK) {
+	if (const auto err = libPE.OpenFile(lpszPathName); err != libpe::PEOK) {
 		m_wstrDocName += L" File Load Failed.";
 		const auto it = g_mapLibpeErrors.find(err);
 		MessageBoxW(nullptr, std::vformat(L"File load failed with libpe error code: 0x{:04X}\n{}",
@@ -42,8 +43,47 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		return FALSE;
 	}
 
-	if (const auto pRes = GetLibpe()->GetResources(); pRes != nullptr) {
-		const auto vecRes = Ilibpe::FlatResources(*pRes);
+	m_optDOS = libPE.GetDOSHeader();
+	m_stFileInfo.fHasDosHdr = m_optDOS.has_value();
+	m_optRich = libPE.GetRichHeader();
+	m_stFileInfo.fHasRichHdr = m_optRich.has_value();
+	m_optNTHdr = libPE.GetNTHeader();
+	m_stFileInfo.fHasNTHdr = m_optNTHdr.has_value();
+	m_optDataDirs = libPE.GetDataDirs();
+	m_stFileInfo.fHasDataDirs = m_optDataDirs.has_value();
+	m_optSecHdr = libPE.GetSecHeaders();
+	m_stFileInfo.fHasSections = m_optSecHdr.has_value();
+	m_optExport = libPE.GetExport();
+	m_stFileInfo.fHasExport = m_optExport.has_value();
+	m_optImport = libPE.GetImport();
+	m_stFileInfo.fHasImport = m_optImport.has_value();
+	m_optResRoot = libPE.GetResources();
+	m_stFileInfo.fHasResource = m_optResRoot.has_value();
+	m_optExcept = libPE.GetExceptions();
+	m_stFileInfo.fHasException = m_optExcept.has_value();
+	m_optSecurity = libPE.GetSecurity();
+	m_stFileInfo.fHasSecurity = m_optSecurity.has_value();
+	m_optReloc = libPE.GetRelocations();
+	m_stFileInfo.fHasReloc = m_optReloc.has_value();
+	m_optDebug = libPE.GetDebug();
+	m_stFileInfo.fHasDebug = m_optDebug.has_value();
+	m_optTLS = libPE.GetTLS();
+	m_stFileInfo.fHasTLS = m_optTLS.has_value();
+	m_optLCD = libPE.GetLoadConfig();
+	m_stFileInfo.fHasLoadCFG = m_optLCD.has_value();
+	m_optBoundImp = libPE.GetBoundImport();
+	m_stFileInfo.fHasBoundImp = m_optBoundImp.has_value();
+	m_optDelayImp = libPE.GetDelayImport();
+	m_stFileInfo.fHasDelayImp = m_optDelayImp.has_value();
+	m_optComDescr = libPE.GetCOMDescriptor();
+	m_stFileInfo.fHasCOMDescr = m_optComDescr.has_value();
+
+	if (m_optNTHdr) {
+		m_stFileInfo.eFileType = libpe::GetFileType(*m_optNTHdr);
+	}
+
+	if (const auto pRes = GetResources(); pRes) {
+		const auto vecRes = FlatResources(*pRes);
 		for (const auto& ref : vecRes) {
 			if (ref.wTypeID == 1) { //RT_CURSOR
 				m_fHasCur = true;
@@ -105,22 +145,22 @@ void CPepperDoc::OnUpdateResExtractAllPng(CCmdUI *pCmdUI)
 
 void CPepperDoc::OnResExtractAllCur()
 {
-	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_CURSOR, m_wstrDocName);
+	ExtractAllResToFile(GetResources(), EResType::RTYPE_CURSOR, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllIco()
 {
-	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_ICON, m_wstrDocName);
+	ExtractAllResToFile(GetResources(), EResType::RTYPE_ICON, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllBmp()
 {
-	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_BITMAP, m_wstrDocName);
+	ExtractAllResToFile(GetResources(), EResType::RTYPE_BITMAP, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllPng()
 {
-	ExtractAllResToFile(*GetLibpe(), EResType::RTYPE_PNG, m_wstrDocName);
+	ExtractAllResToFile(GetResources(), EResType::RTYPE_PNG, m_wstrDocName);
 }
 
 void CPepperDoc::SetEditMode(bool fEditMode)
@@ -141,4 +181,105 @@ void CPepperDoc::SetEditMode(bool fEditMode)
 
 	m_fEditMode = fEditMode;
 	UpdateAllViews(nullptr, MAKELPARAM(ID_DOC_EDITMODE, fEditMode));
+}
+
+auto CPepperDoc::GetFileInfo()->PEFILEINFO&
+{
+	return m_stFileInfo;
+}
+
+auto CPepperDoc::GetOffsetFromVA(ULONGLONG ullVA)->DWORD
+{
+	const auto ullRVA = ullVA - libpe::GetImageBase(*GetNTHeader());
+	return libpe::GetOffsetFromRVA(ullRVA, *GetSecHeaders());
+}
+
+auto CPepperDoc::GetOffsetFromRVA(ULONGLONG ullRVA)->DWORD
+{
+	return libpe::GetOffsetFromRVA(ullRVA, *GetSecHeaders());
+}
+
+auto CPepperDoc::GetDOSHeader()->std::optional<IMAGE_DOS_HEADER>&
+{
+	return m_optDOS;
+}
+
+auto CPepperDoc::GetRichHeader()->std::optional<PERICHHDR_VEC>&
+{
+	return m_optRich;
+}
+
+auto CPepperDoc::GetNTHeader()->std::optional<PENTHDR>&
+{
+	return m_optNTHdr;
+}
+
+auto CPepperDoc::GetDataDirs()->std::optional<PEDATADIR_VEC>&
+{
+	return m_optDataDirs;
+}
+
+auto CPepperDoc::GetSecHeaders()->std::optional<PESECHDR_VEC>&
+{
+	return m_optSecHdr;
+}
+
+auto CPepperDoc::GetExport()->std::optional<PEEXPORT>&
+{
+	return m_optExport;
+}
+
+auto CPepperDoc::GetImport()->std::optional<PEIMPORT_VEC>&
+{
+	return m_optImport;
+}
+
+auto CPepperDoc::GetResources()->std::optional<PERESROOT>&
+{
+	return m_optResRoot;
+}
+
+auto CPepperDoc::GetExceptions()->std::optional<PEEXCEPTION_VEC>&
+{
+	return m_optExcept;
+}
+
+auto CPepperDoc::GetSecurity()->std::optional<PESECURITY_VEC>&
+{
+	return m_optSecurity;
+}
+
+auto CPepperDoc::GetRelocations()->std::optional<PERELOC_VEC>&
+{
+	return m_optReloc;
+}
+
+auto CPepperDoc::GetDebug()->std::optional<PEDEBUG_VEC>&
+{
+	return m_optDebug;
+}
+
+auto CPepperDoc::GetTLS()->std::optional<PETLS>&
+{
+	return m_optTLS;
+}
+
+auto CPepperDoc::GetLoadConfig()->std::optional<PELOADCONFIG>&
+{
+	return m_optLCD;
+}
+
+auto CPepperDoc::GetBoundImport()->std::optional<PEBOUNDIMPORT_VEC>&
+{
+	return m_optBoundImp;
+}
+
+auto CPepperDoc::GetDelayImport()->std::optional<PEDELAYIMPORT_VEC>&
+{
+	return m_optDelayImp;
+}
+
+auto CPepperDoc::GetCOMDescriptor()->std::optional<PECOMDESCRIPTOR>&
+{
+	return m_optComDescr;
 }

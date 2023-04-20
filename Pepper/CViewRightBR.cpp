@@ -12,6 +12,8 @@
 #include <unordered_map>
 #pragma comment(lib, "Mincore.lib") //VerQueryValueW
 
+using namespace libpe;
+
 BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
@@ -65,7 +67,6 @@ void CViewRightBR::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->GetLibpe();
 
 	m_EditBRB.Create(WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL
 		| ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL, CRect(0, 0, 0, 0), this, 0x01);
@@ -583,8 +584,8 @@ void CViewRightBR::CreateDlg(const PERESFLAT& stResData)
 
 void CViewRightBR::CreateListTLSCallbacks()
 {
-	const auto pTLS = m_pLibpe->GetTLS();
-	if (pTLS == nullptr)
+	const auto& pTLS = m_pMainDoc->GetTLS();
+	if (!pTLS)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -601,8 +602,8 @@ void CViewRightBR::CreateListTLSCallbacks()
 
 void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 {
-	const auto pDebug = m_pLibpe->GetDebug();
-	if (pDebug == nullptr)
+	const auto& pDebug = m_pMainDoc->GetDebug();
+	if (!pDebug)
 		return;
 
 	//At the moment only IMAGE_DEBUG_TYPE_CODEVIEW info is supported.
@@ -856,8 +857,8 @@ void CViewRightBR::CreateAccel(const PERESFLAT& stResData)
 
 void CViewRightBR::CreateGroupIconCursor(const PERESFLAT& stResData)
 {
-	const auto pstResRoot = m_pLibpe->GetResources();
-	if (pstResRoot == nullptr)
+	const auto& pstResRoot = m_pMainDoc->GetResources();
+	if (!pstResRoot)
 		return;
 
 #pragma pack(push, 2)
@@ -1009,8 +1010,8 @@ void CViewRightBR::CreateManifest(const PERESFLAT& stResData)
 
 void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 {
-	const auto pstResRoot = m_pLibpe->GetResources();
-	if (pstResRoot == nullptr)
+	const auto& pstResRoot = m_pMainDoc->GetResources();
+	if (!pstResRoot)
 		return;
 
 	const auto& rootvec = pstResRoot->vecResData;

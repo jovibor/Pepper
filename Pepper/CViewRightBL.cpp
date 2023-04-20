@@ -35,9 +35,8 @@ void CViewRightBL::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->GetLibpe();
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
-	stFileInfo = m_pLibpe->GetFileInfo();
+	m_stFileInfo = m_pMainDoc->GetFileInfo();
 
 	//Hex control for SecurityDir and TLSdir.
 	m_hcs.hWndParent = m_hWnd;
@@ -178,8 +177,8 @@ BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 
 void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
-	const auto pstResRoot = m_pLibpe->GetResources();
-	if (pstResRoot == nullptr)
+	const auto& pstResRoot = m_pMainDoc->GetResources();
+	if (!pstResRoot)
 		return;
 
 	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
@@ -212,8 +211,8 @@ void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 {
-	const auto pstResRoot = m_pLibpe->GetResources();
-	if (pstResRoot == nullptr)
+	const auto& pstResRoot = m_pMainDoc->GetResources();
+	if (!pstResRoot)
 		return;
 
 	const auto dwMsgPos = GetMessagePos();
@@ -286,7 +285,7 @@ BOOL CViewRightBL::OnCommand(WPARAM wParam, LPARAM lParam)
 	else if (wMenuID == IDM_EXTRACT_ALLRES) {
 		std::wstring wstrDocName = m_pDocument->GetPathName().GetString();
 		wstrDocName = wstrDocName.substr(wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
-		ExtractAllResToFile(**&m_pLibpe, m_eResType, wstrDocName);
+		ExtractAllResToFile(m_pMainDoc->GetResources(), m_eResType, wstrDocName);
 	}
 
 	return CView::OnCommand(wParam, lParam);
@@ -338,12 +337,12 @@ void CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs->InsertColumn(4, L"Name", LVCFMT_CENTER, 250);
 	m_listExportFuncs->InsertColumn(5, L"Forwarder Name", LVCFMT_CENTER, 400);
 
-	const auto pExport = m_pLibpe->GetExport();
-	if (pExport == nullptr)
+	const auto& pExport = m_pMainDoc->GetExport();
+	if (!pExport)
 		return;
 
 	int listindex = 0;
-	const auto dwOffset = m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions);
+	const auto dwOffset = m_pMainDoc->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions);
 	m_listExportFuncs->SetRedraw(FALSE); //to increase the speed of List populating
 	for (const auto& iterFuncs : pExport->vecFuncs) {
 		m_listExportFuncs->InsertItem(listindex, std::format(L"{:08X}", static_cast<DWORD>(dwOffset + sizeof(DWORD) * iterFuncs.dwOrdinal)).data());
@@ -359,7 +358,7 @@ void CViewRightBL::CreateListExportFuncs()
 
 void CViewRightBL::CreateListImportFuncs()
 {
-	if (m_pLibpe->GetImport() == nullptr)
+	if (!m_pMainDoc->GetImport())
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -375,8 +374,8 @@ void CViewRightBL::CreateListImportFuncs()
 
 void CViewRightBL::CreateTreeResources()
 {
-	const auto pstResRoot = m_pLibpe->GetResources();
-	if (pstResRoot == nullptr)
+	const auto& pstResRoot = m_pMainDoc->GetResources();
+	if (!pstResRoot)
 		return;
 
 	m_treeResBottom.Create(TVS_LINESATROOT | TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
@@ -449,7 +448,7 @@ void CViewRightBL::CreateTreeResources()
 
 void CViewRightBL::CreateListRelocsEntry()
 {
-	if (m_pLibpe->GetRelocations() == nullptr)
+	if (!m_pMainDoc->GetRelocations())
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -464,7 +463,7 @@ void CViewRightBL::CreateListRelocsEntry()
 
 void CViewRightBL::CreateListDelayImpFuncs()
 {
-	if (m_pLibpe->GetDelayImport() == nullptr)
+	if (!m_pMainDoc->GetDelayImport())
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -500,8 +499,8 @@ void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry)
 {
-	const auto pRichHeader = m_pLibpe->GetRichHeader();
-	if (pRichHeader == nullptr || dwEntry >= pRichHeader->size())
+	const auto& pRichHeader = m_pMainDoc->GetRichHeader();
+	if (!pRichHeader || dwEntry >= pRichHeader->size())
 		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
@@ -518,8 +517,8 @@ void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowNtHdrHexEntry()
 {
-	const auto pNTHdr = m_pLibpe->GetNTHeader();
-	if (pNTHdr == nullptr)
+	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
+	if (!pNTHdr)
 		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
@@ -535,8 +534,8 @@ void CViewRightBL::ShowNtHdrHexEntry()
 
 void CViewRightBL::ShowFileHdrHexEntry(DWORD dwEntry)
 {
-	const auto pNTHdr = m_pLibpe->GetNTHeader();
-	if (pNTHdr == nullptr || dwEntry >= g_mapFileHeader.size())
+	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
+	if (!pNTHdr || dwEntry >= g_mapFileHeader.size())
 		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
@@ -553,8 +552,8 @@ void CViewRightBL::ShowFileHdrHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
 {
-	const auto pNTHdr = m_pLibpe->GetNTHeader();
-	if (pNTHdr == nullptr)
+	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
+	if (!pNTHdr)
 		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
@@ -565,11 +564,11 @@ void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
 
 	DWORD dwOffset { };
 	DWORD dwSize { };
-	if (stFileInfo.fIsPE32) {
+	if (m_stFileInfo.eFileType == EFileType::PE32) {
 		dwOffset = pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + g_mapOptHeader32.at(dwEntry).dwOffset;
 		dwSize = g_mapOptHeader32.at(dwEntry).dwSize;
 	}
-	else if (stFileInfo.fIsPE64) {
+	else if (m_stFileInfo.eFileType == EFileType::PE64) {
 		dwOffset = pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader) + g_mapOptHeader64.at(dwEntry).dwOffset;
 		dwSize = g_mapOptHeader64.at(dwEntry).dwSize;
 	}
@@ -582,8 +581,8 @@ void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
 {
-	const auto pNTHdr = m_pLibpe->GetNTHeader();
-	if (pNTHdr == nullptr)
+	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
+	if (!pNTHdr)
 		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
@@ -595,7 +594,7 @@ void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
 	CRect rc;
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	const auto dwOffset = stFileInfo.fIsPE32 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader)
+	const auto dwOffset = m_stFileInfo.eFileType == EFileType::PE32 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader)
 		+ offsetof(IMAGE_OPTIONAL_HEADER32, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry
 		: pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader)
 		+ offsetof(IMAGE_OPTIONAL_HEADER64, DataDirectory) + sizeof(IMAGE_DATA_DIRECTORY) * dwEntry;
@@ -604,8 +603,8 @@ void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowSecHdrHexEntry(DWORD dwEntry)
 {
-	const auto pSecHeaders = m_pLibpe->GetSecHeaders();
-	if (pSecHeaders == nullptr || dwEntry >= pSecHeaders->size())
+	const auto& pSecHeaders = m_pMainDoc->GetSecHeaders();
+	if (!pSecHeaders || dwEntry >= pSecHeaders->size())
 		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
@@ -622,8 +621,8 @@ void CViewRightBL::ShowSecHdrHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
 {
-	const auto pLCD = m_pLibpe->GetLoadConfig();
-	if (pLCD == nullptr || dwEntry >= g_mapLCD32.size())
+	const auto& pLCD = m_pMainDoc->GetLoadConfig();
+	if (!pLCD || dwEntry >= g_mapLCD32.size())
 		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
@@ -637,7 +636,7 @@ void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
 
 	DWORD dwOffset = pLCD->dwOffset;
 	DWORD dwSize;
-	if (stFileInfo.fIsPE32) {
+	if (m_stFileInfo.eFileType == EFileType::PE32) {
 		dwOffset += g_mapLCD32.at(dwEntry).dwOffset;
 		dwSize = g_mapLCD32.at(dwEntry).dwSize;
 	}
@@ -650,8 +649,8 @@ void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 {
-	const auto pImport = m_pLibpe->GetImport();
-	if (pImport == nullptr || dwEntry >= pImport->size())
+	const auto& pImport = m_pMainDoc->GetImport();
+	if (!pImport || dwEntry >= pImport->size())
 		return;
 
 	m_listImportEntry->DeleteAllItems();
@@ -662,31 +661,30 @@ void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 
 	int listindex = 0;
 	const auto& rImp = pImport->at(dwEntry).stImportDesc;
-	auto dwThunkOffset = m_pLibpe->GetOffsetFromRVA(rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk);
+	auto dwThunkOffset = m_pMainDoc->GetOffsetFromRVA(rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk);
 	auto dwThunkRVA = rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk;
 
 	m_listImportEntry->SetRedraw(FALSE);
 	for (const auto& iterFuncs : pImport->at(dwEntry).vecImportFunc) {
 		m_listImportEntry->InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
-		dwThunkOffset += stFileInfo.fIsPE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
+		dwThunkOffset += m_stFileInfo.eFileType == EFileType::PE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		m_listImportEntry->SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
-		m_listImportEntry->SetItemText(listindex, 2, std::format(L"{:04X}",
-			stFileInfo.fIsPE32 ?
+		m_listImportEntry->SetItemText(listindex, 2, std::format(L"{:04X}", m_stFileInfo.eFileType == EFileType::PE32 ?
 			((iterFuncs.unThunk.stThunk32.u1.Ordinal & IMAGE_ORDINAL_FLAG32) ?
 				IMAGE_ORDINAL32(iterFuncs.unThunk.stThunk32.u1.Ordinal) : iterFuncs.stImpByName.Hint)
 			: ((iterFuncs.unThunk.stThunk64.u1.Ordinal & IMAGE_ORDINAL_FLAG64) ?
 				IMAGE_ORDINAL64(iterFuncs.unThunk.stThunk64.u1.Ordinal) : iterFuncs.stImpByName.Hint)).data());
 
 		std::wstring wstrAddr;
-		if (stFileInfo.fIsPE32) {
+		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.stThunk32.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsPE64) {
+		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.stThunk64.u1.AddressOfData);
 		}
 		m_listImportEntry->SetItemText(listindex, 3, wstrAddr.data());
 		m_listImportEntry->SetItemText(listindex, 4, std::format(L"{:08X}", dwThunkRVA).data());
-		dwThunkRVA += stFileInfo.fIsPE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
+		dwThunkRVA += m_stFileInfo.eFileType == EFileType::PE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		++listindex;
 	}
 	m_listImportEntry->SetRedraw(TRUE);
@@ -698,8 +696,8 @@ void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId)
 {
-	const auto pSec = m_pLibpe->GetSecurity();
-	if (pSec == nullptr || nSertId >= pSec->size())
+	const auto& pSec = m_pMainDoc->GetSecurity();
+	if (!pSec || nSertId >= pSec->size())
 		return;
 
 	const auto& secEntry = pSec->at(nSertId).stWinSert;
@@ -719,8 +717,8 @@ void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId)
 
 void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry)
 {
-	const auto pReloc = m_pLibpe->GetRelocations();
-	if (pReloc == nullptr || dwEntry >= pReloc->size())
+	const auto& pReloc = m_pMainDoc->GetRelocations();
+	if (!pReloc || dwEntry >= pReloc->size())
 		return;
 
 	m_listRelocsEntry->DeleteAllItems();
@@ -749,56 +747,55 @@ void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 {
-	const auto pDelayImport = m_pLibpe->GetDelayImport();
-	if (pDelayImport == nullptr || dwEntry >= pDelayImport->size())
+	const auto& pDelayImport = m_pMainDoc->GetDelayImport();
+	if (!pDelayImport || dwEntry >= pDelayImport->size())
 		return;
 
 	m_listDelayImportEntry->DeleteAllItems();
 
 	int listindex = 0;
-	auto dwThunkOffset = m_pLibpe->GetOffsetFromRVA(pDelayImport->at(dwEntry).stDelayImpDesc.ImportNameTableRVA);
+	auto dwThunkOffset = m_pMainDoc->GetOffsetFromRVA(pDelayImport->at(dwEntry).stDelayImpDesc.ImportNameTableRVA);
 
 	m_listDelayImportEntry->SetRedraw(FALSE);
 	for (const auto& iterFuncs : pDelayImport->at(dwEntry).vecDelayImpFunc) {
 		m_listDelayImportEntry->InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
-		dwThunkOffset += stFileInfo.fIsPE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
+		dwThunkOffset += m_stFileInfo.eFileType == EFileType::PE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		m_listDelayImportEntry->SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
-		m_listDelayImportEntry->SetItemText(listindex, 2, std::format(L"{:04X}",
-			stFileInfo.fIsPE32 ?
+		m_listDelayImportEntry->SetItemText(listindex, 2, std::format(L"{:04X}", m_stFileInfo.eFileType == EFileType::PE32 ?
 			((iterFuncs.unThunk.st32.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG32) ?
 				IMAGE_ORDINAL32(iterFuncs.unThunk.st32.stImportNameTable.u1.Ordinal) : iterFuncs.stImpByName.Hint)
 			: ((iterFuncs.unThunk.st64.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG64) ?
 				IMAGE_ORDINAL64(iterFuncs.unThunk.st64.stImportNameTable.u1.Ordinal) : iterFuncs.stImpByName.Hint)).data());
 
 		std::wstring wstrAddr;
-		if (stFileInfo.fIsPE32) {
+		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stImportNameTable.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsPE64) {
+		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stImportNameTable.u1.AddressOfData);
 		}
 		m_listDelayImportEntry->SetItemText(listindex, 3, wstrAddr.data());
 
-		if (stFileInfo.fIsPE32) {
+		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stImportAddressTable.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsPE64) {
+		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stImportAddressTable.u1.AddressOfData);
 		}
 		m_listDelayImportEntry->SetItemText(listindex, 4, wstrAddr.data());
 
-		if (stFileInfo.fIsPE32) {
+		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stBoundImportAddressTable.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsPE64) {
+		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stBoundImportAddressTable.u1.AddressOfData);
 		}
 		m_listDelayImportEntry->SetItemText(listindex, 5, wstrAddr.data());
 
-		if (stFileInfo.fIsPE32) {
+		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stUnloadInformationTable.u1.AddressOfData);
 		}
-		else if (stFileInfo.fIsPE64) {
+		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stUnloadInformationTable.u1.AddressOfData);
 		}
 		m_listDelayImportEntry->SetItemText(listindex, 6, wstrAddr.data());
@@ -815,8 +812,8 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowDebugHexEntry(DWORD dwEntry)
 {
-	const auto pDebug = m_pLibpe->GetDebug();
-	if (pDebug == nullptr || dwEntry >= pDebug->size())
+	const auto& pDebug = m_pMainDoc->GetDebug();
+	if (!pDebug || dwEntry >= pDebug->size())
 		return;
 
 	const auto& rDebugDir = pDebug->at(dwEntry).stDebugDir;
@@ -834,8 +831,8 @@ void CViewRightBL::ShowDebugHexEntry(DWORD dwEntry)
 
 void CViewRightBL::ShowTLSHex()
 {
-	const auto pTLS = m_pLibpe->GetTLS();
-	if (pTLS == nullptr)
+	const auto& pTLS = m_pMainDoc->GetTLS();
+	if (!pTLS)
 		return;
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
@@ -847,18 +844,19 @@ void CViewRightBL::ShowTLSHex()
 	GetClientRect(&rc);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 
-	ULONGLONG ullStartAdr { }, ullEndAdr { };
-	if (stFileInfo.fIsPE32) {
+	ULONGLONG ullStartAdr { };
+	ULONGLONG ullEndAdr { };
+	if (m_stFileInfo.eFileType == EFileType::PE32) {
 		ullStartAdr = pTLS->unTLS.stTLSDir32.StartAddressOfRawData;
 		ullEndAdr = pTLS->unTLS.stTLSDir32.EndAddressOfRawData;
 	}
-	else if (stFileInfo.fIsPE64) {
+	else if (m_stFileInfo.eFileType == EFileType::PE64) {
 		ullStartAdr = pTLS->unTLS.stTLSDir64.StartAddressOfRawData;
 		ullEndAdr = pTLS->unTLS.stTLSDir64.EndAddressOfRawData;
 	}
 
-	const auto dwOffsetStart = m_pLibpe->GetOffsetFromVA(ullStartAdr);
-	const auto dwOffsetEnd = m_pLibpe->GetOffsetFromVA(ullEndAdr);
+	const auto dwOffsetStart = m_pMainDoc->GetOffsetFromVA(ullStartAdr);
+	const auto dwOffsetEnd = m_pMainDoc->GetOffsetFromVA(ullEndAdr);
 	const auto dwSize = dwOffsetEnd > dwOffsetStart ? dwOffsetEnd - dwOffsetStart : 0U;
 	m_pFileLoader->ShowFilePiece(dwOffsetStart, dwSize, m_stHexEdit.get());
 }

@@ -19,7 +19,6 @@ private:
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewLeft);
 private:
-	Ilibpe* m_pLibpe { };
 	CPepperDoc* m_pMainDoc { };
 	CTreeEx m_stTreeMain;
 	CImageList m_ImgListRootTree;

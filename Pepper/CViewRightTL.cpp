@@ -30,7 +30,6 @@ void CViewRightTL::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->GetLibpe();
 	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
 
 	LOGFONTW lf { };
@@ -44,28 +43,23 @@ void CViewRightTL::OnInitialUpdate()
 		m_fontSummary.CreateFontIndirectW(&lf);
 	}
 
-	stFileInfo = m_pLibpe->GetFileInfo();
+	m_stFileInfo = m_pMainDoc->GetFileInfo();
 
 	m_wstrFullPath = L"Full path: " + m_pMainDoc->GetPathName();
 	m_wstrFileName = m_pMainDoc->GetPathName();
 	m_wstrFileName.erase(0, m_wstrFileName.find_last_of('\\') + 1);
 	m_wstrFileName.insert(0, L"File name: ");
 
-	if (stFileInfo.fIsPE32)
+	if (m_stFileInfo.eFileType == EFileType::PE32) {
 		m_wstrFileType = L"File type: PE32 (x86)";
-	else if (stFileInfo.fIsPE64)
+	}
+	else if (m_stFileInfo.eFileType == EFileType::PE64) {
 		m_wstrFileType = L"File type: PE32+ (x64)";
-	else
+	}
+	else {
 		m_wstrFileType = L"File type: unknown";
-
+	}
 	m_wstrPepperVersion = WSTR_PEPPER_VERSION;
-
-	//There can be the absence of some structures in PE.
-	//So it's ok to return not S_OK here.
-	m_pSecHeaders = m_pLibpe->GetSecHeaders();
-	m_pImport = m_pLibpe->GetImport();
-	m_pExceptionDir = m_pLibpe->GetExceptions();
-	m_pRelocTable = m_pLibpe->GetRelocations();
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
@@ -372,9 +366,10 @@ void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
 	auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	auto* pItem = &pDispInfo->item;
+	const auto& pSecHeaders = m_pMainDoc->GetSecHeaders();
 
 	if (pItem->mask & LVIF_TEXT) {
-		const auto& refAt = m_pSecHeaders->at(pItem->iItem);
+		const auto& refAt = pSecHeaders->at(pItem->iItem);
 		const auto& refDescr = refAt.stSecHdr;
 		switch (pItem->iSubItem) {
 		case 0:
@@ -424,9 +419,10 @@ void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	if (pNMI->iSubItem != 10)
 		return;
 
+	const auto& pSecHeaders = m_pMainDoc->GetSecHeaders();
 	std::wstring wstrTipText;
 	for (const auto& flags : MapSecHdrCharact) {
-		if (flags.first & m_pSecHeaders->at(pNMI->iItem).stSecHdr.Characteristics) {
+		if (flags.first & pSecHeaders->at(pNMI->iItem).stSecHdr.Characteristics) {
 			wstrTipText += flags.second;
 			wstrTipText += L"\n";
 		}
@@ -442,9 +438,10 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
+	const auto& pImport = m_pMainDoc->GetImport();
 
 	if (pItem->mask & LVIF_TEXT) {
-		const auto& refAt = m_pImport->at(pItem->iItem);
+		const auto& refAt = pImport->at(pItem->iItem);
 		const auto& refDescr = refAt.stImportDesc;
 		switch (pItem->iSubItem) {
 		case 0:
@@ -476,12 +473,13 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 {
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
+	const auto& pRelocTable = m_pMainDoc->GetRelocations();
 
 	if (pItem->mask & LVIF_TEXT) {
-		const auto& refDescr = m_pRelocTable->at(pItem->iItem).stBaseReloc;
+		const auto& refDescr = pRelocTable->at(pItem->iItem).stBaseReloc;
 		switch (pItem->iSubItem) {
 		case 0:
-			*std::format_to(pItem->pszText, L"{:08X}", m_pRelocTable->at(pItem->iItem).dwOffset) = '\0';
+			*std::format_to(pItem->pszText, L"{:08X}", pRelocTable->at(pItem->iItem).dwOffset) = '\0';
 			break;
 		case 1:
 			*std::format_to(pItem->pszText, L"{:08X}", refDescr.VirtualAddress) = '\0';
@@ -500,9 +498,10 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult
 {
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
+	const auto& pExceptionDir = m_pMainDoc->GetExceptions();
 
 	if (pItem->mask & LVIF_TEXT) {
-		const auto& ref = m_pExceptionDir->at(pItem->iItem);
+		const auto& ref = pExceptionDir->at(pItem->iItem);
 		DWORD dwFmtData { };
 		switch (pItem->iSubItem) {
 		case 0:
@@ -526,8 +525,8 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 {
 	DWORD dwOffset { }, dwSize = 0;
 
-	const auto pExport = m_pLibpe->GetExport();
-	if (pExport == nullptr)
+	const auto& pExport = m_pMainDoc->GetExport();
+	if (!pExport)
 		return;
 
 	switch (wMenuID) {
@@ -541,19 +540,19 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 	{
 		switch (m_iListItem) {
 		case 4: //Name
-			dwOffset = m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.Name);
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pExport->stExportDesc.Name);
 			dwSize = static_cast<DWORD>(pExport->strModuleName.size());
 			break;
 		case 8: //AddressOfFunctions
-			dwOffset = m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions);
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions);
 			dwSize = 1;
 			break;
 		case 9: //AddressOfNames
-			dwOffset = m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfNames);
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pExport->stExportDesc.AddressOfNames);
 			dwSize = 1;
 			break;
 		case 10: //AddressOfOrdinals
-			dwOffset = m_pLibpe->GetOffsetFromRVA(pExport->stExportDesc.AddressOfNameOrdinals);
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pExport->stExportDesc.AddressOfNameOrdinals);
 			dwSize = 1;
 			break;
 		}
@@ -567,41 +566,44 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 
 void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 {
-	const auto fx32 = stFileInfo.fIsPE32;
-	const auto fx64 = stFileInfo.fIsPE64;
+	const auto& pImport = m_pMainDoc->GetImport();
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
 
 	switch (wMenuID) {
 	case IDM_LIST_GOTODESCOFFSET:
-		dwOffset = m_pImport->at(m_iListItem).dwOffset;
+		dwOffset = pImport->at(m_iListItem).dwOffset;
 		dwSize = sizeof(IMAGE_IMPORT_DESCRIPTOR);
 		break;
 	case IDM_LIST_GOTODATAOFFSET:
 		switch (m_iListSubItem) {
 		case 1: //Str dll name
 		case 5: //Name
-			dwOffset = m_pLibpe->GetOffsetFromRVA(m_pImport->at(m_iListItem).stImportDesc.Name);
-			dwSize = static_cast<DWORD>(m_pImport->at(m_iListItem).strModuleName.size());
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pImport->at(m_iListItem).stImportDesc.Name);
+			dwSize = static_cast<DWORD>(pImport->at(m_iListItem).strModuleName.size());
 			break; ;
 		case 2: //OriginalFirstThunk 
-			dwOffset = m_pLibpe->GetOffsetFromRVA(m_pImport->at(m_iListItem).stImportDesc.OriginalFirstThunk);
-			if (fx32)
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pImport->at(m_iListItem).stImportDesc.OriginalFirstThunk);
+			if (m_stFileInfo.eFileType == EFileType::PE32) {
 				dwSize = sizeof(IMAGE_THUNK_DATA32);
-			else if (fx64)
+			}
+			else if (m_stFileInfo.eFileType == EFileType::PE64) {
 				dwSize = sizeof(IMAGE_THUNK_DATA64);
+			}
 			break;
 		case 3: //TimeDateStamp
 			break;
 		case 4: //ForwarderChain
-			dwOffset = m_pLibpe->GetOffsetFromRVA(m_pImport->at(m_iListItem).stImportDesc.ForwarderChain);
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pImport->at(m_iListItem).stImportDesc.ForwarderChain);
 			break;
 		case 6: //FirstThunk
-			dwOffset = m_pLibpe->GetOffsetFromRVA(m_pImport->at(m_iListItem).stImportDesc.FirstThunk);
-			if (fx32)
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pImport->at(m_iListItem).stImportDesc.FirstThunk);
+			if (m_stFileInfo.eFileType == EFileType::PE32) {
 				dwSize = sizeof(IMAGE_THUNK_DATA32);
-			else if (fx64)
+			}
+			else if (m_stFileInfo.eFileType == EFileType::PE64) {
 				dwSize = sizeof(IMAGE_THUNK_DATA64);
+			}
 			break;
 		}
 		break;
@@ -613,55 +615,55 @@ void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 
 void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 {
-	const auto fx32 = stFileInfo.fIsPE32;
-	const auto fx64 = stFileInfo.fIsPE64;
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
 
-	const auto pTLSDir = m_pLibpe->GetTLS();
-	if (pTLSDir == nullptr)
+	const auto& pTLSDir = m_pMainDoc->GetTLS();
+	if (!pTLSDir)
 		return;
 
 	switch (wMenuID) {
 	case IDM_LIST_GOTODESCOFFSET:
 		dwOffset = pTLSDir->dwOffset;
-		if (fx32)
+		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			dwSize = sizeof(IMAGE_TLS_DIRECTORY32);
-		else if (fx64)
+		}
+		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			dwSize = sizeof(IMAGE_TLS_DIRECTORY64);
+		}
 		break;
 	case IDM_LIST_GOTODATAOFFSET:
 	{
 		dwSize = 1; //Just highlight a starting address of one of a TLS field.
-		if (fx32) {
+		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			const auto pTLSDir32 = &pTLSDir->unTLS.stTLSDir32;
 
 			switch (m_iListItem) {
 			case 0: //StartAddressOfRawData
-				dwOffset = m_pLibpe->GetOffsetFromVA(pTLSDir32->StartAddressOfRawData);
+				dwOffset = m_pMainDoc->GetOffsetFromVA(pTLSDir32->StartAddressOfRawData);
 				break;
 			case 2: //AddressOfIndex
-				dwOffset = m_pLibpe->GetOffsetFromVA(pTLSDir32->AddressOfIndex);
+				dwOffset = m_pMainDoc->GetOffsetFromVA(pTLSDir32->AddressOfIndex);
 				break;
 			case 3: //AddressOfCallBacks
-				dwOffset = m_pLibpe->GetOffsetFromVA(pTLSDir32->AddressOfCallBacks);
+				dwOffset = m_pMainDoc->GetOffsetFromVA(pTLSDir32->AddressOfCallBacks);
 				break;
 			default:
 				dwSize = 0; //To not process other fields.
 			}
 		}
-		else if (fx64) {
+		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			const auto pTLSDir64 = &pTLSDir->unTLS.stTLSDir64;
 
 			switch (m_iListItem) {
 			case 0: //StartAddressOfRawData
-				dwOffset = m_pLibpe->GetOffsetFromRVA(pTLSDir64->StartAddressOfRawData);
+				dwOffset = m_pMainDoc->GetOffsetFromRVA(pTLSDir64->StartAddressOfRawData);
 				break;
 			case 2: //AddressOfIndex
-				dwOffset = m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfIndex);
+				dwOffset = m_pMainDoc->GetOffsetFromRVA(pTLSDir64->AddressOfIndex);
 				break;
 			case 3: //AddressOfCallBacks
-				dwOffset = m_pLibpe->GetOffsetFromRVA(pTLSDir64->AddressOfCallBacks);
+				dwOffset = m_pMainDoc->GetOffsetFromRVA(pTLSDir64->AddressOfCallBacks);
 				break;
 			default:
 				dwSize = 0; //To not process other fields.
@@ -679,8 +681,8 @@ void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID)
 {
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
-	const auto pBoundImp = m_pLibpe->GetBoundImport();
-	if (pBoundImp == nullptr)
+	const auto& pBoundImp = m_pMainDoc->GetBoundImport();
+	if (!pBoundImp)
 		return;
 
 	switch (wMenuID) {
@@ -694,7 +696,7 @@ void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID)
 	{
 		switch (m_iListSubItem) {
 		case 3: //OffsetModuleName
-			dwOffset = m_pLibpe->GetOffsetFromRVA(pBoundImp->at(m_iListItem).stBoundImpDesc.OffsetModuleName);
+			dwOffset = m_pMainDoc->GetOffsetFromRVA(pBoundImp->at(m_iListItem).stBoundImpDesc.OffsetModuleName);
 			dwSize = static_cast<DWORD>(pBoundImp->at(m_iListItem).strBoundName.size());
 			break;
 		}
@@ -710,8 +712,8 @@ void CViewRightTL::OnListCOMDescMenuSelect(WORD wMenuID)
 {
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
-	const auto pCOMDesc = m_pLibpe->GetCOMDescriptor();
-	if (pCOMDesc == nullptr)
+	const auto& pCOMDesc = m_pMainDoc->GetCOMDescriptor();
+	if (!pCOMDesc)
 		return;
 
 	switch (wMenuID) {
@@ -736,8 +738,8 @@ void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	if (pTree->itemNew.hItem == m_hTreeResRoot)
 		return;
 
-	const auto pstResRoot = m_pLibpe->GetResources();
-	if (pstResRoot == nullptr)
+	const auto& pstResRoot = m_pMainDoc->GetResources();
+	if (!pstResRoot)
 		return;
 
 	const auto& [idlvlRoot, idlvl2, idlvl3] = m_vecResId.at(m_treeResTop.GetItemData(pTree->itemNew.hItem));
@@ -763,8 +765,8 @@ void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 void CViewRightTL::CreateListDOSHeader()
 {
-	const auto pDosHeader = m_pLibpe->GetMSDOSHeader();
-	if (pDosHeader == nullptr)
+	const auto& pDosHeader = m_pMainDoc->GetDOSHeader();
+	if (!pDosHeader)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -781,8 +783,9 @@ void CViewRightTL::CreateListDOSHeader()
 		const auto& ref = g_mapDOSHeader.at(iter);
 		const auto dwOffset = ref.dwOffset;
 		const auto dwSize = ref.dwSize;
+
 		//Get a pointer to an offset and then take only needed amount of bytes (by &...).
-		auto dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pDosHeader) + dwOffset))
+		auto dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(&*pDosHeader) + dwOffset))
 			& (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
 		if (iter == 0) //e_magic
@@ -797,8 +800,8 @@ void CViewRightTL::CreateListDOSHeader()
 
 void CViewRightTL::CreateListRichHeader()
 {
-	const auto pRichHeader = m_pLibpe->GetRichHeader();
-	if (pRichHeader == nullptr)
+	const auto& pRichHeader = m_pMainDoc->GetRichHeader();
+	if (!pRichHeader)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -827,8 +830,8 @@ void CViewRightTL::CreateListRichHeader()
 
 void CViewRightTL::CreateListNTHeader()
 {
-	const auto pNTHdr = m_pLibpe->GetNTHeader();
-	if (pNTHdr == nullptr)
+	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
+	if (!pNTHdr)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -856,8 +859,8 @@ void CViewRightTL::CreateListNTHeader()
 
 void CViewRightTL::CreateListFileHeader()
 {
-	const auto pNTHdr = m_pLibpe->GetNTHeader();
-	if (pNTHdr == nullptr)
+	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
+	if (!pNTHdr)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -912,8 +915,8 @@ void CViewRightTL::CreateListFileHeader()
 
 void CViewRightTL::CreateListOptHeader()
 {
-	const auto pNTHdr = m_pLibpe->GetNTHeader();
-	if (pNTHdr == nullptr)
+	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
+	if (!pNTHdr)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -926,10 +929,10 @@ void CViewRightTL::CreateListOptHeader()
 	m_listOptHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listOptHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 140);
 
-	const auto dwOffsetBase = stFileInfo.fIsPE32 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) :
+	const auto dwOffsetBase = m_stFileInfo.eFileType == EFileType::PE32 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) :
 		pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader);
-	const auto dwSubsystemPos = stFileInfo.fIsPE32 ? 22U : 21U;  //Position in struct is different in x86 and x64.
-	const auto dwDllCharactPos = stFileInfo.fIsPE32 ? 23U : 22U; //Position in struct is different in x86 and x64.
+	const auto dwSubsystemPos = m_stFileInfo.eFileType == EFileType::PE32 ? 22U : 21U;  //Position in struct is different in x86 and x64.
+	const auto dwDllCharactPos = m_stFileInfo.eFileType == EFileType::PE32 ? 23U : 22U; //Position in struct is different in x86 and x64.
 	const auto lmbOptHdr = [&](const auto& stOptHdr, const auto& mapOptHdr) {
 		for (auto iter { 0U }; iter < mapOptHdr.size(); ++iter) {
 			const auto& ref = mapOptHdr.at(iter);
@@ -967,18 +970,18 @@ void CViewRightTL::CreateListOptHeader()
 			}
 		}
 	};
-	stFileInfo.fIsPE32 ? lmbOptHdr(pNTHdr->unHdr.stNTHdr32.OptionalHeader, g_mapOptHeader32)
+	m_stFileInfo.eFileType == EFileType::PE32 ? lmbOptHdr(pNTHdr->unHdr.stNTHdr32.OptionalHeader, g_mapOptHeader32)
 		: lmbOptHdr(pNTHdr->unHdr.stNTHdr64.OptionalHeader, g_mapOptHeader64);
 }
 
 void CViewRightTL::CreateListDataDirs()
 {
-	const auto pvecDataDirs = m_pLibpe->GetDataDirs();
-	if (pvecDataDirs == nullptr)
+	const auto& pvecDataDirs = m_pMainDoc->GetDataDirs();
+	if (!pvecDataDirs)
 		return;
 
-	const auto pNTHdr = m_pLibpe->GetNTHeader();
-	if (pNTHdr == nullptr)
+	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
+	if (!pNTHdr)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -992,7 +995,7 @@ void CViewRightTL::CreateListDataDirs()
 	m_listDataDirs->InsertColumn(3, L"Directory Size", LVCFMT_CENTER, 100);
 	m_listDataDirs->InsertColumn(4, L"Resides in Section", LVCFMT_CENTER, 125);
 
-	const auto dwDataDirsOffset = stFileInfo.fIsPE32 ? offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory) :
+	const auto dwDataDirsOffset = m_stFileInfo.eFileType == EFileType::PE32 ? offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory) :
 		offsetof(IMAGE_NT_HEADERS64, OptionalHeader.DataDirectory);
 	for (auto iter { 0U }; iter < pvecDataDirs->size(); ++iter) {
 		const auto& ref = pvecDataDirs->at(static_cast<size_t>(iter));
@@ -1013,7 +1016,8 @@ void CViewRightTL::CreateListDataDirs()
 
 void CViewRightTL::CreateListSecHeaders()
 {
-	if (!m_pSecHeaders)
+	const auto& pSecHeaders = m_pMainDoc->GetSecHeaders();
+	if (!pSecHeaders)
 		return;
 
 	m_stlcs.dwStyle = LVS_OWNERDATA;
@@ -1032,13 +1036,13 @@ void CViewRightTL::CreateListSecHeaders()
 	m_listSecHeaders->InsertColumn(8, L"NumberOfRelocations", LVCFMT_CENTER, 150);
 	m_listSecHeaders->InsertColumn(9, L"NumberOfLinenumbers", LVCFMT_CENTER, 160);
 	m_listSecHeaders->InsertColumn(10, L"Characteristics", LVCFMT_CENTER, 115);
-	m_listSecHeaders->SetItemCountEx(static_cast<int>(m_pSecHeaders->size()), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+	m_listSecHeaders->SetItemCountEx(static_cast<int>(pSecHeaders->size()), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
 }
 
 void CViewRightTL::CreateListExport()
 {
-	const auto pExport = m_pLibpe->GetExport();
-	if (pExport == nullptr)
+	const auto& pExport = m_pMainDoc->GetExport();
+	if (!pExport)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -1078,7 +1082,8 @@ void CViewRightTL::CreateListExport()
 
 void CViewRightTL::CreateListImport()
 {
-	if (!m_pImport)
+	const auto& pImport = m_pMainDoc->GetImport();
+	if (!pImport)
 		return;
 
 	m_stlcs.dwStyle = LVS_OWNERDATA;
@@ -1093,13 +1098,13 @@ void CViewRightTL::CreateListImport()
 	m_listImport->InsertColumn(4, L"ForwarderChain", LVCFMT_CENTER, 110);
 	m_listImport->InsertColumn(5, L"Name RVA", LVCFMT_CENTER, 90);
 	m_listImport->InsertColumn(6, L"FirstThunk (IAT)", LVCFMT_CENTER, 135);
-	m_listImport->SetItemCountEx(static_cast<int>(m_pImport->size()), LVSICF_NOSCROLL);
+	m_listImport->SetItemCountEx(static_cast<int>(pImport->size()), LVSICF_NOSCROLL);
 }
 
 void CViewRightTL::CreateTreeResources()
 {
-	const auto pResRoot = m_pLibpe->GetResources();
-	if (pResRoot == nullptr)
+	const auto& pResRoot = m_pMainDoc->GetResources();
+	if (!pResRoot)
 		return;
 
 	m_treeResTop.Create(TVS_SHOWSELALWAYS | TVS_HASBUTTONS | TVS_HASLINES | WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
@@ -1182,7 +1187,8 @@ void CViewRightTL::CreateTreeResources()
 
 void CViewRightTL::CreateListExceptions()
 {
-	if (!m_pExceptionDir)
+	const auto& pExceptionDir = m_pMainDoc->GetExceptions();
+	if (!pExceptionDir)
 		return;
 
 	m_stlcs.dwStyle = LVS_OWNERDATA;
@@ -1194,13 +1200,13 @@ void CViewRightTL::CreateListExceptions()
 	m_listExceptionDir->InsertColumn(1, L"BeginAddress", LVCFMT_CENTER, 100);
 	m_listExceptionDir->InsertColumn(2, L"EndAddress", LVCFMT_CENTER, 100);
 	m_listExceptionDir->InsertColumn(3, L"UnwindData/InfoAddress", LVCFMT_CENTER, 180);
-	m_listExceptionDir->SetItemCountEx(static_cast<int>(m_pExceptionDir->size()), LVSICF_NOSCROLL);
+	m_listExceptionDir->SetItemCountEx(static_cast<int>(pExceptionDir->size()), LVSICF_NOSCROLL);
 }
 
 void CViewRightTL::CreateListSecurity()
 {
-	const auto pSecurityDir = m_pLibpe->GetSecurity();
-	if (pSecurityDir == nullptr)
+	const auto& pSecurityDir = m_pMainDoc->GetSecurity();
+	if (!pSecurityDir)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -1231,7 +1237,8 @@ void CViewRightTL::CreateListSecurity()
 
 void CViewRightTL::CreateListRelocations()
 {
-	if (!m_pRelocTable)
+	const auto& pRelocTable = m_pMainDoc->GetRelocations();
+	if (!pRelocTable)
 		return;
 
 	m_stlcs.dwStyle = LVS_OWNERDATA;
@@ -1243,13 +1250,13 @@ void CViewRightTL::CreateListRelocations()
 	m_listRelocDir->InsertColumn(1, L"Virtual Address", LVCFMT_CENTER, 115);
 	m_listRelocDir->InsertColumn(2, L"Block Size", LVCFMT_CENTER, 100);
 	m_listRelocDir->InsertColumn(3, L"Entries", LVCFMT_CENTER, 100);
-	m_listRelocDir->SetItemCountEx(static_cast<int>(m_pRelocTable->size()), LVSICF_NOSCROLL);
+	m_listRelocDir->SetItemCountEx(static_cast<int>(pRelocTable->size()), LVSICF_NOSCROLL);
 }
 
 void CViewRightTL::CreateListDebug()
 {
-	const auto pDebugDir = m_pLibpe->GetDebug();
-	if (pDebugDir == nullptr)
+	const auto& pDebugDir = m_pMainDoc->GetDebug();
+	if (!pDebugDir)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -1293,8 +1300,8 @@ void CViewRightTL::CreateListDebug()
 
 void CViewRightTL::CreateListTLS()
 {
-	const auto pTLSDir = m_pLibpe->GetTLS();
-	if (pTLSDir == nullptr)
+	const auto& pTLSDir = m_pMainDoc->GetTLS();
+	if (!pTLSDir)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -1326,13 +1333,13 @@ void CViewRightTL::CreateListTLS()
 			}
 		}
 	};
-	stFileInfo.fIsPE32 ? lmbTLS(pTLSDir->unTLS.stTLSDir32, g_mapTLS32) : lmbTLS(pTLSDir->unTLS.stTLSDir64, g_mapTLS64);
+	m_stFileInfo.eFileType == EFileType::PE32 ? lmbTLS(pTLSDir->unTLS.stTLSDir32, g_mapTLS32) : lmbTLS(pTLSDir->unTLS.stTLSDir64, g_mapTLS64);
 }
 
 void CViewRightTL::CreateListLCD()
 {
-	const auto pLCD = m_pLibpe->GetLoadConfig();
-	if (pLCD == nullptr)
+	const auto& pLCD = m_pMainDoc->GetLoadConfig();
+	if (!pLCD)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -1382,13 +1389,13 @@ void CViewRightTL::CreateListLCD()
 			}
 		}
 	};
-	stFileInfo.fIsPE32 ? lmbLCD(pLCD->unLCD.stLCD32, g_mapLCD32) : lmbLCD(pLCD->unLCD.stLCD64, g_mapLCD64);
+	m_stFileInfo.eFileType == EFileType::PE32 ? lmbLCD(pLCD->unLCD.stLCD32, g_mapLCD32) : lmbLCD(pLCD->unLCD.stLCD64, g_mapLCD64);
 }
 
 void CViewRightTL::CreateListBoundImport()
 {
-	const auto pBoundImp = m_pLibpe->GetBoundImport();
-	if (pBoundImp == nullptr)
+	const auto& pBoundImp = m_pMainDoc->GetBoundImport();
+	if (!pBoundImp)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -1422,8 +1429,8 @@ void CViewRightTL::CreateListBoundImport()
 
 void CViewRightTL::CreateListDelayImport()
 {
-	const auto pDelayImp = m_pLibpe->GetDelayImport();
-	if (pDelayImp == nullptr)
+	const auto& pDelayImp = m_pMainDoc->GetDelayImport();
+	if (!pDelayImp)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -1467,8 +1474,8 @@ void CViewRightTL::CreateListDelayImport()
 
 void CViewRightTL::CreateListCOM()
 {
-	const auto pCOMDesc = m_pLibpe->GetCOMDescriptor();
-	if (pCOMDesc == nullptr)
+	const auto& pCOMDesc = m_pMainDoc->GetCOMDescriptor();
+	if (!pCOMDesc)
 		return;
 
 	m_stlcs.dwStyle = 0;
@@ -1509,44 +1516,45 @@ void CViewRightTL::CreateListCOM()
 
 void CViewRightTL::SortImportData()
 {
-	std::sort(m_pImport->begin(), m_pImport->end(),
+	auto& pImport = m_pMainDoc->GetImport();
+	std::sort(pImport->begin(), pImport->end(),
 		[&](const auto& ref1, const auto& ref2) {
 			int iCompare { };
-	switch (m_listImport->GetSortColumn()) {
-	case 0:
-		iCompare = ref1.dwOffset < ref2.dwOffset ? -1 : 1;
-		break;
-	case 1:
-		iCompare = ref1.strModuleName.compare(ref2.strModuleName);
-		break;
-	case 2:
-		iCompare = ref1.stImportDesc.OriginalFirstThunk < ref2.stImportDesc.OriginalFirstThunk ? -1 : 1;
-		break;
-	case 3:
-		iCompare = ref1.stImportDesc.TimeDateStamp < ref2.stImportDesc.TimeDateStamp ? -1 : 1;
-		break;
-	case 4:
-		iCompare = ref1.stImportDesc.ForwarderChain < ref2.stImportDesc.ForwarderChain ? -1 : 1;
-		break;
-	case 5:
-		iCompare = ref1.stImportDesc.Name < ref2.stImportDesc.Name ? -1 : 1;
-		break;
-	case 6:
-		iCompare = ref1.stImportDesc.FirstThunk < ref2.stImportDesc.FirstThunk ? -1 : 1;
-		break;
-	}
+			switch (m_listImport->GetSortColumn()) {
+			case 0:
+				iCompare = ref1.dwOffset < ref2.dwOffset ? -1 : 1;
+				break;
+			case 1:
+				iCompare = ref1.strModuleName.compare(ref2.strModuleName);
+				break;
+			case 2:
+				iCompare = ref1.stImportDesc.OriginalFirstThunk < ref2.stImportDesc.OriginalFirstThunk ? -1 : 1;
+				break;
+			case 3:
+				iCompare = ref1.stImportDesc.TimeDateStamp < ref2.stImportDesc.TimeDateStamp ? -1 : 1;
+				break;
+			case 4:
+				iCompare = ref1.stImportDesc.ForwarderChain < ref2.stImportDesc.ForwarderChain ? -1 : 1;
+				break;
+			case 5:
+				iCompare = ref1.stImportDesc.Name < ref2.stImportDesc.Name ? -1 : 1;
+				break;
+			case 6:
+				iCompare = ref1.stImportDesc.FirstThunk < ref2.stImportDesc.FirstThunk ? -1 : 1;
+				break;
+			}
 
-	bool result { false };
-	if (m_listImport->GetSortAscending()) {
-		if (iCompare < 0)
-			result = true;
-	}
-	else {
-		if (iCompare > 0)
-			result = true;
-	}
+			bool result { false };
+			if (m_listImport->GetSortAscending()) {
+				if (iCompare < 0)
+					result = true;
+			}
+			else {
+				if (iCompare > 0)
+					result = true;
+			}
 
-	return result;
+			return result;
 		});
 
 	m_listImport->RedrawWindow();

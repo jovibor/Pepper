@@ -54,8 +54,7 @@ private:
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBL);
 private:
-	Ilibpe* m_pLibpe { };
-	PEFILEINFO stFileInfo;
+	PEFILEINFO m_stFileInfo;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CFileLoader* m_pFileLoader { };

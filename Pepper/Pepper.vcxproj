@@ -175,7 +175,7 @@
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\HexUtility.cpp" />
-    <ClCompile Include="dep\libpe\src\libpe.cpp">
+    <ClCompile Include="dep\libpe\libpe\libpe.ixx">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -217,7 +217,6 @@
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\HexUtility.h" />
-    <ClInclude Include="dep\libpe\src\libpe.h" />
     <ClInclude Include="res\resource.h" />
     <ClInclude Include="CSplitterEx.h" />
     <ClInclude Include="CTreeEx.h" />

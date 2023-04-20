@@ -6,9 +6,10 @@
 ****************************************************************************************************/
 #pragma once
 #include <afxcontrolbars.h>
-#include "libpe.h"
 #include "CFileLoader.h"
-
+import Utility;
+using namespace util;
+import libpe;
 using namespace libpe;
 
 class CPepperDoc : public CDocument
@@ -17,7 +18,26 @@ public:
 	CFileLoader m_stFileLoader;
 	void SetEditMode(bool fEditMode);
 	[[nodiscard]] bool IsEditMode() { return m_fEditMode; }
-	[[nodiscard]] Ilibpe* GetLibpe() { return &*m_pLibpe; }
+	[[nodiscard]] auto GetFileInfo() -> PEFILEINFO&;
+	[[nodiscard]] auto GetOffsetFromVA(ULONGLONG ullVA) -> DWORD;
+	[[nodiscard]] auto GetOffsetFromRVA(ULONGLONG ullRVA) -> DWORD;
+	[[nodiscard]] auto GetDOSHeader() -> std::optional<IMAGE_DOS_HEADER>&;
+	[[nodiscard]] auto GetRichHeader() -> std::optional<PERICHHDR_VEC>&;
+	[[nodiscard]] auto GetNTHeader() -> std::optional<PENTHDR>&;
+	[[nodiscard]] auto GetDataDirs() -> std::optional<PEDATADIR_VEC>&;
+	[[nodiscard]] auto GetSecHeaders() -> std::optional<PESECHDR_VEC>&;
+	[[nodiscard]] auto GetExport() -> std::optional<PEEXPORT>&;
+	[[nodiscard]] auto GetImport() -> std::optional<PEIMPORT_VEC>&;
+	[[nodiscard]] auto GetResources() -> std::optional<PERESROOT>&;
+	[[nodiscard]] auto GetExceptions() -> std::optional<PEEXCEPTION_VEC>&;
+	[[nodiscard]] auto GetSecurity() -> std::optional<PESECURITY_VEC>&;
+	[[nodiscard]] auto GetRelocations() -> std::optional<PERELOC_VEC>&;
+	[[nodiscard]] auto GetDebug() -> std::optional<PEDEBUG_VEC>&;
+	[[nodiscard]] auto GetTLS() -> std::optional<PETLS>&;
+	[[nodiscard]] auto GetLoadConfig() -> std::optional<PELOADCONFIG>&;
+	[[nodiscard]] auto GetBoundImport() -> std::optional<PEBOUNDIMPORT_VEC>&;
+	[[nodiscard]] auto GetDelayImport() -> std::optional<PEDELAYIMPORT_VEC>&;
+	[[nodiscard]] auto GetCOMDescriptor() -> std::optional<PECOMDESCRIPTOR>&;
 private:
 	BOOL OnOpenDocument(LPCTSTR lpszPathName)override;
 	afx_msg void OnFileClose();
@@ -34,10 +54,27 @@ private:
 	DECLARE_MESSAGE_MAP();
 private:
 	std::wstring m_wstrDocName; //Opened document name.
-	IlibpePtr m_pLibpe { Createlibpe() };
 	bool m_fEditMode { false };
 	bool m_fHasCur { false };
 	bool m_fHasIco { false };
 	bool m_fHasBmp { false };
 	bool m_fHasPng { false };
+	std::optional<IMAGE_DOS_HEADER> m_optDOS;
+	std::optional<PERICHHDR_VEC> m_optRich;
+	std::optional<PENTHDR> m_optNTHdr;
+	std::optional<PEDATADIR_VEC> m_optDataDirs;
+	std::optional<PESECHDR_VEC> m_optSecHdr;
+	std::optional<PEEXPORT> m_optExport;
+	std::optional<PEIMPORT_VEC> m_optImport;
+	std::optional<PERESROOT> m_optResRoot;
+	std::optional<PEEXCEPTION_VEC> m_optExcept;
+	std::optional<PESECURITY_VEC> m_optSecurity;
+	std::optional<PERELOC_VEC> m_optReloc;
+	std::optional<PEDEBUG_VEC> m_optDebug;
+	std::optional<PETLS> m_optTLS;
+	std::optional<PELOADCONFIG> m_optLCD;
+	std::optional<PEBOUNDIMPORT_VEC> m_optBoundImp;
+	std::optional<PEDELAYIMPORT_VEC> m_optDelayImp;
+	std::optional<PECOMDESCRIPTOR> m_optComDescr;
+	PEFILEINFO m_stFileInfo;
 };

@@ -61,8 +61,7 @@ private:
 	void CreateListCOM();
 	void SortImportData();
 private:
-	Ilibpe* m_pLibpe { };
-	PEFILEINFO stFileInfo;
+	PEFILEINFO m_stFileInfo;
 	CFont m_fontSummary;
 	std::wstring m_wstrPepperVersion { };
 	std::wstring m_wstrFileName { };
@@ -96,16 +95,12 @@ private:
 	//resource's index (lvlRoot, lvl2, lvl3), for future use (in OnNotify()).
 	std::vector<std::tuple<long, long, long>> m_vecResId { };
 	HTREEITEM m_hTreeResRoot { };
-	PESECHDR_VEC* m_pSecHeaders { };
-	PEIMPORT_VEC* m_pImport { };
-	PEEXCEPTION_VEC* m_pExceptionDir { };
-	PERELOC_VEC* m_pRelocTable { };
 	CWnd* m_pwndActive { };
 	LOGFONTW m_lf { };
 	LOGFONTW m_hdrlf { };
 	CMenu m_menuList;
 	CFileLoader* m_pFileLoader { };
-	UINT_PTR m_iListID { };      //List ID munu clicked at.
+	UINT_PTR m_iListID { }; //List ID munu clicked at.
 	int m_iListItem { };    //List item munu clicked at.
 	int m_iListSubItem { }; //List SubItem menu clicked at.
 	bool m_fFileSummaryShow { true };

@@ -25,7 +25,6 @@ private:
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightTR);
 private:
-	Ilibpe* m_pLibpe { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CFileLoader* m_pFileLoader { };

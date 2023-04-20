@@ -23,8 +23,7 @@ void CViewLeft::OnInitialUpdate()
 	CView::OnInitialUpdate();
 
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pLibpe = m_pMainDoc->GetLibpe();
-	const auto stFileInfo = m_pLibpe->GetFileInfo();
+	const auto stFileInfo = m_pMainDoc->GetFileInfo();
 
 	//Scaling factor for HighDPI displays.
 	const auto pDC = GetDC();
@@ -59,10 +58,12 @@ void CViewLeft::OnInitialUpdate()
 	HTREEITEM hTreeNTHeaders { };
 	HTREEITEM hTreeOptHeader { };
 
-	if (stFileInfo.fIsPE32 && stFileInfo.fHasNTHdr)
+	if (stFileInfo.eFileType == EFileType::PE32 && stFileInfo.fHasNTHdr) {
 		hTreeNTHeaders = m_stTreeMain.InsertItem(L"NT Header [IMAGE_NT_HEADERS32]", iconHdr, iconHdr, hTreeRoot);
-	else if (stFileInfo.fIsPE64 && stFileInfo.fHasNTHdr)
+	}
+	else if (stFileInfo.eFileType == EFileType::PE64 && stFileInfo.fHasNTHdr) {
 		hTreeNTHeaders = m_stTreeMain.InsertItem(L"NT Header [IMAGE_NT_HEADERS64]", iconHdr, iconHdr, hTreeRoot);
+	}
 
 	if (hTreeNTHeaders) {
 		m_stTreeMain.SetItemData(hTreeNTHeaders, IDC_LIST_NTHEADER);
@@ -73,10 +74,12 @@ void CViewLeft::OnInitialUpdate()
 			m_stTreeMain.SetItemData(hTreeFileHeader, IDC_LIST_FILEHEADER);
 		}
 
-		if (stFileInfo.fIsPE32 && stFileInfo.fHasNTHdr)
+		if (stFileInfo.eFileType == EFileType::PE32 && stFileInfo.fHasNTHdr) {
 			hTreeOptHeader = m_stTreeMain.InsertItem(L"Optional Header [IMAGE_OPTIONAL_HEADER32]", iconHdr, iconHdr, hTreeNTHeaders);
-		else if (stFileInfo.fIsPE64 && stFileInfo.fHasNTHdr)
+		}
+		else if (stFileInfo.eFileType == EFileType::PE64 && stFileInfo.fHasNTHdr) {
 			hTreeOptHeader = m_stTreeMain.InsertItem(L"Optional Header [IMAGE_OPTIONAL_HEADER64]", iconHdr, iconHdr, hTreeNTHeaders);
+		}
 
 		m_stTreeMain.SetItemData(hTreeOptHeader, IDC_LIST_OPTIONALHEADER);
 		m_stTreeMain.Expand(hTreeNTHeaders, TVE_EXPAND);
@@ -87,7 +90,7 @@ void CViewLeft::OnInitialUpdate()
 		m_stTreeMain.SetItemData(hTreeSecHeaders, IDC_LIST_SECHEADERS);
 	}
 
-	if (const auto vecDataDirs = m_pLibpe->GetDataDirs(); vecDataDirs != nullptr) {
+	if (stFileInfo.fHasDataDirs) {
 		if (hTreeOptHeader) {
 			const auto hTreeDataDirs = m_stTreeMain.InsertItem(L"Data Directories [IMAGE_DATA_DIRECTORY]", iconHdr, iconHdr, hTreeOptHeader);
 			m_stTreeMain.SetItemData(hTreeDataDirs, IDC_LIST_DATADIRECTORIES);
@@ -120,14 +123,6 @@ void CViewLeft::OnInitialUpdate()
 		if (stFileInfo.fHasDebug) {
 			const auto hTreeDebugDir = m_stTreeMain.InsertItem(L"Debug Directory", iconDirs, iconDirs, hTreeRoot);
 			m_stTreeMain.SetItemData(hTreeDebugDir, IDC_LIST_DEBUG);
-		}
-		if (stFileInfo.fHasArchitect) {
-			const auto hTreeArchitectureDir = m_stTreeMain.InsertItem(L"Architecture Directory", iconDirs, iconDirs, hTreeRoot);
-			m_stTreeMain.SetItemData(hTreeArchitectureDir, IDC_LIST_ARCHITECTURE);
-		}
-		if (stFileInfo.fHasGlobalPtr) {
-			const auto hTreeGlobalPTRDir = m_stTreeMain.InsertItem(L"GlobalPTR Directory", iconDirs, iconDirs, hTreeRoot);
-			m_stTreeMain.SetItemData(hTreeGlobalPTRDir, IDC_LIST_GLOBALPTR);
 		}
 		if (stFileInfo.fHasTLS) {
 			const auto hTreeTLSDir = m_stTreeMain.InsertItem(L"TLS Directory", iconDirs, iconDirs, hTreeRoot);

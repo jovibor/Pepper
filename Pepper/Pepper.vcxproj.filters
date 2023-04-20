@@ -43,9 +43,6 @@
     <ClCompile Include="Utility.ixx">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="dep\libpe\src\libpe.cpp">
-      <Filter>libpe</Filter>
-    </ClCompile>
     <ClCompile Include="dep\HexCtrl\HexCtrl\dep\ListEx\CListEx.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
@@ -87,6 +84,9 @@
     </ClCompile>
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\HexUtility.cpp">
       <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\libpe\libpe\libpe.ixx">
+      <Filter>libpe</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -131,9 +131,6 @@
     </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dep\libpe\src\libpe.h">
-      <Filter>libpe</Filter>
     </ClInclude>
     <ClInclude Include="dep\HexCtrl\HexCtrl\dep\ListEx\ListEx.h">
       <Filter>HexCtrl</Filter>
