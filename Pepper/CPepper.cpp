@@ -28,7 +28,10 @@ protected:
 BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(WSTR_PEPPER_VERSION);
+
+	const auto wstrVerPepper = std::format(L"Pepper: PE32/PE32+ Binaries Analyzer v{}.{}.{}", util::PEPPER_VERSION_MAJOR,
+		util::PEPPER_VERSION_MINOR, util::PEPPER_VERSION_PATCH);
+	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(wstrVerPepper.data());
 	const auto wstrVerLibpe = std::format(L"libpe: PE32/PE32+ Binaries Parsing Library v{}.{}.{}",
 		libpe::LIBPE_VERSION_MAJOR, libpe::LIBPE_VERSION_MINOR, libpe::LIBPE_VERSION_PATCH);
 	GetDlgItem(IDC_LINK_LIBPE)->SetWindowTextW(wstrVerLibpe.data());

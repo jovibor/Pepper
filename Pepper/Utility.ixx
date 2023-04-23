@@ -13,30 +13,16 @@ module;
 #include <unordered_map>
 #include "HexCtrl.h"
 
-#define PEPPER_PRODUCT_NAME			L"Pepper"
-#define PEPPER_PRODUCT_DESC			L"PE files viewer, github.com/jovibor/Pepper"
-#define PEPPER_COPYRIGHT_NAME  		L"(C) Jovibor 2019-2023"
-#define PEPPER_MAJOR_VERSION		1
-#define PEPPER_MINOR_VERSION		5
-#define PEPPER_MAINTENANCE_VERSION	3
-
-#define TO_WSTR_HELPER(x) L## #x
-#define TO_WSTR(x) TO_WSTR_HELPER(x)
-#define PEPPER_VERSION_WSTR PEPPER_PRODUCT_NAME L" - PE32/PE32+ binaries viewer v" TO_WSTR(PEPPER_MAJOR_VERSION) L"."\
-		TO_WSTR(PEPPER_MINOR_VERSION) L"." TO_WSTR(PEPPER_MAINTENANCE_VERSION)
-#define TO_WSTR_MAP(x) {x, L## #x}
 export module Utility;
-
 import libpe;
+
+#define TO_WSTR_MAP(x) {x, L## #x}
 
 export namespace util
 {
-	constexpr const wchar_t WSTR_PEPPER_PRODUCT_NAME[] = PEPPER_PRODUCT_NAME;
-#ifdef _WIN64
-	constexpr const auto WSTR_PEPPER_VERSION = PEPPER_VERSION_WSTR L" (x64)";
-#else
-	constexpr const auto WSTR_PEPPER_VERSION = PEPPER_VERSION_WSTR L" (x86)";
-#endif
+	constexpr auto PEPPER_VERSION_MAJOR = 1;
+	constexpr auto PEPPER_VERSION_MINOR = 5;
+	constexpr auto PEPPER_VERSION_PATCH = 3;
 
 	[[nodiscard]] inline auto StrToWstr(std::string_view sv, UINT uCodePage = CP_UTF8) -> std::wstring
 	{

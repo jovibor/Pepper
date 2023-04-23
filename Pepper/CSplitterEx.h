@@ -31,7 +31,6 @@
 class CSplitterEx : public CSplitterWndEx
 {
 public:
-	DECLARE_DYNAMIC(CSplitterEx);
 	BOOL CreateStatic(CWnd* m_pParent, int nRows, int nCols, DWORD dwStyle = WS_CHILD | WS_VISIBLE, UINT nID = AFX_IDW_PANE_FIRST)override;
 	BOOL CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE sizeInit, CCreateContext* pContext)override;
 	bool AddNested(int row, int col, CWnd* pNested);
@@ -39,14 +38,14 @@ public:
 	bool ShowRow(UINT nRow);
 	bool HideCol(UINT nCol);
 	bool ShowCol(UINT nCol);
-	DECLARE_MESSAGE_MAP()
+	DECLARE_MESSAGE_MAP();
+	DECLARE_DYNAMIC(CSplitterEx);
 private:
 	void RecalcPanes();
 	afx_msg void OnMouseMove(UINT nFlags, CPoint pt);
 	void OnInvertTracker(const CRect& rect)override;
 private:
-	struct SPANES
-	{
+	struct SPANES {
 		int iRow { };    //Row of the pane.
 		int iCol { };    //Column of the pane.
 		CWnd* pPane { }; //Pane pointer.

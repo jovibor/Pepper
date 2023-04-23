@@ -8,17 +8,16 @@
 #include <afxcontrolbars.h>
 #include "CFileLoader.h"
 import Utility;
-using namespace util;
 import libpe;
 using namespace libpe;
 
 class CPepperDoc : public CDocument
 {
 public:
-	CFileLoader m_stFileLoader;
+	[[nodiscard]] auto GetFileLoader() -> CFileLoader&;
 	void SetEditMode(bool fEditMode);
 	[[nodiscard]] bool IsEditMode() { return m_fEditMode; }
-	[[nodiscard]] auto GetFileInfo() -> PEFILEINFO&;
+	[[nodiscard]] auto GetFileInfo() -> util::PEFILEINFO&;
 	[[nodiscard]] auto GetOffsetFromVA(ULONGLONG ullVA) -> DWORD;
 	[[nodiscard]] auto GetOffsetFromRVA(ULONGLONG ullRVA) -> DWORD;
 	[[nodiscard]] auto GetDOSHeader() -> std::optional<IMAGE_DOS_HEADER>&;
@@ -53,12 +52,8 @@ private:
 	DECLARE_DYNCREATE(CPepperDoc);
 	DECLARE_MESSAGE_MAP();
 private:
+	CFileLoader m_stFileLoader;
 	std::wstring m_wstrDocName; //Opened document name.
-	bool m_fEditMode { false };
-	bool m_fHasCur { false };
-	bool m_fHasIco { false };
-	bool m_fHasBmp { false };
-	bool m_fHasPng { false };
 	std::optional<IMAGE_DOS_HEADER> m_optDOS;
 	std::optional<PERICHHDR_VEC> m_optRich;
 	std::optional<PENTHDR> m_optNTHdr;
@@ -76,5 +71,10 @@ private:
 	std::optional<PEBOUNDIMPORT_VEC> m_optBoundImp;
 	std::optional<PEDELAYIMPORT_VEC> m_optDelayImp;
 	std::optional<PECOMDESCRIPTOR> m_optComDescr;
-	PEFILEINFO m_stFileInfo;
+	util::PEFILEINFO m_stFileInfo;
+	bool m_fEditMode { false };
+	bool m_fHasCur { false };
+	bool m_fHasIco { false };
+	bool m_fHasBmp { false };
+	bool m_fHasPng { false };
 };

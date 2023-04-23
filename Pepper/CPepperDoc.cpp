@@ -163,6 +163,11 @@ void CPepperDoc::OnResExtractAllPng()
 	ExtractAllResToFile(GetResources(), EResType::RTYPE_PNG, m_wstrDocName);
 }
 
+auto CPepperDoc::GetFileLoader()->CFileLoader&
+{
+	return m_stFileLoader;
+}
+
 void CPepperDoc::SetEditMode(bool fEditMode)
 {
 	if (!m_stFileLoader.IsWritable()) {

@@ -30,7 +30,7 @@ void CViewRightTL::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
+	m_pFileLoader = &m_pMainDoc->GetFileLoader();
 
 	LOGFONTW lf { };
 	StringCchCopyW(lf.lfFaceName, 9, L"Consolas");
@@ -59,7 +59,8 @@ void CViewRightTL::OnInitialUpdate()
 	else {
 		m_wstrFileType = L"File type: unknown";
 	}
-	m_wstrPepperVersion = WSTR_PEPPER_VERSION;
+	m_wstrPepperVersion = std::format(L"Pepper v{}.{}.{}", util::PEPPER_VERSION_MAJOR,
+		util::PEPPER_VERSION_MINOR, util::PEPPER_VERSION_PATCH);
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);

@@ -28,7 +28,7 @@ void CViewRightTR::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
+	m_pFileLoader = &m_pMainDoc->GetFileLoader();
 
 	//Hex control for Resources raw.
 	m_hcs.hWndParent = m_hWnd;

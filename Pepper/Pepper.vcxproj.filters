@@ -40,9 +40,6 @@
     <ClCompile Include="CFileLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Utility.ixx">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="dep\HexCtrl\HexCtrl\dep\ListEx\CListEx.cpp">
       <Filter>HexCtrl</Filter>
     </ClCompile>
@@ -87,6 +84,9 @@
     </ClCompile>
     <ClCompile Include="dep\libpe\libpe\libpe.ixx">
       <Filter>libpe</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility.ixx">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

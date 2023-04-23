@@ -176,7 +176,7 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 
 		auto pos = tabGroups.GetHeadPosition();
 		while (pos != nullptr) {
-			if (auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) { //Click on TabCtrl.
+			if (const auto pTabCtrl = DYNAMIC_DOWNCAST(CMFCTabCtrl, tabGroups.GetNext(pos)); pTabCtrl == pWnd) { //Click on TabCtrl.
 				pTabCtrl->ScreenToClient(&pt);
 				if (const auto iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1) {
 					if (auto pWndTab = pTabCtrl->GetTabWnd(iTab); pWndTab != nullptr) {
@@ -205,8 +205,9 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 			{
 				pTabCtrl->ScreenToClient(&pt);
 				if (const auto iTab = pTabCtrl->GetTabFromPoint(pt); iTab != -1) {
-					if (const auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr && pTab == pWndMBtnCurrDown)
+					if (const auto pTab = pTabCtrl->GetTabWnd(iTab); pTab != nullptr && pTab == pWndMBtnCurrDown) {
 						pTab->SendMessageW(WM_CLOSE);
+					}
 				}
 			}
 		}
@@ -231,16 +232,15 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		::GetClientRect(hWnd, rc);
 		CMemDC dcMem(dc, rc);
 		auto pDC = &dcMem.GetDC();
-		constexpr auto iLengthText = static_cast<int>(std::size(WSTR_PEPPER_PRODUCT_NAME)) - 1;
 
 		pDC->FillSolidRect(rc, RGB(190, 190, 190));
 		pDC->SelectObject(m_fontMDIClient);
 		pDC->SetBkMode(TRANSPARENT);
 		pDC->SetTextColor(RGB(205, 205, 205)); //Shadow color.
-		pDC->DrawTextW(WSTR_PEPPER_PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+		pDC->DrawTextW(L"Pepper", 6, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 		pDC->SetTextColor(RGB(193, 193, 193)); //Text color.
 		rc.OffsetRect(-3, 2);
-		pDC->DrawTextW(WSTR_PEPPER_PRODUCT_NAME, iLengthText, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+		pDC->DrawTextW(L"Pepper", 6, rc, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 	}
 	break;
 	case WM_SIZE:
@@ -256,7 +256,6 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam)
 {
-	constexpr auto iLengthText = static_cast<int>(std::size(WSTR_PEPPER_PRODUCT_NAME)) - 1;
 	const auto pDC = CDC::FromHandle(::GetDC(hWnd));
 	const auto iWidthNew = LOWORD(lParam);
 	auto iFontSizeMin = 10;
@@ -271,7 +270,7 @@ void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam)
 		lf.lfHeight = -MulDiv(iFontSizeMin, m_iLOGPIXELSY, 72);
 		m_fontMDIClient.CreateFontIndirectW(&lf);
 		pDC->SelectObject(m_fontMDIClient);
-		stSizeText = pDC->GetTextExtent(WSTR_PEPPER_PRODUCT_NAME, iLengthText);
+		stSizeText = pDC->GetTextExtent(L"Pepper", 6);
 	}
 	::ReleaseDC(hWnd, pDC->m_hDC);
 	::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);

@@ -16,9 +16,8 @@ END_MESSAGE_MAP()
 
 BOOL CSplitterEx::CreateStatic(CWnd* m_pParent, int nRows, int nCols, DWORD dwStyle, UINT nID)
 {
-	//If already created.
 	if ((!m_vecRows.empty() && !m_vecCols.empty()) || !(nRows | nCols) || (nRows | nCols) > 16)
-		return FALSE;
+		return FALSE; //If already created.
 
 	m_vecRows.resize(nRows, true);
 	m_vecCols.resize(nCols, true);
@@ -141,7 +140,8 @@ void CSplitterEx::RecalcPanes()
 	for (auto iterRow = 0U; iterRow < m_vecRows.size(); ++iterRow) {
 		for (auto iterCol = 0U; iterCol < m_vecCols.size(); ++iterCol) {
 			//Finding an exact pane.
-			if (const auto iterPane = std::find_if(m_vecPanes.begin(), m_vecPanes.end(), [=](const SPANES& refData) { return refData.iRow == vecRowsOrdered[iterRow] && refData.iCol == vecColsOrdered[iterCol]; });
+			if (const auto iterPane = std::find_if(m_vecPanes.begin(), m_vecPanes.end(),
+				[=](const SPANES& refData) { return refData.iRow == vecRowsOrdered[iterRow] && refData.iCol == vecColsOrdered[iterCol]; });
 				iterPane != m_vecPanes.end()) {
 				const auto pPane = iterPane->pPane;
 				pPane->SetDlgCtrlID(AFX_IDW_PANE_FIRST + iterRow * 16 + iterCol);

@@ -35,7 +35,7 @@ void CViewRightBL::OnInitialUpdate()
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
-	m_pFileLoader = &m_pMainDoc->m_stFileLoader;
+	m_pFileLoader = &m_pMainDoc->GetFileLoader();
 	m_stFileInfo = m_pMainDoc->GetFileInfo();
 
 	//Hex control for SecurityDir and TLSdir.
@@ -204,7 +204,7 @@ void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 		m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), reinterpret_cast<CObject*>(&m_stResData));
 	}
-	else {	//Update by default, with no pData — to clear the view.
+	else { //Update by default, with no pData — to clear the view.
 		m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_SHOW_RESOURCE_RBR, 0), nullptr);
 	}
 }
