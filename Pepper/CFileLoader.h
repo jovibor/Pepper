@@ -35,18 +35,18 @@ private:
 		IHexCtrl* pHexCtrl { };
 		bool      fWhole { };
 	};
-	bool m_fLoaded { false };
-	bool m_fModified { false };
-	bool m_fWritable { false };
+	static constexpr DWORD m_dwStyle { WS_POPUP | WS_OVERLAPPEDWINDOW };
+	static constexpr DWORD m_dwExStyle { WS_EX_APPWINDOW }; //To force to the taskbar.
 	CPepperDoc* m_pMainDoc { };
 	IHexCtrlPtr m_pHex { HEXCTRL::CreateHexCtrl() };
 	HEXCREATE m_hcs;
 	HEXDATA m_hds;
-	const DWORD m_dwStyle { WS_POPUP | WS_OVERLAPPEDWINDOW };
-	const DWORD m_dwExStyle { WS_EX_APPWINDOW }; //To force to the taskbar.
 	LARGE_INTEGER m_stFileSize { };	 //Size of the loaded PE file.
 	HANDLE m_hFile { };
 	HANDLE m_hMapObject { };	     //Returned by CreateFileMappingW.
 	LPVOID m_lpBase { };
 	std::vector<HEXTODATACHECK> m_vecCheck;
+	bool m_fLoaded { false };
+	bool m_fModified { false };
+	bool m_fWritable { false };
 };

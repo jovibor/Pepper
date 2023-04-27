@@ -17,7 +17,7 @@ public:
 	[[nodiscard]] auto GetFileLoader() -> CFileLoader&;
 	void SetEditMode(bool fEditMode);
 	[[nodiscard]] bool IsEditMode() { return m_fEditMode; }
-	[[nodiscard]] auto GetFileInfo() -> util::PEFILEINFO&;
+	[[nodiscard]] auto GetFileInfo() -> Util::PEFILEINFO&;
 	[[nodiscard]] auto GetOffsetFromVA(ULONGLONG ullVA) -> DWORD;
 	[[nodiscard]] auto GetOffsetFromRVA(ULONGLONG ullRVA) -> DWORD;
 	[[nodiscard]] auto GetDOSHeader() -> std::optional<IMAGE_DOS_HEADER>&;
@@ -71,7 +71,7 @@ private:
 	std::optional<PEBOUNDIMPORT_VEC> m_optBoundImp;
 	std::optional<PEDELAYIMPORT_VEC> m_optDelayImp;
 	std::optional<PECOMDESCRIPTOR> m_optComDescr;
-	util::PEFILEINFO m_stFileInfo;
+	Util::PEFILEINFO m_stFileInfo;
 	bool m_fEditMode { false };
 	bool m_fHasCur { false };
 	bool m_fHasIco { false };

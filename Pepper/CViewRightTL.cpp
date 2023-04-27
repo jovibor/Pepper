@@ -59,8 +59,8 @@ void CViewRightTL::OnInitialUpdate()
 	else {
 		m_wstrFileType = L"File type: unknown";
 	}
-	m_wstrPepperVersion = std::format(L"Pepper v{}.{}.{}", util::PEPPER_VERSION_MAJOR,
-		util::PEPPER_VERSION_MINOR, util::PEPPER_VERSION_PATCH);
+	m_wstrPepperVersion = std::format(L"Pepper v{}.{}.{}", Util::PEPPER_VERSION_MAJOR,
+		Util::PEPPER_VERSION_MINOR, Util::PEPPER_VERSION_PATCH);
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
@@ -193,8 +193,8 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		m_pwndActive->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	}
 
-	fShowRow ? m_pChildFrame->m_stSplitterRight.ShowRow(1) : m_pChildFrame->m_stSplitterRight.HideRow(1);
-	m_pChildFrame->m_stSplitterRight.RecalcLayout();
+	fShowRow ? m_pChildFrame->GetSplitRight().ShowRow(1) : m_pChildFrame->GetSplitRight().HideRow(1);
+	m_pChildFrame->GetSplitRight().RecalcLayout();
 }
 
 void CViewRightTL::OnDraw(CDC* pDC)

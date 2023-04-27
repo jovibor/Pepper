@@ -8,7 +8,7 @@
 #include <afxcontrolbars.h>
 
 import Utility;
-using namespace util;
+using namespace Util;
 
 class CMainFrame : public CMDIFrameWndEx
 {

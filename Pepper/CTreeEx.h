@@ -9,13 +9,11 @@
 
 class CTreeEx : public CTreeCtrl
 {
-	DECLARE_DYNAMIC(CTreeEx);
-	CTreeEx() = default;
-	virtual ~CTreeEx() = default;
 protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnPaint();
-	DECLARE_MESSAGE_MAP()
+	DECLARE_MESSAGE_MAP();
+	DECLARE_DYNAMIC(CTreeEx);
 };

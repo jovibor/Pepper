@@ -139,30 +139,30 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		GetClientRect(&rcClient);
 		m_stListTLSCallbacks->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		m_hwndActive = m_stListTLSCallbacks->m_hWnd;
-		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 2, 0);
+		m_pChildFrame->GetSplitRightBot().ShowCol(1);
+		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 2, 0);
 	}
 	break;
 	case IDC_TREE_RESOURCE:
-		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
+		m_pChildFrame->GetSplitRightBot().ShowCol(1);
+		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case IDC_SHOW_RESOURCE_RBR:
 		m_pResData = reinterpret_cast<PERESFLAT*>(pHint);
 		ShowResource(m_pResData);
-		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 3, 0);
+		m_pChildFrame->GetSplitRightBot().ShowCol(1);
+		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case IDC_LIST_DEBUG_ENTRY:
 		CreateDebugEntry(HIWORD(lHint));
-		m_pChildFrame->m_stSplitterRightBottom.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightBottom.SetColumnInfo(0, rcParent.Width() / 2, 0);
+		m_pChildFrame->GetSplitRightBot().ShowCol(1);
+		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 2, 0);
 		break;
 	default:
-		m_pChildFrame->m_stSplitterRightBottom.HideCol(1);
+		m_pChildFrame->GetSplitRightBot().HideCol(1);
 	}
 
-	m_pChildFrame->m_stSplitterRightBottom.RecalcLayout();
+	m_pChildFrame->GetSplitRightBot().RecalcLayout();
 }
 
 BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
@@ -177,6 +177,8 @@ BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void CViewRightBR::OnDraw(CDC* pDC)
 {
+	constexpr auto clrBkIcons { RGB(230, 230, 230) };
+
 	CRect rcClipBox;
 	pDC->GetClipBox(rcClipBox);
 	const auto sizeScroll = GetTotalSize();
@@ -198,12 +200,12 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	case RTYPE_CURSOR:
 	case RTYPE_BITMAP:
 	case RTYPE_ICON:
-		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
+		pDC->FillSolidRect(rcClipBox, clrBkIcons);
 		m_stImgRes.Draw(pDC, 0, { x, y }, ILD_NORMAL);
 		break;
 	case RTYPE_GROUP_CURSOR:
 	case RTYPE_GROUP_ICON:
-		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
+		pDC->FillSolidRect(rcClipBox, clrBkIcons);
 		for (const auto& iter : m_vecImgRes) {
 			IMAGEINFO imgInfo;
 			iter->GetImageInfo(0, &imgInfo);
@@ -218,7 +220,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 		}
 		break;
 	case RTYPE_PNG:
-		pDC->FillSolidRect(rcClipBox, m_clrBkIcons);
+		pDC->FillSolidRect(rcClipBox, clrBkIcons);
 		m_imgPng.AlphaBlend(pDC->m_hDC, x, y, m_iImgResWidth, m_iImgResHeight, 0, 0, m_iImgResWidth, m_iImgResHeight);
 		break;
 	case RES_LOAD_ERROR:
@@ -595,8 +597,7 @@ void CViewRightBR::CreateListTLSCallbacks()
 
 	int listindex { };
 	for (const auto& iterCallbacks : pTLS->vecTLSCallbacks) {
-		m_stListTLSCallbacks->InsertItem(listindex, std::format(L"{:08X}", iterCallbacks).data());
-		++listindex;
+		m_stListTLSCallbacks->InsertItem(listindex++, std::format(L"{:08X}", iterCallbacks).data());
 	}
 }
 

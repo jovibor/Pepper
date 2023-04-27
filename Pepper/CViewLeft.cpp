@@ -9,7 +9,7 @@
 #include "res/resource.h"
 
 import Utility;
-using namespace util;
+using namespace Util;
 
 IMPLEMENT_DYNCREATE(CViewLeft, CView)
 

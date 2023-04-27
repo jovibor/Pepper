@@ -12,7 +12,7 @@
 #include <span>
 
 import Utility;
-using namespace util;
+using namespace Util;
 using namespace LISTEX;
 
 class CWndSampleDlg final : public CWnd
@@ -60,6 +60,7 @@ private:
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBR);
 private:
+	static constexpr auto m_clrBkImgList { RGB(250, 250, 250) };
 	HWND m_hwndActive { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
@@ -72,8 +73,6 @@ private:
 	IListExPtr m_stListTLSCallbacks { CreateListEx() };
 	LOGFONTW m_lf { };
 	LOGFONTW m_hdrlf { };
-	COLORREF m_clrBkIcons { RGB(230, 230, 230) };
-	COLORREF m_clrBkImgList { RGB(250, 250, 250) };
 	EResType m_eResTypeToDraw { };
 	int m_iImgResWidth { };  //Width of the whole image to draw.
 	int m_iImgResHeight { }; //Height of the whole image to draw.

@@ -7,16 +7,12 @@
 #pragma once
 #include "CSplitterEx.h"
 
-import Utility;
-using namespace util;
-
 class CChildFrame : public CMDIChildWndEx
 {
 public:
-	CSplitterEx m_stSplitterMain;
-	CSplitterEx m_stSplitterRight;
-	CSplitterEx m_stSplitterRightTop;
-	CSplitterEx m_stSplitterRightBottom;
+	[[nodiscard]] auto GetSplitRight() -> CSplitterEx&;
+	[[nodiscard]] auto GetSplitRightTop() -> CSplitterEx&;
+	[[nodiscard]] auto GetSplitRightBot() -> CSplitterEx&;
 private:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnClose();
@@ -28,8 +24,12 @@ private:
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CChildFrame);
 private:
-	bool m_fSplitterCreated { false };
-	bool m_fClosing { false }; //Indicates that tab is closing now.
+	CSplitterEx m_stSplitterMain;
+	CSplitterEx m_stSplitterRight;
+	CSplitterEx m_stSplitterRightTop;
+	CSplitterEx m_stSplitterRightBottom;
 	UINT m_cx { };
 	UINT m_cy { };
+	bool m_fSplitterCreated { false };
+	bool m_fClosing { false }; //Indicates that tab is closing now.
 };

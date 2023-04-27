@@ -84,6 +84,21 @@ void CChildFrame::OnDestroy()
 	--reinterpret_cast<CMainFrame*>(AfxGetMainWnd())->GetChildFramesCount();
 }
 
+auto CChildFrame::GetSplitRight()->CSplitterEx&
+{
+	return m_stSplitterRight;
+}
+
+auto CChildFrame::GetSplitRightTop()->CSplitterEx&
+{
+	return m_stSplitterRightTop;
+}
+
+auto CChildFrame::GetSplitRightBot()->CSplitterEx&
+{
+	return m_stSplitterRightBottom;
+}
+
 BOOL CChildFrame::OnEraseBkgnd(CDC* pDC)
 {
 	return CMDIChildWndEx::OnEraseBkgnd(pDC);

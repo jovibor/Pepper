@@ -11,7 +11,7 @@
 #include <format>
 
 import Utility;
-using namespace util;
+using namespace Util;
 
 IMPLEMENT_DYNCREATE(CPepperDoc, CDocument)
 

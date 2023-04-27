@@ -5,20 +5,20 @@
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 module;
+#include "HexCtrl.h"
 #include <afxdlgs.h>
-#include <fstream>
 #include <format>
+#include <fstream>
 #include <span>
 #include <string>
 #include <unordered_map>
-#include "HexCtrl.h"
 
 export module Utility;
 import libpe;
 
 #define TO_WSTR_MAP(x) {x, L## #x}
 
-export namespace util
+export namespace Util
 {
 	constexpr auto PEPPER_VERSION_MAJOR = 1;
 	constexpr auto PEPPER_VERSION_MINOR = 5;
@@ -196,7 +196,7 @@ export namespace util
 
 		auto dwSavedFiles { 0UL };
 		bool fAllSaveOK { true };
-		for (const auto vecRes = libpe::FlatResources(*pRes); const auto & ref : vecRes) {
+		for (const auto & ref : libpe::FlatResources(*pRes)) {
 			using enum EResType;
 			std::wstring_view wsvExt;
 			switch (eResType) {
@@ -231,14 +231,14 @@ export namespace util
 					wstrPathFile += L"_";
 				}
 				else {
-					wstrPathFile += std::format(L"ResID_{}_", ref.wNameID);
+					wstrPathFile += std::format(L"RESID_{}_", ref.wNameID);
 				}
 
 				if (!ref.wsvLangStr.empty()) {
 					wstrPathFile += ref.wsvLangStr;
 				}
 				else {
-					wstrPathFile += std::format(L"LangID_{}", ref.wLangID);
+					wstrPathFile += std::format(L"LANGID_{}", ref.wLangID);
 				}
 				wstrPathFile += wsvExt;
 
@@ -252,7 +252,7 @@ export namespace util
 		}
 
 		if (fAllSaveOK) {
-			MessageBoxW(nullptr, std::format(L"All {} files were saved successfully!", dwSavedFiles).data(), L"Success", MB_ICONINFORMATION);
+			MessageBoxW(nullptr, std::format(L"All {} files were saved successfully.", dwSavedFiles).data(), L"Success", MB_ICONINFORMATION);
 		}
 		else {
 			MessageBoxW(nullptr, std::format(L"Some issues occured during the save process.\r\nOnly {} files were saved successfully.", dwSavedFiles).data(),

@@ -8,6 +8,7 @@
 #include "CViewRightTR.h"
 
 import Utility;
+using namespace Util;
 
 IMPLEMENT_DYNCREATE(CViewRightTR, CView)
 
@@ -59,14 +60,14 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_stHexEdit->ClearData();
 		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
-		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
+		m_pChildFrame->GetSplitRightTop().ShowCol(1);
+		m_pChildFrame->GetSplitRightTop().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
 	case IDC_HEX_RIGHT_TR:
 		CreateHexResources(reinterpret_cast<PIMAGE_RESOURCE_DATA_ENTRY>(pHint));
-		m_pChildFrame->m_stSplitterRightTop.ShowCol(1);
-		m_pChildFrame->m_stSplitterRightTop.SetColumnInfo(0, rcParent.Width() / 3, 0);
+		m_pChildFrame->GetSplitRightTop().ShowCol(1);
+		m_pChildFrame->GetSplitRightTop().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case ID_DOC_EDITMODE:
 		OnDocEditMode();
@@ -75,11 +76,11 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		if (m_hwndActive) {
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		}
-		m_pChildFrame->m_stSplitterRightTop.HideCol(1);
+		m_pChildFrame->GetSplitRightTop().HideCol(1);
 		break;
 	}
 
-	m_pChildFrame->m_stSplitterRightTop.RecalcLayout();
+	m_pChildFrame->GetSplitRightTop().RecalcLayout();
 }
 
 void CViewRightTR::OnDraw(CDC* /*pDC*/)
