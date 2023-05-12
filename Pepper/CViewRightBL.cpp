@@ -701,8 +701,8 @@ void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId)
 		return;
 
 	const auto& secEntry = pSec->at(nSertId).stWinSert;
-	const auto dwStart = pSec->at(nSertId).dwOffset + offsetof(WIN_CERTIFICATE, bCertificate);
-	const auto dwCertSize = static_cast<DWORD_PTR>(secEntry.dwLength) - offsetof(WIN_CERTIFICATE, bCertificate);
+	const auto dwStart = pSec->at(nSertId).dwOffset + offsetof(PEWIN_CERTIFICATE, bCertificate);
+	const auto dwCertSize = static_cast<DWORD_PTR>(secEntry.dwLength) - offsetof(PEWIN_CERTIFICATE, bCertificate);
 	m_pFileLoader->ShowFilePiece(dwStart, dwCertSize, m_stHexEdit.get());
 
 	if (m_hwndActive != m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN)) {
