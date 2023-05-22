@@ -577,10 +577,10 @@ export namespace Util
 		{ 18, { sizeof(DWORD), 68, L"ManagedNativeHeader.Size" } }
 	};
 
-	//All HexCtrl dialogs' IDs for hiding/showing in Views, when tab is disactivated/activated.
+	//All HexCtrl dialogs' IDs for hiding/showing in Views, when tab is deactivated/activated.
 	inline const std::vector<HEXCTRL::EHexWnd> g_vecHexDlgs {
-		HEXCTRL::EHexWnd::DLG_BKMMANAGER, HEXCTRL::EHexWnd::DLG_DATAINTERP, HEXCTRL::EHexWnd::DLG_FILLDATA,
-		HEXCTRL::EHexWnd::DLG_OPERS, HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_ENCODING,
+		HEXCTRL::EHexWnd::DLG_BKMMANAGER, HEXCTRL::EHexWnd::DLG_DATAINTERP, HEXCTRL::EHexWnd::DLG_MODIFY,
+		HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_ENCODING,
 		HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
 
 

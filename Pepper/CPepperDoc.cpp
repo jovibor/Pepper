@@ -104,6 +104,7 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		}
 	}
 
+	libPE.CloseFile();
 	m_stFileLoader.LoadFile(lpszPathName, this);
 	UpdateAllViews(nullptr);
 

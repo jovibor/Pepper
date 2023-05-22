@@ -88,6 +88,9 @@
     <ClCompile Include="Utility.ixx">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgModify.cpp">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="res\resource.h">
@@ -178,6 +181,9 @@
       <Filter>HexCtrl</Filter>
     </ClInclude>
     <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h">
+      <Filter>HexCtrl</Filter>
+    </ClInclude>
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgModify.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
   </ItemGroup>
