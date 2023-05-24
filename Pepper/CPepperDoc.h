@@ -71,7 +71,7 @@ private:
 	std::optional<PEBOUNDIMPORT_VEC> m_optBoundImp;
 	std::optional<PEDELAYIMPORT_VEC> m_optDelayImp;
 	std::optional<PECOMDESCRIPTOR> m_optComDescr;
-	Util::PEFILEINFO m_stFileInfo;
+	Util::PEFILEINFO m_stFileInfo { };
 	bool m_fEditMode { false };
 	bool m_fHasCur { false };
 	bool m_fHasIco { false };

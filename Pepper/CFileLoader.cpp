@@ -5,44 +5,20 @@
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
 #include "stdafx.h"
+#include "res/resource.h"
 #include "CFileLoader.h"
 #include "CPepperDoc.h"
-#include "res/resource.h"
 #include <algorithm>
 
 import Utility;
 
-void CFileLoader::CreateHexCtrlWnd()
+auto CFileLoader::GetData()const->std::span<std::byte>
 {
-	m_pHex->Create(m_hcs);
-
-	const auto hWndHex = m_pHex->GetWindowHandle(EHexWnd::WND_MAIN);
-	const auto iWidthActual = m_pHex->GetActualWidth() + GetSystemMetrics(SM_CXVSCROLL);
-	CRect rcHex(0, 0, iWidthActual, iWidthActual); //Square window.
-	AdjustWindowRectEx(rcHex, m_dwStyle, FALSE, m_dwExStyle);
-	const auto iWidth = rcHex.Width();
-	const auto iHeight = rcHex.Height() - rcHex.Height() / 3;
-	const auto iPosX = GetSystemMetrics(SM_CXSCREEN) / 2 - iWidth / 2;
-	const auto iPosY = GetSystemMetrics(SM_CYSCREEN) / 2 - iHeight / 2;
-	::SetWindowPos(hWndHex, nullptr, iPosX, iPosY, iWidth, iHeight, SWP_SHOWWINDOW);
-
-	const auto hIconSmall = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 0, 0, 0));
-	const auto hIconBig = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 96, 96, 0));
-	if (hIconSmall != nullptr) {
-		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
-		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
+	if (!IsLoaded()) {
+		return { };
 	}
-}
 
-bool CFileLoader::Flush()
-{
-	if (!IsLoaded())
-		return false;
-
-	if (IsModified())
-		FlushViewOfFile(m_lpBase, 0);
-
-	return false;
+	return { static_cast<std::byte*>(m_lpBase), static_cast<std::size_t>(m_stFileSize.QuadPart) };
 }
 
 HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
@@ -72,8 +48,8 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 		MessageBoxW(L"CreateFileMappingW call in FileLoader::LoadFile failed.", L"Error", MB_ICONERROR);
 		return E_ABORT;
 	}
-	m_fLoaded = true;
 
+	m_fLoaded = true;
 	m_lpBase = MapViewOfFile(m_hMapObject, fWritable ? FILE_MAP_WRITE : FILE_MAP_READ, 0, 0, 0);
 
 	if (!CWnd::CreateEx(0, AfxRegisterWndClass(0), nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr))
@@ -92,8 +68,9 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexCtrl* pHexCtrl)
 {
 	if (!pHexCtrl) {
-		if (!m_pHex->IsCreated())
+		if (!m_pHex->IsCreated()) {
 			CreateHexCtrlWnd();
+		}
 		pHexCtrl = m_pHex.get();
 	}
 
@@ -102,7 +79,7 @@ HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSel
 	if (const auto iter = std::find_if(m_vecCheck.begin(), m_vecCheck.end(), [pHexCtrl](const HEXTODATACHECK& ref) {
 		return ref.pHexCtrl == pHexCtrl; }); iter == m_vecCheck.end() || !iter->fWhole) {
 		m_hds.fMutable = m_pMainDoc->IsEditMode();
-		m_hds.spnData = { static_cast<std::byte*>(m_lpBase), static_cast<std::size_t>(m_stFileSize.QuadPart) };
+		m_hds.spnData = GetData();
 		pHexCtrl->SetData(m_hds);
 
 		if (iter == m_vecCheck.end()) {
@@ -114,16 +91,16 @@ HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSel
 	}
 
 	if (ullSelSize > 0) {
-		std::vector<HEXSPAN> vecSel { { ullOffset, ullSelSize } };
-		pHexCtrl->SetSelection(vecSel);
+		pHexCtrl->SetSelection({ { ullOffset, ullSelSize } });
 		if (!pHexCtrl->IsOffsetVisible(ullOffset)) {
 			pHexCtrl->GoToOffset(ullOffset);
 		}
 	}
 
 	//If floating HexCtrl is in use we bring it to the front.
-	if (pHexCtrl == m_pHex.get())
+	if (pHexCtrl == m_pHex.get()) {
 		::SetForegroundWindow(pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN));
+	}
 
 	return S_OK;
 }
@@ -134,8 +111,9 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		return E_ABORT;
 
 	if (!pHexCtrl) {
-		if (!m_pHex->IsCreated())
+		if (!m_pHex->IsCreated()) {
 			CreateHexCtrlWnd();
+		}
 		pHexCtrl = m_pHex.get();
 	}
 
@@ -143,8 +121,10 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 		pHexCtrl->ClearData();
 		return E_ABORT;
 	}
-	if (ullOffset + ullSize > static_cast<ULONGLONG>(m_stFileSize.QuadPart)) //Overflow check.
+
+	if (ullOffset + ullSize > static_cast<ULONGLONG>(m_stFileSize.QuadPart)) { //Overflow check.
 		ullSize = static_cast<ULONGLONG>(m_stFileSize.QuadPart) - ullOffset;
+	}
 
 	if (const auto iter = std::find_if(m_vecCheck.begin(), m_vecCheck.end(), [pHexCtrl](const HEXTODATACHECK& ref) {
 		return ref.pHexCtrl == pHexCtrl; }); iter == m_vecCheck.end()) {
@@ -155,7 +135,8 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 	}
 
 	m_hds.fMutable = m_pMainDoc->IsEditMode();
-	m_hds.spnData = { reinterpret_cast<std::byte*>(reinterpret_cast<DWORD_PTR>(m_lpBase) + ullOffset), static_cast<std::size_t>(ullSize) };
+	m_hds.spnData = { reinterpret_cast<std::byte*>(reinterpret_cast<DWORD_PTR>(m_lpBase) + ullOffset),
+		static_cast<std::size_t>(ullSize) };
 	pHexCtrl->SetData(m_hds);
 
 	return S_OK;
@@ -163,15 +144,21 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexC
 
 HRESULT CFileLoader::UnloadFile()
 {
-	if (!m_fLoaded)
+	if (!IsLoaded())
 		return E_ABORT;
 
-	if (m_lpBase)
+	if (m_lpBase) {
+		FlushViewOfFile(m_lpBase, 0);
 		UnmapViewOfFile(m_lpBase);
-	if (m_hMapObject)
+	}
+
+	if (m_hMapObject) {
 		CloseHandle(m_hMapObject);
-	if (m_hFile)
+	}
+
+	if (m_hFile) {
 		CloseHandle(m_hFile);
+	}
 
 	m_lpBase = nullptr;
 	m_hMapObject = nullptr;
@@ -181,12 +168,31 @@ HRESULT CFileLoader::UnloadFile()
 	return S_OK;
 }
 
+//Private methods.
+
+void CFileLoader::CreateHexCtrlWnd()
+{
+	m_pHex->Create(m_hcs);
+
+	const auto hWndHex = m_pHex->GetWindowHandle(EHexWnd::WND_MAIN);
+	const auto iWidthActual = m_pHex->GetActualWidth() + GetSystemMetrics(SM_CXVSCROLL);
+	CRect rcHex(0, 0, iWidthActual, iWidthActual); //Square window.
+	AdjustWindowRectEx(rcHex, m_dwStyle, FALSE, m_dwExStyle);
+	const auto iWidth = rcHex.Width();
+	const auto iHeight = rcHex.Height() - rcHex.Height() / 3;
+	const auto iPosX = GetSystemMetrics(SM_CXSCREEN) / 2 - iWidth / 2;
+	const auto iPosY = GetSystemMetrics(SM_CYSCREEN) / 2 - iHeight / 2;
+	::SetWindowPos(hWndHex, nullptr, iPosX, iPosY, iWidth, iHeight, SWP_SHOWWINDOW);
+
+	const auto hIconSmall = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 0, 0, 0));
+	const auto hIconBig = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 96, 96, 0));
+	if (hIconSmall != nullptr) {
+		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
+		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
+	}
+}
+
 bool CFileLoader::IsLoaded()const
 {
 	return m_fLoaded;
-}
-
-BOOL CFileLoader::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
-{
-	return CWnd::OnNotify(wParam, lParam, pResult);
 }

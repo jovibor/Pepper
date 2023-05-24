@@ -260,13 +260,13 @@ export namespace Util
 		}
 	}
 
-	//Errors, that might come from libpe.
-	inline const std::unordered_map<DWORD, std::wstring> g_mapLibpeErrors {
+	//Errors, that might come from the libpe.
+	inline const std::unordered_map<DWORD, std::wstring_view> g_mapLibpeErrors {
 		TO_WSTR_MAP(libpe::PEOK),
-		TO_WSTR_MAP(libpe::ERR_FILE_OPEN),
-		TO_WSTR_MAP(libpe::ERR_FILE_MAPPING),
-		TO_WSTR_MAP(libpe::ERR_FILE_SIZESMALL),
-		TO_WSTR_MAP(libpe::ERR_FILE_NODOSHDR)
+			TO_WSTR_MAP(libpe::ERR_FILE_OPEN),
+			TO_WSTR_MAP(libpe::ERR_FILE_MAPPING),
+			TO_WSTR_MAP(libpe::ERR_FILE_SIZESMALL),
+			TO_WSTR_MAP(libpe::ERR_FILE_NODOSHDR)
 	};
 
 	struct PEFILEINFO {
@@ -580,8 +580,8 @@ export namespace Util
 	//All HexCtrl dialogs' IDs for hiding/showing in Views, when tab is deactivated/activated.
 	inline const std::vector<HEXCTRL::EHexWnd> g_vecHexDlgs {
 		HEXCTRL::EHexWnd::DLG_BKMMANAGER, HEXCTRL::EHexWnd::DLG_DATAINTERP, HEXCTRL::EHexWnd::DLG_MODIFY,
-		HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_ENCODING,
-		HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
+			HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_ENCODING,
+			HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
 
 
 	/*****************************************************************
@@ -656,5 +656,5 @@ export namespace Util
 	********************************************************/
 
 	//Color of the list's "Offset" column
-	constexpr COLORREF g_clrOffset = RGB(150, 150, 150);
+	constexpr auto g_clrOffset = RGB(150, 150, 150);
 };

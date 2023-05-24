@@ -31,15 +31,19 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
 	m_wstrDocName = lpszPathName;
 	m_wstrDocName = m_wstrDocName.substr(m_wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+	const std::wstring wstrErrCaption = L"File load failed: " + m_wstrDocName;
+
+	if (m_stFileLoader.LoadFile(lpszPathName, this) != S_OK) {
+		MessageBoxW(nullptr, L"File load failed.", wstrErrCaption.data(), MB_ICONERROR);
+		return FALSE;
+	}
+
 	libpe::Clibpe libPE;
-
-	if (const auto err = libPE.OpenFile(lpszPathName); err != libpe::PEOK) {
-		m_wstrDocName += L" File Load Failed.";
+	if (const auto err = libPE.OpenFile(m_stFileLoader.GetData()); err != libpe::PEOK) {
 		const auto it = g_mapLibpeErrors.find(err);
-		MessageBoxW(nullptr, std::vformat(L"File load failed with libpe error code: 0x{:04X}\n{}",
+		MessageBoxW(nullptr, std::vformat(L"File load failed with the libpe error code: 0x{:04X}\n{}",
 			std::make_wformat_args(err, it != g_mapLibpeErrors.end() ? it->second : L"N/A")).data(),
-			m_wstrDocName.data(), MB_ICONERROR);
-
+			wstrErrCaption.data(), MB_ICONERROR);
 		return FALSE;
 	}
 
@@ -56,7 +60,7 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	m_optExport = libPE.GetExport();
 	m_stFileInfo.fHasExport = m_optExport.has_value();
 	m_optImport = libPE.GetImport();
-	m_stFileInfo.fHasImport = m_optImport.has_value();
+	m_stFileInfo.fHasImport = m_stFileInfo.fHasIAT = m_optImport.has_value();
 	m_optResRoot = libPE.GetResources();
 	m_stFileInfo.fHasResource = m_optResRoot.has_value();
 	m_optExcept = libPE.GetExceptions();
@@ -104,8 +108,6 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		}
 	}
 
-	libPE.CloseFile();
-	m_stFileLoader.LoadFile(lpszPathName, this);
 	UpdateAllViews(nullptr);
 
 	return TRUE;
@@ -113,7 +115,6 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 void CPepperDoc::OnCloseDocument()
 {
-	m_stFileLoader.Flush();
 	m_stFileLoader.UnloadFile();
 
 	CDocument::OnCloseDocument();
