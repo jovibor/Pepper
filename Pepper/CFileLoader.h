@@ -30,7 +30,7 @@ private:
 private:
 	static constexpr DWORD m_dwStyle { WS_POPUP | WS_OVERLAPPEDWINDOW };
 	static constexpr DWORD m_dwExStyle { WS_EX_APPWINDOW }; //To force to the taskbar.
-	struct HEXTODATACHECK {	//Was given IHexCtrl set with a whole file data or only with a file piece.
+	struct HEXTODATACHECK {	//Was the given IHexCtrl set with a whole file data or only with a file piece?
 		IHexCtrl* pHexCtrl { };
 		bool      fWhole { };
 	};

@@ -29,8 +29,8 @@ BOOL CAboutDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	const auto wstrVerPepper = std::format(L"Pepper: PE32/PE32+ Binaries Analyzer v{}.{}.{}", Util::PEPPER_VERSION_MAJOR,
-		Util::PEPPER_VERSION_MINOR, Util::PEPPER_VERSION_PATCH);
+	const auto wstrVerPepper = std::format(L"Pepper: PE32/PE32+ Binaries Analyzer v{}.{}.{}", Utility::PEPPER_VERSION_MAJOR,
+		Utility::PEPPER_VERSION_MINOR, Utility::PEPPER_VERSION_PATCH);
 	GetDlgItem(IDC_LINK_PEPPER)->SetWindowTextW(wstrVerPepper.data());
 	const auto wstrVerLibpe = std::format(L"libpe: PE32/PE32+ Binaries Parsing Library v{}.{}.{}",
 		libpe::LIBPE_VERSION_MAJOR, libpe::LIBPE_VERSION_MINOR, libpe::LIBPE_VERSION_PATCH);
@@ -50,11 +50,6 @@ BEGIN_MESSAGE_MAP(CPepperApp, CWinAppEx)
 	ON_COMMAND(ID_FILE_OPEN, &CPepperApp::OnFileOpen)
 	ON_UPDATE_COMMAND_UI(IDM_HELP_ABOUT, &CPepperApp::OnUpdateHelpAbout)
 END_MESSAGE_MAP()
-
-CPepperApp::CPepperApp()
-{
-	m_bHiColorIcons = TRUE;
-}
 
 void CPepperApp::OpenNewFile()
 {
@@ -81,14 +76,9 @@ BOOL CPepperApp::InitInstance()
 		delete pMainFrame;
 		return FALSE;
 	}
-
-	//Load and set the same default menu, to stop MFC from adding unnecessary staff to it.
-	const auto menuMain = ::LoadMenuW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDR_MAINFRAME));
-	pMainFrame->SetMenu(CMenu::FromHandle(menuMain));
 	m_pMainWnd = pMainFrame;
 
-	//For Drag'n Drop working, even in elevated state.
-	//Good explanation here:
+	//For Drag'n Drop to work, even in elevated mode.
 	//helgeklein.com/blog/2010/03/how-to-enable-drag-and-drop-for-an-elevated-mfc-application-on-vistawindows-7/
 	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
 	ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
@@ -98,8 +88,9 @@ BOOL CPepperApp::InitInstance()
 	// Parse command line for standard shell commands, DDE, file open
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
-	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew)
+	if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileNew) {
 		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
+	}
 
 	PVOID pOldValue;
 	Wow64DisableWow64FsRedirection(&pOldValue);
@@ -116,8 +107,9 @@ BOOL CPepperApp::InitInstance()
 	//To prevent OpenFileDialog popup if app was launched by
 	//dropping any file on app's shortcut 
 	//(with command line arg file name to be opened).
-	if (cmdInfo.m_strFileName.IsEmpty())
+	if (cmdInfo.m_strFileName.IsEmpty()) {
 		OnFileOpen();
+	}
 
 	Wow64RevertWow64FsRedirection(pOldValue);
 

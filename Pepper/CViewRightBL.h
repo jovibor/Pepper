@@ -16,7 +16,7 @@ import Utility;
 
 using namespace HEXCTRL;
 using namespace LISTEX;
-using namespace Util;
+using namespace Utility;
 
 class CViewRightBL : public CView
 {

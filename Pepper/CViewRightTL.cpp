@@ -59,8 +59,8 @@ void CViewRightTL::OnInitialUpdate()
 	else {
 		m_wstrFileType = L"File type: unknown";
 	}
-	m_wstrPepperVersion = std::format(L"Pepper v{}.{}.{}", Util::PEPPER_VERSION_MAJOR,
-		Util::PEPPER_VERSION_MINOR, Util::PEPPER_VERSION_PATCH);
+	m_wstrPepperVersion = std::format(L"Pepper v{}.{}.{}", Utility::PEPPER_VERSION_MAJOR,
+		Utility::PEPPER_VERSION_MINOR, Utility::PEPPER_VERSION_PATCH);
 
 	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
 	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
@@ -244,8 +244,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	//Menu for lists.
 	if (pNMI->hdr.code == NM_RCLICK && (pNMI->hdr.idFrom == IDC_LIST_EXPORT || pNMI->hdr.idFrom == IDC_LIST_IMPORT
 		|| pNMI->hdr.idFrom == IDC_LIST_IAT || pNMI->hdr.idFrom == IDC_LIST_TLS
-		|| pNMI->hdr.idFrom == IDC_LIST_BOUNDIMPORT || pNMI->hdr.idFrom == IDC_LIST_COMDESCRIPTOR)
-		) {
+		|| pNMI->hdr.idFrom == IDC_LIST_BOUNDIMPORT || pNMI->hdr.idFrom == IDC_LIST_COMDESCRIPTOR)) {
 		m_iListID = pNMI->hdr.idFrom;
 		m_iListItem = pNMI->iItem;
 		m_iListSubItem = pNMI->iSubItem;

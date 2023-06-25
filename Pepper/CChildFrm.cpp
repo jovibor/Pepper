@@ -25,14 +25,6 @@ BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWndEx)
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
-{
-	if (!CMDIChildWndEx::PreCreateWindow(cs))
-		return FALSE;
-
-	return TRUE;
-}
-
 BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
 {
 	CRect rc;
@@ -97,11 +89,6 @@ auto CChildFrame::GetSplitRightTop()->CSplitterEx&
 auto CChildFrame::GetSplitRightBot()->CSplitterEx&
 {
 	return m_stSplitterRightBottom;
-}
-
-BOOL CChildFrame::OnEraseBkgnd(CDC* pDC)
-{
-	return CMDIChildWndEx::OnEraseBkgnd(pDC);
 }
 
 void CChildFrame::OnSize(UINT nType, int cx, int cy)

@@ -1,10 +1,10 @@
+module;
 /****************************************************************************************************
 * Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
-module;
 #include "HexCtrl.h"
 #include <afxdlgs.h>
 #include <format>
@@ -18,7 +18,7 @@ import libpe;
 
 #define TO_WSTR_MAP(x) {x, L## #x}
 
-export namespace Util
+export namespace Utility
 {
 	constexpr auto PEPPER_VERSION_MAJOR = 1;
 	constexpr auto PEPPER_VERSION_MINOR = 5;
@@ -184,70 +184,77 @@ export namespace Util
 		if (!pRes)
 			return;
 
+		using enum EResType;
+		std::wstring_view wsvExt;
+		bool fResByID { true };
+		WORD wTypeID { }; //Res type ID.
+		std::wstring_view wsvTypeStr; //Res type name.
+
+		switch (eResType) {
+		case RTYPE_CURSOR:
+			wTypeID = 1; //RT_CURSOR
+			wsvExt = L".cur";
+			break;
+		case RTYPE_BITMAP:
+			wTypeID = 2; //RT_BITMAP
+			wsvExt = L".bmp";
+			break;
+		case RTYPE_ICON:
+			wTypeID = 3; //RT_ICON
+			wsvExt = L".ico";
+			break;
+		case RTYPE_PNG:
+			fResByID = false;
+			wsvTypeStr = L"PNG"; //PNG
+			wsvExt = L".png";
+			break;
+		default:
+			return; //Unsupported resource type.
+		}
+
 		CFolderPickerDialog fd;
 		if (fd.DoModal() != IDOK)
 			return;
 
-		const auto cstrFolderPath = fd.GetPathName(); //Folder name.
-		std::wstring wstrPathWithPrefix = cstrFolderPath.GetString() + std::wstring { L"\\" };
-		if (!wsvPrefix.empty()) {
-			wstrPathWithPrefix += std::wstring { wsvPrefix } + L"_";
-		}
+		const std::wstring wstrPathWithPrefix = fd.GetPathName().GetString()
+			+ std::wstring { L"\\" } + std::wstring { wsvPrefix };
 
 		auto dwSavedFiles { 0UL };
 		bool fAllSaveOK { true };
-		for (const auto & ref : libpe::FlatResources(*pRes)) {
-			using enum EResType;
-			std::wstring_view wsvExt;
-			switch (eResType) {
-			case RTYPE_CURSOR:
-				if (ref.wTypeID == 1) { //RT_CURSOR
-					wsvExt = L".cur";
+		for (const auto& stResFlat : libpe::FlatResources(*pRes)) {
+			//Looping until desired resource is found.
+			if (fResByID) {
+				if (wTypeID != stResFlat.wTypeID) {
+					continue;
 				}
-				break;
-			case RTYPE_BITMAP:
-				if (ref.wTypeID == 2) { //RT_BITMAP
-					wsvExt = L".bmp";
+			}
+			else {
+				if (wsvTypeStr != stResFlat.wsvTypeStr) {
+					continue;
 				}
-				break;
-			case RTYPE_ICON:
-				if (ref.wTypeID == 3) { //RT_ICON
-					wsvExt = L".ico";
-				}
-				break;
-			case RTYPE_PNG:
-				if (ref.wsvTypeStr == L"PNG") { //PNG
-					wsvExt = L".png";
-				}
-				break;
-			default:
-				break;
 			}
 
-			if (!wsvExt.empty()) {
-				std::wstring wstrPathFile = wstrPathWithPrefix;
-				if (!ref.wsvNameStr.empty()) {
-					wstrPathFile += ref.wsvNameStr;
-					wstrPathFile += L"_";
-				}
-				else {
-					wstrPathFile += std::format(L"RESID_{}_", ref.wNameID);
-				}
+			std::wstring wstrPathFile = wstrPathWithPrefix;
+			if (!stResFlat.wsvNameStr.empty()) {
+				wstrPathFile += L"_" + std::wstring {stResFlat.wsvNameStr};
+			}
+			else {
+				wstrPathFile += std::format(L"_RESID_{}", stResFlat.wNameID);
+			}
 
-				if (!ref.wsvLangStr.empty()) {
-					wstrPathFile += ref.wsvLangStr;
-				}
-				else {
-					wstrPathFile += std::format(L"LANGID_{}", ref.wLangID);
-				}
-				wstrPathFile += wsvExt;
+			if (!stResFlat.wsvLangStr.empty()) {
+				wstrPathFile += L"_" + std::wstring {stResFlat.wsvLangStr};
+			}
+			else {
+				wstrPathFile += std::format(L"_LANGID_{}", stResFlat.wLangID);
+			}
+			wstrPathFile += wsvExt;
 
-				if (SaveResToFile(eResType, wstrPathFile.data(), ref.spnData)) {
-					++dwSavedFiles;
-				}
-				else {
-					fAllSaveOK = false;
-				}
+			if (SaveResToFile(eResType, wstrPathFile.data(), stResFlat.spnData)) {
+				++dwSavedFiles;
+			}
+			else {
+				fAllSaveOK = false;
 			}
 		}
 
@@ -580,7 +587,7 @@ export namespace Util
 	//All HexCtrl dialogs' IDs for hiding/showing in Views, when tab is deactivated/activated.
 	inline const std::vector<HEXCTRL::EHexWnd> g_vecHexDlgs {
 		HEXCTRL::EHexWnd::DLG_BKMMANAGER, HEXCTRL::EHexWnd::DLG_DATAINTERP, HEXCTRL::EHexWnd::DLG_MODIFY,
-			HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_ENCODING,
+			HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_CODEPAGE,
 			HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
 
 

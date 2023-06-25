@@ -12,7 +12,7 @@
 #include <span>
 
 import Utility;
-using namespace Util;
+using namespace Utility;
 using namespace LISTEX;
 
 class CWndSampleDlg final : public CWnd

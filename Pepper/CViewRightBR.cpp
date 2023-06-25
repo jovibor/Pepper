@@ -116,11 +116,11 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	}
 
 	//If it's UpdateAllViews call for top right Hex (IDC_HEX_RIGHT_TR), (from top left Resource Tree) we do nothing.
-	if (!m_pChildFrame || LOWORD(lHint) == IDC_HEX_RIGHT_TR || LOWORD(lHint) == ID_DOC_EDITMODE)
+	if (!m_pChildFrame || iMsg == IDC_HEX_RIGHT_TR || iMsg == ID_DOC_EDITMODE)
 		return;
 
 	//If any but Resources Update we destroy m_DlgSampleWnd, if it's currently created.
-	if (LOWORD(lHint) != IDC_SHOW_RESOURCE_RBR) {
+	if (iMsg != IDC_SHOW_RESOURCE_RBR) {
 		if (m_wndSampleDlg.m_hWnd)
 			m_wndSampleDlg.DestroyWindow();
 	}
@@ -132,7 +132,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	GetParent()->GetWindowRect(&rcParent);
 	m_eResTypeToDraw = EResType::NO_RESOURCE;
 
-	switch (LOWORD(lHint)) {
+	switch (iMsg) {
 	case IDC_LIST_TLS:
 	{
 		CRect rcClient;
@@ -604,7 +604,7 @@ void CViewRightBR::CreateListTLSCallbacks()
 void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 {
 	const auto& pDebug = m_pMainDoc->GetDebug();
-	if (!pDebug)
+	if (!pDebug || dwEntry >= pDebug->size())
 		return;
 
 	//At the moment only IMAGE_DEBUG_TYPE_CODEVIEW info is supported.
@@ -1029,7 +1029,7 @@ void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 						if (iterlvl3.stResDirEntry.Id == stResData.wLangID) {
 							const auto& refData = iterlvl3.vecRawResData;
 							if (!refData.empty()) {
-								static PERESFLAT stData { .wTypeID { 2 } };
+								static PERESFLAT stData {.wTypeID { 2 } };
 								stData.wNameID = stResData.wNameID;
 								stData.spnData = refData;
 								m_pResData = &stData;

@@ -41,8 +41,9 @@ int& CMainFrame::GetChildFramesCount()
 void CMainFrame::OnAppEditmode()
 {
 	if (const auto pFrame = GetActiveFrame(); pFrame != nullptr) {
-		if (const auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr)
+		if (const auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr) {
 			pDoc->SetEditMode(!pDoc->IsEditMode());
+		}
 	}
 }
 
@@ -65,9 +66,13 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		| CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
 	m_wndToolBar.LoadToolBar(IDR_MAINFRAME_256);
 
-	//m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
+//	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndToolBar);      //CAUSES SLOW SIZING!!!
+
+	//VS2008 look set.
+//	CDockingManager::SetDockingMode(DT_SMART);
+//	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerVS2008));
 
 	// Switch the order of document name and application name on the window title bar. This
 	// improves the usability of the taskbar because the document name is visible with the thumbnail.
@@ -86,6 +91,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 		MessageBoxW(L"GetClassInfo(MdiClient) failed");
 		return FALSE;
 	}
+
 	UnregisterClassW(L"MdiClient", AfxGetInstanceHandle());
 	wndClass.cbSize = sizeof(WNDCLASSEXW);
 	wndClass.style |= CS_DBLCLKS;
@@ -162,7 +168,7 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
 	switch (pMsg->message) {
-	case WM_MBUTTONDOWN: //Closing tabs with middle mouse button.
+	case WM_MBUTTONDOWN: //Closing tabs with the middle mouse button.
 	{
 		pWndMBtnCurrDown = nullptr;
 		CPoint pt = pMsg->pt;
@@ -221,8 +227,9 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR dwData)
 {
 	const auto pMainFrame = reinterpret_cast<CMainFrame*>(dwData);
-	if (pMainFrame->GetChildFramesCount() != 0)
+	if (pMainFrame->GetChildFramesCount() != 0) {
 		return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+	}
 
 	switch (uMsg) {
 	case WM_PAINT:

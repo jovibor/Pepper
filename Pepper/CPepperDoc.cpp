@@ -11,7 +11,7 @@
 #include <format>
 
 import Utility;
-using namespace Util;
+using namespace Utility;
 
 IMPLEMENT_DYNCREATE(CPepperDoc, CDocument)
 
@@ -30,7 +30,7 @@ END_MESSAGE_MAP()
 BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
 	m_wstrDocName = lpszPathName;
-	m_wstrDocName = m_wstrDocName.substr(m_wstrDocName.find_last_of(L'\\') + 1); //Doc name with .extension.
+	m_wstrDocName = m_wstrDocName.substr(m_wstrDocName.find_last_of(L'\\') + 1); //Doc name with the .extension.
 	const std::wstring wstrErrCaption = L"File load failed: " + m_wstrDocName;
 
 	if (m_stFileLoader.LoadFile(lpszPathName, this) != S_OK) {

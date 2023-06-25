@@ -9,15 +9,12 @@
 class CPepperApp : public CWinAppEx
 {
 public:
-	CPepperApp();
 	void OpenNewFile();
 private:
-	DECLARE_MESSAGE_MAP();
 	BOOL InitInstance()override;
 	int ExitInstance()override;
 	afx_msg void OnAppAbout();
 	void OnFileOpen();
 	afx_msg void OnUpdateHelpAbout(CCmdUI *pCmdUI);
-private:
-	BOOL m_bHiColorIcons;
+	DECLARE_MESSAGE_MAP();
 };

@@ -14,12 +14,10 @@ public:
 	[[nodiscard]] auto GetSplitRightTop() -> CSplitterEx&;
 	[[nodiscard]] auto GetSplitRightBot() -> CSplitterEx&;
 private:
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnClose();
 	afx_msg void OnDestroy();
 	afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
 	BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)override;
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CChildFrame);

@@ -8,7 +8,7 @@
 #include "CViewRightTR.h"
 
 import Utility;
-using namespace Util;
+using namespace Utility;
 
 IMPLEMENT_DYNCREATE(CViewRightTR, CView)
 
