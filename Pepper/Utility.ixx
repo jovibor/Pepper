@@ -586,7 +586,7 @@ export namespace Utility
 
 	//All HexCtrl dialogs' IDs for hiding/showing in Views, when tab is deactivated/activated.
 	inline const std::vector<HEXCTRL::EHexWnd> g_vecHexDlgs {
-		HEXCTRL::EHexWnd::DLG_BKMMANAGER, HEXCTRL::EHexWnd::DLG_DATAINTERP, HEXCTRL::EHexWnd::DLG_MODIFY,
+		HEXCTRL::EHexWnd::DLG_BKMMGR, HEXCTRL::EHexWnd::DLG_DATAINTERP, HEXCTRL::EHexWnd::DLG_MODIFY,
 			HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_CODEPAGE,
 			HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
 

@@ -413,24 +413,26 @@ void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	}
 }
 
-void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* /*pResult*/)
+void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	if (pNMI->iSubItem != 10)
+	const auto pLTI = reinterpret_cast<PLISTEXTTINFO>(pNMHDR);
+	if (pLTI->iSubItem != 10)
 		return;
 
 	const auto& pSecHeaders = m_pMainDoc->GetSecHeaders();
-	std::wstring wstrTipText;
+	static std::wstring wstrTipText;
+	wstrTipText.clear();
 	for (const auto& flags : MapSecHdrCharact) {
-		if (flags.first & pSecHeaders->at(pNMI->iItem).stSecHdr.Characteristics) {
+		if (flags.first & pSecHeaders->at(pLTI->iItem).stSecHdr.Characteristics) {
 			wstrTipText += flags.second;
 			wstrTipText += L"\n";
 		}
 	}
 	if (!wstrTipText.empty()) {
-		static LISTEXTOOLTIP stTT { { }, L"Section Flags:" };
-		stTT.wstrText = std::move(wstrTipText);
-		pNMI->lParam = reinterpret_cast<LPARAM>(&stTT); //Tooltip pointer.
+		static constexpr auto pwszCaption { L"Section Flags:" };
+		pLTI->stData.pwszCaption = pwszCaption;
+		pLTI->stData.pwszText = wstrTipText.data();
+		*pResult = TRUE;
 	}
 }
 
