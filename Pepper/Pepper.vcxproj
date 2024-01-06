@@ -165,19 +165,26 @@
     <ClCompile Include="CTreeEx.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\dep\ListEx\CListEx.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexCtrl.cpp" />
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexSelection.cpp" />
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CScrollEx.cpp" />
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexScroll.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexSelection.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCodepage.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.cpp" />
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgFillData.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgModify.cpp" />
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.cpp" />
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.cpp" />
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\HexUtility.cpp" />
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\HexUtility.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="dep\libpe\libpe\libpe.ixx">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -208,19 +215,14 @@
     <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\res\HexCtrlRes.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\CHexCtrl.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\src\CHexSelection.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\src\CScrollEx.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCallback.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCodepage.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgFillData.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgModify.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgOpers.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\src\HexUtility.h" />
     <ClInclude Include="res\resource.h" />
     <ClInclude Include="CSplitterEx.h" />
     <ClInclude Include="CTreeEx.h" />
