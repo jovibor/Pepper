@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -14,8 +14,7 @@
 
 import Utility;
 
-class CAboutDlg : public CDialogEx
-{
+class CAboutDlg : public CDialogEx {
 public:
 	CAboutDlg() : CDialogEx(IDD_ABOUTBOX) {};
 protected:
@@ -152,7 +151,7 @@ void CPepperApp::OnFileOpen()
 			return fOpened;
 		}
 		return true;
-	};
+		};
 
 	while (!lmbFOD()) { }; //If no file has been opened (if multiple selection) we show the Open File Dialog again.
 }

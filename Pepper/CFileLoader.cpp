@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -99,7 +99,7 @@ HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSel
 
 	//If floating HexCtrl is in use we bring it to the front.
 	if (pHexCtrl == m_pHex.get()) {
-		::SetForegroundWindow(pHexCtrl->GetWindowHandle(EHexWnd::WND_MAIN));
+		::SetForegroundWindow(pHexCtrl->GetWndHandle(EHexWnd::WND_MAIN));
 	}
 
 	return S_OK;
@@ -174,7 +174,7 @@ void CFileLoader::CreateHexCtrlWnd()
 {
 	m_pHex->Create(m_hcs);
 
-	const auto hWndHex = m_pHex->GetWindowHandle(EHexWnd::WND_MAIN);
+	const auto hWndHex = m_pHex->GetWndHandle(EHexWnd::WND_MAIN);
 	const auto iWidthActual = m_pHex->GetActualWidth() + GetSystemMetrics(SM_CXVSCROLL);
 	CRect rcHex(0, 0, iWidthActual, iWidthActual); //Square window.
 	AdjustWindowRectEx(rcHex, m_dwStyle, FALSE, m_dwExStyle);
@@ -187,8 +187,8 @@ void CFileLoader::CreateHexCtrlWnd()
 	const auto hIconSmall = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 0, 0, 0));
 	const auto hIconBig = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 96, 96, 0));
 	if (hIconSmall != nullptr) {
-		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
-		::SendMessageW(m_pHex->GetWindowHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
+		::SendMessageW(m_pHex->GetWndHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
+		::SendMessageW(m_pHex->GetWndHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
 	}
 }
 

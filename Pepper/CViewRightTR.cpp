@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -59,7 +59,7 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_stHexEdit->ClearData();
-		m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
+		m_hwndActive = m_stHexEdit->GetWndHandle(EHexWnd::WND_MAIN);
 		m_pChildFrame->GetSplitRightTop().ShowCol(1);
 		m_pChildFrame->GetSplitRightTop().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -112,8 +112,8 @@ void CViewRightTR::OnMDITabActivate(bool fActivate)
 		m_vecHWNDVisible.clear();
 	}
 	else { //Hide all opened HexCtrl dialog windows and add them to the vector, when tab is deactivated.
-		for (const auto eWnd : g_vecHexDlgs) {
-			const auto hWnd = m_stHexEdit->GetWindowHandle(eWnd);
+		for (const auto eWnd : g_arrHexDlgs) {
+			const auto hWnd = m_stHexEdit->GetWndHandle(eWnd, false);
 			if (::IsWindow(hWnd) && ::IsWindowVisible(hWnd)) {
 				m_vecHWNDVisible.emplace_back(hWnd);
 				::ShowWindow(hWnd, SW_HIDE);
@@ -135,7 +135,7 @@ void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes)
 		m_stHexEdit->ClearData(); //In case of empty resource just clear the data.
 	}
 
-	m_hwndActive = m_stHexEdit->GetWindowHandle(EHexWnd::WND_MAIN);
+	m_hwndActive = m_stHexEdit->GetWndHandle(EHexWnd::WND_MAIN);
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);

@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -7,8 +7,7 @@
 #pragma once
 #include "CSplitterEx.h"
 
-class CChildFrame : public CMDIChildWndEx
-{
+class CChildFrame : public CMDIChildWndEx {
 public:
 	[[nodiscard]] auto GetSplitRight() -> CSplitterEx&;
 	[[nodiscard]] auto GetSplitRightTop() -> CSplitterEx&;

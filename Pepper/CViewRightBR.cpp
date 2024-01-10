@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -84,13 +84,8 @@ void CViewRightBR::OnInitialUpdate()
 	}
 	m_EditBRB.SetFont(&m_fontEditRes);
 
-	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
-	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
-	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHdrHglInact = RGB(0, 112, 112);
-	m_stlcs.stColor.clrHdrHglAct = RGB(0, 92, 92);
 	m_stlcs.pParent = this;
+	m_stlcs.pColors = &Utility::g_stListColors;
 	m_stlcs.dwHdrHeight = 35;
 
 	const auto pDC = GetDC();
@@ -863,8 +858,7 @@ void CViewRightBR::CreateGroupIconCursor(const PERESFLAT& stResData)
 		return;
 
 #pragma pack(push, 2)
-	struct GRPICONDIRENTRY
-	{
+	struct GRPICONDIRENTRY {
 		BYTE  bWidth;       // Width, in pixels, of the image
 		BYTE  bHeight;      // Height, in pixels, of the image
 		BYTE  bColorCount;  // Number of colors in image (0 if >=8bpp)
@@ -874,8 +868,7 @@ void CViewRightBR::CreateGroupIconCursor(const PERESFLAT& stResData)
 		DWORD dwBytesInRes; // how many bytes in this resource?
 		WORD  nID;          // the ID
 	};
-	struct GRPICONDIR
-	{
+	struct GRPICONDIR {
 		WORD			idReserved;   // Reserved (must be 0)
 		WORD			idType;       // Resource type (1 for icons)
 		WORD			idCount;      // How many images?
@@ -954,8 +947,7 @@ void CViewRightBR::CreateGroupIconCursor(const PERESFLAT& stResData)
 void CViewRightBR::CreateVersion(const PERESFLAT& stResData)
 {
 #pragma pack(push, 4)
-	struct LANGANDCODEPAGE
-	{
+	struct LANGANDCODEPAGE {
 		WORD wLanguage;
 		WORD wCodePage;
 	};
@@ -1029,7 +1021,7 @@ void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 						if (iterlvl3.stResDirEntry.Id == stResData.wLangID) {
 							const auto& refData = iterlvl3.vecRawResData;
 							if (!refData.empty()) {
-								static PERESFLAT stData {.wTypeID { 2 } };
+								static PERESFLAT stData { .wTypeID { 2 } };
 								stData.wNameID = stResData.wNameID;
 								stData.spnData = refData;
 								m_pResData = &stData;

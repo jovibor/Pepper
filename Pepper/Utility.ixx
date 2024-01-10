@@ -1,12 +1,12 @@
 module;
 /****************************************************************************************************
-* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
+#include "ListEx/ListEx.h"
 #include "HexCtrl.h"
-#include <afxdlgs.h>
 #include <format>
 #include <fstream>
 #include <span>
@@ -18,8 +18,7 @@ import libpe;
 
 #define TO_WSTR_MAP(x) {x, L## #x}
 
-export namespace Utility
-{
+export namespace Utility {
 	constexpr auto PEPPER_VERSION_MAJOR = 1;
 	constexpr auto PEPPER_VERSION_MINOR = 5;
 	constexpr auto PEPPER_VERSION_PATCH = 3;
@@ -48,7 +47,7 @@ export namespace Utility
 		RTYPE_UNSUPPORTED = 0x1FFF0, RES_LOAD_ERROR = 0x1FFFF
 	};
 
-	inline bool SaveResToFile(EResType eResType, const wchar_t* pwszPath, std::span<const std::byte> spnData)
+	bool SaveResToFile(EResType eResType, const wchar_t* pwszPath, std::span<const std::byte> spnData)
 	{
 		if (spnData.empty())
 			return false;
@@ -144,7 +143,7 @@ export namespace Utility
 		}
 	}
 
-	inline bool ExtractResToFile(EResType eResType, std::span<const std::byte> spnData)
+	bool ExtractResToFile(EResType eResType, std::span<const std::byte> spnData)
 	{
 		using enum EResType;
 		std::wstring_view wsvName;
@@ -179,7 +178,7 @@ export namespace Utility
 		return true;
 	}
 
-	inline void ExtractAllResToFile(std::optional<libpe::PERESROOT>& pRes, EResType eResType, std::wstring_view wsvPrefix)
+	void ExtractAllResToFile(std::optional<libpe::PERESROOT>& pRes, EResType eResType, std::wstring_view wsvPrefix)
 	{
 		if (!pRes)
 			return;
@@ -236,14 +235,14 @@ export namespace Utility
 
 			std::wstring wstrPathFile = wstrPathWithPrefix;
 			if (!stResFlat.wsvNameStr.empty()) {
-				wstrPathFile += L"_" + std::wstring {stResFlat.wsvNameStr};
+				wstrPathFile += L"_" + std::wstring { stResFlat.wsvNameStr };
 			}
 			else {
 				wstrPathFile += std::format(L"_RESID_{}", stResFlat.wNameID);
 			}
 
 			if (!stResFlat.wsvLangStr.empty()) {
-				wstrPathFile += L"_" + std::wstring {stResFlat.wsvLangStr};
+				wstrPathFile += L"_" + std::wstring { stResFlat.wsvLangStr };
 			}
 			else {
 				wstrPathFile += std::format(L"_LANGID_{}", stResFlat.wLangID);
@@ -268,12 +267,12 @@ export namespace Utility
 	}
 
 	//Errors, that might come from the libpe.
-	inline const std::unordered_map<DWORD, std::wstring_view> g_mapLibpeErrors {
+	const std::unordered_map<DWORD, std::wstring_view> g_mapLibpeErrors {
 		TO_WSTR_MAP(libpe::PEOK),
-			TO_WSTR_MAP(libpe::ERR_FILE_OPEN),
-			TO_WSTR_MAP(libpe::ERR_FILE_MAPPING),
-			TO_WSTR_MAP(libpe::ERR_FILE_SIZESMALL),
-			TO_WSTR_MAP(libpe::ERR_FILE_NODOSHDR)
+		TO_WSTR_MAP(libpe::ERR_FILE_OPEN),
+		TO_WSTR_MAP(libpe::ERR_FILE_MAPPING),
+		TO_WSTR_MAP(libpe::ERR_FILE_SIZESMALL),
+		TO_WSTR_MAP(libpe::ERR_FILE_NODOSHDR)
 	};
 
 	struct PEFILEINFO {
@@ -307,7 +306,7 @@ export namespace Utility
 	using map_hdr = std::unordered_map<DWORD, SPEREFLECTION>;
 
 	//Standard headers' maps.
-	inline const map_hdr g_mapDOSHeader {
+	const map_hdr g_mapDOSHeader {
 		{ 0, { sizeof(WORD), 0, L"e_magic" } },
 		{ 1, { sizeof(WORD), 2, L"e_cblp" } },
 		{ 2, { sizeof(WORD), 4, L"e_cp" } },
@@ -341,7 +340,7 @@ export namespace Utility
 		{ 30, { sizeof(LONG), 60, L"e_lfanew" } }
 	};
 
-	inline const map_hdr g_mapFileHeader {
+	const map_hdr g_mapFileHeader {
 		{ 0, { sizeof(WORD), 0, L"Machine" } },
 		{ 1, { sizeof(WORD), 2, L"NumberOfSections" } },
 		{ 2, { sizeof(DWORD), 4, L"TimeDateStamp" } },
@@ -351,7 +350,7 @@ export namespace Utility
 		{ 6, { sizeof(WORD), 18, L"Characteristics" } }
 	};
 
-	inline const map_hdr g_mapOptHeader32 {
+	const map_hdr g_mapOptHeader32 {
 		{ 0, { sizeof(WORD), 0, L"Magic" } },
 		{ 1, { sizeof(BYTE), 2, L"MajorLinkerVersion" } },
 		{ 2, { sizeof(BYTE), 3, L"MinorLinkerVersion" } },
@@ -384,7 +383,7 @@ export namespace Utility
 		{ 29, { sizeof(DWORD), 92, L"NumberOfRvaAndSizes" } }
 	};
 
-	inline const map_hdr g_mapOptHeader64 {
+	const map_hdr g_mapOptHeader64 {
 		{ 0, { sizeof(WORD), 0, L"Magic" } },
 		{ 1, { sizeof(BYTE), 2, L"MajorLinkerVersion" } },
 		{ 2, { sizeof(BYTE), 3, L"MinorLinkerVersion" } },
@@ -416,7 +415,7 @@ export namespace Utility
 		{ 28, { sizeof(DWORD), 108, L"NumberOfRvaAndSizes" } }
 	};
 
-	inline const std::unordered_map<DWORD, std::wstring_view> g_mapDataDirs {
+	const std::unordered_map<DWORD, std::wstring_view> g_mapDataDirs {
 		{ IMAGE_DIRECTORY_ENTRY_EXPORT, L"Export Directory" },
 		{ IMAGE_DIRECTORY_ENTRY_IMPORT, L"Import Directory" },
 		{ IMAGE_DIRECTORY_ENTRY_RESOURCE, L"Resource Directory" },
@@ -434,7 +433,7 @@ export namespace Utility
 		{ IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, L"COM Descriptor Directory" }
 	};
 
-	inline const map_hdr g_mapExport {
+	const map_hdr g_mapExport {
 		{ 0, { sizeof(DWORD), 0, L"Characteristics" } },
 		{ 1, { sizeof(DWORD), 4, L"TimeDateStamp" } },
 		{ 2, { sizeof(WORD), 8, L"MajorVersion" } },
@@ -448,7 +447,7 @@ export namespace Utility
 		{ 10, { sizeof(DWORD), 36, L"AddressOfNameOrdinals" } }
 	};
 
-	inline const map_hdr g_mapLCD32 {
+	const map_hdr g_mapLCD32 {
 		{ 0, { sizeof(DWORD), 0, L"Size" } },
 		{ 1, { sizeof(DWORD), 4, L"TimeDateStamp" } },
 		{ 2, { sizeof(WORD), 8, L"MajorVersion" } },
@@ -496,7 +495,7 @@ export namespace Utility
 		{ 44, { sizeof(DWORD), 160, L"VolatileMetadataPointer" } },
 	};
 
-	inline const map_hdr g_mapLCD64 {
+	const map_hdr g_mapLCD64 {
 		{ 0, { sizeof(DWORD), 0, L"Size" } },
 		{ 1, { sizeof(DWORD), 4, L"TimeDateStamp" } },
 		{ 2, { sizeof(WORD), 8, L"MajorVersion" } },
@@ -544,7 +543,7 @@ export namespace Utility
 		{ 44, { sizeof(ULONGLONG), 256, L"VolatileMetadataPointer" } },
 	};
 
-	inline const map_hdr g_mapTLS32 {
+	const map_hdr g_mapTLS32 {
 		{ 0, { sizeof(DWORD), 0, L"StartAddressOfRawData" } },
 		{ 1, { sizeof(DWORD), 4, L"EndAddressOfRawData" } },
 		{ 2, { sizeof(DWORD), 8, L"AddressOfIndex" } },
@@ -553,7 +552,7 @@ export namespace Utility
 		{ 5, { sizeof(DWORD), 20, L"Characteristics" } },
 	};
 
-	inline const map_hdr g_mapTLS64 {
+	const map_hdr g_mapTLS64 {
 		{ 0, { sizeof(ULONGLONG), 0, L"StartAddressOfRawData" } },
 		{ 1, { sizeof(ULONGLONG), 8, L"EndAddressOfRawData" } },
 		{ 2, { sizeof(ULONGLONG), 16, L"AddressOfIndex" } },
@@ -562,7 +561,7 @@ export namespace Utility
 		{ 5, { sizeof(DWORD), 36, L"Characteristics" } },
 	};
 
-	inline const map_hdr g_mapComDir {
+	const map_hdr g_mapComDir {
 		{ 0, { sizeof(DWORD), 0, L"cb" } },
 		{ 1, { sizeof(WORD), 4, L"MajorRuntimeVersion" } },
 		{ 2, { sizeof(WORD), 6, L"MinorRuntimeVersion" } },
@@ -585,11 +584,22 @@ export namespace Utility
 	};
 
 	//All HexCtrl dialogs' IDs for hiding/showing in Views, when tab is deactivated/activated.
-	inline const std::vector<HEXCTRL::EHexWnd> g_vecHexDlgs {
+	constexpr HEXCTRL::EHexWnd g_arrHexDlgs[] {
 		HEXCTRL::EHexWnd::DLG_BKMMGR, HEXCTRL::EHexWnd::DLG_DATAINTERP, HEXCTRL::EHexWnd::DLG_MODIFY,
-			HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_CODEPAGE,
-			HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
+		HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_CODEPAGE,
+		HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
 
+	const HEXCTRL::LISTEX::LISTEXCOLORS g_stListColors { //Global colors for all ListEx.
+		.clrTooltipText { RGB(255, 255, 255) },
+		.clrTooltipBk { RGB(0, 132, 132) },
+		.clrHdrText { RGB(255, 255, 255) },
+		.clrHdrBk { RGB(0, 132, 132) },
+		.clrHdrHglInact { RGB(0, 112, 112) },
+		.clrHdrHglAct { RGB(0, 92, 92) }
+	};
+
+	//Color of the list's "Offset" column
+	constexpr auto g_clrOffset = RGB(150, 150, 150);
 
 	/*****************************************************************
 	* These are identificators of all the controls: list, hex, tree. *
@@ -661,7 +671,4 @@ export namespace Utility
 	/********************************************************
 	* End of IDC.											*
 	********************************************************/
-
-	//Color of the list's "Offset" column
-	constexpr auto g_clrOffset = RGB(150, 150, 150);
 };

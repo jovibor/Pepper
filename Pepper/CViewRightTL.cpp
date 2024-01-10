@@ -1,5 +1,5 @@
 /****************************************************************************************************
-* Copyright © 2018-2023 Jovibor https://github.com/jovibor/                                         *
+* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
 * This software is available under the Apache-2.0 License.                                          *
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
@@ -59,16 +59,12 @@ void CViewRightTL::OnInitialUpdate()
 	else {
 		m_wstrFileType = L"File type: unknown";
 	}
+
 	m_wstrPepperVersion = std::format(L"Pepper v{}.{}.{}", Utility::PEPPER_VERSION_MAJOR,
 		Utility::PEPPER_VERSION_MINOR, Utility::PEPPER_VERSION_PATCH);
 
-	m_stlcs.stColor.clrTooltipText = RGB(255, 255, 255);
-	m_stlcs.stColor.clrTooltipBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHdrText = RGB(255, 255, 255);
-	m_stlcs.stColor.clrHdrBk = RGB(0, 132, 132);
-	m_stlcs.stColor.clrHdrHglInact = RGB(0, 112, 112);
-	m_stlcs.stColor.clrHdrHglAct = RGB(0, 92, 92);
 	m_stlcs.pParent = this;
+	m_stlcs.pColors = &Utility::g_stListColors;
 	m_stlcs.dwHdrHeight = 39;
 	m_stlcs.fSortable = true;
 
@@ -971,7 +967,7 @@ void CViewRightTL::CreateListOptHeader()
 				}
 			}
 		}
-	};
+		};
 	m_stFileInfo.eFileType == EFileType::PE32 ? lmbOptHdr(pNTHdr->unHdr.stNTHdr32.OptionalHeader, g_mapOptHeader32)
 		: lmbOptHdr(pNTHdr->unHdr.stNTHdr64.OptionalHeader, g_mapOptHeader64);
 }
@@ -1334,7 +1330,7 @@ void CViewRightTL::CreateListTLS()
 					m_listTLSDir->SetCellTooltip(iterMap, 3, iterCharact->second.data(), L"Characteristics:");
 			}
 		}
-	};
+		};
 	m_stFileInfo.eFileType == EFileType::PE32 ? lmbTLS(pTLSDir->unTLS.stTLSDir32, g_mapTLS32) : lmbTLS(pTLSDir->unTLS.stTLSDir64, g_mapTLS64);
 }
 
@@ -1390,7 +1386,7 @@ void CViewRightTL::CreateListLCD()
 					m_listLCD->SetCellTooltip(iterMap, 3, wstrGFlags.data(), L"GuardFlags:");
 			}
 		}
-	};
+		};
 	m_stFileInfo.eFileType == EFileType::PE32 ? lmbLCD(pLCD->unLCD.stLCD32, g_mapLCD32) : lmbLCD(pLCD->unLCD.stLCD64, g_mapLCD64);
 }
 
