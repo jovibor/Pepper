@@ -21,7 +21,7 @@ import libpe;
 export namespace Utility {
 	constexpr auto PEPPER_VERSION_MAJOR = 1;
 	constexpr auto PEPPER_VERSION_MINOR = 5;
-	constexpr auto PEPPER_VERSION_PATCH = 3;
+	constexpr auto PEPPER_VERSION_PATCH = 4;
 
 	[[nodiscard]] inline auto StrToWstr(std::string_view sv, UINT uCodePage = CP_UTF8) -> std::wstring
 	{

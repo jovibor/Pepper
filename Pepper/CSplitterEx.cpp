@@ -161,7 +161,7 @@ void CSplitterEx::OnMouseMove(UINT nFlags, CPoint pt)
 	CSplitterWndEx::OnMouseMove(nFlags, pt);
 
 	if (IsTracking()) {
-		OnLButtonUp(0, pt);
-		OnLButtonDown(0, pt);
+		StopTracking(TRUE);
+		OnLButtonDown(nFlags, pt);
 	}
 }
