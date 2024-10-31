@@ -67,6 +67,8 @@ void CViewRightTL::OnInitialUpdate()
 	m_stlcs.pColors = &Utility::g_stListColors;
 	m_stlcs.dwHdrHeight = 39;
 	m_stlcs.fSortable = true;
+	m_stlcs.dwTTStyleCell = TTS_BALLOON;
+	m_stlcs.dwTTShowDelay = 250;
 
 	m_lf.lfHeight = m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
