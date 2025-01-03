@@ -8,11 +8,9 @@
 #include <afxcontrolbars.h>
 #include "CFileLoader.h"
 import Utility;
-import libpe;
 using namespace libpe;
 
-class CPepperDoc : public CDocument
-{
+class CPepperDoc : public CDocument {
 public:
 	[[nodiscard]] auto GetFileLoader() -> CFileLoader&;
 	void SetEditMode(bool fEditMode);

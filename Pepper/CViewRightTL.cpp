@@ -8,21 +8,103 @@
 #include "CViewRightTL.h"
 #include "strsafe.h"
 #include <algorithm>
+#include <bit>
 #include <format>
 
 IMPLEMENT_DYNCREATE(CViewRightTL, CView)
 
 BEGIN_MESSAGE_MAP(CViewRightTL, CView)
-	ON_WM_SIZE()
-	ON_WM_MOUSEWHEEL()
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_SECHEADERS, &CViewRightTL::OnListSecHdrGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_IMPORT, &CViewRightTL::OnListImportGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_RELOCATIONS, &CViewRightTL::OnListRelocsGetDispInfo)
 	ON_NOTIFY(LVN_GETDISPINFOW, IDC_LIST_EXCEPTIONS, &CViewRightTL::OnListExceptionsGetDispInfo)
-	ON_NOTIFY(LISTEX_MSG_GETTOOLTIP, IDC_LIST_SECHEADERS, &CViewRightTL::OnListSecHdrGetToolTip)
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_RESOURCE_TOP, &CViewRightTL::OnTreeResTopSelChange)
 	ON_WM_ERASEBKGND()
+	ON_WM_MOUSEWHEEL()
+	ON_WM_SIZE()
+	ON_WM_DRAWITEM()
+	ON_WM_MEASUREITEM()
 END_MESSAGE_MAP()
+
+auto CViewRightTL::GetToolTip(UINT_PTR uListID, int iItem, int iSubItem)->const TOOLTIP*
+{
+	const auto pList = GetListByID(uListID);
+	if (pList == nullptr)
+		return { };
+
+	const auto uID = pList->MapIndexToID(iItem);
+
+	if (const auto it = std::ranges::find_if(m_vecTT, [=](const TOOLTIP& ref) {
+		return ref.uListID == uListID && ref.uID == uID && ref.iSubItem == iSubItem; }); it != m_vecTT.end()) {
+		return &*it;
+	}
+
+	return { };
+}
+
+auto CViewRightTL::GetListByID(UINT_PTR uListID)->CListEx*
+{
+	switch (uListID) {
+	case IDC_LIST_DOSHEADER:
+		return &m_listDOSHeader;
+	case IDC_LIST_RICHHEADER:
+		return &m_listRichHdr;
+	case IDC_LIST_NTHEADER:
+		return &m_listNTHeader;
+	case IDC_LIST_FILEHEADER:
+		return &m_listFileHeader;
+	case IDC_LIST_OPTIONALHEADER:
+		return &m_listOptHeader;
+	case IDC_LIST_DATADIRECTORIES:
+		return &m_listDataDirs;
+	case IDC_LIST_SECHEADERS:
+		return &m_listSecHeaders;
+	case IDC_LIST_EXPORT:
+		return &m_listExportDir;
+	case IDC_LIST_IMPORT:
+		return &m_listImport;
+	case IDC_LIST_EXCEPTIONS:
+		return &m_listExceptionDir;
+	case IDC_LIST_RELOCATIONS:
+		return &m_listRelocDir;
+	case IDC_LIST_SECURITY:
+		return &m_listSecurityDir;
+	case IDC_LIST_DEBUG:
+		return &m_listDebugDir;
+	case IDC_LIST_TLS:
+		return &m_listTLSDir;
+	case IDC_LIST_LOADCONFIG:
+		return &m_listLCD;
+	case IDC_LIST_BOUNDIMPORT:
+		return &m_listBoundImportDir;
+	case IDC_LIST_DELAYIMPORT:
+		return &m_listDelayImportDir;
+	case IDC_LIST_COMDESCRIPTOR:
+		return &m_listCOMDir;
+	default:
+		return { };
+	}
+}
+
+void CViewRightTL::SetToolTip(UINT_PTR uListID, int iItem, int iSubItem, std::wstring_view wsvTT, std::wstring_view wsvCaption)
+{
+	const auto pList = GetListByID(uListID);
+	if (pList == nullptr)
+		return;
+
+	const auto uID = pList->MapIndexToID(iItem);
+
+	if (const auto it = std::ranges::find_if(m_vecTT, [=](const TOOLTIP& ref) {
+		return ref.uListID == uListID && ref.uID == uID; });
+		it == m_vecTT.end()) { //If there is no tooltip for such item/subitem, we just set it.
+		m_vecTT.emplace_back(TOOLTIP { .uListID { uListID }, .uID { uID }, .iSubItem { iSubItem },
+			.wstrCaption { std::wstring { wsvCaption } }, .wstrTT { std::wstring { wsvTT } } });
+	}
+	else {
+		it->wstrCaption = wsvCaption;
+		it->wstrTT = wsvTT;
+	}
+}
 
 void CViewRightTL::OnInitialUpdate()
 {
@@ -63,19 +145,19 @@ void CViewRightTL::OnInitialUpdate()
 	m_wstrPepperVersion = std::format(L"Pepper v{}.{}.{}", Utility::PEPPER_VERSION_MAJOR,
 		Utility::PEPPER_VERSION_MINOR, Utility::PEPPER_VERSION_PATCH);
 
-	m_stlcs.pParent = this;
+	m_stlcs.hWndParent = m_hWnd;
 	m_stlcs.pColors = &Utility::g_stListColors;
 	m_stlcs.dwHdrHeight = 39;
 	m_stlcs.fSortable = true;
 	m_stlcs.dwTTStyleCell = TTS_BALLOON;
-	m_stlcs.dwTTShowDelay = 250;
+	m_stlcs.dwTTDelayTime = 250;
 
 	m_lf.lfHeight = m_hdrlf.lfHeight = -MulDiv(11, iLOGPIXELSY, 72);
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
-	m_stlcs.pListLogFont = &m_lf;
+	m_stlcs.pLFList = &m_lf;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
-	m_stlcs.pHdrLogFont = &m_hdrlf;
+	m_stlcs.pLFHdr = &m_hdrlf;
 
 	m_menuList.CreatePopupMenu();
 	m_menuList.AppendMenuW(MF_STRING, IDM_LIST_GOTODESCOFFSET, L"Go to descriptor offset");
@@ -114,88 +196,88 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	if (!m_pChildFrame || LOWORD(lHint) == IDC_SHOW_RESOURCE_RBR || LOWORD(lHint) == ID_DOC_EDITMODE)
 		return;
 
-	if (m_pwndActive)
-		m_pwndActive->ShowWindow(SW_HIDE);
+	if (m_hWndActive)
+		::ShowWindow(m_hWndActive, SW_HIDE);
 
 	m_fFileSummaryShow = false;
 	bool fShowRow { true };
 	switch (LOWORD(lHint)) {
 	case IDC_SHOW_FILE_SUMMARY:
 		m_fFileSummaryShow = true;
-		m_pwndActive = nullptr;
+		m_hWndActive = nullptr;
 		break;
 	case IDC_LIST_DOSHEADER:
-		m_pwndActive = &*m_listDOSHeader;
+		m_hWndActive = m_listDOSHeader.GetHWND();
 		break;
 	case IDC_LIST_RICHHEADER:
-		m_pwndActive = &*m_listRichHdr;
+		m_hWndActive = m_listRichHdr.GetHWND();
 		break;
 	case IDC_LIST_NTHEADER:
-		m_pwndActive = &*m_listNTHeader;
+		m_hWndActive = m_listNTHeader.GetHWND();
 		break;
 	case IDC_LIST_FILEHEADER:
-		m_pwndActive = &*m_listFileHeader;
+		m_hWndActive = m_listFileHeader.GetHWND();
 		break;
 	case IDC_LIST_OPTIONALHEADER:
-		m_pwndActive = &*m_listOptHeader;
+		m_hWndActive = m_listOptHeader.GetHWND();
 		break;
 	case IDC_LIST_DATADIRECTORIES:
-		m_pwndActive = &*m_listDataDirs;
+		m_hWndActive = m_listDataDirs.GetHWND();
 		break;
 	case IDC_LIST_SECHEADERS:
-		m_pwndActive = &*m_listSecHeaders;
+		m_hWndActive = m_listSecHeaders.GetHWND();
 		break;
 	case IDC_LIST_EXPORT:
-		m_pwndActive = &*m_listExportDir;
+		m_hWndActive = m_listExportDir.GetHWND();
 		break;
 	case IDC_LIST_IAT:
 	case IDC_LIST_IMPORT:
-		m_pwndActive = &*m_listImport;
+		m_hWndActive = m_listImport.GetHWND();
 		break;
 	case IDC_TREE_RESOURCE:
-		m_pwndActive = &m_treeResTop;
+		m_hWndActive = m_treeResTop.m_hWnd;
 		break;
 	case IDC_LIST_EXCEPTIONS:
-		m_pwndActive = &*m_listExceptionDir;
+		m_hWndActive = m_listExceptionDir.GetHWND();
 		fShowRow = false;
 		break;
 	case IDC_LIST_SECURITY:
-		m_pwndActive = &*m_listSecurityDir;
+		m_hWndActive = m_listSecurityDir.GetHWND();
 		break;
 	case IDC_LIST_RELOCATIONS:
-		m_pwndActive = &*m_listRelocDir;
+		m_hWndActive = m_listRelocDir.GetHWND();
 		break;
 	case IDC_LIST_DEBUG:
-		m_pwndActive = &*m_listDebugDir;
+		m_hWndActive = m_listDebugDir.GetHWND();
 		break;
 	case IDC_LIST_TLS:
-		m_pwndActive = &*m_listTLSDir;
+		m_hWndActive = m_listTLSDir.GetHWND();
 		break;
 	case IDC_LIST_LOADCONFIG:
-		m_pwndActive = &*m_listLCD;
+		m_hWndActive = m_listLCD.GetHWND();
 		break;
 	case IDC_LIST_BOUNDIMPORT:
-		m_pwndActive = &*m_listBoundImportDir;
+		m_hWndActive = m_listBoundImportDir.GetHWND();
 		break;
 	case IDC_LIST_DELAYIMPORT:
-		m_pwndActive = &*m_listDelayImportDir;
+		m_hWndActive = m_listDelayImportDir.GetHWND();
 		break;
 	case IDC_LIST_COMDESCRIPTOR:
-		m_pwndActive = &*m_listCOMDir;
+		m_hWndActive = m_listCOMDir.GetHWND();
 		fShowRow = false;
 		break;
 	}
-	if (m_pwndActive) {
+	if (m_hWndActive) {
 		CRect rcClient;
 		GetClientRect(&rcClient);
-		m_pwndActive->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		::SetWindowPos(m_hWndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 	}
 
 	fShowRow ? m_pChildFrame->GetSplitRight().ShowRow(1) : m_pChildFrame->GetSplitRight().HideRow(1);
 	m_pChildFrame->GetSplitRight().RecalcLayout();
 }
 
-void CViewRightTL::OnDraw(CDC* pDC)
+void CViewRightTL::OnDraw(CDC * pDC)
 {
 	//Printing app name/version info and
 	//currently oppened file's type and name.
@@ -233,7 +315,7 @@ void CViewRightTL::OnDraw(CDC* pDC)
 		m_wstrFullPath.data(), static_cast<int>(m_wstrFullPath.size()), nullptr);
 }
 
-BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
 {
 	CView::OnNotify(wParam, lParam, pResult);
 
@@ -253,6 +335,14 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		return TRUE;
 	}
 
+	if (pNMI->hdr.code == LISTEX::LISTEX_MSG_GETTOOLTIP) { //All tooltips for all lists.
+		OnListGetToolTip(&pNMI->hdr);
+	}
+
+	if (pNMI->hdr.code == LISTEX::LISTEX_MSG_GETCOLOR) { //All colors for all lists.
+		OnListGetColor(&pNMI->hdr);
+	}
+
 	switch (pNMI->hdr.idFrom) {
 	case IDC_LIST_DOSHEADER:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
@@ -263,8 +353,9 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_RICHHEADER_ENTRY, pNMI->iItem));
 		break;
 	case IDC_LIST_NTHEADER:
-		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
+		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK) {
 			m_pMainDoc->UpdateAllViews(this, MAKELPARAM(IDC_LIST_NTHEADER_ENTRY, pNMI->iItem));
+		}
 		break;
 	case IDC_LIST_FILEHEADER:
 		if (pNMI->hdr.code == LVN_ITEMCHANGED || pNMI->hdr.code == NM_CLICK)
@@ -356,8 +447,8 @@ void CViewRightTL::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
 
-	if (m_pwndActive)
-		m_pwndActive->SetWindowPos(this, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
+	if (m_hWndActive)
+		::SetWindowPos(m_hWndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
@@ -431,6 +522,34 @@ void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* pResult)
 		pLTI->stData.pwszCaption = pwszCaption;
 		pLTI->stData.pwszText = wstrTipText.data();
 		*pResult = TRUE;
+	}
+}
+
+void CViewRightTL::OnListGetColor(NMHDR* pNMHDR)
+{
+	const auto pLCI = reinterpret_cast<LISTEX::PLISTEXCOLORINFO>(pNMHDR);
+	const auto iItem = pLCI->iItem;
+	const auto iSubItem = pLCI->iSubItem;
+	if (iItem < 0 || iSubItem < 0)
+		return;
+
+	const auto uListID = pLCI->hdr.idFrom;
+	if (const auto pTT = GetToolTip(uListID, iItem, iSubItem); pTT != nullptr) {
+		pLCI->stClr.clrBk = g_clrListBkTT; //Cells with tooltips are colored.
+	}
+}
+
+void CViewRightTL::OnListGetToolTip(NMHDR* pNMHDR)
+{
+	const auto pTTI = reinterpret_cast<PLISTEXTTINFO>(pNMHDR);
+	const auto iItem = pTTI->iItem;
+	const auto iSubItem = pTTI->iSubItem;
+	if (iItem < 0 || iSubItem < 0)
+		return;
+
+	if (const auto pTT = GetToolTip(pNMHDR->idFrom, iItem, iSubItem); pTT != nullptr) {
+		pTTI->stData.pwszCaption = pTT->wstrCaption.data();
+		pTTI->stData.pwszText = pTT->wstrTT.data();
 	}
 }
 
@@ -771,13 +890,13 @@ void CViewRightTL::CreateListDOSHeader()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_DOSHEADER;
-	m_listDOSHeader->Create(m_stlcs);
-	m_listDOSHeader->ShowWindow(SW_HIDE);
-	m_listDOSHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDOSHeader->SetHdrColumnColor(0, g_clrOffset);
-	m_listDOSHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
-	m_listDOSHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
-	m_listDOSHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 100);
+	m_listDOSHeader.Create(m_stlcs);
+	m_listDOSHeader.ShowWindow(SW_HIDE);
+	m_listDOSHeader.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listDOSHeader.SetHdrColumnColor(0, g_clrOffset);
+	m_listDOSHeader.InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
+	m_listDOSHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
+	m_listDOSHeader.InsertColumn(3, L"Value", LVCFMT_CENTER, 100);
 
 	for (auto iter { 0U }; iter < g_mapDOSHeader.size(); ++iter) {
 		const auto& ref = g_mapDOSHeader.at(iter);
@@ -791,10 +910,10 @@ void CViewRightTL::CreateListDOSHeader()
 		if (iter == 0) //e_magic
 			dwValue = (dwValue & 0xFF00) >> 8 | (dwValue & 0xFF) << 8;
 
-		m_listDOSHeader->InsertItem(iter, std::format(L"{:08X}", dwOffset).data());
-		m_listDOSHeader->SetItemText(iter, 1, ref.wstrName.data());
-		m_listDOSHeader->SetItemText(iter, 2, std::format(L"{}", dwSize).data());
-		m_listDOSHeader->SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
+		m_listDOSHeader.InsertItem(iter, std::format(L"{:08X}", dwOffset).data());
+		m_listDOSHeader.SetItemText(iter, 1, ref.wstrName.data());
+		m_listDOSHeader.SetItemText(iter, 2, std::format(L"{}", dwSize).data());
+		m_listDOSHeader.SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
 	}
 }
 
@@ -806,24 +925,24 @@ void CViewRightTL::CreateListRichHeader()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_RICHHEADER;
-	m_listRichHdr->Create(m_stlcs);
-	m_listRichHdr->ShowWindow(SW_HIDE);
-	m_listRichHdr->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listRichHdr->SetHdrColumnColor(0, g_clrOffset);
-	m_listRichHdr->InsertColumn(1, L"\u2116", LVCFMT_CENTER, 35);
-	m_listRichHdr->InsertColumn(2, L"ID [Hex]", LVCFMT_CENTER, 100);
-	m_listRichHdr->InsertColumn(3, L"Version", LVCFMT_CENTER, 100);
-	m_listRichHdr->InsertColumn(4, L"Occurrences", LVCFMT_CENTER, 100);
-	m_listRichHdr->SetColumnSortMode(1, true, EListExSortMode::SORT_NUMERIC);
-	m_listRichHdr->SetColumnSortMode(4, true, EListExSortMode::SORT_NUMERIC);
+	m_listRichHdr.Create(m_stlcs);
+	m_listRichHdr.ShowWindow(SW_HIDE);
+	m_listRichHdr.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listRichHdr.SetHdrColumnColor(0, g_clrOffset);
+	m_listRichHdr.InsertColumn(1, L"\u2116", LVCFMT_CENTER, 35);
+	m_listRichHdr.InsertColumn(2, L"ID [Hex]", LVCFMT_CENTER, 100);
+	m_listRichHdr.InsertColumn(3, L"Version", LVCFMT_CENTER, 100);
+	m_listRichHdr.InsertColumn(4, L"Occurrences", LVCFMT_CENTER, 100);
+	m_listRichHdr.SetColumnSortMode(1, true, EListExSortMode::SORT_NUMERIC);
+	m_listRichHdr.SetColumnSortMode(4, true, EListExSortMode::SORT_NUMERIC);
 
 	auto listindex { 0 };
 	for (const auto& iter : *pRichHeader) {
-		m_listRichHdr->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
-		m_listRichHdr->SetItemText(listindex, 1, std::format(L"{}", listindex + 1).data());
-		m_listRichHdr->SetItemText(listindex, 2, std::format(L"{:04X}", iter.wId).data());
-		m_listRichHdr->SetItemText(listindex, 3, std::format(L"{}", iter.wVersion).data());
-		m_listRichHdr->SetItemText(listindex, 4, std::format(L"{}", iter.dwCount).data());
+		m_listRichHdr.InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
+		m_listRichHdr.SetItemText(listindex, 1, std::format(L"{}", listindex + 1).data());
+		m_listRichHdr.SetItemText(listindex, 2, std::format(L"{:04X}", iter.wId).data());
+		m_listRichHdr.SetItemText(listindex, 3, std::format(L"{}", iter.wVersion).data());
+		m_listRichHdr.SetItemText(listindex, 4, std::format(L"{}", iter.dwCount).data());
 		++listindex;
 	}
 }
@@ -836,25 +955,24 @@ void CViewRightTL::CreateListNTHeader()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_NTHEADER;
-	m_listNTHeader->Create(m_stlcs);
-	m_listNTHeader->ShowWindow(SW_HIDE);
-	m_listNTHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listNTHeader->SetHdrColumnColor(0, g_clrOffset);
-	m_listNTHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 100);
-	m_listNTHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
-	m_listNTHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 100);
+	m_listNTHeader.Create(m_stlcs);
+	m_listNTHeader.ShowWindow(SW_HIDE);
+	m_listNTHeader.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listNTHeader.SetHdrColumnColor(0, g_clrOffset);
+	m_listNTHeader.InsertColumn(1, L"Name", LVCFMT_CENTER, 100);
+	m_listNTHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
+	m_listNTHeader.InsertColumn(3, L"Value", LVCFMT_CENTER, 100);
 
 	const auto pDescr = &pNTHdr->unHdr.stNTHdr32;
-	m_listNTHeader->InsertItem(0, std::format(L"{:08X}", pNTHdr->dwOffset).data());
-	m_listNTHeader->SetItemText(0, 1, L"Signature");
-	m_listNTHeader->SetItemText(0, 2, std::format(L"{}", sizeof(pDescr->Signature)).data());
-	const auto dwSignSwapped = ((pDescr->Signature & 0xFF000000) >> 24) | ((pDescr->Signature & 0x00FF0000) >> 8)
-		| ((pDescr->Signature & 0x0000FF00) << 8) | ((pDescr->Signature & 0x000000FF) << 24);
-	m_listNTHeader->SetItemText(0, 3, std::format(L"{:08X}", dwSignSwapped).data());
-
-	const auto iterSigASCII = reinterpret_cast<const char*>(&pDescr->Signature);
-	const auto iterSigASCIIEnd = iterSigASCII + sizeof(pDescr->Signature);
-	m_listNTHeader->SetCellTooltip(0, 3, std::wstring(iterSigASCII, iterSigASCIIEnd), L"Signature as ASCII:");
+	m_listNTHeader.InsertItem(0, std::format(L"{:08X}", pNTHdr->dwOffset).data());
+	m_listNTHeader.SetItemText(0, 1, L"Signature");
+	m_listNTHeader.SetItemText(0, 2, std::format(L"{}", sizeof(pDescr->Signature)).data());
+	m_listNTHeader.SetItemText(0, 3, std::format(L"{:08X}", std::byteswap(pDescr->Signature)).data());
+	const auto pSigASCII = reinterpret_cast<const char*>(&pDescr->Signature);
+	const auto pSigASCIIEnd = pSigASCII + sizeof(pDescr->Signature);
+	std::wstring wstrTT;
+	wstrTT.assign(pSigASCII, pSigASCIIEnd);
+	SetToolTip(IDC_LIST_NTHEADER, 0, 3, wstrTT.data(), L"Signature as ASCII:");
 }
 
 void CViewRightTL::CreateListFileHeader()
@@ -865,13 +983,13 @@ void CViewRightTL::CreateListFileHeader()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_FILEHEADER;
-	m_listFileHeader->Create(m_stlcs);
-	m_listFileHeader->ShowWindow(SW_HIDE);
-	m_listFileHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listFileHeader->SetHdrColumnColor(0, g_clrOffset);
-	m_listFileHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
-	m_listFileHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
-	m_listFileHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
+	m_listFileHeader.Create(m_stlcs);
+	m_listFileHeader.ShowWindow(SW_HIDE);
+	m_listFileHeader.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listFileHeader.SetHdrColumnColor(0, g_clrOffset);
+	m_listFileHeader.InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
+	m_listFileHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
+	m_listFileHeader.InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
 	for (unsigned iter { 0 }; iter < g_mapFileHeader.size(); ++iter) {
 		const auto pDescr = &pNTHdr->unHdr.stNTHdr32.FileHeader;
@@ -881,20 +999,21 @@ void CViewRightTL::CreateListFileHeader()
 		const auto dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pDescr) + dwOffset))
 			& (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
-		m_listFileHeader->InsertItem(iter, std::format(L"{:08X}", pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset).data());
-		m_listFileHeader->SetItemText(iter, 1, ref.wstrName.data());
-		m_listFileHeader->SetItemText(iter, 2, std::format(L"{}", dwSize).data());
-		m_listFileHeader->SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
+		m_listFileHeader.InsertItem(iter, std::format(L"{:08X}", pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, FileHeader) + dwOffset).data());
+		m_listFileHeader.SetItemText(iter, 1, ref.wstrName.data());
+		m_listFileHeader.SetItemText(iter, 2, std::format(L"{}", dwSize).data());
+		m_listFileHeader.SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
 
 		if (iter == 0) { //Machine
-			if (const auto iterMachine = MapFileHdrMachine.find(pDescr->Machine); iterMachine != MapFileHdrMachine.end())
-				m_listFileHeader->SetCellTooltip(iter, 3, iterMachine->second.data(), L"Machine:");
+			if (const auto iterMachine = MapFileHdrMachine.find(pDescr->Machine); iterMachine != MapFileHdrMachine.end()) {
+				SetToolTip(IDC_LIST_FILEHEADER, iter, 3, iterMachine->second.data(), L"Machine:");
+			}
 		}
 		else if (iter == 2) { //TimeDateStamp	
 			if (const auto time = static_cast<__time64_t>(pDescr->TimeDateStamp); time > 0) {
 				wchar_t buff[64];
 				_wctime64_s(buff, std::size(buff), &time);
-				m_listFileHeader->SetCellTooltip(iter, 3, buff, L"Time / Date:");
+				SetToolTip(IDC_LIST_FILEHEADER, iter, 3, buff, L"Time / Date:");
 			}
 		}
 		else if (iter == 6) { //Characteristics
@@ -907,7 +1026,7 @@ void CViewRightTL::CreateListFileHeader()
 			}
 			if (!wstrCharact.empty()) {
 				wstrCharact.erase(wstrCharact.size() - 1); //to remove last '\n'
-				m_listFileHeader->SetCellTooltip(iter, 3, wstrCharact.data(), L"Characteristics:");
+				SetToolTip(IDC_LIST_FILEHEADER, iter, 3, wstrCharact.data(), L"Characteristics:");
 			}
 		}
 	}
@@ -921,13 +1040,13 @@ void CViewRightTL::CreateListOptHeader()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_OPTIONALHEADER;
-	m_listOptHeader->Create(m_stlcs);
-	m_listOptHeader->ShowWindow(SW_HIDE);
-	m_listOptHeader->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listOptHeader->SetHdrColumnColor(0, g_clrOffset);
-	m_listOptHeader->InsertColumn(1, L"Name", LVCFMT_CENTER, 215);
-	m_listOptHeader->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
-	m_listOptHeader->InsertColumn(3, L"Value", LVCFMT_CENTER, 140);
+	m_listOptHeader.Create(m_stlcs);
+	m_listOptHeader.ShowWindow(SW_HIDE);
+	m_listOptHeader.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listOptHeader.SetHdrColumnColor(0, g_clrOffset);
+	m_listOptHeader.InsertColumn(1, L"Name", LVCFMT_CENTER, 215);
+	m_listOptHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
+	m_listOptHeader.InsertColumn(3, L"Value", LVCFMT_CENTER, 140);
 
 	const auto dwOffsetBase = m_stFileInfo.eFileType == EFileType::PE32 ? pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) :
 		pNTHdr->dwOffset + offsetof(IMAGE_NT_HEADERS64, OptionalHeader);
@@ -941,19 +1060,21 @@ void CViewRightTL::CreateListOptHeader()
 			const auto ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(&stOptHdr) + dwOffset))
 				& (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8));
 
-			m_listOptHeader->InsertItem(iter, std::format(L"{:08X}", dwOffsetBase + dwOffset).data());
-			m_listOptHeader->SetItemText(iter, 1, ref.wstrName.data());
-			m_listOptHeader->SetItemText(iter, 2, std::format(L"{}", dwSize).data());
-			m_listOptHeader->SetItemText(iter, 3, std::vformat(dwSize == sizeof(BYTE) ? L"{:02X}"
+			m_listOptHeader.InsertItem(iter, std::format(L"{:08X}", dwOffsetBase + dwOffset).data());
+			m_listOptHeader.SetItemText(iter, 1, ref.wstrName.data());
+			m_listOptHeader.SetItemText(iter, 2, std::format(L"{}", dwSize).data());
+			m_listOptHeader.SetItemText(iter, 3, std::vformat(dwSize == sizeof(BYTE) ? L"{:02X}"
 				: (dwSize == sizeof(WORD) ? L"{:04X}" : (dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}")), std::make_wformat_args(ullValue)).data());
 
 			if (iter == 0) { //Magic.
-				if (const auto it = MapOptHdrMagic.find(stOptHdr.Magic); it != MapOptHdrMagic.end())
-					m_listOptHeader->SetCellTooltip(iter, 3, it->second.data(), L"Magic:");
+				if (const auto it = MapOptHdrMagic.find(stOptHdr.Magic); it != MapOptHdrMagic.end()) {
+					SetToolTip(IDC_LIST_OPTIONALHEADER, iter, 3, it->second.data(), L"Magic:");
+				}
 			}
 			else if (iter == dwSubsystemPos) { //Subsystem.
-				if (const auto it = MapOptHdrSubsystem.find(stOptHdr.Subsystem); it != MapOptHdrSubsystem.end())
-					m_listOptHeader->SetCellTooltip(iter, 3, it->second.data(), L"Subsystem:");
+				if (const auto it = MapOptHdrSubsystem.find(stOptHdr.Subsystem); it != MapOptHdrSubsystem.end()) {
+					SetToolTip(IDC_LIST_OPTIONALHEADER, iter, 3, it->second.data(), L"Subsystem:");
+				}
 			}
 			else if (iter == dwDllCharactPos) { //DllCharacteristics.
 				std::wstring wstrCharact;
@@ -965,7 +1086,7 @@ void CViewRightTL::CreateListOptHeader()
 				}
 				if (!wstrCharact.empty()) {
 					wstrCharact.erase(wstrCharact.size() - 1); //to remove last '\n'
-					m_listOptHeader->SetCellTooltip(iter, 3, wstrCharact.data(), L"DllCharacteristics:");
+					SetToolTip(IDC_LIST_OPTIONALHEADER, iter, 3, wstrCharact, L"DllCharacteristics:");
 				}
 			}
 		}
@@ -986,14 +1107,14 @@ void CViewRightTL::CreateListDataDirs()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_DATADIRECTORIES;
-	m_listDataDirs->Create(m_stlcs);
-	m_listDataDirs->ShowWindow(SW_HIDE);
-	m_listDataDirs->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDataDirs->SetHdrColumnColor(0, g_clrOffset);
-	m_listDataDirs->InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
-	m_listDataDirs->InsertColumn(2, L"Directory RVA", LVCFMT_CENTER, 100);
-	m_listDataDirs->InsertColumn(3, L"Directory Size", LVCFMT_CENTER, 100);
-	m_listDataDirs->InsertColumn(4, L"Resides in Section", LVCFMT_CENTER, 125);
+	m_listDataDirs.Create(m_stlcs);
+	m_listDataDirs.ShowWindow(SW_HIDE);
+	m_listDataDirs.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listDataDirs.SetHdrColumnColor(0, g_clrOffset);
+	m_listDataDirs.InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
+	m_listDataDirs.InsertColumn(2, L"Directory RVA", LVCFMT_CENTER, 100);
+	m_listDataDirs.InsertColumn(3, L"Directory Size", LVCFMT_CENTER, 100);
+	m_listDataDirs.InsertColumn(4, L"Resides in Section", LVCFMT_CENTER, 125);
 
 	const auto dwDataDirsOffset = m_stFileInfo.eFileType == EFileType::PE32 ? offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory) :
 		offsetof(IMAGE_NT_HEADERS64, OptionalHeader.DataDirectory);
@@ -1001,15 +1122,16 @@ void CViewRightTL::CreateListDataDirs()
 		const auto& ref = pvecDataDirs->at(static_cast<size_t>(iter));
 		const auto pDescr = &ref.stDataDir;
 
-		m_listDataDirs->InsertItem(iter, std::format(L"{:08X}", pNTHdr->dwOffset + dwDataDirsOffset + sizeof(IMAGE_DATA_DIRECTORY) * iter).data());
-		m_listDataDirs->SetItemText(iter, 1, g_mapDataDirs.at(static_cast<WORD>(iter)).data());
-		m_listDataDirs->SetItemText(iter, 2, std::format(L"{:08X}", pDescr->VirtualAddress).data());
-		if (iter == IMAGE_DIRECTORY_ENTRY_SECURITY && pDescr->VirtualAddress > 0)
-			m_listDataDirs->SetCellTooltip(iter, 2, L"This address is the file's raw offset on disk.");
+		m_listDataDirs.InsertItem(iter, std::format(L"{:08X}", pNTHdr->dwOffset + dwDataDirsOffset + sizeof(IMAGE_DATA_DIRECTORY) * iter).data());
+		m_listDataDirs.SetItemText(iter, 1, g_mapDataDirs.at(static_cast<WORD>(iter)).data());
+		m_listDataDirs.SetItemText(iter, 2, std::format(L"{:08X}", pDescr->VirtualAddress).data());
+		if (iter == IMAGE_DIRECTORY_ENTRY_SECURITY && pDescr->VirtualAddress > 0) {
+			SetToolTip(IDC_LIST_DATADIRECTORIES, iter, 2, L"This address is the file's raw offset on disk.");
+		}
 
-		m_listDataDirs->SetItemText(iter, 3, std::format(L"{:08X}", pDescr->Size).data());
+		m_listDataDirs.SetItemText(iter, 3, std::format(L"{:08X}", pDescr->Size).data());
 		if (!ref.strSection.empty()) { //Resides in Section.
-			m_listDataDirs->SetItemText(iter, 4, std::format(L"{:.8}", StrToWstr(ref.strSection)).data());
+			m_listDataDirs.SetItemText(iter, 4, std::format(L"{:.8}", StrToWstr(ref.strSection)).data());
 		}
 	}
 }
@@ -1022,21 +1144,21 @@ void CViewRightTL::CreateListSecHeaders()
 
 	m_stlcs.dwStyle = LVS_OWNERDATA;
 	m_stlcs.uID = IDC_LIST_SECHEADERS;
-	m_listSecHeaders->Create(m_stlcs);
-	m_listSecHeaders->ShowWindow(SW_HIDE);
-	m_listSecHeaders->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listSecHeaders->SetHdrColumnColor(0, g_clrOffset);
-	m_listSecHeaders->InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
-	m_listSecHeaders->InsertColumn(2, L"Virtual Size", LVCFMT_CENTER, 100);
-	m_listSecHeaders->InsertColumn(3, L"Virtual Address", LVCFMT_CENTER, 125);
-	m_listSecHeaders->InsertColumn(4, L"SizeOfRawData", LVCFMT_CENTER, 125);
-	m_listSecHeaders->InsertColumn(5, L"PointerToRawData", LVCFMT_CENTER, 125);
-	m_listSecHeaders->InsertColumn(6, L"PointerToRelocations", LVCFMT_CENTER, 150);
-	m_listSecHeaders->InsertColumn(7, L"PointerToLinenumbers", LVCFMT_CENTER, 160);
-	m_listSecHeaders->InsertColumn(8, L"NumberOfRelocations", LVCFMT_CENTER, 150);
-	m_listSecHeaders->InsertColumn(9, L"NumberOfLinenumbers", LVCFMT_CENTER, 160);
-	m_listSecHeaders->InsertColumn(10, L"Characteristics", LVCFMT_CENTER, 115);
-	m_listSecHeaders->SetItemCountEx(static_cast<int>(pSecHeaders->size()), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
+	m_listSecHeaders.Create(m_stlcs);
+	m_listSecHeaders.ShowWindow(SW_HIDE);
+	m_listSecHeaders.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listSecHeaders.SetHdrColumnColor(0, g_clrOffset);
+	m_listSecHeaders.InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
+	m_listSecHeaders.InsertColumn(2, L"Virtual Size", LVCFMT_CENTER, 100);
+	m_listSecHeaders.InsertColumn(3, L"Virtual Address", LVCFMT_CENTER, 125);
+	m_listSecHeaders.InsertColumn(4, L"SizeOfRawData", LVCFMT_CENTER, 125);
+	m_listSecHeaders.InsertColumn(5, L"PointerToRawData", LVCFMT_CENTER, 125);
+	m_listSecHeaders.InsertColumn(6, L"PointerToRelocations", LVCFMT_CENTER, 150);
+	m_listSecHeaders.InsertColumn(7, L"PointerToLinenumbers", LVCFMT_CENTER, 160);
+	m_listSecHeaders.InsertColumn(8, L"NumberOfRelocations", LVCFMT_CENTER, 150);
+	m_listSecHeaders.InsertColumn(9, L"NumberOfLinenumbers", LVCFMT_CENTER, 160);
+	m_listSecHeaders.InsertColumn(10, L"Characteristics", LVCFMT_CENTER, 115);
+	m_listSecHeaders.SetItemCountEx(static_cast<int>(pSecHeaders->size()), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
 }
 
 void CViewRightTL::CreateListExport()
@@ -1047,13 +1169,13 @@ void CViewRightTL::CreateListExport()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_EXPORT;
-	m_listExportDir->Create(m_stlcs);
-	m_listExportDir->ShowWindow(SW_HIDE);
-	m_listExportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listExportDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listExportDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
-	m_listExportDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
-	m_listExportDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
+	m_listExportDir.Create(m_stlcs);
+	m_listExportDir.ShowWindow(SW_HIDE);
+	m_listExportDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listExportDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listExportDir.InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
+	m_listExportDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
+	m_listExportDir.InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
 	const auto pDescr = &pExport->stExportDesc;
 	for (auto iter { 0U }; iter < g_mapExport.size(); ++iter) {
@@ -1063,19 +1185,19 @@ void CViewRightTL::CreateListExport()
 		const auto dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(pDescr) + dwOffset))
 			& (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
-		m_listExportDir->InsertItem(iter, std::format(L"{:08X}", pExport->dwOffset + dwOffset).data());
-		m_listExportDir->SetItemText(iter, 1, ref.wstrName.data());
-		m_listExportDir->SetItemText(iter, 2, std::format(L"{}", dwSize).data());
+		m_listExportDir.InsertItem(iter, std::format(L"{:08X}", pExport->dwOffset + dwOffset).data());
+		m_listExportDir.SetItemText(iter, 1, ref.wstrName.data());
+		m_listExportDir.SetItemText(iter, 2, std::format(L"{}", dwSize).data());
 
 		if (iter == 4) //Name
-			m_listExportDir->SetItemText(iter, 3, std::format(L"{:08X} ({})", dwValue, StrToWstr(pExport->strModuleName)).data());
+			m_listExportDir.SetItemText(iter, 3, std::format(L"{:08X} ({})", dwValue, StrToWstr(pExport->strModuleName)).data());
 		else
-			m_listExportDir->SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
+			m_listExportDir.SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
 
 		if (const auto time = static_cast<__time64_t>(pDescr->TimeDateStamp); iter == 1 && time > 0) { //TimeDate
 			wchar_t buff[64];
 			_wctime64_s(buff, std::size(buff), &time);
-			m_listExportDir->SetCellTooltip(iter, 3, buff, L"Time / Date:");
+			SetToolTip(IDC_LIST_EXPORT, iter, 3, buff, L"Time / Date:");
 		}
 	}
 }
@@ -1088,17 +1210,17 @@ void CViewRightTL::CreateListImport()
 
 	m_stlcs.dwStyle = LVS_OWNERDATA;
 	m_stlcs.uID = IDC_LIST_IMPORT;
-	m_listImport->Create(m_stlcs);
-	m_listImport->ShowWindow(SW_HIDE);
-	m_listImport->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listImport->SetHdrColumnColor(0, g_clrOffset);
-	m_listImport->InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 300);
-	m_listImport->InsertColumn(2, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_CENTER, 170);
-	m_listImport->InsertColumn(3, L"TimeDateStamp", LVCFMT_CENTER, 115);
-	m_listImport->InsertColumn(4, L"ForwarderChain", LVCFMT_CENTER, 110);
-	m_listImport->InsertColumn(5, L"Name RVA", LVCFMT_CENTER, 90);
-	m_listImport->InsertColumn(6, L"FirstThunk (IAT)", LVCFMT_CENTER, 135);
-	m_listImport->SetItemCountEx(static_cast<int>(pImport->size()), LVSICF_NOSCROLL);
+	m_listImport.Create(m_stlcs);
+	m_listImport.ShowWindow(SW_HIDE);
+	m_listImport.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listImport.SetHdrColumnColor(0, g_clrOffset);
+	m_listImport.InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 300);
+	m_listImport.InsertColumn(2, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_CENTER, 170);
+	m_listImport.InsertColumn(3, L"TimeDateStamp", LVCFMT_CENTER, 115);
+	m_listImport.InsertColumn(4, L"ForwarderChain", LVCFMT_CENTER, 110);
+	m_listImport.InsertColumn(5, L"Name RVA", LVCFMT_CENTER, 90);
+	m_listImport.InsertColumn(6, L"FirstThunk (IAT)", LVCFMT_CENTER, 135);
+	m_listImport.SetItemCountEx(static_cast<int>(pImport->size()), LVSICF_NOSCROLL);
 }
 
 void CViewRightTL::CreateTreeResources()
@@ -1193,14 +1315,14 @@ void CViewRightTL::CreateListExceptions()
 
 	m_stlcs.dwStyle = LVS_OWNERDATA;
 	m_stlcs.uID = IDC_LIST_EXCEPTIONS;
-	m_listExceptionDir->Create(m_stlcs);
-	m_listExceptionDir->ShowWindow(SW_HIDE);
-	m_listExceptionDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listExceptionDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listExceptionDir->InsertColumn(1, L"BeginAddress", LVCFMT_CENTER, 100);
-	m_listExceptionDir->InsertColumn(2, L"EndAddress", LVCFMT_CENTER, 100);
-	m_listExceptionDir->InsertColumn(3, L"UnwindData/InfoAddress", LVCFMT_CENTER, 180);
-	m_listExceptionDir->SetItemCountEx(static_cast<int>(pExceptionDir->size()), LVSICF_NOSCROLL);
+	m_listExceptionDir.Create(m_stlcs);
+	m_listExceptionDir.ShowWindow(SW_HIDE);
+	m_listExceptionDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listExceptionDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listExceptionDir.InsertColumn(1, L"BeginAddress", LVCFMT_CENTER, 100);
+	m_listExceptionDir.InsertColumn(2, L"EndAddress", LVCFMT_CENTER, 100);
+	m_listExceptionDir.InsertColumn(3, L"UnwindData/InfoAddress", LVCFMT_CENTER, 180);
+	m_listExceptionDir.SetItemCountEx(static_cast<int>(pExceptionDir->size()), LVSICF_NOSCROLL);
 }
 
 void CViewRightTL::CreateListSecurity()
@@ -1211,25 +1333,25 @@ void CViewRightTL::CreateListSecurity()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_SECURITY;
-	m_listSecurityDir->Create(m_stlcs);
-	m_listSecurityDir->ShowWindow(SW_HIDE);
-	m_listSecurityDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listSecurityDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listSecurityDir->InsertColumn(1, L"dwLength", LVCFMT_CENTER, 100);
-	m_listSecurityDir->InsertColumn(2, L"wRevision", LVCFMT_CENTER, 100);
-	m_listSecurityDir->InsertColumn(3, L"wCertificateType", LVCFMT_CENTER, 180);
+	m_listSecurityDir.Create(m_stlcs);
+	m_listSecurityDir.ShowWindow(SW_HIDE);
+	m_listSecurityDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listSecurityDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listSecurityDir.InsertColumn(1, L"dwLength", LVCFMT_CENTER, 100);
+	m_listSecurityDir.InsertColumn(2, L"wRevision", LVCFMT_CENTER, 100);
+	m_listSecurityDir.InsertColumn(3, L"wCertificateType", LVCFMT_CENTER, 180);
 
 	int listindex { };
 	for (const auto& iter : *pSecurityDir) {
-		m_listSecurityDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
+		m_listSecurityDir.InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 		const auto pDescr = &iter.stWinSert;
-		m_listSecurityDir->SetItemText(listindex, 1, std::format(L"{:08X}", pDescr->dwLength).data());
-		m_listSecurityDir->SetItemText(listindex, 2, std::format(L"{:04X}", pDescr->wRevision).data());
+		m_listSecurityDir.SetItemText(listindex, 1, std::format(L"{:08X}", pDescr->dwLength).data());
+		m_listSecurityDir.SetItemText(listindex, 2, std::format(L"{:04X}", pDescr->wRevision).data());
 		if (const auto iterRevision = MapWinCertRevision.find(pDescr->wRevision); iterRevision != MapWinCertRevision.end())
-			m_listSecurityDir->SetCellTooltip(listindex, 2, iterRevision->second.data(), L"Certificate revision:");
-		m_listSecurityDir->SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->wCertificateType).data());
+			SetToolTip(IDC_LIST_SECURITY, listindex, 2, iterRevision->second.data(), L"Certificate revision:");
+		m_listSecurityDir.SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->wCertificateType).data());
 		if (const auto iterType = MapWinCertType.find(pDescr->wCertificateType); iterType != MapWinCertType.end())
-			m_listSecurityDir->SetCellTooltip(listindex, 3, iterType->second.data(), L"Certificate type:");
+			SetToolTip(IDC_LIST_SECURITY, listindex, 3, iterType->second.data(), L"Certificate type:");
 
 		++listindex;
 	}
@@ -1243,14 +1365,14 @@ void CViewRightTL::CreateListRelocations()
 
 	m_stlcs.dwStyle = LVS_OWNERDATA;
 	m_stlcs.uID = IDC_LIST_RELOCATIONS;
-	m_listRelocDir->Create(m_stlcs);
-	m_listRelocDir->ShowWindow(SW_HIDE);
-	m_listRelocDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listRelocDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listRelocDir->InsertColumn(1, L"Virtual Address", LVCFMT_CENTER, 115);
-	m_listRelocDir->InsertColumn(2, L"Block Size", LVCFMT_CENTER, 100);
-	m_listRelocDir->InsertColumn(3, L"Entries", LVCFMT_CENTER, 100);
-	m_listRelocDir->SetItemCountEx(static_cast<int>(pRelocTable->size()), LVSICF_NOSCROLL);
+	m_listRelocDir.Create(m_stlcs);
+	m_listRelocDir.ShowWindow(SW_HIDE);
+	m_listRelocDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listRelocDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listRelocDir.InsertColumn(1, L"Virtual Address", LVCFMT_CENTER, 115);
+	m_listRelocDir.InsertColumn(2, L"Block Size", LVCFMT_CENTER, 100);
+	m_listRelocDir.InsertColumn(3, L"Entries", LVCFMT_CENTER, 100);
+	m_listRelocDir.SetItemCountEx(static_cast<int>(pRelocTable->size()), LVSICF_NOSCROLL);
 }
 
 void CViewRightTL::CreateListDebug()
@@ -1261,39 +1383,39 @@ void CViewRightTL::CreateListDebug()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_DEBUG;
-	m_listDebugDir->Create(m_stlcs);
-	m_listDebugDir->ShowWindow(SW_HIDE);
-	m_listDebugDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDebugDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listDebugDir->InsertColumn(1, L"Characteristics", LVCFMT_CENTER, 115);
-	m_listDebugDir->InsertColumn(2, L"TimeDateStamp", LVCFMT_CENTER, 150);
-	m_listDebugDir->InsertColumn(3, L"MajorVersion", LVCFMT_CENTER, 100);
-	m_listDebugDir->InsertColumn(4, L"MinorVersion", LVCFMT_CENTER, 100);
-	m_listDebugDir->InsertColumn(5, L"Type", LVCFMT_CENTER, 90);
-	m_listDebugDir->InsertColumn(6, L"SizeOfData", LVCFMT_CENTER, 100);
-	m_listDebugDir->InsertColumn(7, L"AddressOfRawData", LVCFMT_CENTER, 170);
-	m_listDebugDir->InsertColumn(8, L"PointerToRawData", LVCFMT_CENTER, 140);
+	m_listDebugDir.Create(m_stlcs);
+	m_listDebugDir.ShowWindow(SW_HIDE);
+	m_listDebugDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listDebugDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listDebugDir.InsertColumn(1, L"Characteristics", LVCFMT_CENTER, 115);
+	m_listDebugDir.InsertColumn(2, L"TimeDateStamp", LVCFMT_CENTER, 150);
+	m_listDebugDir.InsertColumn(3, L"MajorVersion", LVCFMT_CENTER, 100);
+	m_listDebugDir.InsertColumn(4, L"MinorVersion", LVCFMT_CENTER, 100);
+	m_listDebugDir.InsertColumn(5, L"Type", LVCFMT_CENTER, 90);
+	m_listDebugDir.InsertColumn(6, L"SizeOfData", LVCFMT_CENTER, 100);
+	m_listDebugDir.InsertColumn(7, L"AddressOfRawData", LVCFMT_CENTER, 170);
+	m_listDebugDir.InsertColumn(8, L"PointerToRawData", LVCFMT_CENTER, 140);
 
 	int listindex { 0 };
 	for (const auto& iter : *pDebugDir) {
 		const auto pDescr = &iter.stDebugDir;
 
-		m_listDebugDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
-		m_listDebugDir->SetItemText(listindex, 1, std::format(L"{:08X}", pDescr->Characteristics).data());
-		m_listDebugDir->SetItemText(listindex, 2, std::format(L"{:08X}", pDescr->TimeDateStamp).data());
+		m_listDebugDir.InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
+		m_listDebugDir.SetItemText(listindex, 1, std::format(L"{:08X}", pDescr->Characteristics).data());
+		m_listDebugDir.SetItemText(listindex, 2, std::format(L"{:08X}", pDescr->TimeDateStamp).data());
 		if (const auto time = static_cast<__time64_t>(pDescr->TimeDateStamp); time > 0) {
 			wchar_t buff[64];
 			_wctime64_s(buff, std::size(buff), &time);
-			m_listDebugDir->SetCellTooltip(listindex, 2, buff, L"Time / Date:");
+			SetToolTip(IDC_LIST_DEBUG, listindex, 2, buff, L"Time / Date:");
 		}
-		m_listDebugDir->SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->MajorVersion).data());
-		m_listDebugDir->SetItemText(listindex, 4, std::format(L"{:04X}", pDescr->MinorVersion).data());
-		m_listDebugDir->SetItemText(listindex, 5, std::format(L"{:08X}", pDescr->Type).data());
+		m_listDebugDir.SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->MajorVersion).data());
+		m_listDebugDir.SetItemText(listindex, 4, std::format(L"{:04X}", pDescr->MinorVersion).data());
+		m_listDebugDir.SetItemText(listindex, 5, std::format(L"{:08X}", pDescr->Type).data());
 		if (const auto iterDType = MapDbgType.find(pDescr->Type); iterDType != MapDbgType.end())
-			m_listDebugDir->SetCellTooltip(listindex, 5, iterDType->second.data(), L"Debug type:");
-		m_listDebugDir->SetItemText(listindex, 6, std::format(L"{:08X}", pDescr->SizeOfData).data());
-		m_listDebugDir->SetItemText(listindex, 7, std::format(L"{:08X}", pDescr->AddressOfRawData).data());
-		m_listDebugDir->SetItemText(listindex, 8, std::format(L"{:08X}", pDescr->PointerToRawData).data());
+			SetToolTip(IDC_LIST_DEBUG, listindex, 5, iterDType->second, L"Debug type:");
+		m_listDebugDir.SetItemText(listindex, 6, std::format(L"{:08X}", pDescr->SizeOfData).data());
+		m_listDebugDir.SetItemText(listindex, 7, std::format(L"{:08X}", pDescr->AddressOfRawData).data());
+		m_listDebugDir.SetItemText(listindex, 8, std::format(L"{:08X}", pDescr->PointerToRawData).data());
 		++listindex;
 	}
 }
@@ -1306,13 +1428,13 @@ void CViewRightTL::CreateListTLS()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_TLS;
-	m_listTLSDir->Create(m_stlcs);
-	m_listTLSDir->ShowWindow(SW_HIDE);
-	m_listTLSDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listTLSDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listTLSDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
-	m_listTLSDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
-	m_listTLSDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 150);
+	m_listTLSDir.Create(m_stlcs);
+	m_listTLSDir.ShowWindow(SW_HIDE);
+	m_listTLSDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listTLSDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listTLSDir.InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
+	m_listTLSDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
+	m_listTLSDir.InsertColumn(3, L"Value", LVCFMT_CENTER, 150);
 
 	const auto lmbTLS = [&](const auto& stPETLS, const auto& mapTLS) {
 		for (auto iterMap { 0U }; iterMap < mapTLS.size(); ++iterMap) {
@@ -1322,14 +1444,14 @@ void CViewRightTL::CreateListTLS()
 			const auto ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(&stPETLS) + dwOffset))
 				& (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8)); //Masking to remove structure's adjacent fields data.
 
-			m_listTLSDir->InsertItem(iterMap, std::format(L"{:08X}", pTLSDir->dwOffset + dwOffset).data());
-			m_listTLSDir->SetItemText(iterMap, 1, ref.wstrName.data());
-			m_listTLSDir->SetItemText(iterMap, 2, std::format(L"{}", dwSize).data());
-			m_listTLSDir->SetItemText(iterMap, 3, std::vformat(dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}", std::make_wformat_args(ullValue)).data());
+			m_listTLSDir.InsertItem(iterMap, std::format(L"{:08X}", pTLSDir->dwOffset + dwOffset).data());
+			m_listTLSDir.SetItemText(iterMap, 1, ref.wstrName.data());
+			m_listTLSDir.SetItemText(iterMap, 2, std::format(L"{}", dwSize).data());
+			m_listTLSDir.SetItemText(iterMap, 3, std::vformat(dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}", std::make_wformat_args(ullValue)).data());
 
 			if (iterMap == 5) { //Characteristics
 				if (const auto iterCharact = MapTLSCharact.find(stPETLS.Characteristics); iterCharact != MapTLSCharact.end())
-					m_listTLSDir->SetCellTooltip(iterMap, 3, iterCharact->second.data(), L"Characteristics:");
+					SetToolTip(IDC_LIST_TLS, iterMap, 3, iterCharact->second, L"Characteristics:");
 			}
 		}
 		};
@@ -1344,13 +1466,13 @@ void CViewRightTL::CreateListLCD()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_LOADCONFIG;
-	m_listLCD->Create(m_stlcs);
-	m_listLCD->ShowWindow(SW_HIDE);
-	m_listLCD->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listLCD->SetHdrColumnColor(0, g_clrOffset);
-	m_listLCD->InsertColumn(1, L"Name", LVCFMT_CENTER, 330);
-	m_listLCD->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
-	m_listLCD->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
+	m_listLCD.Create(m_stlcs);
+	m_listLCD.ShowWindow(SW_HIDE);
+	m_listLCD.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listLCD.SetHdrColumnColor(0, g_clrOffset);
+	m_listLCD.InsertColumn(1, L"Name", LVCFMT_CENTER, 330);
+	m_listLCD.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
+	m_listLCD.InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
 	const auto lmbLCD = [&](const auto& stPELCD, const auto& mapLCD) {
 		for (auto iterMap { 0U }; iterMap < mapLCD.size(); ++iterMap) {
@@ -1363,17 +1485,17 @@ void CViewRightTL::CreateListLCD()
 			const auto ullValue = *(reinterpret_cast<PULONGLONG>(reinterpret_cast<DWORD_PTR>(&stPELCD) + dwOffset))
 				& (ULONGLONG_MAX >> ((sizeof(ULONGLONG) - dwSize) * 8)); //Masking to remove structure's adjacent fields data.
 
-			m_listLCD->InsertItem(iterMap, std::format(L"{:08X}", pLCD->dwOffset + dwOffset).data());
-			m_listLCD->SetItemText(iterMap, 1, ref.wstrName.data());
-			m_listLCD->SetItemText(iterMap, 2, std::format(L"{}", dwSize).data());
-			m_listLCD->SetItemText(iterMap, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : (dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}"),
+			m_listLCD.InsertItem(iterMap, std::format(L"{:08X}", pLCD->dwOffset + dwOffset).data());
+			m_listLCD.SetItemText(iterMap, 1, ref.wstrName.data());
+			m_listLCD.SetItemText(iterMap, 2, std::format(L"{}", dwSize).data());
+			m_listLCD.SetItemText(iterMap, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : (dwSize == sizeof(DWORD) ? L"{:08X}" : L"{:016X}"),
 				std::make_wformat_args(ullValue)).data());
 
 			if (iterMap == 1) { //TimeDateStamp
 				if (const auto time = static_cast<__time64_t>(stPELCD.TimeDateStamp); stPELCD.TimeDateStamp > 0) {
 					wchar_t buff[64];
 					_wctime64_s(buff, std::size(buff), &time);
-					m_listLCD->SetCellTooltip(iterMap, 2, buff, L"Time / Date:");
+					SetToolTip(IDC_LIST_LOADCONFIG, iterMap, 2, buff, L"Time / Date:");
 				}
 			}
 			else if (iterMap == 24) { //GuardFlags
@@ -1385,7 +1507,7 @@ void CViewRightTL::CreateListLCD()
 					}
 				}
 				if (!wstrGFlags.empty())
-					m_listLCD->SetCellTooltip(iterMap, 3, wstrGFlags.data(), L"GuardFlags:");
+					SetToolTip(IDC_LIST_LOADCONFIG, iterMap, 3, wstrGFlags, L"GuardFlags:");
 			}
 		}
 		};
@@ -1400,29 +1522,29 @@ void CViewRightTL::CreateListBoundImport()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_BOUNDIMPORT;
-	m_listBoundImportDir->Create(m_stlcs);
-	m_listBoundImportDir->ShowWindow(SW_HIDE);
-	m_listBoundImportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listBoundImportDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listBoundImportDir->InsertColumn(1, L"Module Name", LVCFMT_CENTER, 290);
-	m_listBoundImportDir->InsertColumn(2, L"TimeDateStamp", LVCFMT_CENTER, 130);
-	m_listBoundImportDir->InsertColumn(3, L"OffsetModuleName", LVCFMT_CENTER, 140);
-	m_listBoundImportDir->InsertColumn(4, L"NumberOfModuleForwarderRefs", LVCFMT_CENTER, 220);
+	m_listBoundImportDir.Create(m_stlcs);
+	m_listBoundImportDir.ShowWindow(SW_HIDE);
+	m_listBoundImportDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listBoundImportDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listBoundImportDir.InsertColumn(1, L"Module Name", LVCFMT_CENTER, 290);
+	m_listBoundImportDir.InsertColumn(2, L"TimeDateStamp", LVCFMT_CENTER, 130);
+	m_listBoundImportDir.InsertColumn(3, L"OffsetModuleName", LVCFMT_CENTER, 140);
+	m_listBoundImportDir.InsertColumn(4, L"NumberOfModuleForwarderRefs", LVCFMT_CENTER, 220);
 
 	int listindex { };
 	for (const auto& iter : *pBoundImp) {
-		m_listBoundImportDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
+		m_listBoundImportDir.InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 
 		const auto pDescr = &iter.stBoundImpDesc;
-		m_listBoundImportDir->SetItemText(listindex, 1, StrToWstr(iter.strBoundName).data());
-		m_listBoundImportDir->SetItemText(listindex, 2, std::format(L"{:08X}", pDescr->TimeDateStamp).data());
+		m_listBoundImportDir.SetItemText(listindex, 1, StrToWstr(iter.strBoundName).data());
+		m_listBoundImportDir.SetItemText(listindex, 2, std::format(L"{:08X}", pDescr->TimeDateStamp).data());
 		if (const auto time = static_cast<__time64_t>(pDescr->TimeDateStamp); time > 0) {
 			wchar_t buff[64];
 			_wctime64_s(buff, std::size(buff), &time);
-			m_listBoundImportDir->SetCellTooltip(listindex, 2, buff, L"Time / Date:");
+			SetToolTip(IDC_LIST_BOUNDIMPORT, listindex, 2, buff, L"Time / Date:");
 		}
-		m_listBoundImportDir->SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->OffsetModuleName).data());
-		m_listBoundImportDir->SetItemText(listindex, 4, std::format(L"{:04X}", pDescr->NumberOfModuleForwarderRefs).data());
+		m_listBoundImportDir.SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->OffsetModuleName).data());
+		m_listBoundImportDir.SetItemText(listindex, 4, std::format(L"{:04X}", pDescr->NumberOfModuleForwarderRefs).data());
 		++listindex;
 	}
 }
@@ -1435,38 +1557,38 @@ void CViewRightTL::CreateListDelayImport()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_DELAYIMPORT;
-	m_listDelayImportDir->Create(m_stlcs);
-	m_listDelayImportDir->ShowWindow(SW_HIDE);
-	m_listDelayImportDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDelayImportDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listDelayImportDir->InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
-	m_listDelayImportDir->InsertColumn(2, L"Attributes", LVCFMT_CENTER, 100);
-	m_listDelayImportDir->InsertColumn(3, L"DllNameRVA", LVCFMT_CENTER, 105);
-	m_listDelayImportDir->InsertColumn(4, L"ModuleHandleRVA", LVCFMT_CENTER, 140);
-	m_listDelayImportDir->InsertColumn(5, L"ImportAddressTableRVA", LVCFMT_CENTER, 160);
-	m_listDelayImportDir->InsertColumn(6, L"ImportNameTableRVA", LVCFMT_CENTER, 150);
-	m_listDelayImportDir->InsertColumn(7, L"BoundImportAddressTableRVA", LVCFMT_CENTER, 200);
-	m_listDelayImportDir->InsertColumn(8, L"UnloadInformationTableRVA", LVCFMT_CENTER, 190);
-	m_listDelayImportDir->InsertColumn(9, L"TimeDateStamp", LVCFMT_CENTER, 115);
+	m_listDelayImportDir.Create(m_stlcs);
+	m_listDelayImportDir.ShowWindow(SW_HIDE);
+	m_listDelayImportDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listDelayImportDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listDelayImportDir.InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
+	m_listDelayImportDir.InsertColumn(2, L"Attributes", LVCFMT_CENTER, 100);
+	m_listDelayImportDir.InsertColumn(3, L"DllNameRVA", LVCFMT_CENTER, 105);
+	m_listDelayImportDir.InsertColumn(4, L"ModuleHandleRVA", LVCFMT_CENTER, 140);
+	m_listDelayImportDir.InsertColumn(5, L"ImportAddressTableRVA", LVCFMT_CENTER, 160);
+	m_listDelayImportDir.InsertColumn(6, L"ImportNameTableRVA", LVCFMT_CENTER, 150);
+	m_listDelayImportDir.InsertColumn(7, L"BoundImportAddressTableRVA", LVCFMT_CENTER, 200);
+	m_listDelayImportDir.InsertColumn(8, L"UnloadInformationTableRVA", LVCFMT_CENTER, 190);
+	m_listDelayImportDir.InsertColumn(9, L"TimeDateStamp", LVCFMT_CENTER, 115);
 
 	int listindex { };
 	for (const auto& iter : *pDelayImp) {
-		m_listDelayImportDir->InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
+		m_listDelayImportDir.InsertItem(listindex, std::format(L"{:08X}", iter.dwOffset).data());
 
 		const auto pDescr = &iter.stDelayImpDesc;
-		m_listDelayImportDir->SetItemText(listindex, 1, std::format(L"{} ({})", StrToWstr(iter.strModuleName), iter.vecDelayImpFunc.size()).data());
-		m_listDelayImportDir->SetItemText(listindex, 2, std::format(L"{:08X}", pDescr->Attributes.AllAttributes).data());
-		m_listDelayImportDir->SetItemText(listindex, 3, std::format(L"{:08X}", pDescr->DllNameRVA).data());
-		m_listDelayImportDir->SetItemText(listindex, 4, std::format(L"{:08X}", pDescr->ModuleHandleRVA).data());
-		m_listDelayImportDir->SetItemText(listindex, 5, std::format(L"{:08X}", pDescr->ImportAddressTableRVA).data());
-		m_listDelayImportDir->SetItemText(listindex, 6, std::format(L"{:08X}", pDescr->ImportNameTableRVA).data());
-		m_listDelayImportDir->SetItemText(listindex, 7, std::format(L"{:08X}", pDescr->BoundImportAddressTableRVA).data());
-		m_listDelayImportDir->SetItemText(listindex, 8, std::format(L"{:08X}", pDescr->UnloadInformationTableRVA).data());
-		m_listDelayImportDir->SetItemText(listindex, 9, std::format(L"{:08X}", pDescr->TimeDateStamp).data());
+		m_listDelayImportDir.SetItemText(listindex, 1, std::format(L"{} ({})", StrToWstr(iter.strModuleName), iter.vecDelayImpFunc.size()).data());
+		m_listDelayImportDir.SetItemText(listindex, 2, std::format(L"{:08X}", pDescr->Attributes.AllAttributes).data());
+		m_listDelayImportDir.SetItemText(listindex, 3, std::format(L"{:08X}", pDescr->DllNameRVA).data());
+		m_listDelayImportDir.SetItemText(listindex, 4, std::format(L"{:08X}", pDescr->ModuleHandleRVA).data());
+		m_listDelayImportDir.SetItemText(listindex, 5, std::format(L"{:08X}", pDescr->ImportAddressTableRVA).data());
+		m_listDelayImportDir.SetItemText(listindex, 6, std::format(L"{:08X}", pDescr->ImportNameTableRVA).data());
+		m_listDelayImportDir.SetItemText(listindex, 7, std::format(L"{:08X}", pDescr->BoundImportAddressTableRVA).data());
+		m_listDelayImportDir.SetItemText(listindex, 8, std::format(L"{:08X}", pDescr->UnloadInformationTableRVA).data());
+		m_listDelayImportDir.SetItemText(listindex, 9, std::format(L"{:08X}", pDescr->TimeDateStamp).data());
 		if (const auto time = static_cast<__time64_t>(pDescr->TimeDateStamp); time > 0) {
 			wchar_t buff[64];
 			_wctime64_s(buff, std::size(buff), &time);
-			m_listDelayImportDir->SetCellTooltip(listindex, 8, buff, L"Time / Date:");
+			SetToolTip(IDC_LIST_DELAYIMPORT, listindex, 8, buff, L"Time / Date:");
 		}
 		++listindex;
 	}
@@ -1480,27 +1602,27 @@ void CViewRightTL::CreateListCOM()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_COMDESCRIPTOR;
-	m_listCOMDir->Create(m_stlcs);
-	m_listCOMDir->ShowWindow(SW_HIDE);
-	m_listCOMDir->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listCOMDir->SetHdrColumnColor(0, g_clrOffset);
-	m_listCOMDir->InsertColumn(1, L"Name", LVCFMT_CENTER, 300);
-	m_listCOMDir->InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
-	m_listCOMDir->InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
+	m_listCOMDir.Create(m_stlcs);
+	m_listCOMDir.ShowWindow(SW_HIDE);
+	m_listCOMDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listCOMDir.SetHdrColumnColor(0, g_clrOffset);
+	m_listCOMDir.InsertColumn(1, L"Name", LVCFMT_CENTER, 300);
+	m_listCOMDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
+	m_listCOMDir.InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
 
-	for (auto iter = 0U; iter < g_mapComDir.size(); ++iter) {
-		const auto& ref = g_mapComDir.at(iter);
+	for (auto itItem = 0U; itItem < g_mapComDir.size(); ++itItem) {
+		const auto& ref = g_mapComDir.at(itItem);
 		const auto dwOffset = ref.dwOffset;
 		const auto dwSize = ref.dwSize;
 		const auto dwValue = *(reinterpret_cast<PDWORD>(reinterpret_cast<DWORD_PTR>(&pCOMDesc->stCorHdr) + dwOffset))
 			& (DWORD_MAX >> ((sizeof(DWORD) - dwSize) * 8));
 
-		m_listCOMDir->InsertItem(iter, std::format(L"{:08X}", pCOMDesc->dwOffset + dwOffset).data());
-		m_listCOMDir->SetItemText(iter, 1, ref.wstrName.data());
-		m_listCOMDir->SetItemText(iter, 2, std::format(L"{}", dwSize).data());
-		m_listCOMDir->SetItemText(iter, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
+		m_listCOMDir.InsertItem(itItem, std::format(L"{:08X}", pCOMDesc->dwOffset + dwOffset).data());
+		m_listCOMDir.SetItemText(itItem, 1, ref.wstrName.data());
+		m_listCOMDir.SetItemText(itItem, 2, std::format(L"{}", dwSize).data());
+		m_listCOMDir.SetItemText(itItem, 3, std::vformat(dwSize == sizeof(WORD) ? L"{:04X}" : L"{:08X}", std::make_wformat_args(dwValue)).data());
 
-		if (iter == 5) {
+		if (itItem == 5) {
 			std::wstring wstrFlags;
 			for (const auto& flags : MapCOR20Flags) {
 				if (flags.first & pCOMDesc->stCorHdr.Flags) {
@@ -1509,7 +1631,7 @@ void CViewRightTL::CreateListCOM()
 				}
 			}
 			if (!wstrFlags.empty())
-				m_listCOMDir->SetCellTooltip(iter, 3, wstrFlags.data(), L"Flags:");
+				SetToolTip(IDC_LIST_COMDESCRIPTOR, itItem, 3, wstrFlags, L"Flags:");
 		}
 	}
 }
@@ -1520,7 +1642,7 @@ void CViewRightTL::SortImportData()
 	std::sort(pImport->begin(), pImport->end(),
 		[&](const auto& ref1, const auto& ref2) {
 			int iCompare { };
-			switch (m_listImport->GetSortColumn()) {
+			switch (m_listImport.GetSortColumn()) {
 			case 0:
 				iCompare = ref1.dwOffset < ref2.dwOffset ? -1 : 1;
 				break;
@@ -1545,7 +1667,7 @@ void CViewRightTL::SortImportData()
 			}
 
 			bool result { false };
-			if (m_listImport->GetSortAscending()) {
+			if (m_listImport.GetSortAscending()) {
 				if (iCompare < 0)
 					result = true;
 			}
@@ -1557,5 +1679,25 @@ void CViewRightTL::SortImportData()
 			return result;
 		});
 
-	m_listImport->RedrawWindow();
+	m_listImport.RedrawWindow();
+}
+
+void CViewRightTL::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	if (const auto pList = GetListByID(nIDCtl); pList != nullptr) {
+		pList->DrawItem(lpDrawItemStruct);
+		return;
+	}
+
+	CView::OnDrawItem(nIDCtl, lpDrawItemStruct);
+}
+
+void CViewRightTL::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
+{
+	if (const auto pList = GetListByID(nIDCtl); pList != nullptr) {
+		pList->MeasureItem(lpMeasureItemStruct);
+		return;
+	}
+
+	CView::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
 }

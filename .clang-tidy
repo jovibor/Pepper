@@ -1,5 +1,5 @@
 Checks: '*,
--cppcoreguidelines-*,-google-*,-fuchsia-*,-hicpp-*,-cert-*,-clang-*,-llvmlibc-*,-altera-*,
+-cppcoreguidelines-*,-google-*,-fuchsia-*,-hicpp-*,-cert-*,-clang-*,-llvmlibc-*,-altera-*,-boost-*,-abseil-*,
 -bugprone-easily-swappable-parameters,
 -bugprone-implicit-widening-of-multiplication-result,
 -bugprone-narrowing-conversions,
@@ -12,8 +12,11 @@ Checks: '*,
 -misc-non-private-member-variables-in-classes,
 -misc-no-recursion,
 -misc-use-after-move,
+-misc-use-internal-linkage,
 -modernize-use-trailing-return-type,
 -modernize-avoid-c-arrays,
+-modernize-use-nodiscard,
+-modernize-use-ranges,
 -performance-no-int-to-ptr,
 -portability-simd-intrinsics,
 -readability-avoid-nested-conditional-operator,
@@ -27,7 +30,7 @@ Checks: '*,
 -readability-misleading-indentation,
 -readability-function-cognitive-complexity,
 -readability-identifier-length,
-
+-readability-named-parameter,
 google-readability-casting'
 
 HeaderFilterRegex: ''

@@ -58,6 +58,8 @@ BEGIN_MESSAGE_MAP(CViewRightBR, CScrollView)
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
 	ON_WM_RBUTTONUP()
+	ON_WM_DRAWITEM()
+	ON_WM_MEASUREITEM()
 END_MESSAGE_MAP()
 
 void CViewRightBR::OnInitialUpdate()
@@ -84,7 +86,7 @@ void CViewRightBR::OnInitialUpdate()
 	}
 	m_EditBRB.SetFont(&m_fontEditRes);
 
-	m_stlcs.pParent = this;
+	m_stlcs.hWndParent = m_hWnd;
 	m_stlcs.pColors = &Utility::g_stListColors;
 	m_stlcs.dwHdrHeight = 35;
 
@@ -94,10 +96,10 @@ void CViewRightBR::OnInitialUpdate()
 	ReleaseDC(pDC);
 
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
-	m_stlcs.pListLogFont = &m_lf;
+	m_stlcs.pLFList = &m_lf;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
-	m_stlcs.pHdrLogFont = &m_hdrlf;
+	m_stlcs.pLFHdr = &m_hdrlf;
 
 	CreateListTLSCallbacks();
 }
@@ -132,8 +134,9 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	{
 		CRect rcClient;
 		GetClientRect(&rcClient);
-		m_stListTLSCallbacks->SetWindowPos(this, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-		m_hwndActive = m_stListTLSCallbacks->m_hWnd;
+		m_stListTLSCallbacks.SetWindowPos(m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(),
+			SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_hwndActive = m_stListTLSCallbacks.GetHWND();
 		m_pChildFrame->GetSplitRightBot().ShowCol(1);
 		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 2, 0);
 	}
@@ -587,12 +590,12 @@ void CViewRightBR::CreateListTLSCallbacks()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
-	m_stListTLSCallbacks->Create(m_stlcs);
-	m_stListTLSCallbacks->InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER, 300);
+	m_stListTLSCallbacks.Create(m_stlcs);
+	m_stListTLSCallbacks.InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER, 300);
 
 	int listindex { };
 	for (const auto& iterCallbacks : pTLS->vecTLSCallbacks) {
-		m_stListTLSCallbacks->InsertItem(listindex++, std::format(L"{:08X}", iterCallbacks).data());
+		m_stListTLSCallbacks.InsertItem(listindex++, std::format(L"{:08X}", iterCallbacks).data());
 	}
 }
 
@@ -1132,6 +1135,26 @@ void CViewRightBR::ResLoadError()
 {
 	m_eResTypeToDraw = EResType::RES_LOAD_ERROR;
 	RedrawWindow();
+}
+
+void CViewRightBR::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	if (nIDCtl == IDC_LIST_TLS_CALLBACKS) {
+		m_stListTLSCallbacks.DrawItem(lpDrawItemStruct);
+		return;
+	}
+
+	CView::OnDrawItem(nIDCtl, lpDrawItemStruct);
+}
+
+void CViewRightBR::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
+{
+	if (nIDCtl == IDC_LIST_TLS_CALLBACKS) {
+		m_stListTLSCallbacks.MeasureItem(lpMeasureItemStruct);
+		return;
+	}
+
+	CView::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
 }
 
 auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>

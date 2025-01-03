@@ -10,7 +10,6 @@
 #include "CPepperDoc.h"
 #include "CTreeEx.h"
 #include "HexCtrl.h"
-#include "ListEx/ListEx.h"
 
 import Utility;
 
@@ -18,9 +17,11 @@ using namespace HEXCTRL;
 using namespace LISTEX;
 using namespace Utility;
 
-class CViewRightBL : public CView
-{
+class CViewRightBL : public CView {
 private:
+	[[nodiscard]] auto GetListByID(UINT_PTR uListID) -> CListEx*;
+	afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
+	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
 	void OnInitialUpdate()override;
 	BOOL OnCommand(WPARAM wParam, LPARAM lParam)override;
 	void OnDraw(CDC* pDC)override; // overridden to draw this view
@@ -63,10 +64,10 @@ private:
 	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
 	HEXCREATE m_hcs { };
 	LISTEXCREATE m_stlcs;
-	IListExPtr m_listExportFuncs { CreateListEx() };
-	IListExPtr m_listImportEntry { CreateListEx() };
-	IListExPtr m_listDelayImportEntry { CreateListEx() };
-	IListExPtr m_listRelocsEntry { CreateListEx() };
+	CListEx m_listExportFuncs;
+	CListEx m_listImportEntry;
+	CListEx m_listDelayImportEntry;
+	CListEx m_listRelocsEntry;
 	CTreeEx m_treeResBottom;
 	CImageList m_imglTreeRes;
 	std::vector<std::tuple<long, long, long, EResType>> m_vecResId { }; //Lvl: ROOT, 2, 3 and res type for tree node.

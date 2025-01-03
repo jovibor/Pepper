@@ -5,16 +5,20 @@ module;
 * Official git repository: https://github.com/jovibor/Pepper/                                       *
 * Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
 ****************************************************************************************************/
-#include "ListEx/ListEx.h"
+#include <afxdlgs.h>
 #include "HexCtrl.h"
 #include <format>
 #include <fstream>
 #include <span>
 #include <string>
 #include <unordered_map>
-
 export module Utility;
-import libpe;
+
+export import libpe;
+export import StrToNum;
+export namespace stn = HEXCTRL::stn;
+export import ListEx;
+export namespace LISTEX = HEXCTRL::LISTEX;
 
 #define TO_WSTR_MAP(x) {x, L## #x}
 
@@ -600,6 +604,7 @@ export namespace Utility {
 
 	//Color of the list's "Offset" column
 	constexpr auto g_clrOffset = RGB(150, 150, 150);
+	constexpr auto g_clrListBkTT = RGB(170, 170, 230);
 
 	/*****************************************************************
 	* These are identificators of all the controls: list, hex, tree. *

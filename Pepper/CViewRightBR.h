@@ -8,15 +8,13 @@
 #include <memory>
 #include "CPepperDoc.h"
 #include "CChildFrm.h"
-#include "ListEx/ListEx.h"
 #include <span>
 
 import Utility;
 using namespace Utility;
 using namespace LISTEX;
 
-class CWndSampleDlg final : public CWnd
-{
+class CWndSampleDlg final : public CWnd {
 public:
 	void Attach(CImageList* pImgList);
 	void CreatedForMenu(bool fMenu);  //Created for show RT_MENU, not RT_DIALOG.
@@ -29,9 +27,10 @@ private:
 	bool m_fMenu { false }; //Dialog is created only for showing RT_MENU.
 };
 
-class CViewRightBR final : public CScrollView
-{
+class CViewRightBR final : public CScrollView {
 private:
+	afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
+	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint pt);
@@ -70,7 +69,7 @@ private:
 	CWndSampleDlg m_wndSampleDlg;
 	CMenu m_menuSample;
 	LISTEXCREATE m_stlcs;
-	IListExPtr m_stListTLSCallbacks { CreateListEx() };
+	CListEx m_stListTLSCallbacks;
 	LOGFONTW m_lf { };
 	LOGFONTW m_hdrlf { };
 	EResType m_eResTypeToDraw { };

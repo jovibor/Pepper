@@ -20,6 +20,8 @@ BEGIN_MESSAGE_MAP(CViewRightBL, CView)
 	ON_WM_ERASEBKGND()
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE_RESOURCE_BOTTOM, &CViewRightBL::OnTreeSelChanged)
 	ON_NOTIFY(NM_RCLICK, IDC_TREE_RESOURCE_BOTTOM, &CViewRightBL::OnTreeRClick)
+	ON_WM_DRAWITEM()
+	ON_WM_MEASUREITEM()
 END_MESSAGE_MAP()
 
 BOOL CViewRightBL::PreCreateWindow(CREATESTRUCT& cs)
@@ -44,7 +46,7 @@ void CViewRightBL::OnInitialUpdate()
 	m_hcs.dwStyle = WS_CHILD;
 	m_stHexEdit->Create(m_hcs);
 
-	m_stlcs.pParent = this;
+	m_stlcs.hWndParent = m_hWnd;
 	m_stlcs.pColors = &Utility::g_stListColors;
 	m_stlcs.dwHdrHeight = 35;
 	m_stlcs.fSortable = true;
@@ -55,10 +57,10 @@ void CViewRightBL::OnInitialUpdate()
 	ReleaseDC(pDC);
 
 	StringCchCopyW(m_lf.lfFaceName, 9, L"Consolas");
-	m_stlcs.pListLogFont = &m_lf;
+	m_stlcs.pLFList = &m_lf;
 	m_hdrlf.lfWeight = FW_BOLD;
 	StringCchCopyW(m_hdrlf.lfFaceName, 16, L"Times New Roman");
-	m_stlcs.pHdrLogFont = &m_hdrlf;
+	m_stlcs.pLFHdr = &m_hdrlf;
 
 	CreateListExportFuncs();
 	CreateListImportFuncs();
@@ -104,13 +106,13 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 		ShowSecHdrHexEntry(HIWORD(lHint));
 		break;
 	case IDC_LIST_EXPORT:
-		if (m_hwndActive != m_listExportFuncs->m_hWnd) {
+		if (m_hwndActive != m_listExportFuncs.GetHWND()) {
 			if (m_hwndActive)
 				::ShowWindow(m_hwndActive, SW_HIDE);
 
-			m_hwndActive = m_listExportFuncs->m_hWnd;
+			m_hwndActive = m_listExportFuncs.GetHWND();
 		}
-		m_listExportFuncs->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+		m_listExportFuncs.SetWindowPos(m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
 	case IDC_LIST_IMPORT_ENTRY:
 		ShowImportListEntry(HIWORD(lHint));
@@ -322,15 +324,15 @@ void CViewRightBL::CreateListExportFuncs()
 {
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_EXPORT_FUNCS;
-	m_listExportFuncs->Create(m_stlcs);
-	m_listExportFuncs->ShowWindow(SW_HIDE);
-	m_listExportFuncs->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listExportFuncs->SetHdrColumnColor(0, g_clrOffset);
-	m_listExportFuncs->InsertColumn(1, L"Function RVA", LVCFMT_CENTER, 100);
-	m_listExportFuncs->InsertColumn(2, L"Ordinal", LVCFMT_CENTER, 100);
-	m_listExportFuncs->InsertColumn(3, L"Name RVA", LVCFMT_CENTER, 100);
-	m_listExportFuncs->InsertColumn(4, L"Name", LVCFMT_CENTER, 250);
-	m_listExportFuncs->InsertColumn(5, L"Forwarder Name", LVCFMT_CENTER, 400);
+	m_listExportFuncs.Create(m_stlcs);
+	m_listExportFuncs.ShowWindow(SW_HIDE);
+	m_listExportFuncs.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listExportFuncs.SetHdrColumnColor(0, g_clrOffset);
+	m_listExportFuncs.InsertColumn(1, L"Function RVA", LVCFMT_CENTER, 100);
+	m_listExportFuncs.InsertColumn(2, L"Ordinal", LVCFMT_CENTER, 100);
+	m_listExportFuncs.InsertColumn(3, L"Name RVA", LVCFMT_CENTER, 100);
+	m_listExportFuncs.InsertColumn(4, L"Name", LVCFMT_CENTER, 250);
+	m_listExportFuncs.InsertColumn(5, L"Forwarder Name", LVCFMT_CENTER, 400);
 
 	const auto& pExport = m_pMainDoc->GetExport();
 	if (!pExport)
@@ -338,17 +340,17 @@ void CViewRightBL::CreateListExportFuncs()
 
 	int listindex = 0;
 	const auto dwOffset = m_pMainDoc->GetOffsetFromRVA(pExport->stExportDesc.AddressOfFunctions);
-	m_listExportFuncs->SetRedraw(FALSE); //to increase the speed of List populating
+	m_listExportFuncs.SetRedraw(FALSE); //to increase the speed of List populating
 	for (const auto& iterFuncs : pExport->vecFuncs) {
-		m_listExportFuncs->InsertItem(listindex, std::format(L"{:08X}", static_cast<DWORD>(dwOffset + sizeof(DWORD) * iterFuncs.dwOrdinal)).data());
-		m_listExportFuncs->SetItemText(listindex, 1, std::format(L"{:08X}", iterFuncs.dwFuncRVA).data());
-		m_listExportFuncs->SetItemText(listindex, 2, std::format(L"{}", iterFuncs.dwOrdinal).data());
-		m_listExportFuncs->SetItemText(listindex, 3, std::format(L"{:08X}", iterFuncs.dwNameRVA).data());
-		m_listExportFuncs->SetItemText(listindex, 4, StrToWstr(iterFuncs.strFuncName).data());
-		m_listExportFuncs->SetItemText(listindex, 5, StrToWstr(iterFuncs.strForwarderName).data());
+		m_listExportFuncs.InsertItem(listindex, std::format(L"{:08X}", static_cast<DWORD>(dwOffset + sizeof(DWORD) * iterFuncs.dwOrdinal)).data());
+		m_listExportFuncs.SetItemText(listindex, 1, std::format(L"{:08X}", iterFuncs.dwFuncRVA).data());
+		m_listExportFuncs.SetItemText(listindex, 2, std::format(L"{}", iterFuncs.dwOrdinal).data());
+		m_listExportFuncs.SetItemText(listindex, 3, std::format(L"{:08X}", iterFuncs.dwNameRVA).data());
+		m_listExportFuncs.SetItemText(listindex, 4, StrToWstr(iterFuncs.strFuncName).data());
+		m_listExportFuncs.SetItemText(listindex, 5, StrToWstr(iterFuncs.strForwarderName).data());
 		++listindex;
 	}
-	m_listExportFuncs->SetRedraw(TRUE);
+	m_listExportFuncs.SetRedraw(TRUE);
 }
 
 void CViewRightBL::CreateListImportFuncs()
@@ -358,13 +360,13 @@ void CViewRightBL::CreateListImportFuncs()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_IMPORT_ENTRY;
-	m_listImportEntry->Create(m_stlcs);
-	m_listImportEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listImportEntry->SetHdrColumnColor(0, g_clrOffset);
-	m_listImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 175);
-	m_listImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
-	m_listImportEntry->InsertColumn(3, L"AddressOfData", LVCFMT_CENTER, 150);
-	m_listImportEntry->InsertColumn(4, L"Thunk RVA", LVCFMT_CENTER, 150);
+	m_listImportEntry.Create(m_stlcs);
+	m_listImportEntry.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listImportEntry.SetHdrColumnColor(0, g_clrOffset);
+	m_listImportEntry.InsertColumn(1, L"Function Name", LVCFMT_CENTER, 175);
+	m_listImportEntry.InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
+	m_listImportEntry.InsertColumn(3, L"AddressOfData", LVCFMT_CENTER, 150);
+	m_listImportEntry.InsertColumn(4, L"Thunk RVA", LVCFMT_CENTER, 150);
 }
 
 void CViewRightBL::CreateTreeResources()
@@ -448,12 +450,12 @@ void CViewRightBL::CreateListRelocsEntry()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_RELOCATIONS_ENTRY;
-	m_listRelocsEntry->Create(m_stlcs);
-	m_listRelocsEntry->ShowWindow(SW_HIDE);
-	m_listRelocsEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listRelocsEntry->SetHdrColumnColor(0, g_clrOffset);
-	m_listRelocsEntry->InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
-	m_listRelocsEntry->InsertColumn(2, L"Offset to apply", LVCFMT_CENTER, 120);
+	m_listRelocsEntry.Create(m_stlcs);
+	m_listRelocsEntry.ShowWindow(SW_HIDE);
+	m_listRelocsEntry.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listRelocsEntry.SetHdrColumnColor(0, g_clrOffset);
+	m_listRelocsEntry.InsertColumn(1, L"Reloc type", LVCFMT_CENTER, 250);
+	m_listRelocsEntry.InsertColumn(2, L"Offset to apply", LVCFMT_CENTER, 120);
 }
 
 void CViewRightBL::CreateListDelayImpFuncs()
@@ -463,15 +465,15 @@ void CViewRightBL::CreateListDelayImpFuncs()
 
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_DELAYIMPORT_ENTRY;
-	m_listDelayImportEntry->Create(m_stlcs);
-	m_listDelayImportEntry->InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDelayImportEntry->SetHdrColumnColor(0, g_clrOffset);
-	m_listDelayImportEntry->InsertColumn(1, L"Function Name", LVCFMT_CENTER, 300);
-	m_listDelayImportEntry->InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
-	m_listDelayImportEntry->InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
-	m_listDelayImportEntry->InsertColumn(4, L"IAT AddresOfData", LVCFMT_CENTER, 200);
-	m_listDelayImportEntry->InsertColumn(5, L"BoundIAT AddresOfData", LVCFMT_CENTER, 230);
-	m_listDelayImportEntry->InsertColumn(6, L"UnloadInfoTable AddresOfData", LVCFMT_CENTER, 240);
+	m_listDelayImportEntry.Create(m_stlcs);
+	m_listDelayImportEntry.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
+	m_listDelayImportEntry.SetHdrColumnColor(0, g_clrOffset);
+	m_listDelayImportEntry.InsertColumn(1, L"Function Name", LVCFMT_CENTER, 300);
+	m_listDelayImportEntry.InsertColumn(2, L"Ordinal / Hint", LVCFMT_CENTER, 100);
+	m_listDelayImportEntry.InsertColumn(3, L"ImportNameTable AddresOfData", 0, 220);
+	m_listDelayImportEntry.InsertColumn(4, L"IAT AddresOfData", LVCFMT_CENTER, 200);
+	m_listDelayImportEntry.InsertColumn(5, L"BoundIAT AddresOfData", LVCFMT_CENTER, 230);
+	m_listDelayImportEntry.InsertColumn(6, L"UnloadInfoTable AddresOfData", LVCFMT_CENTER, 240);
 }
 
 void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry)
@@ -648,23 +650,23 @@ void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 	if (!pImport || dwEntry >= pImport->size())
 		return;
 
-	m_listImportEntry->DeleteAllItems();
+	m_listImportEntry.DeleteAllItems();
 
 	if (m_hwndActive)
 		::ShowWindow(m_hwndActive, SW_HIDE);
-	m_hwndActive = m_listImportEntry->m_hWnd;
+	m_hwndActive = m_listImportEntry.GetHWND();
 
 	int listindex = 0;
 	const auto& rImp = pImport->at(dwEntry).stImportDesc;
 	auto dwThunkOffset = m_pMainDoc->GetOffsetFromRVA(rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk);
 	auto dwThunkRVA = rImp.OriginalFirstThunk ? rImp.OriginalFirstThunk : rImp.FirstThunk;
 
-	m_listImportEntry->SetRedraw(FALSE);
+	m_listImportEntry.SetRedraw(false);
 	for (const auto& iterFuncs : pImport->at(dwEntry).vecImportFunc) {
-		m_listImportEntry->InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
+		m_listImportEntry.InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
 		dwThunkOffset += m_stFileInfo.eFileType == EFileType::PE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
-		m_listImportEntry->SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
-		m_listImportEntry->SetItemText(listindex, 2, std::format(L"{:04X}", m_stFileInfo.eFileType == EFileType::PE32 ?
+		m_listImportEntry.SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
+		m_listImportEntry.SetItemText(listindex, 2, std::format(L"{:04X}", m_stFileInfo.eFileType == EFileType::PE32 ?
 			((iterFuncs.unThunk.stThunk32.u1.Ordinal & IMAGE_ORDINAL_FLAG32) ?
 				IMAGE_ORDINAL32(iterFuncs.unThunk.stThunk32.u1.Ordinal) : iterFuncs.stImpByName.Hint)
 			: ((iterFuncs.unThunk.stThunk64.u1.Ordinal & IMAGE_ORDINAL_FLAG64) ?
@@ -677,16 +679,16 @@ void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.stThunk64.u1.AddressOfData);
 		}
-		m_listImportEntry->SetItemText(listindex, 3, wstrAddr.data());
-		m_listImportEntry->SetItemText(listindex, 4, std::format(L"{:08X}", dwThunkRVA).data());
+		m_listImportEntry.SetItemText(listindex, 3, wstrAddr.data());
+		m_listImportEntry.SetItemText(listindex, 4, std::format(L"{:08X}", dwThunkRVA).data());
 		dwThunkRVA += m_stFileInfo.eFileType == EFileType::PE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
 		++listindex;
 	}
-	m_listImportEntry->SetRedraw(TRUE);
+	m_listImportEntry.SetRedraw(true);
 
 	CRect rc;
 	GetClientRect(&rc);
-	m_listImportEntry->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_listImportEntry.SetWindowPos(m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId)
@@ -716,28 +718,28 @@ void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry)
 	if (!pReloc || dwEntry >= pReloc->size())
 		return;
 
-	m_listRelocsEntry->DeleteAllItems();
+	m_listRelocsEntry.DeleteAllItems();
 	int listindex = 0;
-	m_listRelocsEntry->SetRedraw(FALSE);
+	m_listRelocsEntry.SetRedraw(false);
 	for (const auto& iterRelocs : pReloc->at(dwEntry).vecRelocData) {
-		m_listRelocsEntry->InsertItem(listindex, std::format(L"{:08X}", iterRelocs.dwOffset).data());
+		m_listRelocsEntry.InsertItem(listindex, std::format(L"{:08X}", iterRelocs.dwOffset).data());
 
 		if (const auto type = MapRelocType.find(iterRelocs.wRelocType); type != MapRelocType.end()) {
-			m_listRelocsEntry->SetItemText(listindex, 1, type->second.data());
+			m_listRelocsEntry.SetItemText(listindex, 1, type->second.data());
 		}
 		else {
-			m_listRelocsEntry->SetItemText(listindex, 1, std::format(L"{}", iterRelocs.wRelocType).data());
+			m_listRelocsEntry.SetItemText(listindex, 1, std::format(L"{}", iterRelocs.wRelocType).data());
 		}
 
-		m_listRelocsEntry->SetItemText(listindex, 2, std::format(L"{:04X}", iterRelocs.wRelocOffset).data());
+		m_listRelocsEntry.SetItemText(listindex, 2, std::format(L"{:04X}", iterRelocs.wRelocOffset).data());
 		++listindex;
 	}
-	m_listRelocsEntry->SetRedraw(TRUE);
+	m_listRelocsEntry.SetRedraw(true);
 
 	CRect rc;
 	GetClientRect(&rc);
-	m_listRelocsEntry->SetWindowPos(this, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_hwndActive = m_listRelocsEntry->m_hWnd;
+	m_listRelocsEntry.SetWindowPos(m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_hwndActive = m_listRelocsEntry.GetHWND();
 }
 
 void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
@@ -746,17 +748,17 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 	if (!pDelayImport || dwEntry >= pDelayImport->size())
 		return;
 
-	m_listDelayImportEntry->DeleteAllItems();
+	m_listDelayImportEntry.DeleteAllItems();
 
 	int listindex = 0;
 	auto dwThunkOffset = m_pMainDoc->GetOffsetFromRVA(pDelayImport->at(dwEntry).stDelayImpDesc.ImportNameTableRVA);
 
-	m_listDelayImportEntry->SetRedraw(FALSE);
+	m_listDelayImportEntry.SetRedraw(FALSE);
 	for (const auto& iterFuncs : pDelayImport->at(dwEntry).vecDelayImpFunc) {
-		m_listDelayImportEntry->InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
+		m_listDelayImportEntry.InsertItem(listindex, std::format(L"{:08X}", dwThunkOffset).data());
 		dwThunkOffset += m_stFileInfo.eFileType == EFileType::PE32 ? sizeof(IMAGE_THUNK_DATA32) : sizeof(IMAGE_THUNK_DATA64);
-		m_listDelayImportEntry->SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
-		m_listDelayImportEntry->SetItemText(listindex, 2, std::format(L"{:04X}", m_stFileInfo.eFileType == EFileType::PE32 ?
+		m_listDelayImportEntry.SetItemText(listindex, 1, StrToWstr(iterFuncs.strFuncName).data());
+		m_listDelayImportEntry.SetItemText(listindex, 2, std::format(L"{:04X}", m_stFileInfo.eFileType == EFileType::PE32 ?
 			((iterFuncs.unThunk.st32.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG32) ?
 				IMAGE_ORDINAL32(iterFuncs.unThunk.st32.stImportNameTable.u1.Ordinal) : iterFuncs.stImpByName.Hint)
 			: ((iterFuncs.unThunk.st64.stImportNameTable.u1.Ordinal & IMAGE_ORDINAL_FLAG64) ?
@@ -769,7 +771,7 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stImportNameTable.u1.AddressOfData);
 		}
-		m_listDelayImportEntry->SetItemText(listindex, 3, wstrAddr.data());
+		m_listDelayImportEntry.SetItemText(listindex, 3, wstrAddr.data());
 
 		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stImportAddressTable.u1.AddressOfData);
@@ -777,7 +779,7 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stImportAddressTable.u1.AddressOfData);
 		}
-		m_listDelayImportEntry->SetItemText(listindex, 4, wstrAddr.data());
+		m_listDelayImportEntry.SetItemText(listindex, 4, wstrAddr.data());
 
 		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stBoundImportAddressTable.u1.AddressOfData);
@@ -785,7 +787,7 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stBoundImportAddressTable.u1.AddressOfData);
 		}
-		m_listDelayImportEntry->SetItemText(listindex, 5, wstrAddr.data());
+		m_listDelayImportEntry.SetItemText(listindex, 5, wstrAddr.data());
 
 		if (m_stFileInfo.eFileType == EFileType::PE32) {
 			wstrAddr = std::format(L"{:08X}", iterFuncs.unThunk.st32.stUnloadInformationTable.u1.AddressOfData);
@@ -793,16 +795,16 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 		else if (m_stFileInfo.eFileType == EFileType::PE64) {
 			wstrAddr = std::format(L"{:016X}", iterFuncs.unThunk.st64.stUnloadInformationTable.u1.AddressOfData);
 		}
-		m_listDelayImportEntry->SetItemText(listindex, 6, wstrAddr.data());
+		m_listDelayImportEntry.SetItemText(listindex, 6, wstrAddr.data());
 
 		++listindex;
 	}
-	m_listDelayImportEntry->SetRedraw(TRUE);
+	m_listDelayImportEntry.SetRedraw(true);
 
 	CRect rect;
 	GetClientRect(&rect);
-	m_listDelayImportEntry->SetWindowPos(this, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
-	m_hwndActive = m_listDelayImportEntry->m_hWnd;
+	m_listDelayImportEntry.SetWindowPos(m_hWnd, 0, 0, rect.Width(), rect.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
+	m_hwndActive = m_listDelayImportEntry.GetHWND();
 }
 
 void CViewRightBL::ShowDebugHexEntry(DWORD dwEntry)
@@ -854,4 +856,40 @@ void CViewRightBL::ShowTLSHex()
 	const auto dwOffsetEnd = m_pMainDoc->GetOffsetFromVA(ullEndAdr);
 	const auto dwSize = dwOffsetEnd > dwOffsetStart ? dwOffsetEnd - dwOffsetStart : 0U;
 	m_pFileLoader->ShowFilePiece(dwOffsetStart, dwSize, m_stHexEdit.get());
+}
+
+auto CViewRightBL::GetListByID(UINT_PTR uListID)->CListEx*
+{
+	switch (uListID) {
+	case IDC_LIST_EXPORT_FUNCS:
+		return &m_listExportFuncs;
+	case IDC_LIST_IMPORT_ENTRY:
+		return &m_listImportEntry;
+	case IDC_LIST_DELAYIMPORT_ENTRY:
+		return &m_listDelayImportEntry;
+	case IDC_LIST_RELOCATIONS_ENTRY:
+		return &m_listRelocsEntry;
+	default:
+		return { };
+	}
+}
+
+void CViewRightBL::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	if (const auto pList = GetListByID(nIDCtl); pList != nullptr) {
+		pList->DrawItem(lpDrawItemStruct);
+		return;
+	}
+
+	CView::OnDrawItem(nIDCtl, lpDrawItemStruct);
+}
+
+void CViewRightBL::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
+{
+	if (const auto pList = GetListByID(nIDCtl); pList != nullptr) {
+		pList->MeasureItem(lpMeasureItemStruct);
+		return;
+	}
+
+	CView::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
 }
