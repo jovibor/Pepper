@@ -14,7 +14,7 @@ class CPepperDoc : public CDocument {
 public:
 	[[nodiscard]] auto GetFileLoader() -> CFileLoader&;
 	void SetEditMode(bool fEditMode);
-	[[nodiscard]] bool IsEditMode() { return m_fEditMode; }
+	[[nodiscard]] bool IsEditMode()const { return m_fEditMode; }
 	[[nodiscard]] auto GetFileInfo() -> Utility::PEFILEINFO&;
 	[[nodiscard]] auto GetOffsetFromVA(ULONGLONG ullVA) -> DWORD;
 	[[nodiscard]] auto GetOffsetFromRVA(ULONGLONG ullRVA) -> DWORD;

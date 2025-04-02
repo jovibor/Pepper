@@ -94,13 +94,13 @@ void CViewRightTL::SetToolTip(UINT_PTR uListID, int iItem, int iSubItem, std::ws
 
 	const auto uID = pList->MapIndexToID(iItem);
 
-	if (const auto it = std::ranges::find_if(m_vecTT, [=](const TOOLTIP& ref) {
-		return ref.uListID == uListID && ref.uID == uID; });
-		it == m_vecTT.end()) { //If there is no tooltip for such item/subitem, we just set it.
+	if (const auto it = std::ranges::find_if(m_vecTT, [=](const TOOLTIP& tt) {
+		return tt.uListID == uListID && tt.uID == uID && tt.iSubItem == iSubItem; }); it == m_vecTT.end()) {
+		//If there is no tooltip for such item/subitem, we set it.
 		m_vecTT.emplace_back(TOOLTIP { .uListID { uListID }, .uID { uID }, .iSubItem { iSubItem },
 			.wstrCaption { std::wstring { wsvCaption } }, .wstrTT { std::wstring { wsvTT } } });
 	}
-	else {
+	else { //Otherwise we change it.
 		it->wstrCaption = wsvCaption;
 		it->wstrTT = wsvTT;
 	}
@@ -1408,11 +1408,14 @@ void CViewRightTL::CreateListDebug()
 			_wctime64_s(buff, std::size(buff), &time);
 			SetToolTip(IDC_LIST_DEBUG, listindex, 2, buff, L"Time / Date:");
 		}
+
 		m_listDebugDir.SetItemText(listindex, 3, std::format(L"{:04X}", pDescr->MajorVersion).data());
 		m_listDebugDir.SetItemText(listindex, 4, std::format(L"{:04X}", pDescr->MinorVersion).data());
 		m_listDebugDir.SetItemText(listindex, 5, std::format(L"{:08X}", pDescr->Type).data());
-		if (const auto iterDType = MapDbgType.find(pDescr->Type); iterDType != MapDbgType.end())
-			SetToolTip(IDC_LIST_DEBUG, listindex, 5, iterDType->second, L"Debug type:");
+		if (const auto itDType = MapDbgType.find(pDescr->Type); itDType != MapDbgType.end()) {
+			SetToolTip(IDC_LIST_DEBUG, listindex, 5, itDType->second, L"Debug type:");
+		}
+
 		m_listDebugDir.SetItemText(listindex, 6, std::format(L"{:08X}", pDescr->SizeOfData).data());
 		m_listDebugDir.SetItemText(listindex, 7, std::format(L"{:08X}", pDescr->AddressOfRawData).data());
 		m_listDebugDir.SetItemText(listindex, 8, std::format(L"{:08X}", pDescr->PointerToRawData).data());

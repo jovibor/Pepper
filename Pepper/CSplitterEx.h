@@ -28,8 +28,7 @@
 #include <afxcontrolbars.h>
 #include <vector>
 
-class CSplitterEx : public CSplitterWndEx
-{
+class CSplitterEx : public CSplitterWndEx {
 public:
 	BOOL CreateStatic(CWnd* m_pParent, int nRows, int nCols, DWORD dwStyle = WS_CHILD | WS_VISIBLE, UINT nID = AFX_IDW_PANE_FIRST)override;
 	BOOL CreateView(int row, int col, CRuntimeClass* pViewClass, SIZE sizeInit, CCreateContext* pContext)override;
@@ -52,7 +51,7 @@ private:
 	};
 
 	//Vectors of row/col visibility flags.
-	std::vector<bool> m_vecRows { };
-	std::vector<bool> m_vecCols { };
-	std::vector<SPANES> m_vecPanes { }; //vector of Panes.
+	std::vector<bool> m_vecRows;
+	std::vector<bool> m_vecCols;
+	std::vector<SPANES> m_vecPanes; //vector of Panes.
 };
