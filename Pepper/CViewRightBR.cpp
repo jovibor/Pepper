@@ -12,8 +12,6 @@
 #include <unordered_map>
 #pragma comment(lib, "Mincore.lib") //VerQueryValueW
 
-using namespace libpe;
-
 BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
@@ -87,7 +85,7 @@ void CViewRightBR::OnInitialUpdate()
 	m_EditBRB.SetFont(&m_fontEditRes);
 
 	m_stlcs.hWndParent = m_hWnd;
-	m_stlcs.pColors = &Utility::g_stListColors;
+	m_stlcs.pColors = &ut::g_stListColors;
 	m_stlcs.dwHdrHeight = 35;
 
 	const auto pDC = GetDC();
@@ -146,7 +144,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
 	case IDC_SHOW_RESOURCE_RBR:
-		m_pResData = reinterpret_cast<PERESFLAT*>(pHint);
+		m_pResData = reinterpret_cast<libpe::PERESFLAT*>(pHint);
 		ShowResource(m_pResData);
 		m_pChildFrame->GetSplitRightBot().ShowCol(1);
 		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 3, 0);
@@ -282,7 +280,7 @@ void CViewRightBR::OnSize(UINT nType, int cx, int cy)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBR::CreateIconCursor(const PERESFLAT& stResData)
+void CViewRightBR::CreateIconCursor(const libpe::PERESFLAT& stResData)
 {
 	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(stResData.spnData.data())),
 		static_cast<DWORD>(stResData.spnData.size()),
@@ -315,7 +313,7 @@ void CViewRightBR::CreateIconCursor(const PERESFLAT& stResData)
 	m_eResTypeToDraw = static_cast<EResType>(stResData.wTypeID);
 }
 
-void CViewRightBR::CreateBitmap(const PERESFLAT& stResData)
+void CViewRightBR::CreateBitmap(const libpe::PERESFLAT& stResData)
 {
 	if (stResData.spnData.empty() || stResData.spnData.size() < sizeof(BITMAPINFO))
 		return ResLoadError();
@@ -328,8 +326,9 @@ void CViewRightBR::CreateBitmap(const PERESFLAT& stResData)
 		pDIBBits = static_cast<LPCVOID>(reinterpret_cast<const DWORD*>(pBMPInfo->bmiColors + pBMPInfoHdr->biClrUsed) +
 			(pBMPInfoHdr->biCompression == BI_BITFIELDS ? 3 : 0));
 	}
-	else
+	else {
 		pDIBBits = static_cast<LPCVOID>(pBMPInfo->bmiColors + dwNumColors);
+	}
 
 	const auto hDC = ::GetDC(m_hWnd);
 	const auto hBitmap = CreateDIBitmap(hDC, pBMPInfoHdr, CBM_INIT, pDIBBits, pBMPInfo, DIB_RGB_COLORS);
@@ -358,7 +357,7 @@ void CViewRightBR::CreateBitmap(const PERESFLAT& stResData)
 	bmp.DeleteObject();
 }
 
-void CViewRightBR::CreatePNG(const PERESFLAT& stResData)
+void CViewRightBR::CreatePNG(const libpe::PERESFLAT& stResData)
 {
 	if (stResData.spnData.empty()) {
 		return ResLoadError();
@@ -403,7 +402,7 @@ void CViewRightBR::CreatePNG(const PERESFLAT& stResData)
 	GlobalFree(hBuffer);
 }
 
-void CViewRightBR::CreateMenu(const PERESFLAT& stResData)
+void CViewRightBR::CreateMenu(const libpe::PERESFLAT& stResData)
 {
 	if (stResData.spnData.empty())
 		return;
@@ -447,7 +446,7 @@ void CViewRightBR::CreateMenu(const PERESFLAT& stResData)
 	}
 }
 
-void CViewRightBR::CreateDlg(const PERESFLAT& stResData)
+void CViewRightBR::CreateDlg(const libpe::PERESFLAT& stResData)
 {
 #pragma pack(push, 4)
 	struct DLGTEMPLATEEX //Helper struct. Not completed.
@@ -635,7 +634,7 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateStrings(const PERESFLAT& stResData)
+void CViewRightBR::CreateStrings(const libpe::PERESFLAT& stResData)
 {
 	auto pwszResString = reinterpret_cast<LPCWSTR>(stResData.spnData.data());
 	std::wstring wstrEdit;
@@ -654,7 +653,7 @@ void CViewRightBR::CreateStrings(const PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateAccel(const PERESFLAT& stResData)
+void CViewRightBR::CreateAccel(const libpe::PERESFLAT& stResData)
 {
 	if (stResData.spnData.empty())
 		return;
@@ -854,7 +853,7 @@ void CViewRightBR::CreateAccel(const PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateGroupIconCursor(const PERESFLAT& stResData)
+void CViewRightBR::CreateGroupIconCursor(const libpe::PERESFLAT& stResData)
 {
 	const auto& pstResRoot = m_pMainDoc->GetResources();
 	if (!pstResRoot)
@@ -947,7 +946,7 @@ void CViewRightBR::CreateGroupIconCursor(const PERESFLAT& stResData)
 	m_eResTypeToDraw = static_cast<EResType>(stResData.wTypeID);
 }
 
-void CViewRightBR::CreateVersion(const PERESFLAT& stResData)
+void CViewRightBR::CreateVersion(const libpe::PERESFLAT& stResData)
 {
 #pragma pack(push, 4)
 	struct LANGANDCODEPAGE {
@@ -995,7 +994,7 @@ void CViewRightBR::CreateVersion(const PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateManifest(const PERESFLAT& stResData)
+void CViewRightBR::CreateManifest(const libpe::PERESFLAT& stResData)
 {
 	m_EditBRB.SetWindowTextW(StrToWstr({ reinterpret_cast<const char*>(stResData.spnData.data()), stResData.spnData.size() }).data());
 	CRect rcClient;
@@ -1004,7 +1003,7 @@ void CViewRightBR::CreateManifest(const PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
+void CViewRightBR::CreateToolbar(const libpe::PERESFLAT& stResData)
 {
 	const auto& pstResRoot = m_pMainDoc->GetResources();
 	if (!pstResRoot)
@@ -1024,7 +1023,7 @@ void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 						if (iterlvl3.stResDirEntry.Id == stResData.wLangID) {
 							const auto& refData = iterlvl3.vecRawResData;
 							if (!refData.empty()) {
-								static PERESFLAT stData { .wTypeID { 2 } };
+								static libpe::PERESFLAT stData { .wTypeID { 2 } };
 								stData.wNameID = stResData.wNameID;
 								stData.spnData = refData;
 								m_pResData = &stData;
@@ -1038,7 +1037,7 @@ void CViewRightBR::CreateToolbar(const PERESFLAT& stResData)
 	}
 }
 
-void CViewRightBR::ShowResource(const PERESFLAT* pResData)
+void CViewRightBR::ShowResource(const libpe::PERESFLAT* pResData)
 {
 	m_stImgRes.DeleteImageList();
 	m_vecImgRes.clear();

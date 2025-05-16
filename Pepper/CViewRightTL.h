@@ -13,10 +13,6 @@
 
 import Utility;
 
-using namespace LISTEX;
-using namespace HEXCTRL;
-using namespace Utility;
-
 class CViewRightTL : public CView {
 private:
 	struct TOOLTIP {
@@ -27,7 +23,7 @@ private:
 		std::wstring wstrTT;
 	};
 	auto GetToolTip(UINT_PTR uListID, int iItem, int iSubItem) -> const TOOLTIP*;
-	[[nodiscard]] auto GetListByID(UINT_PTR uListID) -> CListEx*;
+	[[nodiscard]] auto GetListByID(UINT_PTR uListID) -> LISTEX::CListEx*;
 	void SetToolTip(UINT_PTR uListID, int iItem, int iSubItem, std::wstring_view wsvTT, std::wstring_view wsvCaption = { });
 	void OnInitialUpdate()override;
 	void OnUpdate(CView*, LPARAM, CObject*)override;
@@ -74,33 +70,33 @@ private:
 	void CreateListCOM();
 	void SortImportData();
 private:
-	PEFILEINFO m_stFileInfo;
+	ut::PEFILEINFO m_stFileInfo;
 	CFont m_fontSummary;
-	std::wstring m_wstrPepperVersion { };
-	std::wstring m_wstrFileName { };
-	std::wstring m_wstrFileType { };
-	std::wstring m_wstrFullPath { };
+	std::wstring m_wstrPepperVersion;
+	std::wstring m_wstrFileName;
+	std::wstring m_wstrFileType;
+	std::wstring m_wstrFullPath;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
-	LISTEXCREATE m_stlcs;
-	CListEx m_listDOSHeader;
-	CListEx m_listRichHdr;
-	CListEx m_listNTHeader;
-	CListEx m_listFileHeader;
-	CListEx m_listOptHeader;
-	CListEx m_listDataDirs;
-	CListEx m_listSecHeaders;
-	CListEx m_listExportDir;
-	CListEx m_listImport;
-	CListEx m_listExceptionDir;
-	CListEx m_listSecurityDir;
-	CListEx m_listRelocDir;
-	CListEx m_listDebugDir;
-	CListEx m_listLCD;
-	CListEx m_listBoundImportDir;
-	CListEx m_listDelayImportDir;
-	CListEx m_listTLSDir;
-	CListEx m_listCOMDir;
+	LISTEX::LISTEXCREATE m_stlcs;
+	LISTEX::CListEx m_listDOSHeader;
+	LISTEX::CListEx m_listRichHdr;
+	LISTEX::CListEx m_listNTHeader;
+	LISTEX::CListEx m_listFileHeader;
+	LISTEX::CListEx m_listOptHeader;
+	LISTEX::CListEx m_listDataDirs;
+	LISTEX::CListEx m_listSecHeaders;
+	LISTEX::CListEx m_listExportDir;
+	LISTEX::CListEx m_listImport;
+	LISTEX::CListEx m_listExceptionDir;
+	LISTEX::CListEx m_listSecurityDir;
+	LISTEX::CListEx m_listRelocDir;
+	LISTEX::CListEx m_listDebugDir;
+	LISTEX::CListEx m_listLCD;
+	LISTEX::CListEx m_listBoundImportDir;
+	LISTEX::CListEx m_listDelayImportDir;
+	LISTEX::CListEx m_listTLSDir;
+	LISTEX::CListEx m_listCOMDir;
 	CTreeEx m_treeResTop;
 
 	//Resource id for given treeCtrl node.

@@ -65,7 +65,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSelSize, IHexCtrl* pHexCtrl)
+HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSelSize, HEXCTRL::IHexCtrl* pHexCtrl)
 {
 	if (!pHexCtrl) {
 		if (!m_pHex->IsCreated()) {
@@ -99,13 +99,13 @@ HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSel
 
 	//If floating HexCtrl is in use we bring it to the front.
 	if (pHexCtrl == m_pHex.get()) {
-		::SetForegroundWindow(pHexCtrl->GetWndHandle(EHexWnd::WND_MAIN));
+		::SetForegroundWindow(pHexCtrl->GetWndHandle(HEXCTRL::EHexWnd::WND_MAIN));
 	}
 
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, IHexCtrl* pHexCtrl)
+HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, HEXCTRL::IHexCtrl* pHexCtrl)
 {
 	if (!IsLoaded())
 		return E_ABORT;
@@ -174,7 +174,7 @@ void CFileLoader::CreateHexCtrlWnd()
 {
 	m_pHex->Create(m_hcs);
 
-	const auto hWndHex = m_pHex->GetWndHandle(EHexWnd::WND_MAIN);
+	const auto hWndHex = m_pHex->GetWndHandle(HEXCTRL::EHexWnd::WND_MAIN);
 	const auto iWidthActual = m_pHex->GetActualWidth() + GetSystemMetrics(SM_CXVSCROLL);
 	CRect rcHex(0, 0, iWidthActual, iWidthActual); //Square window.
 	AdjustWindowRectEx(rcHex, m_dwStyle, FALSE, m_dwExStyle);
@@ -187,8 +187,8 @@ void CFileLoader::CreateHexCtrlWnd()
 	const auto hIconSmall = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 0, 0, 0));
 	const auto hIconBig = static_cast<HICON>(LoadImageW(AfxGetInstanceHandle(), MAKEINTRESOURCEW(IDI_HEXCTRL_LOGO), IMAGE_ICON, 96, 96, 0));
 	if (hIconSmall != nullptr) {
-		::SendMessageW(m_pHex->GetWndHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
-		::SendMessageW(m_pHex->GetWndHandle(EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
+		::SendMessageW(m_pHex->GetWndHandle(HEXCTRL::EHexWnd::WND_MAIN), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIconSmall));
+		::SendMessageW(m_pHex->GetWndHandle(HEXCTRL::EHexWnd::WND_MAIN), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hIconBig));
 	}
 }
 

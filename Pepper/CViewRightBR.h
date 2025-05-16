@@ -11,8 +11,6 @@
 #include <span>
 
 import Utility;
-using namespace Utility;
-using namespace LISTEX;
 
 class CWndSampleDlg final : public CWnd {
 public:
@@ -38,21 +36,21 @@ private:
 	void OnDraw(CDC* pDC)override;
 	void OnInitialUpdate()override;
 	void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)override;
-	void CreateIconCursor(const PERESFLAT& stResData);
-	void CreateBitmap(const PERESFLAT& stResData);
-	void CreatePNG(const PERESFLAT& stResData);
-	void CreateMenu(const PERESFLAT& stResData);
+	void CreateIconCursor(const libpe::PERESFLAT& stResData);
+	void CreateBitmap(const libpe::PERESFLAT& stResData);
+	void CreatePNG(const libpe::PERESFLAT& stResData);
+	void CreateMenu(const libpe::PERESFLAT& stResData);
 	void CreateDebugEntry(DWORD dwEntry);
-	void CreateDlg(const PERESFLAT& stResData);
+	void CreateDlg(const libpe::PERESFLAT& stResData);
 	void CreateListTLSCallbacks();
-	void CreateStrings(const PERESFLAT& stResData);
-	void CreateAccel(const PERESFLAT& stResData);
-	void CreateGroupIconCursor(const PERESFLAT& stResData);
-	void CreateVersion(const PERESFLAT& stResData);
-	void CreateManifest(const PERESFLAT& stResData);
-	void CreateToolbar(const PERESFLAT& stResData);
+	void CreateStrings(const libpe::PERESFLAT& stResData);
+	void CreateAccel(const libpe::PERESFLAT& stResData);
+	void CreateGroupIconCursor(const libpe::PERESFLAT& stResData);
+	void CreateVersion(const libpe::PERESFLAT& stResData);
+	void CreateManifest(const libpe::PERESFLAT& stResData);
+	void CreateToolbar(const libpe::PERESFLAT& stResData);
 	void ResLoadError();
-	void ShowResource(const PERESFLAT* pResData);
+	void ShowResource(const libpe::PERESFLAT* pResData);
 	void OnMDITabActivate(bool fActivate);
 	static auto ParceDlgTemplate(std::span<std::byte> spnData) -> std::optional<std::wstring>;
 	static void PremultiplyBitmapAlpha(HDC hDC, HBITMAP hBmp);
@@ -63,13 +61,13 @@ private:
 	HWND m_hwndActive { };
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
-	PERESFLAT* m_pResData { }; //Current resource's data pointer.
+	libpe::PERESFLAT* m_pResData { }; //Current resource's data pointer.
 	CImageList m_stImgRes;
 	CImage m_imgPng; //Image for .PNG, with transparency.
 	CWndSampleDlg m_wndSampleDlg;
 	CMenu m_menuSample;
-	LISTEXCREATE m_stlcs;
-	CListEx m_stListTLSCallbacks;
+	LISTEX::LISTEXCREATE m_stlcs;
+	LISTEX::CListEx m_stListTLSCallbacks;
 	LOGFONTW m_lf { };
 	LOGFONTW m_hdrlf { };
 	EResType m_eResTypeToDraw { };

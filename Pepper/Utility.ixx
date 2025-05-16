@@ -22,7 +22,7 @@ export namespace LISTEX = HEXCTRL::LISTEX;
 
 #define TO_WSTR_MAP(x) {x, L## #x}
 
-export namespace Utility {
+export namespace ut {
 	constexpr auto PEPPER_VERSION_MAJOR = 1;
 	constexpr auto PEPPER_VERSION_MINOR = 5;
 	constexpr auto PEPPER_VERSION_PATCH = 4;

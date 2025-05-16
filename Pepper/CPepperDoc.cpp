@@ -11,7 +11,6 @@
 #include <format>
 
 import Utility;
-using namespace Utility;
 
 IMPLEMENT_DYNCREATE(CPepperDoc, CDocument)
 
@@ -211,82 +210,82 @@ auto CPepperDoc::GetDOSHeader()->std::optional<IMAGE_DOS_HEADER>&
 	return m_optDOS;
 }
 
-auto CPepperDoc::GetRichHeader()->std::optional<PERICHHDR_VEC>&
+auto CPepperDoc::GetRichHeader()->std::optional<libpe::PERICHHDR_VEC>&
 {
 	return m_optRich;
 }
 
-auto CPepperDoc::GetNTHeader()->std::optional<PENTHDR>&
+auto CPepperDoc::GetNTHeader()->std::optional<libpe::PENTHDR>&
 {
 	return m_optNTHdr;
 }
 
-auto CPepperDoc::GetDataDirs()->std::optional<PEDATADIR_VEC>&
+auto CPepperDoc::GetDataDirs()->std::optional<libpe::PEDATADIR_VEC>&
 {
 	return m_optDataDirs;
 }
 
-auto CPepperDoc::GetSecHeaders()->std::optional<PESECHDR_VEC>&
+auto CPepperDoc::GetSecHeaders()->std::optional<libpe::PESECHDR_VEC>&
 {
 	return m_optSecHdr;
 }
 
-auto CPepperDoc::GetExport()->std::optional<PEEXPORT>&
+auto CPepperDoc::GetExport()->std::optional<libpe::PEEXPORT>&
 {
 	return m_optExport;
 }
 
-auto CPepperDoc::GetImport()->std::optional<PEIMPORT_VEC>&
+auto CPepperDoc::GetImport()->std::optional<libpe::PEIMPORT_VEC>&
 {
 	return m_optImport;
 }
 
-auto CPepperDoc::GetResources()->std::optional<PERESROOT>&
+auto CPepperDoc::GetResources()->std::optional<libpe::PERESROOT>&
 {
 	return m_optResRoot;
 }
 
-auto CPepperDoc::GetExceptions()->std::optional<PEEXCEPTION_VEC>&
+auto CPepperDoc::GetExceptions()->std::optional<libpe::PEEXCEPTION_VEC>&
 {
 	return m_optExcept;
 }
 
-auto CPepperDoc::GetSecurity()->std::optional<PESECURITY_VEC>&
+auto CPepperDoc::GetSecurity()->std::optional<libpe::PESECURITY_VEC>&
 {
 	return m_optSecurity;
 }
 
-auto CPepperDoc::GetRelocations()->std::optional<PERELOC_VEC>&
+auto CPepperDoc::GetRelocations()->std::optional<libpe::PERELOC_VEC>&
 {
 	return m_optReloc;
 }
 
-auto CPepperDoc::GetDebug()->std::optional<PEDEBUG_VEC>&
+auto CPepperDoc::GetDebug()->std::optional<libpe::PEDEBUG_VEC>&
 {
 	return m_optDebug;
 }
 
-auto CPepperDoc::GetTLS()->std::optional<PETLS>&
+auto CPepperDoc::GetTLS()->std::optional<libpe::PETLS>&
 {
 	return m_optTLS;
 }
 
-auto CPepperDoc::GetLoadConfig()->std::optional<PELOADCONFIG>&
+auto CPepperDoc::GetLoadConfig()->std::optional<libpe::PELOADCONFIG>&
 {
 	return m_optLCD;
 }
 
-auto CPepperDoc::GetBoundImport()->std::optional<PEBOUNDIMPORT_VEC>&
+auto CPepperDoc::GetBoundImport()->std::optional<libpe::PEBOUNDIMPORT_VEC>&
 {
 	return m_optBoundImp;
 }
 
-auto CPepperDoc::GetDelayImport()->std::optional<PEDELAYIMPORT_VEC>&
+auto CPepperDoc::GetDelayImport()->std::optional<libpe::PEDELAYIMPORT_VEC>&
 {
 	return m_optDelayImp;
 }
 
-auto CPepperDoc::GetCOMDescriptor()->std::optional<PECOMDESCRIPTOR>&
+auto CPepperDoc::GetCOMDescriptor()->std::optional<libpe::PECOMDESCRIPTOR>&
 {
 	return m_optComDescr;
 }

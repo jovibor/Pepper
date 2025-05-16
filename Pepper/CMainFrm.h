@@ -8,7 +8,7 @@
 #include <afxcontrolbars.h>
 
 import Utility;
-using namespace Utility;
+using namespace ut;
 
 class CMainFrame : public CMDIFrameWndEx {
 public:
@@ -26,7 +26,7 @@ private:
 	LRESULT OnTabActivate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnUpdateAppEditmode(CCmdUI* pCmdUI);
 	BOOL PreCreateWindow(CREATESTRUCT& cs)override;
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	BOOL PreTranslateMessage(MSG* pMsg)override;
 	DECLARE_DYNAMIC(CMainFrame);
 	DECLARE_MESSAGE_MAP();
 private:

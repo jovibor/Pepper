@@ -13,13 +13,9 @@
 
 import Utility;
 
-using namespace HEXCTRL;
-using namespace LISTEX;
-using namespace Utility;
-
 class CViewRightBL : public CView {
 private:
-	[[nodiscard]] auto GetListByID(UINT_PTR uListID) -> CListEx*;
+	[[nodiscard]] auto GetListByID(UINT_PTR uListID) -> LISTEX::CListEx*;
 	afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
 	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
 	void OnInitialUpdate()override;
@@ -56,24 +52,24 @@ private:
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBL);
 private:
-	PEFILEINFO m_stFileInfo;
+	ut::PEFILEINFO m_stFileInfo;
 	CChildFrame* m_pChildFrame { };
 	CPepperDoc* m_pMainDoc { };
 	CFileLoader* m_pFileLoader { };
 	HWND m_hwndActive { };
-	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
-	HEXCREATE m_hcs { };
-	LISTEXCREATE m_stlcs;
-	CListEx m_listExportFuncs;
-	CListEx m_listImportEntry;
-	CListEx m_listDelayImportEntry;
-	CListEx m_listRelocsEntry;
+	HEXCTRL::IHexCtrlPtr m_stHexEdit { HEXCTRL::CreateHexCtrl() };
+	HEXCTRL::HEXCREATE m_hcs { };
+	LISTEX::LISTEXCREATE m_stlcs;
+	LISTEX::CListEx m_listExportFuncs;
+	LISTEX::CListEx m_listImportEntry;
+	LISTEX::CListEx m_listDelayImportEntry;
+	LISTEX::CListEx m_listRelocsEntry;
 	CTreeEx m_treeResBottom;
 	CImageList m_imglTreeRes;
-	std::vector<std::tuple<long, long, long, EResType>> m_vecResId { }; //Lvl: ROOT, 2, 3 and res type for tree node.
+	std::vector<std::tuple<long, long, long, ut::EResType>> m_vecResId { }; //Lvl: ROOT, 2, 3 and res type for tree node.
 	LOGFONTW m_lf { };
 	LOGFONTW m_hdrlf { };
-	PERESFLAT m_stResData;
-	EResType m_eResType;
+	libpe::PERESFLAT m_stResData;
+	ut::EResType m_eResType;
 	std::vector<HWND> m_vecHWNDVisible;
 };
