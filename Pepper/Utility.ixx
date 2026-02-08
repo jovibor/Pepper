@@ -15,10 +15,8 @@ module;
 export module Utility;
 
 export import libpe;
-export import HexCtrl_StrToNum;
-export namespace stn = HEXCTRL::stn;
-export import HexCtrl_ListEx;
-export namespace LISTEX = HEXCTRL::LISTEX;
+export import StrToNum;
+export import ListEx;
 
 #define TO_WSTR_MAP(x) {x, L## #x}
 
@@ -593,7 +591,7 @@ export namespace ut {
 		HEXCTRL::EHexWnd::DLG_SEARCH, HEXCTRL::EHexWnd::DLG_CODEPAGE,
 		HEXCTRL::EHexWnd::DLG_GOTO, HEXCTRL::EHexWnd::DLG_TEMPLMGR };
 
-	const HEXCTRL::LISTEX::LISTEXCOLORS g_stListColors { //Global colors for all ListEx.
+	const LISTEX::LISTEXCOLORS g_stListColors { //Global colors for all ListEx.
 		.clrTooltipText { RGB(255, 255, 255) },
 		.clrTooltipBk { RGB(0, 132, 132) },
 		.clrHdrText { RGB(255, 255, 255) },

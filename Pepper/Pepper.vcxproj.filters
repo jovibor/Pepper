@@ -88,6 +88,12 @@
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\dep\HexCtrl_StrToNum.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
+    <ClCompile Include="dep\ListEx.ixx">
+      <Filter>ListEx</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\StrToNum.ixx">
+      <Filter>StrToNum</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="res\resource.h">
@@ -209,6 +215,12 @@
     </Filter>
     <Filter Include="HexCtrl">
       <UniqueIdentifier>{523cad8d-113d-4e2f-84ae-c3a434c4936e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ListEx">
+      <UniqueIdentifier>{278c9257-bbc7-4361-b034-9152a595ca0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="StrToNum">
+      <UniqueIdentifier>{e1e8b989-a869-438b-a9e8-e5205e28db04}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
