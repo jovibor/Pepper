@@ -1,9 +1,9 @@
-/****************************************************************************************************
-* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
-* This software is available under the Apache-2.0 License.                                          *
-* Official git repository: https://github.com/jovibor/Pepper/                                       *
-* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
-****************************************************************************************************/
+/*****************************************************************
+* Copyright © 2018-present Jovibor https://github.com/jovibor/   *
+* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.  *
+* Official git repository: https://github.com/jovibor/Pepper/    *
+* This software is available under the Apache-2.0 License.       *
+*****************************************************************/
 #include "stdafx.h"
 #include "CMainFrm.h"
 #include "CViewRightBR.h"
@@ -590,6 +590,7 @@ void CViewRightBR::CreateListTLSCallbacks()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
 	m_stListTLSCallbacks.Create(m_stlcs);
+	m_stListTLSCallbacks.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_stListTLSCallbacks.InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER, 300);
 
 	int listindex { };

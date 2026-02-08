@@ -1,10 +1,10 @@
+/*****************************************************************
+* Copyright © 2018-present Jovibor https://github.com/jovibor/   *
+* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.  *
+* Official git repository: https://github.com/jovibor/Pepper/    *
+* This software is available under the Apache-2.0 License.       *
+*****************************************************************/
 module;
-/****************************************************************************************************
-* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
-* This software is available under the Apache-2.0 License.                                          *
-* Official git repository: https://github.com/jovibor/Pepper/                                       *
-* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
-****************************************************************************************************/
 #include <afxdlgs.h>
 #include "HexCtrl.h"
 #include <format>
@@ -15,9 +15,9 @@ module;
 export module Utility;
 
 export import libpe;
-export import StrToNum;
+export import HexCtrl_StrToNum;
 export namespace stn = HEXCTRL::stn;
-export import ListEx;
+export import HexCtrl_ListEx;
 export namespace LISTEX = HEXCTRL::LISTEX;
 
 #define TO_WSTR_MAP(x) {x, L## #x}
@@ -27,7 +27,7 @@ export namespace ut {
 	constexpr auto PEPPER_VERSION_MINOR = 5;
 	constexpr auto PEPPER_VERSION_PATCH = 4;
 
-	[[nodiscard]] inline auto StrToWstr(std::string_view sv, UINT uCodePage = CP_UTF8) -> std::wstring
+	[[nodiscard]] auto StrToWstr(std::string_view sv, UINT uCodePage = CP_UTF8) -> std::wstring
 	{
 		const auto iSize = MultiByteToWideChar(uCodePage, 0, sv.data(), static_cast<int>(sv.size()), nullptr, 0);
 		std::wstring wstr(iSize, 0);
@@ -602,9 +602,9 @@ export namespace ut {
 		.clrHdrHglAct { RGB(0, 92, 92) }
 	};
 
-	//Color of the list's "Offset" column
-	constexpr auto g_clrOffset = RGB(150, 150, 150);
-	constexpr auto g_clrListBkTT = RGB(170, 170, 230);
+	constexpr auto g_clrListBkOffset = RGB(150, 150, 150); //Bk color of a list's "Offset" column
+	constexpr auto g_clrListBkTT = RGB(170, 170, 230);     //Bk color of a list's cell with tooltip.
+	constexpr auto g_clrListBkError = RGB(230, 130, 130);  //Bk color of a list's cell with error info.
 
 	/*****************************************************************
 	* These are identificators of all the controls: list, hex, tree. *

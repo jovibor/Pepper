@@ -1,15 +1,14 @@
-/****************************************************************************************************
-* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
-* This software is available under the Apache-2.0 License.                                          *
-* Official git repository: https://github.com/jovibor/Pepper/                                       *
-* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
-****************************************************************************************************/
+/*****************************************************************
+* Copyright © 2018-present Jovibor https://github.com/jovibor/   *
+* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.  *
+* Official git repository: https://github.com/jovibor/Pepper/    *
+* This software is available under the Apache-2.0 License.       *
+*****************************************************************/
 #pragma once
 #include "CPepperDoc.h"
 #include "CTreeEx.h"
 
-class CViewLeft : public CView
-{
+class CViewLeft : public CView {
 private:
 	void OnInitialUpdate()override;
 	BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)override;

@@ -1,9 +1,9 @@
-/****************************************************************************************************
-* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
-* This software is available under the Apache-2.0 License.                                          *
-* Official git repository: https://github.com/jovibor/Pepper/                                       *
-* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
-****************************************************************************************************/
+/*****************************************************************
+* Copyright © 2018-present Jovibor https://github.com/jovibor/   *
+* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.  *
+* Official git repository: https://github.com/jovibor/Pepper/    *
+* This software is available under the Apache-2.0 License.       *
+*****************************************************************/
 #include "stdafx.h"
 #include "CViewRightTL.h"
 #include "strsafe.h"
@@ -279,7 +279,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	m_pChildFrame->GetSplitRight().RecalcLayout();
 }
 
-void CViewRightTL::OnDraw(CDC * pDC)
+void CViewRightTL::OnDraw(CDC* pDC)
 {
 	//Printing app name/version info and
 	//currently oppened file's type and name.
@@ -317,7 +317,7 @@ void CViewRightTL::OnDraw(CDC * pDC)
 		m_wstrFullPath.data(), static_cast<int>(m_wstrFullPath.size()), nullptr);
 }
 
-BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
+BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
 	CView::OnNotify(wParam, lParam, pResult);
 
@@ -469,11 +469,15 @@ void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 			*std::format_to(pItem->pszText, L"{:08X}", refAt.dwOffset) = '\0';
 			break;
 		case 1:
-			if (refAt.strSecName.empty())
-				*std::format_to(pItem->pszText, L"{:.8}", ut::StrToWstr(std::string_view(reinterpret_cast<const char*>(refDescr.Name), 8))) = '\0';
-			else
-				*std::format_to(pItem->pszText, L"{:.8} ({})", ut::StrToWstr(std::string_view(reinterpret_cast<const char*>(refDescr.Name), 8)),
+			if (refAt.strSecName.empty()) {
+				*std::format_to(pItem->pszText, L"{:.8}",
+					ut::StrToWstr(std::string_view(reinterpret_cast<const char*>(refDescr.Name), 8))) = '\0';
+			}
+			else {
+				*std::format_to(pItem->pszText, L"{:.8} ({})",
+					ut::StrToWstr(std::string_view(reinterpret_cast<const char*>(refDescr.Name), 8)),
 					ut::StrToWstr(refAt.strSecName)) = '\0';
+			}
 			break;
 		case 2:
 			*std::format_to(pItem->pszText, L"{:08X}", refDescr.Misc.VirtualSize) = '\0';
@@ -542,6 +546,18 @@ void CViewRightTL::OnListGetColor(NMHDR* pNMHDR)
 	const auto uListID = pLCI->hdr.idFrom;
 	if (const auto pTT = GetToolTip(uListID, iItem, iSubItem); pTT != nullptr) {
 		pLCI->stClr.clrBk = ut::g_clrListBkTT; //Cells with tooltips are colored.
+		return;
+	}
+
+	if (iSubItem == 4) { //Section name.
+		const auto& vecDataDirs = m_pMainDoc->GetDataDirs();
+		const auto& dataDir = vecDataDirs->at(iItem);
+		const auto pDescr = &dataDir.stDataDir;
+
+		if (pDescr->VirtualAddress != 0 && dataDir.dwSecIdx == 0xFFFFFFFFUL) { //Bogus section.
+			pLCI->stClr.clrBk = ut::g_clrListBkError;
+			return;
+		}
 	}
 }
 
@@ -920,9 +936,10 @@ void CViewRightTL::CreateListDOSHeader()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_DOSHEADER;
 	m_listDOSHeader.Create(m_stlcs);
+	m_listDOSHeader.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listDOSHeader.ShowWindow(SW_HIDE);
 	m_listDOSHeader.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDOSHeader.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listDOSHeader.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listDOSHeader.InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
 	m_listDOSHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listDOSHeader.InsertColumn(3, L"Value", LVCFMT_CENTER, 100);
@@ -955,9 +972,10 @@ void CViewRightTL::CreateListRichHeader()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_RICHHEADER;
 	m_listRichHdr.Create(m_stlcs);
+	m_listRichHdr.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listRichHdr.ShowWindow(SW_HIDE);
 	m_listRichHdr.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listRichHdr.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listRichHdr.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listRichHdr.InsertColumn(1, L"\u2116", LVCFMT_CENTER, 35);
 	m_listRichHdr.InsertColumn(2, L"ID [Hex]", LVCFMT_CENTER, 100);
 	m_listRichHdr.InsertColumn(3, L"Version", LVCFMT_CENTER, 100);
@@ -985,9 +1003,10 @@ void CViewRightTL::CreateListNTHeader()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_NTHEADER;
 	m_listNTHeader.Create(m_stlcs);
+	m_listNTHeader.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listNTHeader.ShowWindow(SW_HIDE);
 	m_listNTHeader.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listNTHeader.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listNTHeader.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listNTHeader.InsertColumn(1, L"Name", LVCFMT_CENTER, 100);
 	m_listNTHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listNTHeader.InsertColumn(3, L"Value", LVCFMT_CENTER, 100);
@@ -1013,9 +1032,10 @@ void CViewRightTL::CreateListFileHeader()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_FILEHEADER;
 	m_listFileHeader.Create(m_stlcs);
+	m_listFileHeader.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listFileHeader.ShowWindow(SW_HIDE);
 	m_listFileHeader.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listFileHeader.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listFileHeader.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listFileHeader.InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
 	m_listFileHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listFileHeader.InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
@@ -1071,9 +1091,10 @@ void CViewRightTL::CreateListOptHeader()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_OPTIONALHEADER;
 	m_listOptHeader.Create(m_stlcs);
+	m_listOptHeader.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listOptHeader.ShowWindow(SW_HIDE);
 	m_listOptHeader.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listOptHeader.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listOptHeader.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listOptHeader.InsertColumn(1, L"Name", LVCFMT_CENTER, 215);
 	m_listOptHeader.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listOptHeader.InsertColumn(3, L"Value", LVCFMT_CENTER, 140);
@@ -1127,8 +1148,8 @@ void CViewRightTL::CreateListOptHeader()
 
 void CViewRightTL::CreateListDataDirs()
 {
-	const auto& pvecDataDirs = m_pMainDoc->GetDataDirs();
-	if (!pvecDataDirs)
+	const auto& vecDataDirs = m_pMainDoc->GetDataDirs();
+	if (!vecDataDirs)
 		return;
 
 	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
@@ -1138,31 +1159,49 @@ void CViewRightTL::CreateListDataDirs()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_DATADIRECTORIES;
 	m_listDataDirs.Create(m_stlcs);
+	m_listDataDirs.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listDataDirs.ShowWindow(SW_HIDE);
 	m_listDataDirs.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDataDirs.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listDataDirs.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listDataDirs.InsertColumn(1, L"Name", LVCFMT_CENTER, 200);
 	m_listDataDirs.InsertColumn(2, L"Directory RVA", LVCFMT_CENTER, 100);
 	m_listDataDirs.InsertColumn(3, L"Directory Size", LVCFMT_CENTER, 100);
-	m_listDataDirs.InsertColumn(4, L"Resides in Section", LVCFMT_CENTER, 125);
+	m_listDataDirs.InsertColumn(4, L"Resides in Section", LVCFMT_CENTER, 135);
 
 	const auto dwDataDirsOffset = m_stFileInfo.eFileType == libpe::EFileType::PE32 ?
 		offsetof(IMAGE_NT_HEADERS32, OptionalHeader.DataDirectory) :
 		offsetof(IMAGE_NT_HEADERS64, OptionalHeader.DataDirectory);
-	for (auto iter { 0U }; iter < pvecDataDirs->size(); ++iter) {
-		const auto& ref = pvecDataDirs->at(static_cast<size_t>(iter));
-		const auto pDescr = &ref.stDataDir;
 
-		m_listDataDirs.InsertItem(iter, std::format(L"{:08X}", pNTHdr->dwOffset + dwDataDirsOffset + sizeof(IMAGE_DATA_DIRECTORY) * iter).data());
-		m_listDataDirs.SetItemText(iter, 1, ut::g_mapDataDirs.at(static_cast<WORD>(iter)).data());
-		m_listDataDirs.SetItemText(iter, 2, std::format(L"{:08X}", pDescr->VirtualAddress).data());
-		if (iter == IMAGE_DIRECTORY_ENTRY_SECURITY && pDescr->VirtualAddress > 0) {
-			SetToolTip(ut::IDC_LIST_DATADIRECTORIES, iter, 2, L"This address is the file's raw offset on disk.");
+	for (auto itDirs { 0U }; itDirs < vecDataDirs->size(); ++itDirs) {
+		const auto& dataDir = vecDataDirs->at(itDirs);
+		const auto pDescr = &dataDir.stDataDir;
+
+		m_listDataDirs.InsertItem(itDirs, std::format(L"{:08X}", pNTHdr->dwOffset + dwDataDirsOffset
+			+ sizeof(IMAGE_DATA_DIRECTORY) * itDirs).data());
+		m_listDataDirs.SetItemText(itDirs, 1, ut::g_mapDataDirs.at(static_cast<WORD>(itDirs)).data());
+		m_listDataDirs.SetItemText(itDirs, 2, std::format(L"{:08X}", pDescr->VirtualAddress).data());
+		m_listDataDirs.SetItemText(itDirs, 3, std::format(L"{:08X}", pDescr->Size).data());
+
+		if (pDescr->VirtualAddress == 0) { //Does not reside in any section.
+			continue;
 		}
 
-		m_listDataDirs.SetItemText(iter, 3, std::format(L"{:08X}", pDescr->Size).data());
-		if (!ref.strSection.empty()) { //Resides in Section.
-			m_listDataDirs.SetItemText(iter, 4, std::format(L"{:.8}", ut::StrToWstr(ref.strSection)).data());
+		if (itDirs == IMAGE_DIRECTORY_ENTRY_SECURITY) {
+			SetToolTip(ut::IDC_LIST_DATADIRECTORIES, itDirs, 2, L"This address is the file's raw offset on disk.");
+			continue;
+		}
+
+		if (dataDir.dwSecIdx == 0xFFFFFFFFUL) {
+			m_listDataDirs.SetItemText(itDirs, 4, L"Invalid"); //Bogus/malware PE file.
+		}
+		else {
+			if (const auto& optSec = m_pMainDoc->GetSecHeaders(); optSec && dataDir.dwSecIdx < optSec->size()) {
+				const auto& refSec = optSec->at(dataDir.dwSecIdx);
+				const auto wstrSecName = refSec.strSecName.empty() ?
+					ut::StrToWstr(std::string_view(reinterpret_cast<const char*>(refSec.stSecHdr.Name), 8)) :
+					ut::StrToWstr(refSec.strSecName);
+				m_listDataDirs.SetItemText(itDirs, 4, wstrSecName.data());
+			}
 		}
 	}
 }
@@ -1176,9 +1215,10 @@ void CViewRightTL::CreateListSecHeaders()
 	m_stlcs.dwStyle = LVS_OWNERDATA;
 	m_stlcs.uID = ut::IDC_LIST_SECHEADERS;
 	m_listSecHeaders.Create(m_stlcs);
+	m_listSecHeaders.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listSecHeaders.ShowWindow(SW_HIDE);
 	m_listSecHeaders.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listSecHeaders.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listSecHeaders.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listSecHeaders.InsertColumn(1, L"Name", LVCFMT_CENTER, 150);
 	m_listSecHeaders.InsertColumn(2, L"Virtual Size", LVCFMT_CENTER, 100);
 	m_listSecHeaders.InsertColumn(3, L"Virtual Address", LVCFMT_CENTER, 125);
@@ -1201,9 +1241,10 @@ void CViewRightTL::CreateListExport()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_EXPORT;
 	m_listExportDir.Create(m_stlcs);
+	m_listExportDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listExportDir.ShowWindow(SW_HIDE);
 	m_listExportDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listExportDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listExportDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listExportDir.InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listExportDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listExportDir.InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
@@ -1242,9 +1283,10 @@ void CViewRightTL::CreateListImport()
 	m_stlcs.dwStyle = LVS_OWNERDATA;
 	m_stlcs.uID = ut::IDC_LIST_IMPORT;
 	m_listImport.Create(m_stlcs);
+	m_listImport.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listImport.ShowWindow(SW_HIDE);
 	m_listImport.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listImport.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listImport.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listImport.InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 300);
 	m_listImport.InsertColumn(2, L"OriginalFirstThunk\n(Import Lookup Table)", LVCFMT_CENTER, 170);
 	m_listImport.InsertColumn(3, L"TimeDateStamp", LVCFMT_CENTER, 115);
@@ -1347,9 +1389,10 @@ void CViewRightTL::CreateListExceptions()
 	m_stlcs.dwStyle = LVS_OWNERDATA;
 	m_stlcs.uID = ut::IDC_LIST_EXCEPTIONS;
 	m_listExceptionDir.Create(m_stlcs);
+	m_listExceptionDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listExceptionDir.ShowWindow(SW_HIDE);
 	m_listExceptionDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listExceptionDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listExceptionDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listExceptionDir.InsertColumn(1, L"BeginAddress", LVCFMT_CENTER, 100);
 	m_listExceptionDir.InsertColumn(2, L"EndAddress", LVCFMT_CENTER, 100);
 	m_listExceptionDir.InsertColumn(3, L"UnwindData/InfoAddress", LVCFMT_CENTER, 180);
@@ -1365,9 +1408,10 @@ void CViewRightTL::CreateListSecurity()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_SECURITY;
 	m_listSecurityDir.Create(m_stlcs);
+	m_listSecurityDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listSecurityDir.ShowWindow(SW_HIDE);
 	m_listSecurityDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listSecurityDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listSecurityDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listSecurityDir.InsertColumn(1, L"dwLength", LVCFMT_CENTER, 100);
 	m_listSecurityDir.InsertColumn(2, L"wRevision", LVCFMT_CENTER, 100);
 	m_listSecurityDir.InsertColumn(3, L"wCertificateType", LVCFMT_CENTER, 180);
@@ -1398,9 +1442,10 @@ void CViewRightTL::CreateListRelocations()
 	m_stlcs.dwStyle = LVS_OWNERDATA;
 	m_stlcs.uID = ut::IDC_LIST_RELOCATIONS;
 	m_listRelocDir.Create(m_stlcs);
+	m_listRelocDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listRelocDir.ShowWindow(SW_HIDE);
 	m_listRelocDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listRelocDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listRelocDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listRelocDir.InsertColumn(1, L"Virtual Address", LVCFMT_CENTER, 115);
 	m_listRelocDir.InsertColumn(2, L"Block Size", LVCFMT_CENTER, 100);
 	m_listRelocDir.InsertColumn(3, L"Entries", LVCFMT_CENTER, 100);
@@ -1416,9 +1461,10 @@ void CViewRightTL::CreateListDebug()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_DEBUG;
 	m_listDebugDir.Create(m_stlcs);
+	m_listDebugDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listDebugDir.ShowWindow(SW_HIDE);
 	m_listDebugDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDebugDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listDebugDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listDebugDir.InsertColumn(1, L"Characteristics", LVCFMT_CENTER, 115);
 	m_listDebugDir.InsertColumn(2, L"TimeDateStamp", LVCFMT_CENTER, 150);
 	m_listDebugDir.InsertColumn(3, L"MajorVersion", LVCFMT_CENTER, 100);
@@ -1464,9 +1510,10 @@ void CViewRightTL::CreateListTLS()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_TLS;
 	m_listTLSDir.Create(m_stlcs);
+	m_listTLSDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listTLSDir.ShowWindow(SW_HIDE);
 	m_listTLSDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listTLSDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listTLSDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listTLSDir.InsertColumn(1, L"Name", LVCFMT_CENTER, 250);
 	m_listTLSDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
 	m_listTLSDir.InsertColumn(3, L"Value", LVCFMT_CENTER, 150);
@@ -1502,9 +1549,10 @@ void CViewRightTL::CreateListLCD()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_LOADCONFIG;
 	m_listLCD.Create(m_stlcs);
+	m_listLCD.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listLCD.ShowWindow(SW_HIDE);
 	m_listLCD.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listLCD.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listLCD.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listLCD.InsertColumn(1, L"Name", LVCFMT_CENTER, 330);
 	m_listLCD.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 110);
 	m_listLCD.InsertColumn(3, L"Value", LVCFMT_CENTER, 300);
@@ -1559,9 +1607,10 @@ void CViewRightTL::CreateListBoundImport()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_BOUNDIMPORT;
 	m_listBoundImportDir.Create(m_stlcs);
+	m_listBoundImportDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listBoundImportDir.ShowWindow(SW_HIDE);
 	m_listBoundImportDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listBoundImportDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listBoundImportDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listBoundImportDir.InsertColumn(1, L"Module Name", LVCFMT_CENTER, 290);
 	m_listBoundImportDir.InsertColumn(2, L"TimeDateStamp", LVCFMT_CENTER, 130);
 	m_listBoundImportDir.InsertColumn(3, L"OffsetModuleName", LVCFMT_CENTER, 140);
@@ -1594,9 +1643,10 @@ void CViewRightTL::CreateListDelayImport()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_DELAYIMPORT;
 	m_listDelayImportDir.Create(m_stlcs);
+	m_listDelayImportDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listDelayImportDir.ShowWindow(SW_HIDE);
 	m_listDelayImportDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listDelayImportDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listDelayImportDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listDelayImportDir.InsertColumn(1, L"Module Name (funcs number)", LVCFMT_CENTER, 260);
 	m_listDelayImportDir.InsertColumn(2, L"Attributes", LVCFMT_CENTER, 100);
 	m_listDelayImportDir.InsertColumn(3, L"DllNameRVA", LVCFMT_CENTER, 105);
@@ -1639,9 +1689,10 @@ void CViewRightTL::CreateListCOM()
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_COMDESCRIPTOR;
 	m_listCOMDir.Create(m_stlcs);
+	m_listCOMDir.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_listCOMDir.ShowWindow(SW_HIDE);
 	m_listCOMDir.InsertColumn(0, L"Offset", LVCFMT_CENTER, 90);
-	m_listCOMDir.SetHdrColumnColor(0, ut::g_clrOffset);
+	m_listCOMDir.SetHdrColumnColor(0, ut::g_clrListBkOffset);
 	m_listCOMDir.InsertColumn(1, L"Name", LVCFMT_CENTER, 300);
 	m_listCOMDir.InsertColumn(2, L"Size [BYTES]", LVCFMT_CENTER, 100);
 	m_listCOMDir.InsertColumn(3, L"Value", LVCFMT_CENTER, 300);

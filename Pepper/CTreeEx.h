@@ -1,14 +1,13 @@
-/****************************************************************************************************
-* Copyright © 2018-2024 Jovibor https://github.com/jovibor/                                         *
-* This software is available under the Apache-2.0 License.                                          *
-* Official git repository: https://github.com/jovibor/Pepper/                                       *
-* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.                                     *
-****************************************************************************************************/
+/*****************************************************************
+* Copyright © 2018-present Jovibor https://github.com/jovibor/   *
+* Pepper is a PE32 (x86) and PE32+ (x64) binares viewer/editor.  *
+* Official git repository: https://github.com/jovibor/Pepper/    *
+* This software is available under the Apache-2.0 License.       *
+*****************************************************************/
 #pragma once
 #include <afxcontrolbars.h>
 
-class CTreeEx : public CTreeCtrl
-{
+class CTreeEx : public CTreeCtrl {
 protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);

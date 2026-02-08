@@ -162,15 +162,39 @@
     <ClCompile Include="CViewRightBR.cpp" />
     <ClCompile Include="CViewRightTL.cpp" />
     <ClCompile Include="CTreeEx.cpp" />
-    <ClCompile Include="dep\HexCtrl\HexCtrl\dep\ListEx\ListEx.ixx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\dep\StrToNum\StrToNum.ixx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexCtrl.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgBkmMgr.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgCodepage.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgDataInterp.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgGoTo.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgModify.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgProgress.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgSearch.ixx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgTemplMgr.ixx">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -182,35 +206,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\dep\HexCtrl_ListEx.ixx">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCodepage.ixx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.ixx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.ixx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgModify.ixx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgProgress.ixx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.ixx">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\dep\HexCtrl_StrToNum.ixx">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -228,6 +228,15 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_BKMS.bmp" />
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_CLPBRD_COPYHEX.bmp" />
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_CLPBRD_PASTEHEX.bmp" />
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_FONTCHOOSE.bmp" />
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_GROUP.bmp" />
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_LOGO.bmp" />
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_MODIFY.bmp" />
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_MODIFY_FILLZEROS.bmp" />
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_SEARCH.bmp" />
     <Image Include="res\IDI_HEXCTRL_LOGO.ico" />
     <Image Include="res\IDI_TREE_PEDIRS.ico" />
     <Image Include="res\IDI_TREE_PEHEADER.ico" />
@@ -236,6 +245,7 @@
     <Image Include="res\Toolbar256.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="dep\HexCtrl\HexCtrl\src\res\IDJ_HEXCTRL_KEYBIND.json" />
     <None Include="res\Pepper.rc2" />
   </ItemGroup>
   <ItemGroup>
@@ -245,7 +255,7 @@
     <ClInclude Include="CPepper.h" />
     <ClInclude Include="CPepperDoc.h" />
     <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h" />
-    <ClInclude Include="dep\HexCtrl\HexCtrl\res\HexCtrlRes.h" />
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\res\HexCtrlRes.h" />
     <ClInclude Include="res\resource.h" />
     <ClInclude Include="CSplitterEx.h" />
     <ClInclude Include="CTreeEx.h" />
@@ -262,7 +272,7 @@
     <ClInclude Include="CViewRightTR.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="dep\HexCtrl\HexCtrl\res\HexCtrl.rc" />
+    <ResourceCompile Include="dep\HexCtrl\HexCtrl\src\res\HexCtrl.rc" />
     <ResourceCompile Include="res\Pepper.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

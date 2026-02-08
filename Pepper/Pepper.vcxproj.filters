@@ -55,37 +55,37 @@
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\HexUtility.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\dep\ListEx\ListEx.ixx">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\dep\StrToNum\StrToNum.ixx">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgProgress.ixx">
-      <Filter>HexCtrl</Filter>
-    </ClCompile>
     <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexCtrl.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgBkmMgr.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgBkmMgr.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgCodepage.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgCodepage.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgDataInterp.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgDataInterp.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgGoTo.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgGoTo.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgModify.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgModify.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgSearch.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgProgress.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
-    <ClCompile Include="dep\HexCtrl\HexCtrl\src\Dialogs\CHexDlgTemplMgr.ixx">
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgSearch.ixx">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\CHexDlgTemplMgr.ixx">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\dep\HexCtrl_ListEx.ixx">
+      <Filter>HexCtrl</Filter>
+    </ClCompile>
+    <ClCompile Include="dep\HexCtrl\HexCtrl\src\dep\HexCtrl_StrToNum.ixx">
       <Filter>HexCtrl</Filter>
     </ClCompile>
   </ItemGroup>
@@ -132,10 +132,10 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dep\HexCtrl\HexCtrl\res\HexCtrlRes.h">
+    <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
-    <ClInclude Include="dep\HexCtrl\HexCtrl\HexCtrl.h">
+    <ClInclude Include="dep\HexCtrl\HexCtrl\src\res\HexCtrlRes.h">
       <Filter>HexCtrl</Filter>
     </ClInclude>
   </ItemGroup>
@@ -143,7 +143,7 @@
     <ResourceCompile Include="res\Pepper.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-    <ResourceCompile Include="dep\HexCtrl\HexCtrl\res\HexCtrl.rc">
+    <ResourceCompile Include="dep\HexCtrl\HexCtrl\src\res\HexCtrl.rc">
       <Filter>HexCtrl</Filter>
     </ResourceCompile>
   </ItemGroup>
@@ -166,6 +166,33 @@
     <Image Include="res\IDI_HEXCTRL_LOGO.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_BKMS.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_CLPBRD_COPYHEX.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_CLPBRD_PASTEHEX.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_FONTCHOOSE.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_GROUP.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_LOGO.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_MODIFY.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_MODIFY_FILLZEROS.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
+    <Image Include="dep\HexCtrl\HexCtrl\src\res\IDB_HEXCTRL_SEARCH.bmp">
+      <Filter>HexCtrl</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -187,6 +214,9 @@
   <ItemGroup>
     <None Include="res\Pepper.rc2">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="dep\HexCtrl\HexCtrl\src\res\IDJ_HEXCTRL_KEYBIND.json">
+      <Filter>HexCtrl</Filter>
     </None>
   </ItemGroup>
 </Project>
