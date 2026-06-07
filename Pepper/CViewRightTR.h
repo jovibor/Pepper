@@ -9,8 +9,6 @@
 #include "CPepperDoc.h"
 #include "HexCtrl.h"
 
-using namespace HEXCTRL;
-
 class CViewRightTR : public CView {
 private:
 	virtual void OnDraw(CDC* pDC);
@@ -28,7 +26,7 @@ private:
 	CPepperDoc* m_pMainDoc { };
 	CFileLoader* m_pFileLoader { };
 	HWND m_hwndActive { };
-	IHexCtrlPtr m_stHexEdit { CreateHexCtrl() };
-	HEXCREATE m_hcs { };
+	HEXCTRL::IHexCtrlPtr m_stHexEdit { HEXCTRL::CreateHexCtrl() };
+	HEXCTRL::HEXCREATE m_hcs { };
 	std::vector<HWND> m_vecHWNDVisible;
 };

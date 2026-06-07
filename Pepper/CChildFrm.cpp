@@ -5,6 +5,8 @@
 * This software is available under the Apache-2.0 License.       *
 *****************************************************************/
 #include "stdafx.h"
+#include <algorithm>
+#include <cmath>
 #include "CChildFrm.h"
 #include "CMainFrm.h"
 #include "CViewLeft.h"
@@ -12,8 +14,6 @@
 #include "CViewRightBR.h"
 #include "CViewRightTL.h"
 #include "CViewRightTR.h"
-#include <algorithm>
-#include <cmath>
 
 import Utility;
 
@@ -60,7 +60,7 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 	//If tab is closing we don't need to UpdateAllViews.
 	//At this moment the Document can already be destroyed in memory, so GetActiveDocument can point to a bad data.
 	if (!m_fClosing) {
-		GetActiveDocument()->UpdateAllViews(nullptr, bActivate == FALSE ? MSG_MDITAB_DISACTIVATE : MSG_MDITAB_ACTIVATE);
+		GetActiveDocument()->UpdateAllViews(nullptr, bActivate == FALSE ? ut::MSG_MDITAB_DISACTIVATE : ut::MSG_MDITAB_ACTIVATE);
 	}
 }
 

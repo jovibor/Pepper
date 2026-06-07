@@ -5,10 +5,10 @@
 * This software is available under the Apache-2.0 License.       *
 *****************************************************************/
 #pragma once
+#include <span>
 #include <memory>
 #include "CPepperDoc.h"
 #include "CChildFrm.h"
-#include <span>
 
 import Utility;
 
@@ -70,7 +70,7 @@ private:
 	LISTEX::CListEx m_stListTLSCallbacks;
 	LOGFONTW m_lf { };
 	LOGFONTW m_hdrlf { };
-	EResType m_eResTypeToDraw { };
+	ut::EResType m_eResTypeToDraw { };
 	int m_iImgResWidth { };  //Width of the whole image to draw.
 	int m_iImgResHeight { }; //Height of the whole image to draw.
 	std::vector<std::unique_ptr<CImageList>> m_vecImgRes; //Vector for RT_GROUP_ICON/CURSOR.

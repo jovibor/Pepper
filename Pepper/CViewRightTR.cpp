@@ -8,7 +8,6 @@
 #include "CViewRightTR.h"
 
 import Utility;
-using namespace ut;
 
 IMPLEMENT_DYNCREATE(CViewRightTR, CView)
 
@@ -33,7 +32,7 @@ void CViewRightTR::OnInitialUpdate()
 
 	//Hex control for Resources raw.
 	m_hcs.hWndParent = m_hWnd;
-	m_hcs.uID = IDC_HEX_RIGHT_TR;
+	m_hcs.uID = ut::IDC_HEX_RIGHT_TR;
 	m_hcs.dwStyle = WS_CHILD;
 	m_stHexEdit->Create(m_hcs);
 }
@@ -41,12 +40,12 @@ void CViewRightTR::OnInitialUpdate()
 void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 {
 	const auto iMsg = LOWORD(lHint);
-	if (iMsg == MSG_MDITAB_ACTIVATE || iMsg == MSG_MDITAB_DISACTIVATE) {
-		OnMDITabActivate(iMsg == MSG_MDITAB_ACTIVATE);
+	if (iMsg == ut::MSG_MDITAB_ACTIVATE || iMsg == ut::MSG_MDITAB_DISACTIVATE) {
+		OnMDITabActivate(iMsg == ut::MSG_MDITAB_ACTIVATE);
 		return; //No further handling if it's tab Activate/Disactivate messages.
 	}
 
-	if (!m_pChildFrame || iMsg == IDC_SHOW_RESOURCE_RBR)
+	if (!m_pChildFrame || iMsg == ut::IDC_SHOW_RESOURCE_RBR)
 		return;
 
 	CRect rcParent;
@@ -55,21 +54,21 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	GetClientRect(&rcClient);
 
 	switch (iMsg) {
-	case IDC_TREE_RESOURCE:
+	case ut::IDC_TREE_RESOURCE:
 		if (m_hwndActive)
 			::ShowWindow(m_hwndActive, SW_HIDE);
 		m_stHexEdit->ClearData();
-		m_hwndActive = m_stHexEdit->GetWndHandle(EHexWnd::WND_MAIN);
+		m_hwndActive = m_stHexEdit->GetWndHandle(HEXCTRL::EHexWnd::WND_MAIN);
 		m_pChildFrame->GetSplitRightTop().ShowCol(1);
 		m_pChildFrame->GetSplitRightTop().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 		break;
-	case IDC_HEX_RIGHT_TR:
+	case ut::IDC_HEX_RIGHT_TR:
 		CreateHexResources(reinterpret_cast<PIMAGE_RESOURCE_DATA_ENTRY>(pHint));
 		m_pChildFrame->GetSplitRightTop().ShowCol(1);
 		m_pChildFrame->GetSplitRightTop().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
-	case ID_DOC_EDITMODE:
+	case ut::ID_DOC_EDITMODE:
 		OnDocEditMode();
 		break;
 	default:
@@ -84,8 +83,7 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 }
 
 void CViewRightTR::OnDraw(CDC* /*pDC*/)
-{
-}
+{ }
 
 void CViewRightTR::OnSize(UINT nType, int cx, int cy)
 {
@@ -112,7 +110,7 @@ void CViewRightTR::OnMDITabActivate(bool fActivate)
 		m_vecHWNDVisible.clear();
 	}
 	else { //Hide all opened HexCtrl dialog windows and add them to the vector, when tab is deactivated.
-		for (const auto eWnd : g_arrHexDlgs) {
+		for (const auto eWnd : ut::g_arrHexDlgs) {
 			const auto hWnd = m_stHexEdit->GetWndHandle(eWnd, false);
 			if (::IsWindow(hWnd) && ::IsWindowVisible(hWnd)) {
 				m_vecHWNDVisible.emplace_back(hWnd);
@@ -135,7 +133,7 @@ void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes)
 		m_stHexEdit->ClearData(); //In case of empty resource just clear the data.
 	}
 
-	m_hwndActive = m_stHexEdit->GetWndHandle(EHexWnd::WND_MAIN);
+	m_hwndActive = m_stHexEdit->GetWndHandle(HEXCTRL::EHexWnd::WND_MAIN);
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rcClient.Width(), rcClient.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);

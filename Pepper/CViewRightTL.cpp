@@ -5,11 +5,11 @@
 * This software is available under the Apache-2.0 License.       *
 *****************************************************************/
 #include "stdafx.h"
-#include "CViewRightTL.h"
 #include "strsafe.h"
 #include <algorithm>
 #include <bit>
 #include <format>
+#include "CViewRightTL.h"
 
 IMPLEMENT_DYNCREATE(CViewRightTL, CView)
 

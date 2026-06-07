@@ -7,9 +7,6 @@
 #pragma once
 #include <afxcontrolbars.h>
 
-import Utility;
-using namespace ut;
-
 class CMainFrame : public CMDIFrameWndEx {
 public:
 	BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE,

@@ -6,9 +6,9 @@
 *****************************************************************/
 #include "stdafx.h"
 #include "res/resource.h"
+#include <format>
 #include "CMainFrm.h"
 #include "CPepperDoc.h"
-#include <format>
 
 import Utility;
 
@@ -39,9 +39,9 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 	libpe::Clibpe libPE;
 	if (const auto err = libPE.OpenFile(m_stFileLoader.GetData()); err != libpe::PEOK) {
-		const auto it = g_mapLibpeErrors.find(err);
+		const auto it = ut::g_mapLibpeErrors.find(err);
 		MessageBoxW(nullptr, std::vformat(L"File load failed with the libpe error code: 0x{:04X}\n{}",
-			std::make_wformat_args(err, it != g_mapLibpeErrors.end() ? it->second : L"N/A")).data(),
+			std::make_wformat_args(err, it != ut::g_mapLibpeErrors.end() ? it->second : L"N/A")).data(),
 			wstrErrCaption.data(), MB_ICONERROR);
 		return FALSE;
 	}
@@ -146,22 +146,22 @@ void CPepperDoc::OnUpdateResExtractAllPng(CCmdUI *pCmdUI)
 
 void CPepperDoc::OnResExtractAllCur()
 {
-	ExtractAllResToFile(GetResources(), EResType::RTYPE_CURSOR, m_wstrDocName);
+	ut::ExtractAllResToFile(GetResources(), ut::EResType::RTYPE_CURSOR, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllIco()
 {
-	ExtractAllResToFile(GetResources(), EResType::RTYPE_ICON, m_wstrDocName);
+	ut::ExtractAllResToFile(GetResources(), ut::EResType::RTYPE_ICON, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllBmp()
 {
-	ExtractAllResToFile(GetResources(), EResType::RTYPE_BITMAP, m_wstrDocName);
+	ut::ExtractAllResToFile(GetResources(), ut::EResType::RTYPE_BITMAP, m_wstrDocName);
 }
 
 void CPepperDoc::OnResExtractAllPng()
 {
-	ExtractAllResToFile(GetResources(), EResType::RTYPE_PNG, m_wstrDocName);
+	ut::ExtractAllResToFile(GetResources(), ut::EResType::RTYPE_PNG, m_wstrDocName);
 }
 
 auto CPepperDoc::GetFileLoader()->CFileLoader&
@@ -186,10 +186,10 @@ void CPepperDoc::SetEditMode(bool fEditMode)
 	}
 
 	m_fEditMode = fEditMode;
-	UpdateAllViews(nullptr, MAKELPARAM(ID_DOC_EDITMODE, fEditMode));
+	UpdateAllViews(nullptr, MAKELPARAM(ut::ID_DOC_EDITMODE, fEditMode));
 }
 
-auto CPepperDoc::GetFileInfo()->PEFILEINFO&
+auto CPepperDoc::GetFileInfo()->ut::PEFILEINFO&
 {
 	return m_stFileInfo;
 }

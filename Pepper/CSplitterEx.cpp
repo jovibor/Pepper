@@ -5,8 +5,8 @@
 * This software is available under the Apache-2.0 License.       *
 *****************************************************************/
 #include "stdafx.h"
-#include "CSplitterEx.h"
 #include <algorithm>
+#include "CSplitterEx.h"
 
 IMPLEMENT_DYNAMIC(CSplitterEx, CSplitterWndEx)
 
@@ -153,8 +153,7 @@ void CSplitterEx::RecalcPanes()
 }
 
 void CSplitterEx::OnInvertTracker(const CRect& /*rect*/)
-{
-}
+{ }
 
 void CSplitterEx::OnMouseMove(UINT nFlags, CPoint pt)
 {

@@ -5,11 +5,11 @@
 * This software is available under the Apache-2.0 License.       *
 *****************************************************************/
 #include "stdafx.h"
+#include <format>
+#include <unordered_map>
 #include "CMainFrm.h"
 #include "CViewRightBR.h"
 #include "strsafe.h"
-#include <format>
-#include <unordered_map>
 #pragma comment(lib, "Mincore.lib") //VerQueryValueW
 
 BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)
@@ -105,17 +105,17 @@ void CViewRightBR::OnInitialUpdate()
 void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 {
 	const auto iMsg = LOWORD(lHint);
-	if (iMsg == MSG_MDITAB_ACTIVATE || iMsg == MSG_MDITAB_DISACTIVATE) {
-		OnMDITabActivate(iMsg == MSG_MDITAB_ACTIVATE);
+	if (iMsg == ut::MSG_MDITAB_ACTIVATE || iMsg == ut::MSG_MDITAB_DISACTIVATE) {
+		OnMDITabActivate(iMsg == ut::MSG_MDITAB_ACTIVATE);
 		return; //No further handling if it's tab Activate/Disactivate messages.
 	}
 
 	//If it's UpdateAllViews call for top right Hex (IDC_HEX_RIGHT_TR), (from top left Resource Tree) we do nothing.
-	if (!m_pChildFrame || iMsg == IDC_HEX_RIGHT_TR || iMsg == ID_DOC_EDITMODE)
+	if (!m_pChildFrame || iMsg == ut::IDC_HEX_RIGHT_TR || iMsg == ut::ID_DOC_EDITMODE)
 		return;
 
 	//If any but Resources Update we destroy m_DlgSampleWnd, if it's currently created.
-	if (iMsg != IDC_SHOW_RESOURCE_RBR) {
+	if (iMsg != ut::IDC_SHOW_RESOURCE_RBR) {
 		if (m_wndSampleDlg.m_hWnd)
 			m_wndSampleDlg.DestroyWindow();
 	}
@@ -125,10 +125,10 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 
 	CRect rcParent;
 	GetParent()->GetWindowRect(&rcParent);
-	m_eResTypeToDraw = EResType::NO_RESOURCE;
+	m_eResTypeToDraw = ut::EResType::NO_RESOURCE;
 
 	switch (iMsg) {
-	case IDC_LIST_TLS:
+	case ut::IDC_LIST_TLS:
 	{
 		CRect rcClient;
 		GetClientRect(&rcClient);
@@ -139,17 +139,17 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 2, 0);
 	}
 	break;
-	case IDC_TREE_RESOURCE:
+	case ut::IDC_TREE_RESOURCE:
 		m_pChildFrame->GetSplitRightBot().ShowCol(1);
 		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
-	case IDC_SHOW_RESOURCE_RBR:
+	case ut::IDC_SHOW_RESOURCE_RBR:
 		m_pResData = reinterpret_cast<libpe::PERESFLAT*>(pHint);
 		ShowResource(m_pResData);
 		m_pChildFrame->GetSplitRightBot().ShowCol(1);
 		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 3, 0);
 		break;
-	case IDC_LIST_DEBUG_ENTRY:
+	case ut::IDC_LIST_DEBUG_ENTRY:
 		CreateDebugEntry(HIWORD(lHint));
 		m_pChildFrame->GetSplitRightBot().ShowCol(1);
 		m_pChildFrame->GetSplitRightBot().SetColumnInfo(0, rcParent.Width() / 2, 0);
@@ -164,7 +164,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	const auto wMenuID = LOWORD(wParam);
-	if (wMenuID == IDM_EXTRACT_RES) {
+	if (wMenuID == ut::IDM_EXTRACT_RES) {
 		ExtractResToFile(m_eResTypeToDraw, m_pResData->spnData);
 	}
 
@@ -191,7 +191,7 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	else
 		y = rcClipBox.Height() / 2 - (m_iImgResHeight / 2);
 
-	using enum EResType;
+	using enum ut::EResType;
 	switch (m_eResTypeToDraw) {
 	case RTYPE_CURSOR:
 	case RTYPE_BITMAP:
@@ -241,7 +241,7 @@ BOOL CViewRightBR::OnEraseBkgnd(CDC* /*pDC*/)
 
 void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt)
 {
-	using enum EResType;
+	using enum ut::EResType;
 	if (m_eResTypeToDraw != RTYPE_CURSOR && m_eResTypeToDraw != RTYPE_BITMAP
 		&& m_eResTypeToDraw != RTYPE_ICON && m_eResTypeToDraw != RTYPE_TOOLBAR
 		&& m_eResTypeToDraw != RTYPE_PNG)
@@ -268,7 +268,7 @@ void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt)
 		break;
 	}
 
-	menu.AppendMenuW(MF_STRING, IDM_EXTRACT_RES, wsvMenu.data());
+	menu.AppendMenuW(MF_STRING, ut::IDM_EXTRACT_RES, wsvMenu.data());
 	menu.TrackPopupMenuEx(TPM_LEFTALIGN, pt.x, pt.y, this, nullptr);
 }
 
@@ -310,7 +310,7 @@ void CViewRightBR::CreateIconCursor(const libpe::PERESFLAT& stResData)
 	DeleteObject(iconInfo.hbmMask);
 	DestroyIcon(hIcon);
 	SetScrollSizes(MM_TEXT, CSize(stBmp.bmWidth, lHeight));
-	m_eResTypeToDraw = static_cast<EResType>(stResData.wTypeID);
+	m_eResTypeToDraw = static_cast<ut::EResType>(stResData.wTypeID);
 }
 
 void CViewRightBR::CreateBitmap(const libpe::PERESFLAT& stResData)
@@ -352,7 +352,7 @@ void CViewRightBR::CreateBitmap(const libpe::PERESFLAT& stResData)
 	if (m_stImgRes.Add(&bmp, nullptr) == -1)
 		return ResLoadError();
 
-	m_eResTypeToDraw = EResType::RTYPE_BITMAP;
+	m_eResTypeToDraw = ut::EResType::RTYPE_BITMAP;
 	SetScrollSizes(MM_TEXT, CSize(stBmp.bmWidth, stBmp.bmHeight));
 	bmp.DeleteObject();
 }
@@ -396,7 +396,7 @@ void CViewRightBR::CreatePNG(const libpe::PERESFLAT& stResData)
 
 	m_iImgResWidth = m_imgPng.GetWidth();
 	m_iImgResHeight = m_imgPng.GetHeight();
-	m_eResTypeToDraw = EResType::RTYPE_PNG;
+	m_eResTypeToDraw = ut::EResType::RTYPE_PNG;
 	SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
 	GlobalUnlock(hBuffer);
 	GlobalFree(hBuffer);
@@ -588,7 +588,7 @@ void CViewRightBR::CreateListTLSCallbacks()
 		return;
 
 	m_stlcs.dwStyle = 0;
-	m_stlcs.uID = IDC_LIST_TLS_CALLBACKS;
+	m_stlcs.uID = ut::IDC_LIST_TLS_CALLBACKS;
 	m_stListTLSCallbacks.Create(m_stlcs);
 	m_stListTLSCallbacks.SetExtendedStyle(LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 	m_stListTLSCallbacks.InsertColumn(0, L"TLS Callbacks", LVCFMT_CENTER, 300);
@@ -625,7 +625,7 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	}
 
 	if (!refDebug.stDebugHdrInfo.strPDBName.empty()) {
-		wstrEdit += L"PDB File: " + StrToWstr(refDebug.stDebugHdrInfo.strPDBName);
+		wstrEdit += L"PDB File: " + ut::StrToWstr(refDebug.stDebugHdrInfo.strPDBName);
 	}
 	m_EditBRB.SetWindowTextW(wstrEdit.data());
 
@@ -944,7 +944,7 @@ void CViewRightBR::CreateGroupIconCursor(const libpe::PERESFLAT& stResData)
 	}
 
 	SetScrollSizes(MM_TEXT, CSize(m_iImgResWidth, m_iImgResHeight));
-	m_eResTypeToDraw = static_cast<EResType>(stResData.wTypeID);
+	m_eResTypeToDraw = static_cast<ut::EResType>(stResData.wTypeID);
 }
 
 void CViewRightBR::CreateVersion(const libpe::PERESFLAT& stResData)
@@ -997,7 +997,7 @@ void CViewRightBR::CreateVersion(const libpe::PERESFLAT& stResData)
 
 void CViewRightBR::CreateManifest(const libpe::PERESFLAT& stResData)
 {
-	m_EditBRB.SetWindowTextW(StrToWstr({ reinterpret_cast<const char*>(stResData.spnData.data()), stResData.spnData.size() }).data());
+	m_EditBRB.SetWindowTextW(ut::StrToWstr({ reinterpret_cast<const char*>(stResData.spnData.data()), stResData.spnData.size() }).data());
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	m_EditBRB.SetWindowPos(this, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom, SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
@@ -1089,7 +1089,7 @@ void CViewRightBR::ShowResource(const libpe::PERESFLAT* pResData)
 				CreateToolbar(*pResData);
 				break;
 			default:
-				m_eResTypeToDraw = EResType::RTYPE_UNSUPPORTED;
+				m_eResTypeToDraw = ut::EResType::RTYPE_UNSUPPORTED;
 				break;
 			}
 		}
@@ -1098,7 +1098,7 @@ void CViewRightBR::ShowResource(const libpe::PERESFLAT* pResData)
 				CreatePNG(*pResData);
 			}
 			else {
-				m_eResTypeToDraw = EResType::RTYPE_UNSUPPORTED;
+				m_eResTypeToDraw = ut::EResType::RTYPE_UNSUPPORTED;
 			}
 		}
 	}
@@ -1133,13 +1133,13 @@ void CViewRightBR::OnMDITabActivate(bool fActivate)
 
 void CViewRightBR::ResLoadError()
 {
-	m_eResTypeToDraw = EResType::RES_LOAD_ERROR;
+	m_eResTypeToDraw = ut::EResType::RES_LOAD_ERROR;
 	RedrawWindow();
 }
 
 void CViewRightBR::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
-	if (nIDCtl == IDC_LIST_TLS_CALLBACKS) {
+	if (nIDCtl == ut::IDC_LIST_TLS_CALLBACKS) {
 		m_stListTLSCallbacks.DrawItem(lpDrawItemStruct);
 		return;
 	}
@@ -1149,7 +1149,7 @@ void CViewRightBR::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 void CViewRightBR::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
 {
-	if (nIDCtl == IDC_LIST_TLS_CALLBACKS) {
+	if (nIDCtl == ut::IDC_LIST_TLS_CALLBACKS) {
 		m_stListTLSCallbacks.MeasureItem(lpMeasureItemStruct);
 		return;
 	}

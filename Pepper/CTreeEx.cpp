@@ -37,8 +37,7 @@ BOOL CTreeEx::OnEraseBkgnd(CDC* /*pDC*/)
 }
 
 void CTreeEx::OnKillFocus(CWnd* /*pNewWnd*/)
-{
-}
+{ }
 
 void CTreeEx::OnLButtonDown(UINT nFlags, CPoint point)
 {

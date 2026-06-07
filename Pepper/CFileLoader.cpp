@@ -6,9 +6,9 @@
 *****************************************************************/
 #include "stdafx.h"
 #include "res/resource.h"
+#include <algorithm>
 #include "CFileLoader.h"
 #include "CPepperDoc.h"
-#include <algorithm>
 
 import Utility;
 
@@ -91,7 +91,8 @@ HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSel
 	}
 
 	if (ullSelSize > 0) {
-		pHexCtrl->SetSelection({ { ullOffset, ullSelSize } });
+		const HEXCTRL::HEXSPAN hs { ullOffset, ullSelSize };
+		pHexCtrl->SetSelection({ &hs, 1 });
 		if (!pHexCtrl->IsOffsetVisible(ullOffset)) {
 			pHexCtrl->GoToOffset(ullOffset);
 		}

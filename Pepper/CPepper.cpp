@@ -5,12 +5,12 @@
 * This software is available under the Apache-2.0 License.       *
 *****************************************************************/
 #include "stdafx.h"
+#include "res/resource.h"
+#include <format>
 #include "CChildFrm.h"
 #include "CMainFrm.h"
 #include "CPepper.h"
 #include "CPepperDoc.h"
-#include "res/resource.h"
-#include <format>
 
 import Utility;
 

@@ -5,10 +5,10 @@
 * This software is available under the Apache-2.0 License.       *
 *****************************************************************/
 #include "stdafx.h"
-#include "CViewRightBL.h"
-#include "res/resource.h"
-#include "strsafe.h"
 #include <format>
+#include "res/resource.h"
+#include "CViewRightBL.h"
+#include "strsafe.h"
 
 import Utility;
 
@@ -164,8 +164,7 @@ void CViewRightBL::OnSize(UINT nType, int cx, int cy)
 }
 
 void CViewRightBL::OnDraw(CDC* /*pDC*/)
-{
-}
+{ }
 
 BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
 {
