@@ -23,8 +23,8 @@ export import ListEx;
 
 export namespace ut {
 	constexpr auto PEPPER_VERSION_MAJOR = 1;
-	constexpr auto PEPPER_VERSION_MINOR = 5;
-	constexpr auto PEPPER_VERSION_PATCH = 4;
+	constexpr auto PEPPER_VERSION_MINOR = 6;
+	constexpr auto PEPPER_VERSION_PATCH = 0;
 
 	[[nodiscard]] auto StrToWstr(std::string_view sv, UINT uCodePage = CP_UTF8) -> std::wstring
 	{
