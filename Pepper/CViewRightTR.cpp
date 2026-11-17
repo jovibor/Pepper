@@ -15,15 +15,13 @@ BEGIN_MESSAGE_MAP(CViewRightTR, CView)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-BOOL CViewRightTR::PreCreateWindow(CREATESTRUCT& cs)
-{
+BOOL CViewRightTR::PreCreateWindow(CREATESTRUCT& cs) {
 	cs.style |= WS_CLIPCHILDREN;
 
 	return CView::PreCreateWindow(cs);
 }
 
-void CViewRightTR::OnInitialUpdate()
-{
+void CViewRightTR::OnInitialUpdate() {
 	CView::OnInitialUpdate();
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
@@ -37,8 +35,7 @@ void CViewRightTR::OnInitialUpdate()
 	m_stHexEdit->Create(m_hcs);
 }
 
-void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
-{
+void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint) {
 	const auto iMsg = LOWORD(lHint);
 	if (iMsg == ut::MSG_MDITAB_ACTIVATE || iMsg == ut::MSG_MDITAB_DISACTIVATE) {
 		OnMDITabActivate(iMsg == ut::MSG_MDITAB_ACTIVATE);
@@ -82,25 +79,21 @@ void CViewRightTR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	m_pChildFrame->GetSplitRightTop().RecalcLayout();
 }
 
-void CViewRightTR::OnDraw(CDC* /*pDC*/)
-{ }
+void CViewRightTR::OnDraw(CDC* /*pDC*/) { }
 
-void CViewRightTR::OnSize(UINT nType, int cx, int cy)
-{
+void CViewRightTR::OnSize(UINT nType, int cx, int cy) {
 	CView::OnSize(nType, cx, cy);
 
 	if (m_hwndActive)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightTR::OnDocEditMode()
-{
+void CViewRightTR::OnDocEditMode() {
 	if (m_stHexEdit->IsDataSet())
 		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
 }
 
-void CViewRightTR::OnMDITabActivate(bool fActivate)
-{
+void CViewRightTR::OnMDITabActivate(bool fActivate) {
 	if (fActivate) { //Show all windows from the vector, when tab is activated.
 		for (const auto hWnd : m_vecHWNDVisible) {
 			if (::IsWindow(hWnd)) {
@@ -120,8 +113,7 @@ void CViewRightTR::OnMDITabActivate(bool fActivate)
 	}
 }
 
-void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes)
-{
+void CViewRightTR::CreateHexResources(const IMAGE_RESOURCE_DATA_ENTRY* pRes) {
 	if (m_hwndActive)
 		::ShowWindow(m_hwndActive, SW_HIDE);
 

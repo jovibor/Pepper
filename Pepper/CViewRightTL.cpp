@@ -26,8 +26,7 @@ BEGIN_MESSAGE_MAP(CViewRightTL, CView)
 	ON_WM_MEASUREITEM()
 END_MESSAGE_MAP()
 
-auto CViewRightTL::GetToolTip(UINT_PTR uListID, int iItem, int iSubItem)->const TOOLTIP*
-{
+auto CViewRightTL::GetToolTip(UINT_PTR uListID, int iItem, int iSubItem)->const TOOLTIP* {
 	const auto pList = GetListByID(uListID);
 	if (pList == nullptr)
 		return { };
@@ -42,8 +41,7 @@ auto CViewRightTL::GetToolTip(UINT_PTR uListID, int iItem, int iSubItem)->const 
 	return { };
 }
 
-auto CViewRightTL::GetListByID(UINT_PTR uListID)->LISTEX::CListEx*
-{
+auto CViewRightTL::GetListByID(UINT_PTR uListID)->LISTEX::CListEx* {
 	switch (uListID) {
 	case ut::IDC_LIST_DOSHEADER:
 		return &m_listDOSHeader;
@@ -86,8 +84,7 @@ auto CViewRightTL::GetListByID(UINT_PTR uListID)->LISTEX::CListEx*
 	}
 }
 
-void CViewRightTL::SetToolTip(UINT_PTR uListID, int iItem, int iSubItem, std::wstring_view wsvTT, std::wstring_view wsvCaption)
-{
+void CViewRightTL::SetToolTip(UINT_PTR uListID, int iItem, int iSubItem, std::wstring_view wsvTT, std::wstring_view wsvCaption) {
 	const auto pList = GetListByID(uListID);
 	if (pList == nullptr)
 		return;
@@ -106,8 +103,7 @@ void CViewRightTL::SetToolTip(UINT_PTR uListID, int iItem, int iSubItem, std::ws
 	}
 }
 
-void CViewRightTL::OnInitialUpdate()
-{
+void CViewRightTL::OnInitialUpdate() {
 	CView::OnInitialUpdate();
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
@@ -184,8 +180,7 @@ void CViewRightTL::OnInitialUpdate()
 	CreateListCOM();
 }
 
-void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
-{
+void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/) {
 	const auto iMsg = LOWORD(lHint);
 	if (iMsg == ut::MSG_MDITAB_ACTIVATE || iMsg == ut::MSG_MDITAB_DISACTIVATE) {
 		return; //No further handling if it's tab Activate/Disactivate messages.
@@ -279,8 +274,7 @@ void CViewRightTL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	m_pChildFrame->GetSplitRight().RecalcLayout();
 }
 
-void CViewRightTL::OnDraw(CDC* pDC)
-{
+void CViewRightTL::OnDraw(CDC* pDC) {
 	//Printing app name/version info and
 	//currently oppened file's type and name.
 	if (!m_fFileSummaryShow)
@@ -317,8 +311,7 @@ void CViewRightTL::OnDraw(CDC* pDC)
 		m_wstrFullPath.data(), static_cast<int>(m_wstrFullPath.size()), nullptr);
 }
 
-BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
-{
+BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) {
 	CView::OnNotify(wParam, lParam, pResult);
 
 	const auto pNMI = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
@@ -415,8 +408,7 @@ BOOL CViewRightTL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	return TRUE;
 }
 
-BOOL CViewRightTL::OnCommand(WPARAM wParam, LPARAM lParam)
-{
+BOOL CViewRightTL::OnCommand(WPARAM wParam, LPARAM lParam) {
 	const auto wMenuID = LOWORD(wParam);
 	switch (m_iListID) {
 	case ut::IDC_LIST_EXPORT:
@@ -442,21 +434,18 @@ BOOL CViewRightTL::OnCommand(WPARAM wParam, LPARAM lParam)
 	return CView::OnCommand(wParam, lParam);
 }
 
-BOOL CViewRightTL::OnEraseBkgnd(CDC* /*pDC*/)
-{
+BOOL CViewRightTL::OnEraseBkgnd(CDC* /*pDC*/) {
 	return FALSE;
 }
 
-void CViewRightTL::OnSize(UINT nType, int cx, int cy)
-{
+void CViewRightTL::OnSize(UINT nType, int cx, int cy) {
 	CView::OnSize(nType, cx, cy);
 
 	if (m_hWndActive)
 		::SetWindowPos(m_hWndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
-{
+void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/) {
 	auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	auto* pItem = &pDispInfo->item;
 	const auto& pSecHeaders = m_pMainDoc->GetSecHeaders();
@@ -512,8 +501,7 @@ void CViewRightTL::OnListSecHdrGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	}
 }
 
-void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* pResult)
-{
+void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* pResult) {
 	const auto pLTI = reinterpret_cast<LISTEX::PLISTEXTTINFO>(pNMHDR);
 	if (pLTI->iSubItem != 10)
 		return;
@@ -535,8 +523,7 @@ void CViewRightTL::OnListSecHdrGetToolTip(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 }
 
-void CViewRightTL::OnListGetColor(NMHDR* pNMHDR)
-{
+void CViewRightTL::OnListGetColor(NMHDR* pNMHDR) {
 	const auto pLCI = reinterpret_cast<LISTEX::PLISTEXCOLORINFO>(pNMHDR);
 	const auto iItem = pLCI->iItem;
 	const auto iSubItem = pLCI->iSubItem;
@@ -561,8 +548,7 @@ void CViewRightTL::OnListGetColor(NMHDR* pNMHDR)
 	}
 }
 
-void CViewRightTL::OnListGetToolTip(NMHDR* pNMHDR)
-{
+void CViewRightTL::OnListGetToolTip(NMHDR* pNMHDR) {
 	const auto pTTI = reinterpret_cast<LISTEX::PLISTEXTTINFO>(pNMHDR);
 	const auto iItem = pTTI->iItem;
 	const auto iSubItem = pTTI->iSubItem;
@@ -575,8 +561,7 @@ void CViewRightTL::OnListGetToolTip(NMHDR* pNMHDR)
 	}
 }
 
-void CViewRightTL::OnListImportGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
-{
+void CViewRightTL::OnListImportGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/) {
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
 	const auto& pImport = m_pMainDoc->GetImport();
@@ -612,8 +597,7 @@ void CViewRightTL::OnListImportGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	}
 }
 
-void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
-{
+void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/) {
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
 	const auto& pRelocTable = m_pMainDoc->GetRelocations();
@@ -639,8 +623,7 @@ void CViewRightTL::OnListRelocsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	}
 }
 
-void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/)
-{
+void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult*/) {
 	const auto* pDispInfo = reinterpret_cast<NMLVDISPINFOW*>(pNMHDR);
 	const auto* pItem = &pDispInfo->item;
 	const auto& pExceptionDir = m_pMainDoc->GetExceptions();
@@ -669,8 +652,7 @@ void CViewRightTL::OnListExceptionsGetDispInfo(NMHDR* pNMHDR, LRESULT* /*pResult
 	}
 }
 
-void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
-{
+void CViewRightTL::OnListExportMenuSelect(WORD wMenuID) {
 	DWORD dwOffset { }, dwSize = 0;
 
 	const auto& pExport = m_pMainDoc->GetExport();
@@ -716,8 +698,7 @@ void CViewRightTL::OnListExportMenuSelect(WORD wMenuID)
 		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
-void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
-{
+void CViewRightTL::OnListImportMenuSelect(WORD wMenuID) {
 	const auto& pImport = m_pMainDoc->GetImport();
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
@@ -769,8 +750,7 @@ void CViewRightTL::OnListImportMenuSelect(WORD wMenuID)
 		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
-void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
-{
+void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID) {
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
 
@@ -835,8 +815,7 @@ void CViewRightTL::OnListTLSMenuSelect(WORD wMenuID)
 		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
-void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID)
-{
+void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID) {
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
 	const auto& pBoundImp = m_pMainDoc->GetBoundImport();
@@ -870,8 +849,7 @@ void CViewRightTL::OnListBoundImpMenuSelect(WORD wMenuID)
 		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
-void CViewRightTL::OnListCOMDescMenuSelect(WORD wMenuID)
-{
+void CViewRightTL::OnListCOMDescMenuSelect(WORD wMenuID) {
 	DWORD dwOffset { };
 	DWORD dwSize = 0;
 	const auto& pCOMDesc = m_pMainDoc->GetCOMDescriptor();
@@ -896,8 +874,7 @@ void CViewRightTL::OnListCOMDescMenuSelect(WORD wMenuID)
 		m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize);
 }
 
-void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
-{
+void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/) {
 	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
 	if (pTree->itemNew.hItem == m_hTreeResRoot)
 		return;
@@ -927,8 +904,7 @@ void CViewRightTL::OnTreeResTopSelChange(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	}
 }
 
-void CViewRightTL::CreateListDOSHeader()
-{
+void CViewRightTL::CreateListDOSHeader() {
 	const auto& pDosHeader = m_pMainDoc->GetDOSHeader();
 	if (!pDosHeader)
 		return;
@@ -963,8 +939,7 @@ void CViewRightTL::CreateListDOSHeader()
 	}
 }
 
-void CViewRightTL::CreateListRichHeader()
-{
+void CViewRightTL::CreateListRichHeader() {
 	const auto& pRichHeader = m_pMainDoc->GetRichHeader();
 	if (!pRichHeader)
 		return;
@@ -994,8 +969,7 @@ void CViewRightTL::CreateListRichHeader()
 	}
 }
 
-void CViewRightTL::CreateListNTHeader()
-{
+void CViewRightTL::CreateListNTHeader() {
 	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
 	if (!pNTHdr)
 		return;
@@ -1023,8 +997,7 @@ void CViewRightTL::CreateListNTHeader()
 	SetToolTip(ut::IDC_LIST_NTHEADER, 0, 3, wstrTT.data(), L"Signature as ASCII:");
 }
 
-void CViewRightTL::CreateListFileHeader()
-{
+void CViewRightTL::CreateListFileHeader() {
 	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
 	if (!pNTHdr)
 		return;
@@ -1082,8 +1055,7 @@ void CViewRightTL::CreateListFileHeader()
 	}
 }
 
-void CViewRightTL::CreateListOptHeader()
-{
+void CViewRightTL::CreateListOptHeader() {
 	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
 	if (!pNTHdr)
 		return;
@@ -1146,8 +1118,7 @@ void CViewRightTL::CreateListOptHeader()
 		: lmbOptHdr(pNTHdr->unHdr.stNTHdr64.OptionalHeader, ut::g_mapOptHeader64);
 }
 
-void CViewRightTL::CreateListDataDirs()
-{
+void CViewRightTL::CreateListDataDirs() {
 	const auto& vecDataDirs = m_pMainDoc->GetDataDirs();
 	if (!vecDataDirs)
 		return;
@@ -1206,8 +1177,7 @@ void CViewRightTL::CreateListDataDirs()
 	}
 }
 
-void CViewRightTL::CreateListSecHeaders()
-{
+void CViewRightTL::CreateListSecHeaders() {
 	const auto& pSecHeaders = m_pMainDoc->GetSecHeaders();
 	if (!pSecHeaders)
 		return;
@@ -1232,8 +1202,7 @@ void CViewRightTL::CreateListSecHeaders()
 	m_listSecHeaders.SetItemCountEx(static_cast<int>(pSecHeaders->size()), LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);
 }
 
-void CViewRightTL::CreateListExport()
-{
+void CViewRightTL::CreateListExport() {
 	const auto& pExport = m_pMainDoc->GetExport();
 	if (!pExport)
 		return;
@@ -1274,8 +1243,7 @@ void CViewRightTL::CreateListExport()
 	}
 }
 
-void CViewRightTL::CreateListImport()
-{
+void CViewRightTL::CreateListImport() {
 	const auto& pImport = m_pMainDoc->GetImport();
 	if (!pImport)
 		return;
@@ -1296,8 +1264,7 @@ void CViewRightTL::CreateListImport()
 	m_listImport.SetItemCountEx(static_cast<int>(pImport->size()), LVSICF_NOSCROLL);
 }
 
-void CViewRightTL::CreateTreeResources()
-{
+void CViewRightTL::CreateTreeResources() {
 	const auto& pResRoot = m_pMainDoc->GetResources();
 	if (!pResRoot)
 		return;
@@ -1380,8 +1347,7 @@ void CViewRightTL::CreateTreeResources()
 	m_treeResTop.Expand(m_hTreeResRoot, TVE_EXPAND);
 }
 
-void CViewRightTL::CreateListExceptions()
-{
+void CViewRightTL::CreateListExceptions() {
 	const auto& pExceptionDir = m_pMainDoc->GetExceptions();
 	if (!pExceptionDir)
 		return;
@@ -1399,8 +1365,7 @@ void CViewRightTL::CreateListExceptions()
 	m_listExceptionDir.SetItemCountEx(static_cast<int>(pExceptionDir->size()), LVSICF_NOSCROLL);
 }
 
-void CViewRightTL::CreateListSecurity()
-{
+void CViewRightTL::CreateListSecurity() {
 	const auto& pSecurityDir = m_pMainDoc->GetSecurity();
 	if (!pSecurityDir)
 		return;
@@ -1433,8 +1398,7 @@ void CViewRightTL::CreateListSecurity()
 	}
 }
 
-void CViewRightTL::CreateListRelocations()
-{
+void CViewRightTL::CreateListRelocations() {
 	const auto& pRelocTable = m_pMainDoc->GetRelocations();
 	if (!pRelocTable)
 		return;
@@ -1452,8 +1416,7 @@ void CViewRightTL::CreateListRelocations()
 	m_listRelocDir.SetItemCountEx(static_cast<int>(pRelocTable->size()), LVSICF_NOSCROLL);
 }
 
-void CViewRightTL::CreateListDebug()
-{
+void CViewRightTL::CreateListDebug() {
 	const auto& pDebugDir = m_pMainDoc->GetDebug();
 	if (!pDebugDir)
 		return;
@@ -1501,8 +1464,7 @@ void CViewRightTL::CreateListDebug()
 	}
 }
 
-void CViewRightTL::CreateListTLS()
-{
+void CViewRightTL::CreateListTLS() {
 	const auto& pTLSDir = m_pMainDoc->GetTLS();
 	if (!pTLSDir)
 		return;
@@ -1540,8 +1502,7 @@ void CViewRightTL::CreateListTLS()
 	m_stFileInfo.eFileType == libpe::EFileType::PE32 ? lmbTLS(pTLSDir->unTLS.stTLSDir32, ut::g_mapTLS32) : lmbTLS(pTLSDir->unTLS.stTLSDir64, ut::g_mapTLS64);
 }
 
-void CViewRightTL::CreateListLCD()
-{
+void CViewRightTL::CreateListLCD() {
 	const auto& pLCD = m_pMainDoc->GetLoadConfig();
 	if (!pLCD)
 		return;
@@ -1598,8 +1559,7 @@ void CViewRightTL::CreateListLCD()
 		: lmbLCD(pLCD->unLCD.stLCD64, ut::g_mapLCD64);
 }
 
-void CViewRightTL::CreateListBoundImport()
-{
+void CViewRightTL::CreateListBoundImport() {
 	const auto& pBoundImp = m_pMainDoc->GetBoundImport();
 	if (!pBoundImp)
 		return;
@@ -1634,8 +1594,7 @@ void CViewRightTL::CreateListBoundImport()
 	}
 }
 
-void CViewRightTL::CreateListDelayImport()
-{
+void CViewRightTL::CreateListDelayImport() {
 	const auto& pDelayImp = m_pMainDoc->GetDelayImport();
 	if (!pDelayImp)
 		return;
@@ -1680,8 +1639,7 @@ void CViewRightTL::CreateListDelayImport()
 	}
 }
 
-void CViewRightTL::CreateListCOM()
-{
+void CViewRightTL::CreateListCOM() {
 	const auto& pCOMDesc = m_pMainDoc->GetCOMDescriptor();
 	if (!pCOMDesc)
 		return;
@@ -1723,8 +1681,7 @@ void CViewRightTL::CreateListCOM()
 	}
 }
 
-void CViewRightTL::SortImportData()
-{
+void CViewRightTL::SortImportData() {
 	auto& pImport = m_pMainDoc->GetImport();
 	std::sort(pImport->begin(), pImport->end(),
 		[&](const auto& ref1, const auto& ref2) {
@@ -1769,8 +1726,7 @@ void CViewRightTL::SortImportData()
 	m_listImport.RedrawWindow();
 }
 
-void CViewRightTL::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
-{
+void CViewRightTL::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct) {
 	if (const auto pList = GetListByID(nIDCtl); pList != nullptr) {
 		pList->DrawItem(lpDrawItemStruct);
 		return;
@@ -1779,8 +1735,7 @@ void CViewRightTL::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CView::OnDrawItem(nIDCtl, lpDrawItemStruct);
 }
 
-void CViewRightTL::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
-{
+void CViewRightTL::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct) {
 	if (const auto pList = GetListByID(nIDCtl); pList != nullptr) {
 		pList->MeasureItem(lpMeasureItemStruct);
 		return;

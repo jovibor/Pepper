@@ -17,18 +17,15 @@ BEGIN_MESSAGE_MAP(CWndSampleDlg, CWnd)
 	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
-void CWndSampleDlg::Attach(CImageList* pImgList)
-{
+void CWndSampleDlg::Attach(CImageList* pImgList) {
 	m_pImgRes = pImgList;
 }
 
-void CWndSampleDlg::CreatedForMenu(bool fMenu)
-{
+void CWndSampleDlg::CreatedForMenu(bool fMenu) {
 	m_fMenu = fMenu;
 }
 
-void CWndSampleDlg::OnPaint()
-{
+void CWndSampleDlg::OnPaint() {
 	CPaintDC dc(this);
 
 	CRect rc;
@@ -44,8 +41,7 @@ void CWndSampleDlg::OnPaint()
 	}
 }
 
-void CWndSampleDlg::OnClose()
-{
+void CWndSampleDlg::OnClose() {
 	CWnd::OnClose();
 }
 
@@ -60,8 +56,7 @@ BEGIN_MESSAGE_MAP(CViewRightBR, CScrollView)
 	ON_WM_MEASUREITEM()
 END_MESSAGE_MAP()
 
-void CViewRightBR::OnInitialUpdate()
-{
+void CViewRightBR::OnInitialUpdate() {
 	CScrollView::OnInitialUpdate();
 	SetScrollSizes(MM_TEXT, CSize(0, 0));
 
@@ -102,8 +97,7 @@ void CViewRightBR::OnInitialUpdate()
 	CreateListTLSCallbacks();
 }
 
-void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
-{
+void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint) {
 	const auto iMsg = LOWORD(lHint);
 	if (iMsg == ut::MSG_MDITAB_ACTIVATE || iMsg == ut::MSG_MDITAB_DISACTIVATE) {
 		OnMDITabActivate(iMsg == ut::MSG_MDITAB_ACTIVATE);
@@ -161,8 +155,7 @@ void CViewRightBR::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* pHint)
 	m_pChildFrame->GetSplitRightBot().RecalcLayout();
 }
 
-BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
-{
+BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam) {
 	const auto wMenuID = LOWORD(wParam);
 	if (wMenuID == ut::IDM_EXTRACT_RES) {
 		ExtractResToFile(m_eResTypeToDraw, m_pResData->spnData);
@@ -171,8 +164,7 @@ BOOL CViewRightBR::OnCommand(WPARAM wParam, LPARAM lParam)
 	return CScrollView::OnCommand(wParam, lParam);
 }
 
-void CViewRightBR::OnDraw(CDC* pDC)
-{
+void CViewRightBR::OnDraw(CDC* pDC) {
 	constexpr auto clrBkIcons { RGB(230, 230, 230) };
 
 	CRect rcClipBox;
@@ -234,13 +226,11 @@ void CViewRightBR::OnDraw(CDC* pDC)
 	}
 }
 
-BOOL CViewRightBR::OnEraseBkgnd(CDC* /*pDC*/)
-{
+BOOL CViewRightBR::OnEraseBkgnd(CDC* /*pDC*/) {
 	return TRUE;
 }
 
-void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt)
-{
+void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt) {
 	using enum ut::EResType;
 	if (m_eResTypeToDraw != RTYPE_CURSOR && m_eResTypeToDraw != RTYPE_BITMAP
 		&& m_eResTypeToDraw != RTYPE_ICON && m_eResTypeToDraw != RTYPE_TOOLBAR
@@ -272,16 +262,14 @@ void CViewRightBR::OnRButtonUp(UINT /*nFlags*/, CPoint pt)
 	menu.TrackPopupMenuEx(TPM_LEFTALIGN, pt.x, pt.y, this, nullptr);
 }
 
-void CViewRightBR::OnSize(UINT nType, int cx, int cy)
-{
+void CViewRightBR::OnSize(UINT nType, int cx, int cy) {
 	CScrollView::OnSize(nType, cx, cy);
 
 	if (m_hwndActive)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBR::CreateIconCursor(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateIconCursor(const libpe::PERESFLAT& stResData) {
 	const auto hIcon = CreateIconFromResourceEx(const_cast<PBYTE>(reinterpret_cast<const BYTE*>(stResData.spnData.data())),
 		static_cast<DWORD>(stResData.spnData.size()),
 		(stResData.wTypeID == 3) ? TRUE : FALSE, 0x00030000UL, 0, 0, LR_DEFAULTCOLOR);
@@ -313,8 +301,7 @@ void CViewRightBR::CreateIconCursor(const libpe::PERESFLAT& stResData)
 	m_eResTypeToDraw = static_cast<ut::EResType>(stResData.wTypeID);
 }
 
-void CViewRightBR::CreateBitmap(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateBitmap(const libpe::PERESFLAT& stResData) {
 	if (stResData.spnData.empty() || stResData.spnData.size() < sizeof(BITMAPINFO))
 		return ResLoadError();
 
@@ -357,8 +344,7 @@ void CViewRightBR::CreateBitmap(const libpe::PERESFLAT& stResData)
 	bmp.DeleteObject();
 }
 
-void CViewRightBR::CreatePNG(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreatePNG(const libpe::PERESFLAT& stResData) {
 	if (stResData.spnData.empty()) {
 		return ResLoadError();
 	}
@@ -402,8 +388,7 @@ void CViewRightBR::CreatePNG(const libpe::PERESFLAT& stResData)
 	GlobalFree(hBuffer);
 }
 
-void CViewRightBR::CreateMenu(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateMenu(const libpe::PERESFLAT& stResData) {
 	if (stResData.spnData.empty())
 		return;
 
@@ -446,8 +431,7 @@ void CViewRightBR::CreateMenu(const libpe::PERESFLAT& stResData)
 	}
 }
 
-void CViewRightBR::CreateDlg(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateDlg(const libpe::PERESFLAT& stResData) {
 #pragma pack(push, 4)
 	struct DLGTEMPLATEEX //Helper struct. Not completed.
 	{
@@ -581,8 +565,7 @@ void CViewRightBR::CreateDlg(const libpe::PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateListTLSCallbacks()
-{
+void CViewRightBR::CreateListTLSCallbacks() {
 	const auto& pTLS = m_pMainDoc->GetTLS();
 	if (!pTLS)
 		return;
@@ -599,8 +582,7 @@ void CViewRightBR::CreateListTLSCallbacks()
 	}
 }
 
-void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
-{
+void CViewRightBR::CreateDebugEntry(DWORD dwEntry) {
 	const auto& pDebug = m_pMainDoc->GetDebug();
 	if (!pDebug || dwEntry >= pDebug->size())
 		return;
@@ -635,8 +617,7 @@ void CViewRightBR::CreateDebugEntry(DWORD dwEntry)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateStrings(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateStrings(const libpe::PERESFLAT& stResData) {
 	auto pwszResString = reinterpret_cast<LPCWSTR>(stResData.spnData.data());
 	std::wstring wstrEdit;
 	for (int i = 0; i < 16; ++i) {
@@ -654,8 +635,7 @@ void CViewRightBR::CreateStrings(const libpe::PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateAccel(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateAccel(const libpe::PERESFLAT& stResData) {
 	if (stResData.spnData.empty())
 		return;
 
@@ -854,8 +834,7 @@ void CViewRightBR::CreateAccel(const libpe::PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateGroupIconCursor(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateGroupIconCursor(const libpe::PERESFLAT& stResData) {
 	const auto& pstResRoot = m_pMainDoc->GetResources();
 	if (!pstResRoot)
 		return;
@@ -947,8 +926,7 @@ void CViewRightBR::CreateGroupIconCursor(const libpe::PERESFLAT& stResData)
 	m_eResTypeToDraw = static_cast<ut::EResType>(stResData.wTypeID);
 }
 
-void CViewRightBR::CreateVersion(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateVersion(const libpe::PERESFLAT& stResData) {
 #pragma pack(push, 4)
 	struct LANGANDCODEPAGE {
 		WORD wLanguage;
@@ -995,8 +973,7 @@ void CViewRightBR::CreateVersion(const libpe::PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateManifest(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateManifest(const libpe::PERESFLAT& stResData) {
 	m_EditBRB.SetWindowTextW(ut::StrToWstr({ reinterpret_cast<const char*>(stResData.spnData.data()), stResData.spnData.size() }).data());
 	CRect rcClient;
 	GetClientRect(&rcClient);
@@ -1004,8 +981,7 @@ void CViewRightBR::CreateManifest(const libpe::PERESFLAT& stResData)
 	m_hwndActive = m_EditBRB.m_hWnd;
 }
 
-void CViewRightBR::CreateToolbar(const libpe::PERESFLAT& stResData)
-{
+void CViewRightBR::CreateToolbar(const libpe::PERESFLAT& stResData) {
 	const auto& pstResRoot = m_pMainDoc->GetResources();
 	if (!pstResRoot)
 		return;
@@ -1038,8 +1014,7 @@ void CViewRightBR::CreateToolbar(const libpe::PERESFLAT& stResData)
 	}
 }
 
-void CViewRightBR::ShowResource(const libpe::PERESFLAT* pResData)
-{
+void CViewRightBR::ShowResource(const libpe::PERESFLAT* pResData) {
 	m_stImgRes.DeleteImageList();
 	m_vecImgRes.clear();
 
@@ -1113,8 +1088,7 @@ void CViewRightBR::ShowResource(const libpe::PERESFLAT* pResData)
 	RedrawWindow();
 }
 
-void CViewRightBR::OnMDITabActivate(bool fActivate)
-{
+void CViewRightBR::OnMDITabActivate(bool fActivate) {
 	if (fActivate) { //Show all windows from vector when tab is activated.
 		for (const auto hWnd : m_vecHWNDVisible) {
 			if (::IsWindow(hWnd)) {
@@ -1131,14 +1105,12 @@ void CViewRightBR::OnMDITabActivate(bool fActivate)
 	}
 }
 
-void CViewRightBR::ResLoadError()
-{
+void CViewRightBR::ResLoadError() {
 	m_eResTypeToDraw = ut::EResType::RES_LOAD_ERROR;
 	RedrawWindow();
 }
 
-void CViewRightBR::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
-{
+void CViewRightBR::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct) {
 	if (nIDCtl == ut::IDC_LIST_TLS_CALLBACKS) {
 		m_stListTLSCallbacks.DrawItem(lpDrawItemStruct);
 		return;
@@ -1147,8 +1119,7 @@ void CViewRightBR::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CView::OnDrawItem(nIDCtl, lpDrawItemStruct);
 }
 
-void CViewRightBR::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
-{
+void CViewRightBR::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct) {
 	if (nIDCtl == ut::IDC_LIST_TLS_CALLBACKS) {
 		m_stListTLSCallbacks.MeasureItem(lpMeasureItemStruct);
 		return;
@@ -1157,8 +1128,7 @@ void CViewRightBR::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemSt
 	CView::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
 }
 
-auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring>
-{
+auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional<std::wstring> {
 #pragma pack(push, 4) //When refData comes from PE resources it is packed.
 
 	//Helper struct as described in https://docs.microsoft.com/en-us/windows/win32/dlgbox/dlgtemplateex
@@ -1549,8 +1519,7 @@ auto CViewRightBR::ParceDlgTemplate(std::span<std::byte> spnData)->std::optional
 	return { std::move(wstrRet) };
 }
 
-void CViewRightBR::PremultiplyBitmapAlpha(HDC hDC, HBITMAP hBmp)
-{
+void CViewRightBR::PremultiplyBitmapAlpha(HDC hDC, HBITMAP hBmp) {
 	constexpr auto dwSizeToAlloc = sizeof(BITMAPINFOHEADER) + (sizeof(RGBQUAD) * 256);
 	const auto pBMI = reinterpret_cast<BITMAPINFO*>(_malloca(dwSizeToAlloc));
 	if (pBMI == nullptr)

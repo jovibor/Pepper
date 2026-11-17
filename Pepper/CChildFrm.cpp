@@ -27,8 +27,7 @@ BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWndEx)
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
-{
+BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext) {
 	CRect rc;
 	::GetClientRect(AfxGetMainWnd()->m_hWnd, &rc);
 
@@ -53,8 +52,7 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pConte
 	return TRUE;
 }
 
-void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd)
-{
+void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd) {
 	CMDIChildWndEx::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
 
 	//If tab is closing we don't need to UpdateAllViews.
@@ -64,37 +62,31 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 	}
 }
 
-void CChildFrame::OnClose()
-{
+void CChildFrame::OnClose() {
 	m_fClosing = true;
 
 	CMDIChildWndEx::OnClose();
 }
 
-void CChildFrame::OnDestroy()
-{
+void CChildFrame::OnDestroy() {
 	CMDIChildWndEx::OnDestroy();
 
 	--reinterpret_cast<CMainFrame*>(AfxGetMainWnd())->GetChildFramesCount();
 }
 
-auto CChildFrame::GetSplitRight()->CSplitterEx&
-{
+auto CChildFrame::GetSplitRight()->CSplitterEx& {
 	return m_stSplitterRight;
 }
 
-auto CChildFrame::GetSplitRightTop()->CSplitterEx&
-{
+auto CChildFrame::GetSplitRightTop()->CSplitterEx& {
 	return m_stSplitterRightTop;
 }
 
-auto CChildFrame::GetSplitRightBot()->CSplitterEx&
-{
+auto CChildFrame::GetSplitRightBot()->CSplitterEx& {
 	return m_stSplitterRightBottom;
 }
 
-void CChildFrame::OnSize(UINT nType, int cx, int cy)
-{
+void CChildFrame::OnSize(UINT nType, int cx, int cy) {
 	if (m_fSplitterCreated && nType != SIZE_MINIMIZED && cx > 0 && cy > 0) {
 		if (m_cx > 0 && m_cy > 0) {
 			//When resizing main window we keep ratio between splitters.

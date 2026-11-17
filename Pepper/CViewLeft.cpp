@@ -17,8 +17,7 @@ BEGIN_MESSAGE_MAP(CViewLeft, CView)
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
-void CViewLeft::OnInitialUpdate()
-{
+void CViewLeft::OnInitialUpdate() {
 	CView::OnInitialUpdate();
 
 	m_pMainDoc = static_cast<CPepperDoc*>(GetDocument());
@@ -153,8 +152,7 @@ void CViewLeft::OnInitialUpdate()
 	m_fCreated = true;
 }
 
-BOOL CViewLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
-{
+BOOL CViewLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) {
 	const auto pTree = reinterpret_cast<LPNMTREEVIEWW>(lParam);
 	if (pTree->hdr.idFrom == ut::IDC_TREE_LEFT_MAIN && pTree->hdr.code == TVN_SELCHANGED)
 		m_pMainDoc->UpdateAllViews(this, m_stTreeMain.GetItemData(pTree->itemNew.hItem));
@@ -162,17 +160,13 @@ BOOL CViewLeft::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	return CView::OnNotify(wParam, lParam, pResult);
 }
 
-void CViewLeft::OnDraw(CDC* /*pDC*/)
-{
-}
+void CViewLeft::OnDraw(CDC* /*pDC*/) { }
 
-BOOL CViewLeft::OnEraseBkgnd(CDC* /*pDC*/)
-{
+BOOL CViewLeft::OnEraseBkgnd(CDC* /*pDC*/) {
 	return FALSE;
 }
 
-void CViewLeft::OnSize(UINT nType, int cx, int cy)
-{
+void CViewLeft::OnSize(UINT nType, int cx, int cy) {
 	CView::OnSize(nType, cx, cy);
 
 	if (m_fCreated)

@@ -26,8 +26,7 @@ export namespace ut {
 	constexpr auto PEPPER_VERSION_MINOR = 6;
 	constexpr auto PEPPER_VERSION_PATCH = 0;
 
-	[[nodiscard]] auto StrToWstr(std::string_view sv, UINT uCodePage = CP_UTF8) -> std::wstring
-	{
+	[[nodiscard]] auto StrToWstr(std::string_view sv, UINT uCodePage = CP_UTF8) -> std::wstring {
 		const auto iSize = MultiByteToWideChar(uCodePage, 0, sv.data(), static_cast<int>(sv.size()), nullptr, 0);
 		std::wstring wstr(iSize, 0);
 		MultiByteToWideChar(uCodePage, 0, sv.data(), static_cast<int>(sv.size()), wstr.data(), iSize);
@@ -50,8 +49,7 @@ export namespace ut {
 		RTYPE_UNSUPPORTED = 0x1FFF0, RES_LOAD_ERROR = 0x1FFFF
 	};
 
-	bool SaveResToFile(EResType eResType, const wchar_t* pwszPath, std::span<const std::byte> spnData)
-	{
+	bool SaveResToFile(EResType eResType, const wchar_t* pwszPath, std::span<const std::byte> spnData) {
 		if (spnData.empty())
 			return false;
 
@@ -146,8 +144,7 @@ export namespace ut {
 		}
 	}
 
-	bool ExtractResToFile(EResType eResType, std::span<const std::byte> spnData)
-	{
+	bool ExtractResToFile(EResType eResType, std::span<const std::byte> spnData) {
 		using enum EResType;
 		std::wstring_view wsvName;
 		switch (eResType) {
@@ -181,8 +178,7 @@ export namespace ut {
 		return true;
 	}
 
-	void ExtractAllResToFile(std::optional<libpe::PERESROOT>& pRes, EResType eResType, std::wstring_view wsvPrefix)
-	{
+	void ExtractAllResToFile(std::optional<libpe::PERESROOT>& pRes, EResType eResType, std::wstring_view wsvPrefix) {
 		if (!pRes)
 			return;
 

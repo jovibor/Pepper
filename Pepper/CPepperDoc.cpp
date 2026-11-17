@@ -26,8 +26,7 @@ BEGIN_MESSAGE_MAP(CPepperDoc, CDocument)
 	ON_COMMAND(IDM_RES_EXTRACTALLPNG, &CPepperDoc::OnResExtractAllPng)
 END_MESSAGE_MAP()
 
-BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
-{
+BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName) {
 	m_wstrDocName = lpszPathName;
 	m_wstrDocName = m_wstrDocName.substr(m_wstrDocName.find_last_of(L'\\') + 1); //Doc name with the .extension.
 	const std::wstring wstrErrCaption = L"File load failed: " + m_wstrDocName;
@@ -112,65 +111,53 @@ BOOL CPepperDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	return TRUE;
 }
 
-void CPepperDoc::OnCloseDocument()
-{
+void CPepperDoc::OnCloseDocument() {
 	m_stFileLoader.UnloadFile();
 
 	CDocument::OnCloseDocument();
 }
 
-void CPepperDoc::OnFileClose()
-{
+void CPepperDoc::OnFileClose() {
 	reinterpret_cast<CMainFrame*>(AfxGetMainWnd())->MDIGetActive()->SendMessageW(WM_CLOSE);
 }
 
-void CPepperDoc::OnUpdateResExtractAllCur(CCmdUI *pCmdUI)
-{
+void CPepperDoc::OnUpdateResExtractAllCur(CCmdUI *pCmdUI) {
 	pCmdUI->Enable(m_fHasCur);
 }
 
-void CPepperDoc::OnUpdateResExtractAllIco(CCmdUI *pCmdUI)
-{
+void CPepperDoc::OnUpdateResExtractAllIco(CCmdUI *pCmdUI) {
 	pCmdUI->Enable(m_fHasIco);
 }
 
-void CPepperDoc::OnUpdateResExtractAllBmp(CCmdUI *pCmdUI)
-{
+void CPepperDoc::OnUpdateResExtractAllBmp(CCmdUI *pCmdUI) {
 	pCmdUI->Enable(m_fHasBmp);
 }
 
-void CPepperDoc::OnUpdateResExtractAllPng(CCmdUI *pCmdUI)
-{
+void CPepperDoc::OnUpdateResExtractAllPng(CCmdUI *pCmdUI) {
 	pCmdUI->Enable(m_fHasPng);
 }
 
-void CPepperDoc::OnResExtractAllCur()
-{
+void CPepperDoc::OnResExtractAllCur() {
 	ut::ExtractAllResToFile(GetResources(), ut::EResType::RTYPE_CURSOR, m_wstrDocName);
 }
 
-void CPepperDoc::OnResExtractAllIco()
-{
+void CPepperDoc::OnResExtractAllIco() {
 	ut::ExtractAllResToFile(GetResources(), ut::EResType::RTYPE_ICON, m_wstrDocName);
 }
 
-void CPepperDoc::OnResExtractAllBmp()
-{
+void CPepperDoc::OnResExtractAllBmp() {
 	ut::ExtractAllResToFile(GetResources(), ut::EResType::RTYPE_BITMAP, m_wstrDocName);
 }
 
-void CPepperDoc::OnResExtractAllPng()
-{
+void CPepperDoc::OnResExtractAllPng() {
 	ut::ExtractAllResToFile(GetResources(), ut::EResType::RTYPE_PNG, m_wstrDocName);
 }
 
-auto CPepperDoc::GetFileLoader()->CFileLoader&
-{
+auto CPepperDoc::GetFileLoader()->CFileLoader& {
 	return m_stFileLoader;
 }
 
-void CPepperDoc::SetEditMode(bool fEditMode)
-{
+void CPepperDoc::SetEditMode(bool fEditMode) {
 	if (!m_stFileLoader.IsWritable()) {
 		MessageBoxW(AfxGetMainWnd()->GetSafeHwnd(), L"File cannot be opened for writing.\r\n"
 			"Most likely it's already opened by another process.", L"Error open for writing", MB_ICONERROR);
@@ -189,103 +176,83 @@ void CPepperDoc::SetEditMode(bool fEditMode)
 	UpdateAllViews(nullptr, MAKELPARAM(ut::ID_DOC_EDITMODE, fEditMode));
 }
 
-auto CPepperDoc::GetFileInfo()->ut::PEFILEINFO&
-{
+auto CPepperDoc::GetFileInfo()->ut::PEFILEINFO& {
 	return m_stFileInfo;
 }
 
-auto CPepperDoc::GetOffsetFromVA(ULONGLONG ullVA)->DWORD
-{
+auto CPepperDoc::GetOffsetFromVA(ULONGLONG ullVA)->DWORD {
 	const auto ullRVA = ullVA - libpe::GetImageBase(*GetNTHeader());
 	return libpe::GetOffsetFromRVA(ullRVA, *GetSecHeaders());
 }
 
-auto CPepperDoc::GetOffsetFromRVA(ULONGLONG ullRVA)->DWORD
-{
+auto CPepperDoc::GetOffsetFromRVA(ULONGLONG ullRVA)->DWORD {
 	return libpe::GetOffsetFromRVA(ullRVA, *GetSecHeaders());
 }
 
-auto CPepperDoc::GetDOSHeader()->std::optional<IMAGE_DOS_HEADER>&
-{
+auto CPepperDoc::GetDOSHeader()->std::optional<IMAGE_DOS_HEADER>& {
 	return m_optDOS;
 }
 
-auto CPepperDoc::GetRichHeader()->std::optional<libpe::PERICHHDR_VEC>&
-{
+auto CPepperDoc::GetRichHeader()->std::optional<libpe::PERICHHDR_VEC>& {
 	return m_optRich;
 }
 
-auto CPepperDoc::GetNTHeader()->std::optional<libpe::PENTHDR>&
-{
+auto CPepperDoc::GetNTHeader()->std::optional<libpe::PENTHDR>& {
 	return m_optNTHdr;
 }
 
-auto CPepperDoc::GetDataDirs()->std::optional<libpe::PEDATADIR_VEC>&
-{
+auto CPepperDoc::GetDataDirs()->std::optional<libpe::PEDATADIR_VEC>& {
 	return m_optDataDirs;
 }
 
-auto CPepperDoc::GetSecHeaders()->std::optional<libpe::PESECHDR_VEC>&
-{
+auto CPepperDoc::GetSecHeaders()->std::optional<libpe::PESECHDR_VEC>& {
 	return m_optSecHdr;
 }
 
-auto CPepperDoc::GetExport()->std::optional<libpe::PEEXPORT>&
-{
+auto CPepperDoc::GetExport()->std::optional<libpe::PEEXPORT>& {
 	return m_optExport;
 }
 
-auto CPepperDoc::GetImport()->std::optional<libpe::PEIMPORT_VEC>&
-{
+auto CPepperDoc::GetImport()->std::optional<libpe::PEIMPORT_VEC>& {
 	return m_optImport;
 }
 
-auto CPepperDoc::GetResources()->std::optional<libpe::PERESROOT>&
-{
+auto CPepperDoc::GetResources()->std::optional<libpe::PERESROOT>& {
 	return m_optResRoot;
 }
 
-auto CPepperDoc::GetExceptions()->std::optional<libpe::PEEXCEPTION_VEC>&
-{
+auto CPepperDoc::GetExceptions()->std::optional<libpe::PEEXCEPTION_VEC>& {
 	return m_optExcept;
 }
 
-auto CPepperDoc::GetSecurity()->std::optional<libpe::PESECURITY_VEC>&
-{
+auto CPepperDoc::GetSecurity()->std::optional<libpe::PESECURITY_VEC>& {
 	return m_optSecurity;
 }
 
-auto CPepperDoc::GetRelocations()->std::optional<libpe::PERELOC_VEC>&
-{
+auto CPepperDoc::GetRelocations()->std::optional<libpe::PERELOC_VEC>& {
 	return m_optReloc;
 }
 
-auto CPepperDoc::GetDebug()->std::optional<libpe::PEDEBUG_VEC>&
-{
+auto CPepperDoc::GetDebug()->std::optional<libpe::PEDEBUG_VEC>& {
 	return m_optDebug;
 }
 
-auto CPepperDoc::GetTLS()->std::optional<libpe::PETLS>&
-{
+auto CPepperDoc::GetTLS()->std::optional<libpe::PETLS>& {
 	return m_optTLS;
 }
 
-auto CPepperDoc::GetLoadConfig()->std::optional<libpe::PELOADCONFIG>&
-{
+auto CPepperDoc::GetLoadConfig()->std::optional<libpe::PELOADCONFIG>& {
 	return m_optLCD;
 }
 
-auto CPepperDoc::GetBoundImport()->std::optional<libpe::PEBOUNDIMPORT_VEC>&
-{
+auto CPepperDoc::GetBoundImport()->std::optional<libpe::PEBOUNDIMPORT_VEC>& {
 	return m_optBoundImp;
 }
 
-auto CPepperDoc::GetDelayImport()->std::optional<libpe::PEDELAYIMPORT_VEC>&
-{
+auto CPepperDoc::GetDelayImport()->std::optional<libpe::PEDELAYIMPORT_VEC>& {
 	return m_optDelayImp;
 }
 
-auto CPepperDoc::GetCOMDescriptor()->std::optional<libpe::PECOMDESCRIPTOR>&
-{
+auto CPepperDoc::GetCOMDescriptor()->std::optional<libpe::PECOMDESCRIPTOR>& {
 	return m_optComDescr;
 }

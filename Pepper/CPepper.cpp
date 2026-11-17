@@ -24,8 +24,7 @@ protected:
 #define STR2WIDE(x) L##x
 #define STRWIDER(x) STR2WIDE(x)
 
-BOOL CAboutDlg::OnInitDialog()
-{
+BOOL CAboutDlg::OnInitDialog() {
 	CDialogEx::OnInitDialog();
 
 	const auto wstrVerPepper = std::format(L"Pepper: PE32/PE32+ Binaries Analyzer v{}.{}.{}", ut::PEPPER_VERSION_MAJOR,
@@ -50,13 +49,11 @@ BEGIN_MESSAGE_MAP(CPepperApp, CWinAppEx)
 	ON_UPDATE_COMMAND_UI(IDM_HELP_ABOUT, &CPepperApp::OnUpdateHelpAbout)
 END_MESSAGE_MAP()
 
-void CPepperApp::OpenNewFile()
-{
+void CPepperApp::OpenNewFile() {
 	OnFileOpen();
 }
 
-BOOL CPepperApp::InitInstance()
-{
+BOOL CPepperApp::InitInstance() {
 	CWinAppEx::InitInstance();
 
 	SetRegistryKey(L"Pepper");
@@ -115,19 +112,16 @@ BOOL CPepperApp::InitInstance()
 	return TRUE;
 }
 
-int CPepperApp::ExitInstance()
-{
+int CPepperApp::ExitInstance() {
 	return CWinAppEx::ExitInstance();
 }
 
-void CPepperApp::OnAppAbout()
-{
+void CPepperApp::OnAppAbout() {
 	CAboutDlg aboutDlg;
 	aboutDlg.DoModal();
 }
 
-void CPepperApp::OnFileOpen()
-{
+void CPepperApp::OnFileOpen() {
 	const auto lmbFOD = [this]()->bool {
 		CFileDialog fd(TRUE, nullptr, nullptr, OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_ALLOWMULTISELECT |
 			OFN_DONTADDTORECENT | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, L"All files (*.*)|*.*||");
@@ -156,8 +150,7 @@ void CPepperApp::OnFileOpen()
 	while (!lmbFOD()) { }; //If no file has been opened (if multiple selection) we show the Open File Dialog again.
 }
 
-void CPepperApp::OnUpdateHelpAbout(CCmdUI *pCmdUI)
-{
+void CPepperApp::OnUpdateHelpAbout(CCmdUI *pCmdUI) {
 	pCmdUI->Enable(TRUE);
 	pCmdUI->SetCheck(0);
 }

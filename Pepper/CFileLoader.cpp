@@ -12,8 +12,7 @@
 
 import Utility;
 
-auto CFileLoader::GetData()const->std::span<std::byte>
-{
+auto CFileLoader::GetData()const->std::span<std::byte> {
 	if (!IsLoaded()) {
 		return { };
 	}
@@ -21,8 +20,7 @@ auto CFileLoader::GetData()const->std::span<std::byte>
 	return { static_cast<std::byte*>(m_lpBase), static_cast<std::size_t>(m_stFileSize.QuadPart) };
 }
 
-HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
-{
+HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc) {
 	if (IsLoaded() || !pDoc)
 		return E_ABORT;
 
@@ -65,8 +63,7 @@ HRESULT CFileLoader::LoadFile(LPCWSTR lpszFileName, CPepperDoc* pDoc)
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSelSize, HEXCTRL::IHexCtrl* pHexCtrl)
-{
+HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSelSize, HEXCTRL::IHexCtrl* pHexCtrl) {
 	if (!pHexCtrl) {
 		if (!m_pHex->IsCreated()) {
 			CreateHexCtrlWnd();
@@ -106,8 +103,7 @@ HRESULT CFileLoader::ShowOffsetInWholeFile(ULONGLONG ullOffset, ULONGLONG ullSel
 	return S_OK;
 }
 
-HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, HEXCTRL::IHexCtrl* pHexCtrl)
-{
+HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, HEXCTRL::IHexCtrl* pHexCtrl) {
 	if (!IsLoaded())
 		return E_ABORT;
 
@@ -143,8 +139,7 @@ HRESULT CFileLoader::ShowFilePiece(ULONGLONG ullOffset, ULONGLONG ullSize, HEXCT
 	return S_OK;
 }
 
-HRESULT CFileLoader::UnloadFile()
-{
+HRESULT CFileLoader::UnloadFile() {
 	if (!IsLoaded())
 		return E_ABORT;
 
@@ -171,8 +166,7 @@ HRESULT CFileLoader::UnloadFile()
 
 //Private methods.
 
-void CFileLoader::CreateHexCtrlWnd()
-{
+void CFileLoader::CreateHexCtrlWnd() {
 	m_pHex->Create(m_hcs);
 
 	const auto hWndHex = m_pHex->GetWndHandle(HEXCTRL::EHexWnd::WND_MAIN);
@@ -193,7 +187,6 @@ void CFileLoader::CreateHexCtrlWnd()
 	}
 }
 
-bool CFileLoader::IsLoaded()const
-{
+bool CFileLoader::IsLoaded()const {
 	return m_fLoaded;
 }

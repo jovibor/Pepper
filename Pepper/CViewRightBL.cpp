@@ -24,15 +24,13 @@ BEGIN_MESSAGE_MAP(CViewRightBL, CView)
 	ON_WM_MEASUREITEM()
 END_MESSAGE_MAP()
 
-BOOL CViewRightBL::PreCreateWindow(CREATESTRUCT& cs)
-{
+BOOL CViewRightBL::PreCreateWindow(CREATESTRUCT& cs) {
 	cs.style |= WS_CLIPCHILDREN;
 
 	return CView::PreCreateWindow(cs);
 }
 
-void CViewRightBL::OnInitialUpdate()
-{
+void CViewRightBL::OnInitialUpdate() {
 	CView::OnInitialUpdate();
 
 	m_pChildFrame = static_cast<CChildFrame*>(GetParentFrame());
@@ -69,8 +67,7 @@ void CViewRightBL::OnInitialUpdate()
 	CreateListDelayImpFuncs();
 }
 
-void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/)
-{
+void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/) {
 	const auto iMsg = LOWORD(lHint);
 	if (iMsg == ut::MSG_MDITAB_ACTIVATE || iMsg == ut::MSG_MDITAB_DISACTIVATE) {
 		OnMDITabActivate(iMsg == ut::MSG_MDITAB_ACTIVATE);
@@ -155,24 +152,20 @@ void CViewRightBL::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHint*/
 	}
 }
 
-void CViewRightBL::OnSize(UINT nType, int cx, int cy)
-{
+void CViewRightBL::OnSize(UINT nType, int cx, int cy) {
 	CView::OnSize(nType, cx, cy);
 
 	if (m_hwndActive)
 		::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, cx, cy, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBL::OnDraw(CDC* /*pDC*/)
-{ }
+void CViewRightBL::OnDraw(CDC* /*pDC*/) { }
 
-BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC)
-{
+BOOL CViewRightBL::OnEraseBkgnd(CDC* pDC) {
 	return CView::OnEraseBkgnd(pDC);
 }
 
-void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
-{
+void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/) {
 	const auto& pstResRoot = m_pMainDoc->GetResources();
 	if (!pstResRoot)
 		return;
@@ -205,8 +198,7 @@ void CViewRightBL::OnTreeSelChanged(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 	}
 }
 
-void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
-{
+void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/) {
 	const auto& pstResRoot = m_pMainDoc->GetResources();
 	if (!pstResRoot)
 		return;
@@ -272,8 +264,7 @@ void CViewRightBL::OnTreeRClick(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 	menu.TrackPopupMenuEx(TPM_LEFTALIGN, ptScreen.x, ptScreen.y, this, nullptr);
 }
 
-BOOL CViewRightBL::OnCommand(WPARAM wParam, LPARAM lParam)
-{
+BOOL CViewRightBL::OnCommand(WPARAM wParam, LPARAM lParam) {
 	const auto wMenuID = LOWORD(wParam);
 	if (wMenuID == ut::IDM_EXTRACT_RES) {
 		ExtractResToFile(m_eResType, m_stResData.spnData);
@@ -287,19 +278,16 @@ BOOL CViewRightBL::OnCommand(WPARAM wParam, LPARAM lParam)
 	return CView::OnCommand(wParam, lParam);
 }
 
-BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult)
-{
+BOOL CViewRightBL::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT * pResult) {
 	return CView::OnNotify(wParam, lParam, pResult);
 }
 
-void CViewRightBL::OnDocEditMode()
-{
+void CViewRightBL::OnDocEditMode() {
 	if (m_stHexEdit->IsDataSet())
 		m_stHexEdit->SetMutable(m_pMainDoc->IsEditMode());
 }
 
-void CViewRightBL::OnMDITabActivate(bool fActivate)
-{
+void CViewRightBL::OnMDITabActivate(bool fActivate) {
 	if (fActivate) { //Show all windows from the vector, when tab is activated.
 		for (const auto hWnd : m_vecHWNDVisible) {
 			if (::IsWindow(hWnd)) {
@@ -319,8 +307,7 @@ void CViewRightBL::OnMDITabActivate(bool fActivate)
 	}
 }
 
-void CViewRightBL::CreateListExportFuncs()
-{
+void CViewRightBL::CreateListExportFuncs() {
 	m_stlcs.dwStyle = 0;
 	m_stlcs.uID = ut::IDC_LIST_EXPORT_FUNCS;
 	m_listExportFuncs.Create(m_stlcs);
@@ -353,8 +340,7 @@ void CViewRightBL::CreateListExportFuncs()
 	m_listExportFuncs.SetRedraw(TRUE);
 }
 
-void CViewRightBL::CreateListImportFuncs()
-{
+void CViewRightBL::CreateListImportFuncs() {
 	if (!m_pMainDoc->GetImport())
 		return;
 
@@ -370,8 +356,7 @@ void CViewRightBL::CreateListImportFuncs()
 	m_listImportEntry.InsertColumn(4, L"Thunk RVA", LVCFMT_CENTER, 150);
 }
 
-void CViewRightBL::CreateTreeResources()
-{
+void CViewRightBL::CreateTreeResources() {
 	const auto& pstResRoot = m_pMainDoc->GetResources();
 	if (!pstResRoot)
 		return;
@@ -444,8 +429,7 @@ void CViewRightBL::CreateTreeResources()
 	}
 }
 
-void CViewRightBL::CreateListRelocsEntry()
-{
+void CViewRightBL::CreateListRelocsEntry() {
 	if (!m_pMainDoc->GetRelocations())
 		return;
 
@@ -460,8 +444,7 @@ void CViewRightBL::CreateListRelocsEntry()
 	m_listRelocsEntry.InsertColumn(2, L"Offset to apply", LVCFMT_CENTER, 120);
 }
 
-void CViewRightBL::CreateListDelayImpFuncs()
-{
+void CViewRightBL::CreateListDelayImpFuncs() {
 	if (!m_pMainDoc->GetDelayImport())
 		return;
 
@@ -479,8 +462,7 @@ void CViewRightBL::CreateListDelayImpFuncs()
 	m_listDelayImportEntry.InsertColumn(6, L"UnloadInfoTable AddresOfData", LVCFMT_CENTER, 240);
 }
 
-void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry) {
 	if (dwEntry >= ut::g_mapDOSHeader.size())
 		return;
 
@@ -497,8 +479,7 @@ void CViewRightBL::ShowDosHdrHexEntry(DWORD dwEntry)
 	m_pFileLoader->ShowOffsetInWholeFile(ref.dwOffset, ref.dwSize, m_stHexEdit.get());
 }
 
-void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry) {
 	const auto& pRichHeader = m_pMainDoc->GetRichHeader();
 	if (!pRichHeader || dwEntry >= pRichHeader->size())
 		return;
@@ -515,8 +496,7 @@ void CViewRightBL::ShowRichHdrHexEntry(DWORD dwEntry)
 	m_pFileLoader->ShowOffsetInWholeFile(pRichHeader->at(dwEntry).dwOffset, 8, m_stHexEdit.get());
 }
 
-void CViewRightBL::ShowNtHdrHexEntry()
-{
+void CViewRightBL::ShowNtHdrHexEntry() {
 	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
 	if (!pNTHdr)
 		return;
@@ -532,8 +512,7 @@ void CViewRightBL::ShowNtHdrHexEntry()
 	m_pFileLoader->ShowOffsetInWholeFile(pNTHdr->dwOffset, sizeof(DWORD), m_stHexEdit.get()); //Shows NTHDR signature.
 }
 
-void CViewRightBL::ShowFileHdrHexEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowFileHdrHexEntry(DWORD dwEntry) {
 	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
 	if (!pNTHdr || dwEntry >= ut::g_mapFileHeader.size())
 		return;
@@ -550,8 +529,7 @@ void CViewRightBL::ShowFileHdrHexEntry(DWORD dwEntry)
 	m_pFileLoader->ShowOffsetInWholeFile(dwOffset, ut::g_mapFileHeader.at(dwEntry).dwSize, m_stHexEdit.get());
 }
 
-void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry) {
 	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
 	if (!pNTHdr)
 		return;
@@ -579,8 +557,7 @@ void CViewRightBL::ShowOptHdrHexEntry(DWORD dwEntry)
 	m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize, m_stHexEdit.get());
 }
 
-void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry) {
 	const auto& pNTHdr = m_pMainDoc->GetNTHeader();
 	if (!pNTHdr)
 		return;
@@ -602,8 +579,7 @@ void CViewRightBL::ShowDataDirsHexEntry(DWORD dwEntry)
 	m_pFileLoader->ShowOffsetInWholeFile(dwOffset, sizeof(IMAGE_DATA_DIRECTORY), m_stHexEdit.get());
 }
 
-void CViewRightBL::ShowSecHdrHexEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowSecHdrHexEntry(DWORD dwEntry) {
 	const auto& pSecHeaders = m_pMainDoc->GetSecHeaders();
 	if (!pSecHeaders || dwEntry >= pSecHeaders->size())
 		return;
@@ -620,8 +596,7 @@ void CViewRightBL::ShowSecHdrHexEntry(DWORD dwEntry)
 	m_pFileLoader->ShowFilePiece(ref.PointerToRawData, ref.SizeOfRawData, m_stHexEdit.get());
 }
 
-void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry) {
 	const auto& pLCD = m_pMainDoc->GetLoadConfig();
 	if (!pLCD || dwEntry >= ut::g_mapLCD32.size())
 		return;
@@ -648,8 +623,7 @@ void CViewRightBL::ShowLCDHexEntry(DWORD dwEntry)
 	m_pFileLoader->ShowOffsetInWholeFile(dwOffset, dwSize, m_stHexEdit.get());
 }
 
-void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowImportListEntry(DWORD dwEntry) {
 	const auto& pImport = m_pMainDoc->GetImport();
 	if (!pImport || dwEntry >= pImport->size())
 		return;
@@ -695,8 +669,7 @@ void CViewRightBL::ShowImportListEntry(DWORD dwEntry)
 	m_listImportEntry.SetWindowPos(m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId)
-{
+void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId) {
 	const auto& pSec = m_pMainDoc->GetSecurity();
 	if (!pSec || nSertId >= pSec->size())
 		return;
@@ -717,8 +690,7 @@ void CViewRightBL::ShowSecurityHexEntry(unsigned nSertId)
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry) {
 	const auto& pReloc = m_pMainDoc->GetRelocations();
 	if (!pReloc || dwEntry >= pReloc->size())
 		return;
@@ -747,8 +719,7 @@ void CViewRightBL::ShowRelocsListEntry(DWORD dwEntry)
 	m_hwndActive = m_listRelocsEntry.GetHWND();
 }
 
-void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry) {
 	const auto& pDelayImport = m_pMainDoc->GetDelayImport();
 	if (!pDelayImport || dwEntry >= pDelayImport->size())
 		return;
@@ -814,8 +785,7 @@ void CViewRightBL::ShowDelayImpListEntry(DWORD dwEntry)
 	m_hwndActive = m_listDelayImportEntry.GetHWND();
 }
 
-void CViewRightBL::ShowDebugHexEntry(DWORD dwEntry)
-{
+void CViewRightBL::ShowDebugHexEntry(DWORD dwEntry) {
 	const auto& pDebug = m_pMainDoc->GetDebug();
 	if (!pDebug || dwEntry >= pDebug->size())
 		return;
@@ -833,8 +803,7 @@ void CViewRightBL::ShowDebugHexEntry(DWORD dwEntry)
 	::SetWindowPos(m_hwndActive, m_hWnd, 0, 0, rc.Width(), rc.Height(), SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-void CViewRightBL::ShowTLSHex()
-{
+void CViewRightBL::ShowTLSHex() {
 	const auto& pTLS = m_pMainDoc->GetTLS();
 	if (!pTLS)
 		return;
@@ -865,8 +834,7 @@ void CViewRightBL::ShowTLSHex()
 	m_pFileLoader->ShowFilePiece(dwOffsetStart, dwSize, m_stHexEdit.get());
 }
 
-auto CViewRightBL::GetListByID(UINT_PTR uListID)->LISTEX::CListEx*
-{
+auto CViewRightBL::GetListByID(UINT_PTR uListID)->LISTEX::CListEx* {
 	switch (uListID) {
 	case ut::IDC_LIST_EXPORT_FUNCS:
 		return &m_listExportFuncs;
@@ -881,8 +849,7 @@ auto CViewRightBL::GetListByID(UINT_PTR uListID)->LISTEX::CListEx*
 	}
 }
 
-void CViewRightBL::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
-{
+void CViewRightBL::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct) {
 	if (const auto pList = GetListByID(nIDCtl); pList != nullptr) {
 		pList->DrawItem(lpDrawItemStruct);
 		return;
@@ -891,8 +858,7 @@ void CViewRightBL::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CView::OnDrawItem(nIDCtl, lpDrawItemStruct);
 }
 
-void CViewRightBL::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
-{
+void CViewRightBL::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct) {
 	if (const auto pList = GetListByID(nIDCtl); pList != nullptr) {
 		pList->MeasureItem(lpMeasureItemStruct);
 		return;

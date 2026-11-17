@@ -24,8 +24,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI(IDM_EDIT_EDITMODE, &CMainFrame::OnUpdateAppEditmode)
 END_MESSAGE_MAP()
 
-BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext)
-{
+BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext) {
 	// base class does the real work
 	if (!CMDIFrameWndEx::LoadFrame(nIDResource, dwDefaultStyle, pParentWnd, pContext))
 		return FALSE;
@@ -33,13 +32,11 @@ BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParent
 	return TRUE;
 }
 
-int& CMainFrame::GetChildFramesCount()
-{
+int& CMainFrame::GetChildFramesCount() {
 	return m_iChildFrames;
 }
 
-void CMainFrame::OnAppEditmode()
-{
+void CMainFrame::OnAppEditmode() {
 	if (const auto pFrame = GetActiveFrame(); pFrame != nullptr) {
 		if (const auto pDoc = reinterpret_cast<CPepperDoc*>(pFrame->GetActiveDocument()); pDoc != nullptr) {
 			pDoc->SetEditMode(!pDoc->IsEditMode());
@@ -47,8 +44,7 @@ void CMainFrame::OnAppEditmode()
 	}
 }
 
-int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
-{
+int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 	if (CMDIFrameWndEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
@@ -81,8 +77,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	return 0;
 }
 
-BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
-{
+BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) {
 	//Default "MdiClient" class doesn't have CS_DBLCLKS flag set.
 	//We acquire class info, unregister it, set the CS_DBLCLKS flag and then register again.
 	//Now we will recieve WM_LBUTTONDBLCLK messages for m_hWndMDIClient window.
@@ -109,39 +104,33 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	return TRUE;
 }
 
-void CMainFrame::OnClose()
-{
+void CMainFrame::OnClose() {
 	CMDIFrameWndEx::OnClose();
 }
 
-void CMainFrame::OnDropFiles(HDROP hDropInfo)
-{
+void CMainFrame::OnDropFiles(HDROP hDropInfo) {
 	PVOID pOldValue;
 	Wow64DisableWow64FsRedirection(&pOldValue);
 	CMDIFrameWndEx::OnDropFiles(hDropInfo);
 	Wow64RevertWow64FsRedirection(pOldValue);
 }
 
-BOOL CMainFrame::OnEraseMDIClientBackground(CDC* /*pDC*/)
-{
+BOOL CMainFrame::OnEraseMDIClientBackground(CDC* /*pDC*/) {
 	return TRUE;
 }
 
-void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
-{
+void CMainFrame::OnGetMinMaxInfo(MINMAXINFO* lpMMI) {
 	lpMMI->ptMinTrackSize.x = 400;
 	lpMMI->ptMinTrackSize.y = 200;
 
 	CMDIFrameWndEx::OnGetMinMaxInfo(lpMMI);
 }
 
-LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/)
-{
+LRESULT CMainFrame::OnTabActivate(WPARAM /*wParam*/, LPARAM /*lParam*/) {
 	return S_OK;
 }
 
-void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
-{
+void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI) {
 	const auto pFrame = GetActiveFrame();
 	if (pFrame == nullptr) {
 		pCmdUI->Enable(0);
@@ -157,16 +146,14 @@ void CMainFrame::OnUpdateAppEditmode(CCmdUI* pCmdUI)
 	pCmdUI->SetCheck(pDoc->IsEditMode());
 }
 
-BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
-{
+BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs) {
 	if (!CMDIFrameWndEx::PreCreateWindow(cs))
 		return FALSE;
 
 	return TRUE;
 }
 
-BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
-{
+BOOL CMainFrame::PreTranslateMessage(MSG* pMsg) {
 	switch (pMsg->message) {
 	case WM_MBUTTONDOWN: //Closing tabs with the middle mouse button.
 	{
@@ -224,8 +211,7 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 	return CMDIFrameWndEx::PreTranslateMessage(pMsg);
 }
 
-LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR dwData)
-{
+LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR dwData) {
 	const auto pMainFrame = reinterpret_cast<CMainFrame*>(dwData);
 	if (pMainFrame->GetChildFramesCount() != 0) {
 		return DefSubclassProc(hWnd, uMsg, wParam, lParam);
@@ -261,8 +247,7 @@ LRESULT CMainFrame::MDIClientProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
-void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam)
-{
+void CMainFrame::MDIClientSize(HWND hWnd, WPARAM /*wParam*/, LPARAM lParam) {
 	const auto pDC = CDC::FromHandle(::GetDC(hWnd));
 	const auto iWidthNew = LOWORD(lParam);
 	auto iFontSizeMin = 10;

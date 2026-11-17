@@ -16,8 +16,7 @@ BEGIN_MESSAGE_MAP(CTreeEx, CTreeCtrl)
 	ON_WM_PAINT()
 END_MESSAGE_MAP()
 
-void CTreeEx::OnPaint()
-{
+void CTreeEx::OnPaint() {
 	//To avoid flickering.
 	CPaintDC dc(this);
 
@@ -31,16 +30,13 @@ void CTreeEx::OnPaint()
 	DefWindowProcW(WM_PAINT, reinterpret_cast<WPARAM>(rDC.m_hDC), static_cast<LPARAM>(0));
 }
 
-BOOL CTreeEx::OnEraseBkgnd(CDC* /*pDC*/)
-{
+BOOL CTreeEx::OnEraseBkgnd(CDC* /*pDC*/) {
 	return TRUE;
 }
 
-void CTreeEx::OnKillFocus(CWnd* /*pNewWnd*/)
-{ }
+void CTreeEx::OnKillFocus(CWnd* /*pNewWnd*/) { }
 
-void CTreeEx::OnLButtonDown(UINT nFlags, CPoint point)
-{
+void CTreeEx::OnLButtonDown(UINT nFlags, CPoint point) {
 	SetFocus();
 
 	CTreeCtrl::OnLButtonDown(nFlags, point);
