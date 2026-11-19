@@ -52,7 +52,7 @@ private:
 	void ResLoadError();
 	void ShowResource(const libpe::PERESFLAT* pResData);
 	void OnMDITabActivate(bool fActivate);
-	static auto ParceDlgTemplate(std::span<std::byte> spnData) -> std::optional<std::wstring>;
+	static auto ParseDlgTemplate(std::span<const std::byte> spnData) -> std::optional<std::wstring>;
 	static void PremultiplyBitmapAlpha(HDC hDC, HBITMAP hBmp);
 	DECLARE_MESSAGE_MAP();
 	DECLARE_DYNCREATE(CViewRightBR);
