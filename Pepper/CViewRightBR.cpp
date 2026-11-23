@@ -1228,6 +1228,7 @@ auto CViewRightBR::ParseDlgTemplate(std::span<const std::byte> spnData)->std::op
 	const WCHAR* pwszMenu { };
 	std::size_t uzSizeMenu { };
 	WORD wMenuOrdinal { };
+	bool fHasMenuOrdinal { false };
 	std::wstring wstrRet; //String to return.
 
 	if (fDlgEx) { //DLGTEMPLATEEX.
@@ -1267,6 +1268,7 @@ auto CViewRightBR::ParseDlgTemplate(std::span<const std::byte> spnData)->std::op
 		if (!lmbIsPtrSafe(pDlgData, sizeof(WORD) * 2)) { return std::nullopt; }
 
 		wMenuOrdinal = *reinterpret_cast<const WORD*>(pDlgData + sizeof(WORD)); //Menu ordinal WORD is right after the DLGTEMPLATE(EX) end.
+		fHasMenuOrdinal = true;
 		pDlgData += sizeof(WORD) * 2;
 	}
 	else { //Menu is a wstring.
@@ -1302,7 +1304,8 @@ auto CViewRightBR::ParseDlgTemplate(std::span<const std::byte> spnData)->std::op
 		for (const auto& it : mapDlgStyles) {
 			if (it.first & dwDlgStyles) {
 				if (!wstrStyles.empty()) {
-					wstrStyles += L" | " + std::wstring { it.second };
+					wstrStyles += L" | ";
+					wstrStyles += it.second;
 				}
 				else {
 					wstrStyles += it.second;
@@ -1331,7 +1334,8 @@ auto CViewRightBR::ParseDlgTemplate(std::span<const std::byte> spnData)->std::op
 		for (const auto& it : mapDlgExStyles) {
 			if (it.first & dwDlgStylesEx) {
 				if (!wstrExStyles.empty()) {
-					wstrExStyles += L" | " + std::wstring { it.second };
+					wstrExStyles += L" | ";
+					wstrExStyles += it.second;
 				}
 				else {
 					wstrExStyles += it.second;
@@ -1398,12 +1402,15 @@ auto CViewRightBR::ParseDlgTemplate(std::span<const std::byte> spnData)->std::op
 	if (pwszMenu != nullptr && uzSizeMenu > 0) {
 		wstrRet += L"DIALOG MENU RESOURCE NAME: \"" + std::wstring { pwszMenu } + L"\"\r\n";
 	}
-	else if (wMenuOrdinal > 0) {
+	else if (fHasMenuOrdinal) {
 		wstrRet += std::format(L"DIALOG MENU RESOURCE ORDINAL: 0x{:X}\r\n", wMenuOrdinal);
 	}
 
 	//Font related stuff, it has little differences between templates.
 	if (dwDlgStyles & DS_SETFONT) {
+		pDlgData = lmbAlignPtrWORD(pDlgData);
+		if (!lmbIsPtrSafe(pDlgData, sizeof(WORD))) { return std::nullopt; }
+
 		wstrRet += L"DIALOG FONT: ";
 		if (fDlgEx) { //DLGTEMPLATEEX font.
 			if (!lmbIsPtrSafe(pDlgData, 6)) { return std::nullopt; }
@@ -1488,9 +1495,9 @@ auto CViewRightBR::ParseDlgTemplate(std::span<const std::byte> spnData)->std::op
 			pDlgData += sizeof(WORD) * 2;
 			wstrItem += std::format(L"Class ordinal: 0x{:04X}", wClassOrdinalItem);
 
-			static const std::unordered_map<DWORD, std::wstring_view> mapItemClassOrd {
-				{ 0x0080, L"Button" }, { 0x0081, L"Edit" }, { 0x0082, L"Static" },
-				{ 0x0083, L"List box" }, { 0x0084, L"Scroll bar" }, { 0x0085, L"Combo box" },
+			static const std::unordered_map<WORD, std::wstring_view> mapItemClassOrd {
+				{ WORD { 0x0080U }, L"Button" }, { WORD { 0x0081U }, L"Edit" }, { WORD { 0x0082U }, L"Static" },
+				{ WORD { 0x0083U }, L"List box" }, { WORD { 0x0084U }, L"Scroll bar" }, { WORD { 0x0085U }, L"Combo box" },
 			};
 			if (const auto iter = mapItemClassOrd.find(wClassOrdinalItem); iter != mapItemClassOrd.end()) {
 				wstrItem += L" (\"" + std::wstring { iter->second } + L"\")";
@@ -1534,7 +1541,6 @@ auto CViewRightBR::ParseDlgTemplate(std::span<const std::byte> spnData)->std::op
 		const auto wExtraCountItem = *reinterpret_cast<const WORD*>(pDlgData);
 		pDlgData += sizeof(WORD);
 		if (wExtraCountItem > 0) {
-			pDlgData = lmbAlignPtrWORD(pDlgData);
 			if (!lmbIsPtrSafe(pDlgData, wExtraCountItem)) { return std::nullopt; }
 
 			pDlgData += wExtraCountItem;
